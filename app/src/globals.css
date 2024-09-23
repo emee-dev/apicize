@@ -1,0 +1,99 @@
+.help {
+  /* margin: 1rem; */
+  overflow: auto;
+  display: flex;
+  width: 100%;
+  padding: 1em;
+  background-color: #03021f;
+}
+
+.help h1:first {
+  background-color: #1d1d24;
+}
+
+.help p {
+  margin-bottom: 1em;
+}
+
+.help-text {
+  display: block;
+  flex-grow: 1;
+  padding-right: 36px;
+}
+
+.help-text img {
+  margin: 2em 0 2em 0;
+}
+
+.help-toolbar {
+  display: inline-block;
+  margin-right: 1em;
+}
+
+.help-toolbar button {
+  font-size: 32px;
+}
+
+
+h1 .help-icon {
+  margin-right: 0.25em;
+}
+
+h2 .help-icon {
+  margin-left: 0.25em;
+}
+
+.help-icon {
+  vertical-align: middle;
+}
+
+.help-text .MuiTypography-body1 {
+  margin-bottom: 1.0em;
+}
+
+textarea,
+pre {
+  /* Make react-simple-code-editor work */
+  word-break: break-all !important;
+}
+
+.editor-panel {
+  flex: 1;
+  margin-left: 0px;
+  padding: 16px 24px 16px 16px;
+  /* padding: 8px 16px 8px 8px; */
+  height: 100vh;
+}
+
+
+.editor-panel-no-toolbar {
+  flex: 1;
+  margin-left: 0px;
+  padding: 16px 24px 16px 82px;
+  /* padding: 8px 16px 8px 8px; */
+  height: 100vh;
+}
+
+.editor-title .MuiSvgIcon-root {
+  margin-right: 20px;
+}
+
+.editor-title .text {
+  display: inline-block;
+  position: relative;
+  top: -3px;
+}
+
+.navigation-menu-item div:nth-child(2) {
+  margin-bottom: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.nav-node-text {
+  flex-grow: 1;
+}
+
+.MuiTreeItem-root.selected>.MuiTreeItem-content {
+  background-color: rgba(255,255,255,0.2);
+}

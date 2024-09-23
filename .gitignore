@@ -1,0 +1,14 @@
+node_modules
+dist
+target
+.webpack
+tsconfig.tsbuildinfo
+*.sh
+.next
+.yarn/*
+!.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

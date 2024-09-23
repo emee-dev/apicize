@@ -1,0 +1,18 @@
+{
+  "name": "@apicize/lib-typescript",
+  "private": true,
+  "version": "0.3.1",
+  "description": "TypeScript model definitions for Apicize",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "rebuild": "rm -rf dist && rm ./tsconfig.tsbuildinfo && tsc"
+  },
+  "author": "",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}

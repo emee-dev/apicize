@@ -1,0 +1,57 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "ui:dev",
+			"type": "shell",
+			// `dev` keeps running in the background
+			// ideally you should also configure a `problemMatcher`
+			// see https://code.visualstudio.com/docs/editor/tasks#_can-a-background-task-be-used-as-a-prelaunchtask-in-launchjson
+			"isBackground": true,
+			// change this to your `beforeDevCommand`:
+			"command": "yarn",
+			"args": [
+				"dev"
+			],
+			"problemMatcher": {
+				"base": "$rustc",
+				"fileLocation": "autoDetect"
+			},
+			// "dependsOn": ["ui:deps"],
+		},
+		{ 
+			"label": "ui:deps",
+			"type": "shell",
+			"isBackground": false,
+			"command": "yarn",
+			"args": [
+				"build-deps"
+			]
+		},
+		{
+			"label": "ui:build",
+			"type": "shell",
+			// change this to your `beforeBuildCommand`:
+			"command": "yarn",
+			"args": [
+				"build"
+			]
+		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/@apicize/cli"
+			},
+			"label": "rust: build cli",
+			"problemMatcher": {
+				"base": "$rustc",
+				"fileLocation": "autoDetect"
+			}
+		},
+	]
+}
