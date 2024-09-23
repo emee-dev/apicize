@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.5.8
+
+* Copy demo to documents directory upon creation
+* Add check for config director
+
 # 0.5.7
 
 * Fix OAuth expiration detection

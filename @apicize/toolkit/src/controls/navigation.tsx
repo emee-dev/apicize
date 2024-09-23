@@ -944,7 +944,7 @@ export const Navigation = observer(() => {
                     <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()}>
                         <PostAddIcon />
                     </IconButton>
-                    <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook()} sx={{ marginLeft: '4px' }}>
+                    <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook(undefined, true)} sx={{ marginLeft: '4px' }}>
                         <FileOpenIcon />
                     </IconButton>
                     <IconButton aria-label='save' title='Save Workbook (Ctrl + S)' disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()} sx={{ marginLeft: '4px' }}>

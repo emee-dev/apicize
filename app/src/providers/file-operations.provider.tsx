@@ -2,7 +2,7 @@ import { ReactNode, useRef } from "react";
 import * as core from '@tauri-apps/api/core'
 import * as dialog from '@tauri-apps/plugin-dialog'
 import * as path from '@tauri-apps/api/path'
-import { exists, readFile, readTextFile } from "@tauri-apps/plugin-fs"
+import { exists, readFile, readTextFile, copyFile, mkdir } from "@tauri-apps/plugin-fs"
 import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useFeedback, WorkspaceStore } from "@apicize/toolkit";
 import { StoredGlobalSettings, Workspace } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
@@ -60,6 +60,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         )
 
         try {
+            console.log('updating settings', newSettings)
             await core.invoke<StoredGlobalSettings>('save_settings', { settings: newSettings })
         } catch (e) {
             feedback.toast(`Unable to save settings: ${e}`, ToastSeverity.Error)
@@ -79,7 +80,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         }
         return base;
     }
-    
+
     /**
      * Return SSH path if available, otherwise, fall back to settings
      * @returns 
@@ -145,7 +146,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
 
         workspaceStore.newWorkspace()
         _forceClose.current = false
-        feedback.toast('Created New Workbook', ToastSeverity.Success)        
+        feedback.toast('Created New Workbook', ToastSeverity.Success)
     }
 
     /**
@@ -156,8 +157,6 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      */
     const openWorkbook = async (fileName?: string, doUpdateSettings?: boolean) => {
         const settings = await loadSettings()
-        if (! doUpdateSettings) doUpdateSettings = true
-
         if (workspaceStore.dirty) {
             if (! await feedback.confirm({
                 title: 'Open Workbook',
@@ -224,7 +223,6 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             const workspaceToSave = workspaceStore.getWorkspace()
             await core.invoke('save_workspace', { workspace: workspaceToSave, path: workspaceStore.workbookFullName })
             await updateSettings({ lastWorkbookFileName: workspaceStore.workbookFullName })
-            console.log('Triggering toast...')
             feedback.toast(`Saved ${workspaceStore.workbookFullName}`, ToastSeverity.Success)
             workspaceStore.updateSavedLocation(
                 workspaceStore.workbookFullName,
@@ -327,12 +325,12 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             defaultPath,
             directory: false,
             filters: [{
-                    name: extensionName,
-                    extensions
-                }, {
-                    name: 'All Files',
-                    extensions: ['*']
-                }]
+                name: extensionName,
+                extensions
+            }, {
+                name: 'All Files',
+                extensions: ['*']
+            }]
         })) as any
 
         if (!fileName) return null
@@ -359,9 +357,9 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             defaultPath: await getBodyDataPath(),
             directory: false,
             filters: [{
-                    name: 'All Files',
-                    extensions: ['*']
-                }]
+                name: 'All Files',
+                extensions: ['*']
+            }]
         })) as any
 
         if (!fileName) return null
@@ -376,7 +374,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         const data = base64Encode(await readFile(fileName))
         return data
     }
-    
+
     /**
      * Open up the specified help topic
      * @param showTopic 
@@ -386,9 +384,9 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         const helpFile = await join(await resourceDir(), 'help', `${showTopic}.md`)
         if (await exists(helpFile)) {
             let text = await readTextFile(helpFile)
-    
+
             const helpDir = await join(await resourceDir(), 'help', 'images')
-    
+
             // This is cheesy, but I can't think of another way to inject images from the React client
             let imageLink
             do {
@@ -411,18 +409,28 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             throw new Error(`Help topic "${showTopic}" not found at ${helpFile}`)
         }
     }
-    
+
     // Load if we have not 
     (async () => {
-        if(workspaceStore.lastWorkbookNotYetRequested()) {
+        if (workspaceStore.lastWorkbookNotYetRequested()) {
             try {
                 let settings = await loadSettings()
-                if ((settings?.lastWorkbookFileName?.length ?? 0) > 0) {
-                    await openWorkbook(settings.lastWorkbookFileName, false)
+                if (settings.lastWorkbookFileName && (settings.lastWorkbookFileName?.length ?? 0) > 0) {
+                    if (await exists(settings.lastWorkbookFileName)) {
+                        await openWorkbook(settings.lastWorkbookFileName, false)
+                    }
+                } else {
+                    if (! await exists(settings.workbookDirectory)) {
+                        await mkdir(settings.workbookDirectory)
+                        const demoFileSource = await join(await resourceDir(), 'help', `demo.apicize`)
+                        const demoFileDest = await join(settings.workbookDirectory, `demo.apicize`)
+                        await copyFile(demoFileSource, demoFileDest)
+                        await openWorkbook(demoFileDest, true)
+                    }
                 }
             } catch (e) {
                 feedback.toast(`${e}`, ToastSeverity.Error)
-            }        
+            }
         }
     })()
 

@@ -2,7 +2,7 @@
   "$schema": "../../node_modules/@tauri-apps/cli/config.schema.json",
   "identifier": "apicize.app",
   "productName": "Apicize",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "app": {
     "security": {
       "csp": null
@@ -57,7 +57,6 @@
       "signingIdentity": null
     },
     "resources": [
-      "../examples/demo.apicize",
       "./help"
     ],
     "shortDescription": "HTTP testing tool",

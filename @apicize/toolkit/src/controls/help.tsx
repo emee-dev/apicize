@@ -95,7 +95,6 @@ export const HelpPanel = observer(() => {
                     setContent(r.result)
                     setLastTopic(topic)
                 }
-                feedback.toast(`Retrieved help topic ${topic}`, ToastSeverity.Info)
             } catch (e) {
                 feedback.toast(`Unable to display topic ${topic} - ${e}`, ToastSeverity.Error)
             }

@@ -20,6 +20,7 @@ use mime::Mime;
 use reqwest::{Body, Client, ClientBuilder, Error, Identity, Proxy};
 use serde_json::Value;
 use std::collections::HashSet;
+use std::fs::create_dir;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Once};
 use std::time::{Duration, Instant};
@@ -249,7 +250,11 @@ impl ApicizeSettings {
     /// Return the file name for settings
     fn get_settings_filename() -> path::PathBuf {
         if let Some(directory) = config_dir() {
-            directory.join("apicize").join("settings.json")
+            let dir = directory.join("apicize");
+            if ! dir.exists() {
+                create_dir(&dir).unwrap()
+            }
+            dir.join("settings.son")
         } else {
             panic!("Operating system did not provide configuration directory")
         }
@@ -1097,10 +1102,8 @@ impl Workspace {
             done = (scenario.is_some()
                 && authorization.is_some()
                 && certificate.is_some()
-                && proxy.is_some()) ||
-                (! (
-                    allow_scenario && allow_authorization && allow_certificate && allow_proxy
-                ));
+                && proxy.is_some())
+                || (!(allow_scenario && allow_authorization && allow_certificate && allow_proxy));
 
             if !done {
                 // Get the parent
@@ -1120,7 +1123,10 @@ impl Workspace {
                 if let Some(found_parent) = parent {
                     let parent_id = found_parent.get_id();
                     if encountered_ids.contains(parent_id) {
-                        println!("Recursive parent found at {}, cancelling traversal", parent_id);
+                        println!(
+                            "Recursive parent found at {}, cancelling traversal",
+                            parent_id
+                        );
                         done = true
                     } else {
                         current = found_parent;
@@ -1131,19 +1137,19 @@ impl Workspace {
             }
         }
 
-        if ! allow_scenario {
+        if !allow_scenario {
             scenario = None
         }
 
-        if ! allow_authorization {
+        if !allow_authorization {
             authorization = None
         }
 
-        if ! allow_certificate {
+        if !allow_certificate {
             certificate = None
         }
 
-        if ! allow_proxy {
+        if !allow_proxy {
             proxy = None
         }
 
