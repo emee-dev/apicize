@@ -750,6 +750,7 @@ export class WorkspaceStore {
     @action
     copyScenario(id: string) {
         const source = this.workspace.scenarios.entities.get(id)
+        if (! source) return
         const scenario = new EditableWorkbookScenario()
         scenario.id = GenerateIdentifier()
         scenario.name = `${GetTitle(source)} - Copy`
@@ -761,6 +762,13 @@ export class WorkspaceStore {
             this.workspace.scenarios.topLevelIds.splice(idx + 1, 0, scenario.id)
         }
         this.workspace.scenarios.entities.set(scenario.id, scenario)
+        scenario.persistence = source.persistence
+        scenario.variables = source.variables.map(v => ({
+            id: GenerateIdentifier(),
+            name: v.name,
+            value: v.value,
+            disabled: v.disabled
+        }))
         this.dirty = true
         this.changeActive(EditableEntityType.Scenario, scenario.id)
     }
@@ -822,32 +830,32 @@ export class WorkspaceStore {
     @action
     copyAuthorization(id: string) {
         const source = this.workspace.authorizations.entities.get(id)
-        if (source) {
-            const authorization = new EditableWorkbookAuthorization()
-            authorization.id = GenerateIdentifier()
-            authorization.name = `${GetTitle(source)} - Copy`
-            authorization.dirty = true
-            authorization.header = source.header
-            authorization.value = source.value
-            authorization.username = source.username
-            authorization.password = source.password
-            authorization.accessTokenUrl = source.accessTokenUrl
-            authorization.clientId = source.clientId
-            authorization.clientSecret = source.clientSecret
-            authorization.scope = source.scope
-            authorization.selectedCertificate = source.selectedCertificate
-            authorization.selectedProxy = source.selectedProxy
+        if (! source) return
+        const authorization = new EditableWorkbookAuthorization()
+        authorization.id = GenerateIdentifier()
+        authorization.name = `${GetTitle(source)} - Copy`
+        authorization.type = source.type
+        authorization.dirty = true
+        authorization.header = source.header
+        authorization.value = source.value
+        authorization.username = source.username
+        authorization.password = source.password
+        authorization.accessTokenUrl = source.accessTokenUrl
+        authorization.clientId = source.clientId
+        authorization.clientSecret = source.clientSecret
+        authorization.scope = source.scope
+        authorization.selectedCertificate = source.selectedCertificate
+        authorization.selectedProxy = source.selectedProxy
 
-            const idx = this.workspace.authorizations.topLevelIds.indexOf(source.id)
-            if (idx === -1) {
-                this.workspace.authorizations.topLevelIds.push(authorization.id)
-            } else {
-                this.workspace.authorizations.topLevelIds.splice(idx + 1, 0, authorization.id)
-            }
-            this.workspace.authorizations.entities.set(authorization.id, authorization)
-            this.dirty = true
-            this.changeActive(EditableEntityType.Authorization, authorization.id)
+        const idx = this.workspace.authorizations.topLevelIds.indexOf(source.id)
+        if (idx === -1) {
+            this.workspace.authorizations.topLevelIds.push(authorization.id)
+        } else {
+            this.workspace.authorizations.topLevelIds.splice(idx + 1, 0, authorization.id)
         }
+        this.workspace.authorizations.entities.set(authorization.id, authorization)
+        this.dirty = true
+        this.changeActive(EditableEntityType.Authorization, authorization.id)
     }
 
     getAuthorization(id: string) {
@@ -1010,25 +1018,25 @@ export class WorkspaceStore {
     @action
     copyCertificate(id: string) {
         const source = this.workspace.certificates.entities.get(id)
-        if (source) {
-            const certificate = new EditableWorkbookCertificate()
-            certificate.id = GenerateIdentifier()
-            certificate.name = `${GetTitle(source)} - Copy`
-            certificate.dirty = true
-            certificate.pem = source.pem
-            certificate.key = source.key
-            certificate.pfx = source.pfx
-            certificate.password = source.password
-            const idx = this.workspace.certificates.topLevelIds.findIndex(cid => cid === source.id)
-            if (idx === -1) {
-                this.workspace.certificates.topLevelIds.push(certificate.id)
-            } else {
-                this.workspace.certificates.topLevelIds.splice(idx + 1, 0, certificate.id)
-            }
-            this.workspace.certificates.entities.set(certificate.id, certificate)
-            this.dirty = true
-            this.changeActive(EditableEntityType.Certificate, certificate.id)
+        if (! source) return
+        const certificate = new EditableWorkbookCertificate()
+        certificate.id = GenerateIdentifier()
+        certificate.name = `${GetTitle(source)} - Copy`
+        certificate.type = source.type
+        certificate.dirty = true
+        certificate.pem = source.pem
+        certificate.key = source.key
+        certificate.pfx = source.pfx
+        certificate.password = source.password
+        const idx = this.workspace.certificates.topLevelIds.findIndex(cid => cid === source.id)
+        if (idx === -1) {
+            this.workspace.certificates.topLevelIds.push(certificate.id)
+        } else {
+            this.workspace.certificates.topLevelIds.splice(idx + 1, 0, certificate.id)
         }
+        this.workspace.certificates.entities.set(certificate.id, certificate)
+        this.dirty = true
+        this.changeActive(EditableEntityType.Certificate, certificate.id)
     }
 
     getCertificate(id: string) {

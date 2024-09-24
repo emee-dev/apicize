@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.5.9
+
+* Fix duplicate scenario and certificate
+* Fix test result log word wrap
+
 # 0.5.8
 
 * Copy demo to documents directory upon creation

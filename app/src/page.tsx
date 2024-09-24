@@ -1,13 +1,12 @@
 'use client'
 
 import * as core from '@tauri-apps/api/core'
-import { Navigation, WorkspaceStore } from '@apicize/toolkit'
+import { AuthorizationEditor, CertificateEditor, HelpPanel, Navigation, ProxyEditor, RequestEditor, ScenarioEditor, WorkspaceStore } from '@apicize/toolkit'
 import type { } from '@mui/x-tree-view/themeAugmentation';
 import { Stack, CssBaseline, ThemeProvider, createTheme, alpha } from '@mui/material'
 import { } from '@apicize/toolkit'
 import React from 'react'
 import "typeface-open-sans"
-import Pane from './pane';
 import { ClipboardProvider } from './providers/clipboard.provider';
 import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
@@ -111,7 +110,24 @@ export default function Home() {
             <ClipboardProvider>
               <Stack direction='row' sx={{ width: '100%', height: '100vh', display: 'flex', padding: '0' }}>
                 <Navigation />
-                <Pane />
+                <>
+                  <HelpPanel />
+                  <RequestEditor
+                    sx={{ display: 'block', flexGrow: 1 }}
+                  />
+                  <ScenarioEditor
+                    sx={{ display: 'block', flexGrow: 1 }}
+                  />
+                  <AuthorizationEditor
+                    sx={{ display: 'block', flexGrow: 1 }}
+                  />
+                  <CertificateEditor
+                    sx={{ display: 'block', flexGrow: 1 }}
+                  />
+                  <ProxyEditor
+                    sx={{ display: 'block', flexGrow: 1 }}
+                  />
+                </>
               </Stack>
             </ClipboardProvider>
           </WorkspaceProvider>

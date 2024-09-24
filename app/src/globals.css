@@ -57,6 +57,16 @@ pre {
   word-break: break-all !important;
 }
 
+pre.log {
+  /* Make react-simple-code-editor work */
+  word-break: break-word !important;
+  padding-top: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
 .editor-panel {
   flex: 1;
   margin-left: 0px;
@@ -95,5 +105,5 @@ pre {
 }
 
 .MuiTreeItem-root.selected>.MuiTreeItem-content {
-  background-color: rgba(255,255,255,0.2);
+  background-color: rgba(255, 255, 255, 0.2);
 }

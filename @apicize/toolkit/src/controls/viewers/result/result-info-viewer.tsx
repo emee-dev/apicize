@@ -118,7 +118,7 @@ const TestResult = (props: { name: string[], success: boolean, logs?: string[], 
                 sx={{ marginTop: 0, marginBottom: 0, paddingTop: 0, ":first-letter": { textTransform: 'capitalize' } }} color='error'>{props.error}</Typography>) : (<></>)}
             {(props.logs?.length ?? 0) > 0 ? (
                 <Box sx={{ overflow: 'auto', marginTop: '0.25rem', marginBottom: 0 }}>
-                    <pre style={{ paddingTop: 0, marginTop: 0, whiteSpace: 'pre-line' }}>{props.logs?.join('\n')}</pre>
+                    <pre className='log'>{props.logs?.join('\n')}</pre>
                 </Box>
             ) : (<></>)}
         </Stack>
@@ -158,7 +158,7 @@ export const ResultInfoViewer = observer((props: {
         if (summary) {
             title = `Group Execution ${summary.allTestsSucceeded ? "Completed" : "Failed"}`
             if (summary.milliseconds) {
-                title += ` (${summary.milliseconds} ms)`
+                title += ` (${summary.milliseconds.toLocaleString()} ms)`
             }
         }
         result = undefined
