@@ -8,6 +8,7 @@ import { visit } from 'unist-util-visit';
 import { Node as DastNode } from 'mdast';
 import SendIcon from '@mui/icons-material/Send';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings'
+import LanguageIcon from '@mui/icons-material/Language'
 import ViewListIcon from '@mui/icons-material/ViewList'
 import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined'
 import ScienceIcon from '@mui/icons-material/Science';
@@ -212,6 +213,8 @@ export const HelpPanel = observer(() => {
                 return <ScienceIcon className='help-icon' />
             case 'authorization':
                 return <LockIcon className='help-icon' />
+            case 'scenario':
+                return <LanguageIcon className='help-icon' />
             case 'certificate':
                 return <SecurityIcon className='help-icon' />
             case 'proxy':

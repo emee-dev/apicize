@@ -104,6 +104,15 @@ pre.log {
   flex-grow: 1;
 }
 
+.nav-folder {
+  flex-grow: 0;
+  margin-right: 0.5em;
+}
+
 .MuiTreeItem-root.selected>.MuiTreeItem-content {
   background-color: rgba(255, 255, 255, 0.2);
+}
+
+.running-icon {
+  margin-left: 0.2em;
 }

@@ -66,7 +66,6 @@ export class FileOperationsStore {
     }
 
     retrieveHelpTopic(topic: string) {
-        debugger
         return this.callbacks.onRetrieveHelpTopic(topic)
     }
 }

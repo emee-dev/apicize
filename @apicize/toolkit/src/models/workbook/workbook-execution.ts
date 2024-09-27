@@ -49,6 +49,7 @@ export interface WorkbookExecutionRunMenuItem {
 }
 
 export interface WorkbookExecution {
+     requestOrGroupId: string
      running: boolean
      runIndex: number
      resultIndex: number

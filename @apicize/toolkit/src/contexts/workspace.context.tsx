@@ -49,6 +49,8 @@ export class WorkspaceStore {
     @observable accessor dirty: boolean = false
     @observable accessor invalidItems = new Set<string>()
 
+    @observable accessor executingRequestIDs: string[] = []
+
     @observable accessor expandedItems = ['hdr-r', 'hdr-s', 'hdr-a', 'hdr-c', 'hdr-p']
 
     private defaultRequested = false
@@ -336,8 +338,8 @@ export class WorkspaceStore {
                 request.method = entry.method
                 request.mode = entry.mode
                 request.timeout = entry.timeout
-                request.headers = entry.headers.map(h => ({...h, id: GenerateIdentifier() } as EditableNameValuePair))
-                request.queryStringParams = entry.queryStringParams.map(q => ({...q, id: GenerateIdentifier() } as EditableNameValuePair))
+                request.headers = entry.headers.map(h => ({ ...h, id: GenerateIdentifier() } as EditableNameValuePair))
+                request.queryStringParams = entry.queryStringParams.map(q => ({ ...q, id: GenerateIdentifier() } as EditableNameValuePair))
                 request.body = entry.body
                     ? {
                         type: entry.body.type,
@@ -750,7 +752,7 @@ export class WorkspaceStore {
     @action
     copyScenario(id: string) {
         const source = this.workspace.scenarios.entities.get(id)
-        if (! source) return
+        if (!source) return
         const scenario = new EditableWorkbookScenario()
         scenario.id = GenerateIdentifier()
         scenario.name = `${GetTitle(source)} - Copy`
@@ -830,7 +832,7 @@ export class WorkspaceStore {
     @action
     copyAuthorization(id: string) {
         const source = this.workspace.authorizations.entities.get(id)
-        if (! source) return
+        if (!source) return
         const authorization = new EditableWorkbookAuthorization()
         authorization.id = GenerateIdentifier()
         authorization.name = `${GetTitle(source)} - Copy`
@@ -1018,7 +1020,7 @@ export class WorkspaceStore {
     @action
     copyCertificate(id: string) {
         const source = this.workspace.certificates.entities.get(id)
-        if (! source) return
+        if (!source) return
         const certificate = new EditableWorkbookCertificate()
         certificate.id = GenerateIdentifier()
         certificate.name = `${GetTitle(source)} - Copy`
@@ -1174,7 +1176,7 @@ export class WorkspaceStore {
     getExecution(requestOrGroupId: string) {
         let execution = this.requestExecutions.get(requestOrGroupId)
         if (!execution) {
-            execution = new WorkbookExecutionEntry()
+            execution = new WorkbookExecutionEntry(requestOrGroupId)
             this.requestExecutions.set(requestOrGroupId, execution)
         }
         return execution
@@ -1302,10 +1304,10 @@ export class WorkspaceStore {
         }
     }
 
-    @action
-    reportExecutionComplete(execution: WorkbookExecution) {
-        execution.running = false
-    }
+    // @action
+    // reportExecutionComplete(execution: WorkbookExecution) {
+    //     execution.running = false
+    // }
 
     @action
     async executeRequest(requestOrGroupId: string) {
@@ -1317,13 +1319,17 @@ export class WorkspaceStore {
         if (execution) {
             execution.running = true
         } else {
-            let execution = new WorkbookExecutionEntry()
+            let execution = new WorkbookExecutionEntry(requestOrGroupId)
             execution.running = true
             this.requestExecutions.set(requestOrGroupId, execution)
         }
 
         if (!(execution && (request || group))) throw new Error(`Invalid ID ${requestOrGroupId}`)
 
+        let idx = this.executingRequestIDs.indexOf(execution.requestOrGroupId)
+        if (idx === -1) {
+            this.executingRequestIDs.push(requestOrGroupId)
+        }
         try {
             let executionResults = await this.callbacks.onExecuteRequest(this.getWorkspace(), requestOrGroupId)
             this.reportExecutionResults(execution, group, executionResults)
@@ -1332,12 +1338,25 @@ export class WorkspaceStore {
         }
     }
 
+    @action
+    reportExecutionComplete(execution: WorkbookExecution) {
+        let idx = this.executingRequestIDs.indexOf(execution.requestOrGroupId)
+        if (idx !== -1) {
+            this.executingRequestIDs.splice(idx, 1)
+        }
+        execution.running = false
+    }
+
 
     @action
     cancelRequest(requestOrGroupId: string) {
         const match = this.requestExecutions.get(requestOrGroupId)
         if (match) {
             match.running = false
+        }
+        let idx = this.executingRequestIDs.indexOf(requestOrGroupId)
+        if (idx !== -1) {
+            this.executingRequestIDs.splice(idx, 1)
         }
         return this.callbacks.onCancelRequest(requestOrGroupId)
     }
@@ -1381,7 +1400,7 @@ class WorkbookExecutionEntry implements WorkbookExecution {
     @observable accessor panel = 'Info'
     @observable accessor results = new Map<string, WorkbookExecutionResult>()
 
-    constructor() {
+    constructor(public readonly requestOrGroupId: string) {
         makeObservable(this)
     }
 }

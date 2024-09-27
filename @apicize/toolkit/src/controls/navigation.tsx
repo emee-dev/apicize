@@ -4,6 +4,7 @@ import FolderIcon from '@mui/icons-material/Folder'
 import FileOpenIcon from '@mui/icons-material/FileOpen'
 import PostAddIcon from '@mui/icons-material/PostAdd'
 import SaveIcon from '@mui/icons-material/Save'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import SaveAsIcon from '@mui/icons-material/SaveAs'
 import HelpIcon from '@mui/icons-material/Help'
@@ -40,22 +41,6 @@ export const Navigation = observer(() => {
     const workspace = useWorkspace()
     const fileOps = useFileOperations()
     const feedback = useFeedback()
-
-    // const nodesToExpand = ['hdr-r', 'hdr-s', 'hdr-a', 'hdr-c', 'hdr-p']
-    // const expandRequestsWithChildren = (item: EditableItem) => {
-    //     if (item.entityType === EditableEntityType.Group) {
-    //         const childIDs = workspace.workspace.requests.childIds?.get(item.id)
-    //         if (childIDs && childIDs.length > 0) {
-    //             nodesToExpand.push(`${item.entityType}-${item.id}`)
-    //             childIDs
-    //                 .map(id => workspace.workspace.requests.entities.get(id))
-    //                 .filter(e => e !== undefined)
-    //                 .forEach(expandRequestsWithChildren)
-    //         }
-    //     }
-    // }
-    // workspace.workspace.requests.entities.forEach(expandRequestsWithChildren)
-    // console.log(`Nodes to expand: ${nodesToExpand.join(', ')}`)
 
     const [requestsMenu, setRequestsMenu] = useState<MenuPosition | undefined>(undefined)
     const [reqMenu, setReqMenu] = useState<MenuPosition | undefined>(undefined)
@@ -143,11 +128,11 @@ export const Navigation = observer(() => {
                     sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default' }}
                 >
                     {
-                        props.type === EditableEntityType.Request || EditableEntityType.Group ? (<SendIcon sx={{ flexGrow: 0, marginRight: '10px' }} />) :
-                            props.type === EditableEntityType.Authorization ? (<LockIcon sx={{ flexGrow: 0, marginRight: '10px' }} />) :
-                                props.type === EditableEntityType.Scenario ? (<LanguageIcon sx={{ flexGrow: 0, marginRight: '10px' }} />) :
-                                    props.type === EditableEntityType.Proxy ? (<AirlineStopsIcon sx={{ flexGrow: 0, marginRight: '10px' }} />) :
-                                        props.type === EditableEntityType.Certificate ? (<SecurityIcon sx={{ flexGrow: 0, marginRight: '10px' }} />) :
+                        props.type === (EditableEntityType.Request || EditableEntityType.Group) ? (<SendIcon className='nav-folder' />) :
+                            props.type === EditableEntityType.Authorization ? (<LockIcon className='nav-folder' />) :
+                                props.type === EditableEntityType.Scenario ? (<LanguageIcon className='nav-folder' />) :
+                                    props.type === EditableEntityType.Proxy ? (<AirlineStopsIcon className='nav-folder' />) :
+                                        props.type === EditableEntityType.Certificate ? (<SecurityIcon className='nav-folder' />) :
                                             (<></>)
                     }
                     <Box className='nav-node-text' sx={{ flexGrow: 1 }}>
@@ -156,13 +141,13 @@ export const Navigation = observer(() => {
                     {
                         props.type === EditableEntityType.Request ?
                             (
-                                <IconButton sx={{ flexGrow: 0, minHeight: '40px' }} onClick={(e) => handleShowRequestsMenu(e, 'menu-auth')}>
+                                <IconButton sx={{ flexGrow: 0, minHeight: '1em' }} onClick={(e) => handleShowRequestsMenu(e, 'menu-auth')}>
                                     <MoreVertIcon />
                                 </IconButton>
                             )
                             :
                             (
-                                <IconButton sx={{ flexGrow: 0, minHeight: '40px' }}
+                                <IconButton sx={{ flexGrow: 0, minHeight: '1em' }}
                                     onClick={(e) => {
                                         e.preventDefault()
                                         e.stopPropagation()
@@ -214,11 +199,17 @@ export const Navigation = observer(() => {
 
         // Requests can be hierarchical
         let children: EditableItem[] | undefined
+        let isRunning: boolean
         if (props.item.entityType === EditableEntityType.Group) {
             const childIds = workspace.workspace.requests.childIds?.get(props.item.id)
             children = childIds?.map(id =>
                 workspace.workspace.requests.entities.get(id)
             )?.filter(e => e !== undefined)
+            isRunning = workspace.executingRequestIDs.indexOf(props.item.id) !== -1
+        } else if (props.item.entityType === EditableEntityType.Request) {
+            isRunning = workspace.executingRequestIDs.indexOf(props.item.id) !== -1
+        } else {
+            isRunning = false
         }
 
         return children
@@ -231,7 +222,7 @@ export const Navigation = observer(() => {
                     {...attributes}
                     sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default' }}
                     // Add a selected class so that we can mark expandable tree items as selected and have them show up properly
-                    className={workspace.active?.id === props.item.id ? 'selected': ''}
+                    className={workspace.active?.id === props.item.id ? 'selected' : ''}
                     label={(
                         <Box
                             key={`lbl-${props.item.id}`}
@@ -251,8 +242,11 @@ export const Navigation = observer(() => {
                                 e.stopPropagation()
                             }}
                         >
-                            <FolderIcon sx={{ flexGrow: 0, marginRight: '10px' }} />
-                            <Box className='nav-node-text'>{GetTitle(props.item)}</Box>
+                            <FolderIcon className='nav-folder' />
+                            <Box className='nav-node-text'>
+                                {GetTitle(props.item)}
+                            </Box>
+                            {isRunning ? <PlayArrowIcon className='running-icon' /> : null}
                             <IconButton
                                 sx={{
                                     visibility: props.item.id === workspace.active?.id ? 'normal' : 'hidden'
@@ -267,17 +261,17 @@ export const Navigation = observer(() => {
                             </IconButton>
                         </Box>
                     )}>
-                        {children.map(c => (
-                            <NavTreeItem
-                                type={props.type}
-                                key={`csub-${c.id}`}
-                                depth={props.depth + 1}
-                                item={c}
-                                // onSelect={props.onSelect}
-                                onMenu={props.onMenu}
-                                onMove={props.onMove}
-                            />
-                        ))}
+                    {children.map(c => (
+                        <NavTreeItem
+                            type={props.type}
+                            key={`csub-${c.id}`}
+                            depth={props.depth + 1}
+                            item={c}
+                            // onSelect={props.onSelect}
+                            onMenu={props.onMenu}
+                            onMove={props.onMove}
+                        />
+                    ))}
                 </TreeItem>
             )
             :
@@ -310,7 +304,7 @@ export const Navigation = observer(() => {
                         >
                             {
                                 Array.isArray(children)
-                                    ? <FolderIcon sx={{ flexGrow: 0, marginRight: '10px' }} />
+                                    ? <FolderIcon sx={{ flexGrow: 0, marginRight: '0.8em' }} />
                                     : null
                             }
                             <Box
@@ -320,10 +314,9 @@ export const Navigation = observer(() => {
                                 {
                                     props.item.invalid ? (<WarningAmberIcon sx={{ color: '#FFFF00', marginRight: '0.25em' }} />) : null
                                 }
-                                {
-                                    GetTitle(props.item)
-                                }
+                                {GetTitle(props.item)}
                             </Box>
+                            {isRunning ? <PlayArrowIcon className='running-icon' /> : null}
                             <IconButton
                                 sx={{
                                     visibility: props.item.id === workspace.active?.id ? 'normal' : 'hidden'
@@ -938,19 +931,19 @@ export const Navigation = observer(() => {
     }
 
     return (
-        <Stack direction='column' className='selection-pane' sx={{ flexShrink: 0, bottom: 0, overflow: 'auto', marginRight: '4px', paddingRight: '20px', backgroundColor: '#202020' }}>
-            <Box display='flex' flexDirection='row' sx={{ marginBottom: '24px', paddingLeft: '4px', paddingRight: '2px' }}>
+        <Stack direction='column' className='selection-pane' sx={{ flexShrink: 0, bottom: 0, overflow: 'auto', marginRight: '0.1em', paddingRight: '0.5em', backgroundColor: '#202020' }}>
+            <Box display='flex' flexDirection='row' sx={{ marginBottom: '0.2em', paddingLeft: '0.1em', paddingRight: '0.1em' }}>
                 <Box sx={{ width: '100%', marginRight: '8px' }}>
-                    <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()}>
+                    <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()} sx={{ marginLeft: '0.2em' }}>
                         <PostAddIcon />
                     </IconButton>
-                    <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook(undefined, true)} sx={{ marginLeft: '4px' }}>
+                    <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook(undefined, true)} sx={{ marginLeft: '0.2em' }}>
                         <FileOpenIcon />
                     </IconButton>
-                    <IconButton aria-label='save' title='Save Workbook (Ctrl + S)' disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()} sx={{ marginLeft: '4px' }}>
+                    <IconButton aria-label='save' title='Save Workbook (Ctrl + S)' disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()} sx={{ marginLeft: '0.2em' }}>
                         <SaveIcon />
                     </IconButton>
-                    <IconButton aria-label='save' title='Save Workbook As (Ctrl + Shift + S)' onClick={() => fileOps.saveWorkbookAs()} sx={{ marginLeft: '4px' }}>
+                    <IconButton aria-label='save' title='Save Workbook As (Ctrl + Shift + S)' onClick={() => fileOps.saveWorkbookAs()} sx={{ marginLeft: '0.2em' }}>
                         <SaveAsIcon />
                     </IconButton>
                     <IconButton aria-label='help' title='Help' sx={{ float: 'right' }} onClick={() => { showHelp(); }}>
@@ -983,7 +976,7 @@ export const Navigation = observer(() => {
                         }
                         workspace.clearActive()
                     }}
-                    sx={{ height: '100vh', flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
+                    sx={{ height: '100vh', flexGrow: 1, maxWidth: 400, overflowY: 'auto', marginLeft: '0.2em' }}
                 >
                     <NavTreeSection key='nav-section-request' type={EditableEntityType.Request} title='Requests' helpTopic='requests' onAdd={() => { }}>
                         {

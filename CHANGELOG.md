@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.5.11
+
+* Navigation UI tuning
+
 # 0.5.10
 
 * Set clipboard to use interim event in v2-yarn-friendly branch

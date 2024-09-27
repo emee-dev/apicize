@@ -5,7 +5,7 @@ import { AuthorizationEditor, CertificateEditor, HelpPanel, Navigation, ProxyEdi
 import type { } from '@mui/x-tree-view/themeAugmentation';
 import { Stack, CssBaseline, ThemeProvider, createTheme, alpha } from '@mui/material'
 import { } from '@apicize/toolkit'
-import React from 'react'
+import React, { useState } from 'react'
 import "typeface-open-sans"
 import { ClipboardProvider } from './providers/clipboard.provider';
 import { FeedbackProvider } from './providers/feedback.provider';
