@@ -1,7 +1,7 @@
 {
   "name": "app",
   "private": true,
-  "version": "0.5.11",
+  "version": "0.5.12",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,10 +11,10 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@apicize/toolkit": "^0.5.11",
+    "@apicize/toolkit": "^0.5.12",
     "@dnd-kit/core": "^6.1.0",
-    "@mui/material": "^6.0.2",
-    "@mui/system": "^6.0.2",
+    "@mui/material": "^6.1.1",
+    "@mui/system": "^6.1.1",
     "@tauri-apps/plugin-dialog": "^2.0.0-beta",
     "@tauri-apps/plugin-fs": "^2.0.0-beta",
     "@tauri-apps/plugin-global-shortcut": "^2.0.0-beta",

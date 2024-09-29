@@ -270,6 +270,8 @@ impl ApicizeSettings {
             let settings = ApicizeSettings {
                 last_workbook_file_name: None,
                 workbook_directory: Some(String::from(get_workbooks_directory().to_string_lossy())),
+                font_size: 12,
+                color_scheme: ColorScheme::Dark,
             };
             Ok(SerializationOpenSuccess {
                 file_name: String::from(""),

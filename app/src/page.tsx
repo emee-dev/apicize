@@ -5,13 +5,16 @@ import { AuthorizationEditor, CertificateEditor, HelpPanel, Navigation, ProxyEdi
 import type { } from '@mui/x-tree-view/themeAugmentation';
 import { Stack, CssBaseline, ThemeProvider, createTheme, alpha } from '@mui/material'
 import { } from '@apicize/toolkit'
-import React, { useState } from 'react'
+import React, { ReactNode, useState } from 'react'
 import "typeface-open-sans"
 import { ClipboardProvider } from './providers/clipboard.provider';
 import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
 import { WorkspaceProvider } from './providers/workspace.provider';
 import { ApicizeExecutionResults } from '@apicize/lib-typescript';
+import { ApicizeSettings, ApicizeSettingsProvider, useApicizeSettings } from './providers/apicize-settings.provider';
+import { ConfigurableTheme } from './controls/configurable-theme';
+import { SettingsDialog } from './controls/settings-dialog';
 
 const store = new WorkspaceStore({
   onExecuteRequest: (workspace, requestId) => core.invoke<ApicizeExecutionResults>
@@ -22,118 +25,46 @@ const store = new WorkspaceStore({
     'clear_cached_authorization', { authorizationId })
 })
 
+const settings = new ApicizeSettings()
+
 export default function Home() {
 
-  const darkTheme = createTheme({
-    typography: {
-      fontSize: 12,
-      fontFamily: "'Open Sans','sans'"
-    },
-    components: {
-      MuiOutlinedInput: {
-        styleOverrides: {
-          root: {
-            minWidth: '120px'
-          }
-        }
-      },
-      MuiTreeItem: {
-        styleOverrides: {
-          root: {
-            // There is no way to explicitly set focus in MUI TreeView, so don't use it
-            "& > .MuiTreeItem-content.Mui-focused": {
-              backgroundColor: alpha("#000", 0)
-            },
-            "& > .MuiTreeItem-content.Mui-selected": {
-              backgroundColor: alpha("#FFF", 0.2)
-            }
-          }
-        }
-      },
-
-      MuiIconButton: {
-        defaultProps: {
-          sx: { padding: '3px' }
-        }
-      },
-      MuiListItemIcon: {
-        defaultProps: {
-          sx: {
-            minWidth: '36px'
-          }
-        }
-      },
-      // .css-18ax2bx-MuiInputBase-input-MuiOutlinedInput-input {
-      MuiInputBase: {
-        styleOverrides: {
-          input: {
-            "&.code": {
-              fontFamily: 'monospace'
-            }
-          }
-        }
-      },
-      MuiTypography: {
-        styleOverrides: {
-          h1: {
-            fontSize: '1.5rem',
-            fontWeight: 'normal',
-            marginTop: '0.1rem',
-            marginBottom: '1.5rem'
-          },
-          h2: {
-            fontSize: '1.3rem',
-            fontWeight: 'normal',
-            marginTop: '1.5rem',
-            marginBottom: '1.0rem',
-          },
-          h3: {
-            fontSize: '1.1rem',
-            fontWeight: 'normal',
-            marginTop: '1.5rem',
-            marginBottom: '1.0rem',
-          }
-        }
-      }
-    },
-    palette: {
-      mode: 'dark',
-    },
-  })
-
   return (
-    <ThemeProvider theme={darkTheme}>
-      <FeedbackProvider>
-        <FileOperationsProvider store={store}>
-          <WorkspaceProvider store={store}>
-            <CssBaseline />
-            <ClipboardProvider>
-              <Stack direction='row' sx={{ width: '100%', height: '100vh', display: 'flex', padding: '0' }}>
-                <Navigation />
-                <>
-                  <HelpPanel />
-                  <RequestEditor
-                    sx={{ display: 'block', flexGrow: 1 }}
-                  />
-                  <ScenarioEditor
-                    sx={{ display: 'block', flexGrow: 1 }}
-                  />
-                  <AuthorizationEditor
-                    sx={{ display: 'block', flexGrow: 1 }}
-                  />
-                  <CertificateEditor
-                    sx={{ display: 'block', flexGrow: 1 }}
-                  />
-                  <ProxyEditor
-                    sx={{ display: 'block', flexGrow: 1 }}
-                  />
-                </>
-              </Stack>
-            </ClipboardProvider>
-          </WorkspaceProvider>
-        </FileOperationsProvider>
-      </FeedbackProvider>
-    </ThemeProvider>
+    <ApicizeSettingsProvider store={settings}>
+      <ConfigurableTheme>
+        <CssBaseline />
+        <FeedbackProvider>
+          <FileOperationsProvider store={store}>
+            <WorkspaceProvider store={store}>
+              <ClipboardProvider>
+                <Stack direction='row' sx={{ width: '100%', height: '100vh', display: 'flex', padding: '0' }}>
+                  <Navigation onSettings={() => settings.showSettings = true} />
+                  <>
+                    <HelpPanel />
+                    <RequestEditor
+                      sx={{ display: 'block', flexGrow: 1 }}
+                    />
+                    <ScenarioEditor
+                      sx={{ display: 'block', flexGrow: 1 }}
+                    />
+                    <AuthorizationEditor
+                      sx={{ display: 'block', flexGrow: 1 }}
+                    />
+                    <CertificateEditor
+                      sx={{ display: 'block', flexGrow: 1 }}
+                    />
+                    <ProxyEditor
+                      sx={{ display: 'block', flexGrow: 1 }}
+                    />
+                  </>
+                </Stack>
+              </ClipboardProvider>
+            </WorkspaceProvider>
+            <SettingsDialog />
+          </FileOperationsProvider>
+        </FeedbackProvider>
+      </ConfigurableTheme>
+    </ApicizeSettingsProvider>
   )
 }
 

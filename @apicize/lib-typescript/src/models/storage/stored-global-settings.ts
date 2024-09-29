@@ -6,4 +6,6 @@ import { WorkbookProxy } from "../workbook/workbook-proxy"
 export interface StoredGlobalSettings {
     workbookDirectory: string
     lastWorkbookFileName?: string
+    fontSize: number
+    colorScheme: 'dark' | 'light'
 }

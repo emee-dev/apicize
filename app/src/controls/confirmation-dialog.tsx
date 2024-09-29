@@ -13,7 +13,7 @@ export const ConfirmationDialog = observer(() => {
         <Dialog
             open={feedback.confirmOpen}
             onClose={() => feedback.closeConfirm(false)}
-            sx={{ padding: '24px' }}
+            sx={{ padding: '5em', minWidth: '50em' }}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
         >
@@ -21,11 +21,11 @@ export const ConfirmationDialog = observer(() => {
                 {feedback.confirmOptions.title ?? 'Confirm'}
             </DialogTitle>
             <DialogContent sx={{
-                paddingTop: '24px',
+                paddingTop: '2em',
                 paddingRight: '24px',
                 paddingLeft: '24px'
             }}>
-                <DialogContentText id="alert-dialog-description" sx={{ minWidth: '400px' }}>
+                <DialogContentText id="alert-dialog-description">
                     {feedback.confirmOptions.message ?? 'Proceed?'}
                 </DialogContentText>
             </DialogContent>

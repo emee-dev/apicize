@@ -1,4 +1,4 @@
-import { ReactNode, useRef } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import * as core from '@tauri-apps/api/core'
 import * as dialog from '@tauri-apps/plugin-dialog'
 import * as path from '@tauri-apps/api/path'
@@ -6,6 +6,7 @@ import { exists, readFile, readTextFile, copyFile, mkdir } from "@tauri-apps/plu
 import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useFeedback, WorkspaceStore } from "@apicize/toolkit";
 import { StoredGlobalSettings, Workspace } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
+import { useApicizeSettings } from "./apicize-settings.provider";
 
 /**
  * Implementation of file opeartions via Tauri
@@ -15,9 +16,10 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
     const EXT = 'apicize';
 
     const feedback = useFeedback()
+    const settings = useApicizeSettings()
 
     const _forceClose = useRef(false)
-    const _settings = useRef<StoredGlobalSettings | undefined>()
+    const _defaultRequested = useRef(false)
     const _sshPath = useRef('')
     const _bodyDataPath = useRef('')
 
@@ -26,42 +28,38 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      * @returns active settings
      */
     const loadSettings = async () => {
-        if (_settings.current) return _settings.current
-
-        let settings: StoredGlobalSettings
+        let storedSettings: StoredGlobalSettings
         try {
-            settings = await core.invoke<StoredGlobalSettings>('open_settings')
+            storedSettings = await core.invoke<StoredGlobalSettings>('open_settings')
         } catch (e) {
             // If unable to load settings, try and put into place some sensible defaults
-            settings = {
+            storedSettings = {
                 workbookDirectory: await path.join(await path.documentDir(), 'apicize'),
+                fontSize: 12,
+                colorScheme: 'dark'
             }
             feedback.toast(`Unable to access settings: ${e}`, ToastSeverity.Error)
         }
 
-        _settings.current = settings
-        return _settings.current
+        settings.lastWorkbookFileName = storedSettings.lastWorkbookFileName
+        settings.workbookDirectory = storedSettings.workbookDirectory
+        settings.fontSize = storedSettings.fontSize
+        settings.colorScheme = storedSettings.colorScheme
     }
 
     /**
      * Updates specified settings and saves
      * @param updates 
      */
-    const updateSettings = async (updates: {
-        workbookDirectory?: string,
-        lastWorkbookFileName?: string
-    }) => {
-        _settings.current = await loadSettings()
-
-        // Build a new set of settings, including  in proxy / certificate information
-        const newSettings = workspaceStore.getSettings(
-            updates.workbookDirectory === undefined ? _settings.current.workbookDirectory : updates.workbookDirectory,
-            updates.lastWorkbookFileName === undefined ? _settings.current.lastWorkbookFileName : updates.lastWorkbookFileName
-        )
-
+    const saveSettings = async () => {
         try {
-            console.log('updating settings', newSettings)
-            await core.invoke<StoredGlobalSettings>('save_settings', { settings: newSettings })
+            const settingsToSave: StoredGlobalSettings = {
+                workbookDirectory: settings.workbookDirectory,
+                lastWorkbookFileName: settings.lastWorkbookFileName,
+                fontSize: settings.fontSize,
+                colorScheme: settings.colorScheme
+            }
+            await core.invoke<StoredGlobalSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {
             feedback.toast(`Unable to save settings: ${e}`, ToastSeverity.Error)
         }
@@ -91,7 +89,6 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 return _sshPath.current
             }
         }
-        const settings = await loadSettings()
         const home = await path.homeDir()
         const openSshPath = await path.join(home, '.ssh')
         if (await exists(openSshPath)) {
@@ -122,7 +119,6 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 return _bodyDataPath.current
             }
         }
-        const settings = await loadSettings()
         _bodyDataPath.current = settings.workbookDirectory
         return _bodyDataPath.current
     }
@@ -156,7 +152,6 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      * @returns 
      */
     const openWorkbook = async (fileName?: string, doUpdateSettings?: boolean) => {
-        const settings = await loadSettings()
         if (workspaceStore.dirty) {
             if (! await feedback.confirm({
                 title: 'Open Workbook',
@@ -173,7 +168,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             fileName = (await dialog.open({
                 multiple: false,
                 title: 'Open Apicize Workbook',
-                defaultPath: settings?.workbookDirectory,
+                defaultPath: settings.workbookDirectory,
                 directory: false,
                 filters: [{
                     name: 'Apicize Files',
@@ -188,8 +183,9 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             const data: Workspace = await core.invoke('open_workspace', { path: fileName })
             const displayName = await getDisplayName(fileName)
             workspaceStore.loadWorkspace(data, fileName, displayName)
-            if (doUpdateSettings) {
-                await updateSettings({ lastWorkbookFileName: fileName })
+            settings.lastWorkbookFileName = fileName
+            if (settings.dirty) {
+                await saveSettings()
             }
             _forceClose.current = false
             feedback.toast(`Opened ${fileName}`, ToastSeverity.Success)
@@ -222,12 +218,15 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
 
             const workspaceToSave = workspaceStore.getWorkspace()
             await core.invoke('save_workspace', { workspace: workspaceToSave, path: workspaceStore.workbookFullName })
-            await updateSettings({ lastWorkbookFileName: workspaceStore.workbookFullName })
             feedback.toast(`Saved ${workspaceStore.workbookFullName}`, ToastSeverity.Success)
             workspaceStore.updateSavedLocation(
                 workspaceStore.workbookFullName,
                 await getDisplayName(workspaceStore.workbookFullName)
             )
+            settings.lastWorkbookFileName = workspaceStore.workbookFullName
+            if (settings.dirty) {
+                await saveSettings()
+            }
         } catch (e) {
             feedback.toast(`${e}`, ToastSeverity.Error)
         }
@@ -251,8 +250,6 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 }
             }
 
-            const settings = await loadSettings()
-
             let fileName = await dialog.save({
                 title: 'Save Apicize Workbook',
                 defaultPath: ((workspaceStore.workbookFullName?.length ?? 0) > 0)
@@ -274,12 +271,15 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             const workspaceToSave = workspaceStore.getWorkspace()
             await core.invoke('save_workspace', { workspace: workspaceToSave, path: fileName })
 
-            await updateSettings({ lastWorkbookFileName: fileName })
             feedback.toast(`Saved ${fileName}`, ToastSeverity.Success)
             workspaceStore.updateSavedLocation(
                 fileName,
                 await getDisplayName(fileName)
             )
+            settings.lastWorkbookFileName = fileName
+            if (settings.dirty) {
+                await saveSettings()
+            }
         } catch (e) {
             feedback.toast(`${e}`, ToastSeverity.Error)
         }
@@ -412,9 +412,10 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
 
     // Load if we have not 
     (async () => {
-        if (workspaceStore.lastWorkbookNotYetRequested()) {
+        await loadSettings()
+        if (!_defaultRequested.current) {
             try {
-                let settings = await loadSettings()
+                _defaultRequested.current = true
                 if (settings.lastWorkbookFileName && (settings.lastWorkbookFileName?.length ?? 0) > 0) {
                     if (await exists(settings.lastWorkbookFileName)) {
                         await openWorkbook(settings.lastWorkbookFileName, false)
@@ -441,8 +442,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         onSaveWorkbookAs: saveWorkbookAs,
         onOpenSshFile: openSsshFile,
         onOpenFile: openFile,
-        onLoadSettings: loadSettings,
         onRetrieveHelpTopic: retrieveHelpTopic,
+        onSaveSettings: saveSettings
     })
 
     return (

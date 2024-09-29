@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.5.12
+
+* Configurable text size and light/dark scheme
+
 # 0.5.11
 
 * Navigation UI tuning

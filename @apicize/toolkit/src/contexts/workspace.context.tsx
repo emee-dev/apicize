@@ -1,7 +1,7 @@
 import { action, makeObservable, observable, toJS } from "mobx"
 import { DEFAULT_SELECTION_ID, NO_SELECTION, NO_SELECTION_ID } from "../models/store"
 import { WorkbookExecution, WorkbookExecutionGroupSummary, WorkbookExecutionGroupSummaryRequest, WorkbookExecutionResult, WorkbookExecutionRunMenuItem } from "../models/workbook/workbook-execution"
-import { editableWorkspaceToStoredWorkspace, newEditableWorkspace, stateToGlobalSettingsStorage, storedWorkspaceToEditableWorkspace } from "../services/apicize-serializer"
+import { editableWorkspaceToStoredWorkspace, newEditableWorkspace, storedWorkspaceToEditableWorkspace } from "../services/apicize-serializer"
 import { EditableWorkbookRequest, EditableWorkbookRequestGroup } from "../models/workbook/editable-workbook-request"
 import { EditableWorkbookScenario } from "../models/workbook/editable-workbook-scenario"
 import { EditableWorkbookAuthorization } from "../models/workbook/editable-workbook-authorization"
@@ -52,8 +52,6 @@ export class WorkspaceStore {
     @observable accessor executingRequestIDs: string[] = []
 
     @observable accessor expandedItems = ['hdr-r', 'hdr-s', 'hdr-a', 'hdr-c', 'hdr-p']
-
-    private defaultRequested = false
 
     constructor(private readonly callbacks: {
         onExecuteRequest: (workspace: Workspace, requestId: string) => Promise<ApicizeExecutionResults>,
@@ -124,12 +122,6 @@ export class WorkspaceStore {
         this.appVersion = version
     }
 
-    lastWorkbookNotYetRequested() {
-        if (this.defaultRequested) return false
-        this.defaultRequested = true
-        return true
-    }
-
     @action
     newWorkspace() {
         this.workbookFullName = ''
@@ -197,15 +189,8 @@ export class WorkspaceStore {
         )
     }
 
-    getSettings(workbookDirectory: string, lastWorkbookFileName: string | undefined) {
-        return stateToGlobalSettingsStorage(
-            workbookDirectory,
-            lastWorkbookFileName)
-    }
-
     @action
     toggleExpanded(itemId: string, isExpanded: boolean) {
-        console.log(`Expanding ${itemId} (${isExpanded})`)
         let expanded = new Set(this.expandedItems)
         if (isExpanded) {
             expanded.add(itemId)
@@ -380,8 +365,6 @@ export class WorkspaceStore {
 
         const source = getNestedEntity(id, this.workspace.requests)
         const entry = copyEntry(source)
-        console.log('Source entry', source)
-        console.log('Copied entry', entry)
         this.workspace.requests.entities.set(entry.id, entry)
 
         let append = true

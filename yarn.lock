@@ -23,7 +23,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@apicize/toolkit@npm:^0.5.11, @apicize/toolkit@workspace:@apicize/toolkit":
+"@apicize/toolkit@npm:^0.5.12, @apicize/toolkit@workspace:@apicize/toolkit":
   version: 0.0.0-use.local
   resolution: "@apicize/toolkit@workspace:@apicize/toolkit"
   dependencies:
@@ -31,11 +31,11 @@ __metadata:
     "@dnd-kit/core": "npm:^6.1.0"
     "@emotion/react": "npm:^11.11.1"
     "@emotion/styled": "npm:^11.11.0"
-    "@mui/icons-material": "npm:^6.0.2"
-    "@mui/material": "npm:^6.0.2"
-    "@mui/system": "npm:^6.0.2"
-    "@mui/x-data-grid": "npm:^7.16.0"
-    "@mui/x-tree-view": "npm:^7.16.0"
+    "@mui/icons-material": "npm:^6.1.1"
+    "@mui/material": "npm:^6.1.1"
+    "@mui/system": "npm:^6.1.1"
+    "@mui/x-data-grid": "npm:^7.18.0"
+    "@mui/x-tree-view": "npm:^7.18.0"
     "@types/hast": "npm:^3.0.4"
     "@types/jest": "npm:^29.5.3"
     "@types/js-beautify": "npm:^1.14.3"
@@ -421,7 +421,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.25.0, @babel/runtime@npm:^7.25.6":
+"@babel/runtime@npm:^7.25.6":
   version: 7.25.6
   resolution: "@babel/runtime@npm:7.25.6"
   dependencies:
@@ -1225,38 +1225,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mui/core-downloads-tracker@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "@mui/core-downloads-tracker@npm:6.0.2"
-  checksum: 10c0/b83b067ab7b6fe90b1616a8ced478cb030384c0942502e63d2c5580677dcaed055a5a5178130c1c3a9b6b02f4b1a1e19ce0f2e6a754c1f5724495c6458a8efd8
+"@mui/core-downloads-tracker@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@mui/core-downloads-tracker@npm:6.1.1"
+  checksum: 10c0/ca837b75b8d2147a5a67785725b1158eff1240dbca65effbc9c4387fc7c342416bff332b0678378292738aa1b0224b866979c623a5da426904a43df394782286
   languageName: node
   linkType: hard
 
-"@mui/icons-material@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "@mui/icons-material@npm:6.0.2"
+"@mui/icons-material@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@mui/icons-material@npm:6.1.1"
   dependencies:
-    "@babel/runtime": "npm:^7.25.0"
+    "@babel/runtime": "npm:^7.25.6"
   peerDependencies:
-    "@mui/material": ^6.0.2
+    "@mui/material": ^6.1.1
     "@types/react": ^17.0.0 || ^18.0.0 || ^19.0.0
     react: ^17.0.0 || ^18.0.0 || ^19.0.0
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/862cae6f8cb9624ca728ffbb755f29fd937a45ab9a38f4aeea053b86747eb153279666cf62ffa0fb1f2617b824e66e5badd2f3a9133f7223b230c1c987d57de7
+  checksum: 10c0/fc9f468ebf7ee9238606c915b648a4ba461d1ff241926131cd0de173d9092d8be6b2dc84a9d1bd8abcc6a349793e5501bd9d90487af7e946395a9b5ff104d498
   languageName: node
   linkType: hard
 
-"@mui/material@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "@mui/material@npm:6.0.2"
+"@mui/material@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@mui/material@npm:6.1.1"
   dependencies:
-    "@babel/runtime": "npm:^7.25.0"
-    "@mui/core-downloads-tracker": "npm:^6.0.2"
-    "@mui/system": "npm:^6.0.2"
-    "@mui/types": "npm:^7.2.16"
-    "@mui/utils": "npm:^6.0.2"
+    "@babel/runtime": "npm:^7.25.6"
+    "@mui/core-downloads-tracker": "npm:^6.1.1"
+    "@mui/system": "npm:^6.1.1"
+    "@mui/types": "npm:^7.2.17"
+    "@mui/utils": "npm:^6.1.1"
     "@popperjs/core": "npm:^2.11.8"
     "@types/react-transition-group": "npm:^4.4.11"
     clsx: "npm:^2.1.1"
@@ -1267,7 +1267,7 @@ __metadata:
   peerDependencies:
     "@emotion/react": ^11.5.0
     "@emotion/styled": ^11.3.0
-    "@mui/material-pigment-css": ^6.0.2
+    "@mui/material-pigment-css": ^6.1.1
     "@types/react": ^17.0.0 || ^18.0.0 || ^19.0.0
     react: ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -1280,16 +1280,16 @@ __metadata:
       optional: true
     "@types/react":
       optional: true
-  checksum: 10c0/2dc43f4fec596f4cec4428610ba6e100d4e9e48a8a16e049baa10e9b6a028f5ce90a68edf0713bd8ca70c985c68d1544ffaffb51946348e04af287e686622c9b
+  checksum: 10c0/ee47e8ac90db10e104fb3176512f5dd762e4cbf534d6377a0b515d738544eb56f3d4c8c54a1ddc029526b56443fc57ed3637164424245a1f3214d8ba4ff4b5eb
   languageName: node
   linkType: hard
 
-"@mui/private-theming@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "@mui/private-theming@npm:6.0.2"
+"@mui/private-theming@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@mui/private-theming@npm:6.1.1"
   dependencies:
-    "@babel/runtime": "npm:^7.25.0"
-    "@mui/utils": "npm:^6.0.2"
+    "@babel/runtime": "npm:^7.25.6"
+    "@mui/utils": "npm:^6.1.1"
     prop-types: "npm:^15.8.1"
   peerDependencies:
     "@types/react": ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -1297,16 +1297,17 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/981bef131b755256d2942f92c7ca22a1baf11ef19f76824e44751d0eca0dc0ff62361b744d46efc5746c82816415597ec5e6248307619ccd79f79d70e98938d7
+  checksum: 10c0/a4374cb55f6ca1959aa4cb38c28ace2d8e1e73f97cd0eb3c383a0de977df4a5e2966c5f0ab4d04c596ebf9c224aa196301162f3d1e72a43e20ae6cd06dadfc05
   languageName: node
   linkType: hard
 
-"@mui/styled-engine@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "@mui/styled-engine@npm:6.0.2"
+"@mui/styled-engine@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@mui/styled-engine@npm:6.1.1"
   dependencies:
-    "@babel/runtime": "npm:^7.25.0"
+    "@babel/runtime": "npm:^7.25.6"
     "@emotion/cache": "npm:^11.13.1"
+    "@emotion/sheet": "npm:^1.4.0"
     csstype: "npm:^3.1.3"
     prop-types: "npm:^15.8.1"
   peerDependencies:
@@ -1318,19 +1319,19 @@ __metadata:
       optional: true
     "@emotion/styled":
       optional: true
-  checksum: 10c0/36eb8298805e005dec6e564c83e63313f2f654bdac61d31b99785178478f5a9673660f67796633a0beeacc3c66e4bc3b2f33ec473d2cce400dfca707c8e10b37
+  checksum: 10c0/5711ca945b9f93845df477da0a82107e8426d7e4a893d464ab968cbdfc6660960056c785c97a3752d1d6829c264bac78754b5585e4ab8a0e3e1738c505fa8770
   languageName: node
   linkType: hard
 
-"@mui/system@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "@mui/system@npm:6.0.2"
+"@mui/system@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@mui/system@npm:6.1.1"
   dependencies:
-    "@babel/runtime": "npm:^7.25.0"
-    "@mui/private-theming": "npm:^6.0.2"
-    "@mui/styled-engine": "npm:^6.0.2"
-    "@mui/types": "npm:^7.2.16"
-    "@mui/utils": "npm:^6.0.2"
+    "@babel/runtime": "npm:^7.25.6"
+    "@mui/private-theming": "npm:^6.1.1"
+    "@mui/styled-engine": "npm:^6.1.1"
+    "@mui/types": "npm:^7.2.17"
+    "@mui/utils": "npm:^6.1.1"
     clsx: "npm:^2.1.1"
     csstype: "npm:^3.1.3"
     prop-types: "npm:^15.8.1"
@@ -1346,7 +1347,7 @@ __metadata:
       optional: true
     "@types/react":
       optional: true
-  checksum: 10c0/bcb77617467f2b6ad22dd7d5c384f8e1a86511065f4384d7d45d4e2ca34db383454556f59a97f44fbd82bbe38ee0f45fb25e22fb39536e7f42d99c3ee88dcdb2
+  checksum: 10c0/9c7d63b369e4885066f23beac927dc5c8aad78bca32e66044744cb04320fdcd4fe2136de92135ae740b3ba8f369bcd3e75ca95fa7617d3021fd0d358b8aade9f
   languageName: node
   linkType: hard
 
@@ -1362,15 +1363,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mui/types@npm:^7.2.16":
-  version: 7.2.16
-  resolution: "@mui/types@npm:7.2.16"
+"@mui/types@npm:^7.2.17":
+  version: 7.2.17
+  resolution: "@mui/types@npm:7.2.17"
   peerDependencies:
     "@types/react": ^17.0.0 || ^18.0.0 || ^19.0.0
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/e51189d464e4217616a0d2bf45468b949c5b660b154fa03f1153456e4ef1422157454ed442dc9bde6a247166c8db7de6c405c629829525e3ca500ee9cf48f507
+  checksum: 10c0/2dd77e88490d364f1f8408a5270583d323919461812768b804cae3874143d79714a862f14c7167f5f65109f7f1e90252ffee14473e3470dd1ae12d7b7308c6c4
   languageName: node
   linkType: hard
 
@@ -1394,12 +1395,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mui/utils@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "@mui/utils@npm:6.0.2"
+"@mui/utils@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@mui/utils@npm:6.1.1"
   dependencies:
-    "@babel/runtime": "npm:^7.25.0"
-    "@mui/types": "npm:^7.2.16"
+    "@babel/runtime": "npm:^7.25.6"
+    "@mui/types": "npm:^7.2.17"
     "@types/prop-types": "npm:^15.7.12"
     clsx: "npm:^2.1.1"
     prop-types: "npm:^15.8.1"
@@ -1410,17 +1411,17 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/7a7d45878727bb154cd2bed4b8bbe536f24cda9431688e64a87f82dfe313e82cb948865cacc3c416588a3988d5715f3546c636e2b341c6fa0f5409bbe287a133
+  checksum: 10c0/4278d1810b6bf9cb366201414885cdcbfcee383030efc90444d5446a9bcc28ec5c5b299ca2a2b0280721f6d51116f29142119cc5c9c4ec86aafd9d5329aa01a6
   languageName: node
   linkType: hard
 
-"@mui/x-data-grid@npm:^7.16.0":
-  version: 7.16.0
-  resolution: "@mui/x-data-grid@npm:7.16.0"
+"@mui/x-data-grid@npm:^7.18.0":
+  version: 7.18.0
+  resolution: "@mui/x-data-grid@npm:7.18.0"
   dependencies:
     "@babel/runtime": "npm:^7.25.6"
     "@mui/utils": "npm:^5.16.6"
-    "@mui/x-internals": "npm:7.16.0"
+    "@mui/x-internals": "npm:7.18.0"
     clsx: "npm:^2.1.1"
     prop-types: "npm:^15.8.1"
     reselect: "npm:^5.1.1"
@@ -1436,29 +1437,29 @@ __metadata:
       optional: true
     "@emotion/styled":
       optional: true
-  checksum: 10c0/4042b48dd50325aa1eb199f246516d74fa6d72cf263cbb7c1f64fde8bc5c86802dec286952366e36bdf11cd78ad439e4084e5eae3b48d86c424437b2590be64b
+  checksum: 10c0/265a71c99f2bacd7ff15489629306711c2e30815b7dd560cf53b754c7693d82c84aaaf2c214d453e51cb201426a54128c2ea46c916a5d036188a813732177807
   languageName: node
   linkType: hard
 
-"@mui/x-internals@npm:7.16.0":
-  version: 7.16.0
-  resolution: "@mui/x-internals@npm:7.16.0"
+"@mui/x-internals@npm:7.18.0":
+  version: 7.18.0
+  resolution: "@mui/x-internals@npm:7.18.0"
   dependencies:
     "@babel/runtime": "npm:^7.25.6"
     "@mui/utils": "npm:^5.16.6"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
-  checksum: 10c0/77decc15d9053d716ea369058092fe8ef690978fd36c413be84d4a54b565ca779384e6e126fe292da119ec1b048c45385097935394c3381095ce78abab8324d4
+  checksum: 10c0/bdf95a3b18430c6e200229ca30c53ca9857c478d4bd30c144c6a2d97c330b872775adfeac4652be3b748635a5c952c00415dbbdaf2a792db188ea9e522a56e57
   languageName: node
   linkType: hard
 
-"@mui/x-tree-view@npm:^7.16.0":
-  version: 7.16.0
-  resolution: "@mui/x-tree-view@npm:7.16.0"
+"@mui/x-tree-view@npm:^7.18.0":
+  version: 7.18.0
+  resolution: "@mui/x-tree-view@npm:7.18.0"
   dependencies:
     "@babel/runtime": "npm:^7.25.6"
     "@mui/utils": "npm:^5.16.6"
-    "@mui/x-internals": "npm:7.16.0"
+    "@mui/x-internals": "npm:7.18.0"
     "@types/react-transition-group": "npm:^4.4.11"
     clsx: "npm:^2.1.1"
     prop-types: "npm:^15.8.1"
@@ -1475,7 +1476,7 @@ __metadata:
       optional: true
     "@emotion/styled":
       optional: true
-  checksum: 10c0/6685dd4748c0c487e697c3fe044d7e3bdf39892b9d657583d26bd4aedb73911c9871066eb7d6f26c65cfa00a6b6a1eac618e2e0a2e5ddd51b3f3e5aa2fd00674
+  checksum: 10c0/13f11a79467d43e50d3e44be218e45d480b27a853895469fdc30517ab828c0d6c586e72571725b655fea4bdeeacf6d6f24e6f833720c9fcbf410d3d12ebca947
   languageName: node
   linkType: hard
 
@@ -1985,9 +1986,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tauri-apps/cli-darwin-arm64@npm:2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli-darwin-arm64@npm:2.0.0-rc.17"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
 "@tauri-apps/cli-darwin-x64@npm:2.0.0-rc.16":
   version: 2.0.0-rc.16
   resolution: "@tauri-apps/cli-darwin-x64@npm:2.0.0-rc.16"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@tauri-apps/cli-darwin-x64@npm:2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli-darwin-x64@npm:2.0.0-rc.17"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
@@ -1999,9 +2014,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tauri-apps/cli-linux-arm-gnueabihf@npm:2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli-linux-arm-gnueabihf@npm:2.0.0-rc.17"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
 "@tauri-apps/cli-linux-arm64-gnu@npm:2.0.0-rc.16":
   version: 2.0.0-rc.16
   resolution: "@tauri-apps/cli-linux-arm64-gnu@npm:2.0.0-rc.16"
+  conditions: os=linux & cpu=arm64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@tauri-apps/cli-linux-arm64-gnu@npm:2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli-linux-arm64-gnu@npm:2.0.0-rc.17"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
@@ -2013,9 +2042,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tauri-apps/cli-linux-arm64-musl@npm:2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli-linux-arm64-musl@npm:2.0.0-rc.17"
+  conditions: os=linux & cpu=arm64 & libc=musl
+  languageName: node
+  linkType: hard
+
 "@tauri-apps/cli-linux-x64-gnu@npm:2.0.0-rc.16":
   version: 2.0.0-rc.16
   resolution: "@tauri-apps/cli-linux-x64-gnu@npm:2.0.0-rc.16"
+  conditions: os=linux & cpu=x64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@tauri-apps/cli-linux-x64-gnu@npm:2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli-linux-x64-gnu@npm:2.0.0-rc.17"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
@@ -2027,9 +2070,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tauri-apps/cli-linux-x64-musl@npm:2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli-linux-x64-musl@npm:2.0.0-rc.17"
+  conditions: os=linux & cpu=x64 & libc=musl
+  languageName: node
+  linkType: hard
+
 "@tauri-apps/cli-win32-arm64-msvc@npm:2.0.0-rc.16":
   version: 2.0.0-rc.16
   resolution: "@tauri-apps/cli-win32-arm64-msvc@npm:2.0.0-rc.16"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@tauri-apps/cli-win32-arm64-msvc@npm:2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli-win32-arm64-msvc@npm:2.0.0-rc.17"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
@@ -2041,9 +2098,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tauri-apps/cli-win32-ia32-msvc@npm:2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli-win32-ia32-msvc@npm:2.0.0-rc.17"
+  conditions: os=win32 & cpu=ia32
+  languageName: node
+  linkType: hard
+
 "@tauri-apps/cli-win32-x64-msvc@npm:2.0.0-rc.16":
   version: 2.0.0-rc.16
   resolution: "@tauri-apps/cli-win32-x64-msvc@npm:2.0.0-rc.16"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@tauri-apps/cli-win32-x64-msvc@npm:2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli-win32-x64-msvc@npm:2.0.0-rc.17"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -2086,6 +2157,47 @@ __metadata:
   bin:
     tauri: tauri.js
   checksum: 10c0/2c646c120057ae9f5e03ab09a9955be249925f4e6e7bb858bb67894a5871ce73ea40feae210d6a2489ad2f0680be4bd47a17bb13e57e1b874ea7a1116f9b89c4
+  languageName: node
+  linkType: hard
+
+"@tauri-apps/cli@npm:^2.0.0-rc.17":
+  version: 2.0.0-rc.17
+  resolution: "@tauri-apps/cli@npm:2.0.0-rc.17"
+  dependencies:
+    "@tauri-apps/cli-darwin-arm64": "npm:2.0.0-rc.17"
+    "@tauri-apps/cli-darwin-x64": "npm:2.0.0-rc.17"
+    "@tauri-apps/cli-linux-arm-gnueabihf": "npm:2.0.0-rc.17"
+    "@tauri-apps/cli-linux-arm64-gnu": "npm:2.0.0-rc.17"
+    "@tauri-apps/cli-linux-arm64-musl": "npm:2.0.0-rc.17"
+    "@tauri-apps/cli-linux-x64-gnu": "npm:2.0.0-rc.17"
+    "@tauri-apps/cli-linux-x64-musl": "npm:2.0.0-rc.17"
+    "@tauri-apps/cli-win32-arm64-msvc": "npm:2.0.0-rc.17"
+    "@tauri-apps/cli-win32-ia32-msvc": "npm:2.0.0-rc.17"
+    "@tauri-apps/cli-win32-x64-msvc": "npm:2.0.0-rc.17"
+  dependenciesMeta:
+    "@tauri-apps/cli-darwin-arm64":
+      optional: true
+    "@tauri-apps/cli-darwin-x64":
+      optional: true
+    "@tauri-apps/cli-linux-arm-gnueabihf":
+      optional: true
+    "@tauri-apps/cli-linux-arm64-gnu":
+      optional: true
+    "@tauri-apps/cli-linux-arm64-musl":
+      optional: true
+    "@tauri-apps/cli-linux-x64-gnu":
+      optional: true
+    "@tauri-apps/cli-linux-x64-musl":
+      optional: true
+    "@tauri-apps/cli-win32-arm64-msvc":
+      optional: true
+    "@tauri-apps/cli-win32-ia32-msvc":
+      optional: true
+    "@tauri-apps/cli-win32-x64-msvc":
+      optional: true
+  bin:
+    tauri: tauri.js
+  checksum: 10c0/2f821b2c8e7338f2c05ec2cdce9c705418895dd411f44e09d6e02efef6538024a01f9530c1b90c77679de0b7b51704e1c9c655facadbd45fab720611dc41af96
   languageName: node
   linkType: hard
 
@@ -2666,6 +2778,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "apicize@workspace:."
   dependencies:
+    "@tauri-apps/cli": "npm:^2.0.0-rc.17"
     concurrently: "npm:^8.2.2"
     rimraf: "npm:^5.0.5"
     typescript: "npm:^5.5.4"
@@ -2676,10 +2789,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:app"
   dependencies:
-    "@apicize/toolkit": "npm:^0.5.11"
+    "@apicize/toolkit": "npm:^0.5.12"
     "@dnd-kit/core": "npm:^6.1.0"
-    "@mui/material": "npm:^6.0.2"
-    "@mui/system": "npm:^6.0.2"
+    "@mui/material": "npm:^6.1.1"
+    "@mui/system": "npm:^6.1.1"
     "@tauri-apps/api": "npm:^2.0.0-rc.5"
     "@tauri-apps/cli": "npm:^2.0.0-rc.16"
     "@tauri-apps/plugin-dialog": "npm:^2.0.0-beta"

@@ -217,12 +217,3 @@ export function editableWorkspaceToStoredWorkspace(
     return result
 }
 
-export function stateToGlobalSettingsStorage(
-    workbookDirectory: string,
-    lastWorkbookFileName: string | undefined,
-): StoredGlobalSettings {
-    return {
-        workbookDirectory,
-        lastWorkbookFileName,
-    }
-}

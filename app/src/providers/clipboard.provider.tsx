@@ -1,6 +1,5 @@
-import { ReactNode, useEffect, useMemo, useRef } from "react";
-import { IMAGE_CHANGED, TEXT_CHANGED, hasImage, hasText, readText, readImageBase64, writeImageBase64, writeText, startListening, onClipboardUpdate } from "tauri-plugin-clipboard-api"
-import { listen, UnlistenFn } from "@tauri-apps/api/event";
+import { ReactNode, useEffect, useMemo } from "react";
+import { hasImage, hasText, readText, readImageBase64, writeImageBase64, writeText, onClipboardUpdate } from "tauri-plugin-clipboard-api"
 import { ClipboardContext, ClipboardStore, ToastSeverity, useFeedback } from "@apicize/toolkit";
 
 /**

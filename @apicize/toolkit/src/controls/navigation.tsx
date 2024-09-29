@@ -13,6 +13,7 @@ import LockIcon from '@mui/icons-material/Lock'
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import SecurityIcon from '@mui/icons-material/Security';
+import SettingsIcon from '@mui/icons-material/Settings';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import LanguageIcon from '@mui/icons-material/Language'
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
@@ -36,7 +37,7 @@ interface MenuPosition {
 }
 
 
-export const Navigation = observer(() => {
+export const Navigation = observer((props: { onSettings?: () => void }) => {
 
     const workspace = useWorkspace()
     const fileOps = useFileOperations()
@@ -931,8 +932,13 @@ export const Navigation = observer(() => {
     }
 
     return (
-        <Stack direction='column' className='selection-pane' sx={{ flexShrink: 0, bottom: 0, overflow: 'auto', marginRight: '0.1em', paddingRight: '0.5em', backgroundColor: '#202020' }}>
-            <Box display='flex' flexDirection='row' sx={{ marginBottom: '0.2em', paddingLeft: '0.1em', paddingRight: '0.1em' }}>
+        <Stack direction='column' className='nav-selection-pane' sx={[(theme) => ({
+            backgroundColor: '#E0E0E0',
+            ...theme.applyStyles('dark', {
+                backgroundColor: '#202020'
+            })
+        }) ]}>
+            <Box display='flex' flexDirection='row' sx={{ marginBottom: '0.2em', paddingLeft: '0.1em' }}>
                 <Box sx={{ width: '100%', marginRight: '8px' }}>
                     <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()} sx={{ marginLeft: '0.2em' }}>
                         <PostAddIcon />
@@ -946,9 +952,16 @@ export const Navigation = observer(() => {
                     <IconButton aria-label='save' title='Save Workbook As (Ctrl + Shift + S)' onClick={() => fileOps.saveWorkbookAs()} sx={{ marginLeft: '0.2em' }}>
                         <SaveAsIcon />
                     </IconButton>
-                    <IconButton aria-label='help' title='Help' sx={{ float: 'right' }} onClick={() => { showHelp(); }}>
-                        <HelpIcon />
-                    </IconButton>
+                    <Box sx={{ float: 'right' }}>
+                        {
+                            props.onSettings
+                                ? <IconButton aria-label='settings' title='Settings' sx={{ marginRight: '0.2em' }} onClick={props.onSettings}><SettingsIcon /></IconButton>
+                                : null
+                        }
+                        <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }}>
+                            <HelpIcon />
+                        </IconButton>
+                    </Box>
                 </Box>
             </Box>
             <DndContext onDragMove={onDragMove} onDragCancel={onDragCancel} onDragEnd={onDragEnd} sensors={sensors}>
@@ -976,7 +989,7 @@ export const Navigation = observer(() => {
                         }
                         workspace.clearActive()
                     }}
-                    sx={{ height: '100vh', flexGrow: 1, maxWidth: 400, overflowY: 'auto', marginLeft: '0.2em' }}
+                    className='navigation-tree'
                 >
                     <NavTreeSection key='nav-section-request' type={EditableEntityType.Request} title='Requests' helpTopic='requests' onAdd={() => { }}>
                         {

@@ -9,7 +9,7 @@ export class FileOperationsStore {
         onSaveWorkbookAs: () => Promise<void>,
         onOpenSshFile: (fileType: SshFileType) => Promise<string | null>,
         onOpenFile: () => Promise<string | null>,
-        onLoadSettings: () => Promise<StoredGlobalSettings>,
+        onSaveSettings: () => Promise<void>,
         onRetrieveHelpTopic: (topic: string) => Promise<string>,
     }) {
     }
@@ -58,15 +58,15 @@ export class FileOperationsStore {
         return this.callbacks.onOpenFile()
     }
 
-    /**
-     * Returns global settings
-     */
-    loadSettings() {
-        return this.callbacks.onLoadSettings()
-    }
-
     retrieveHelpTopic(topic: string) {
         return this.callbacks.onRetrieveHelpTopic(topic)
+    }
+
+    /**
+     * Save workspace's workbook after prompting for file name
+     */
+    saveSettings() {
+        return this.callbacks.onSaveSettings()
     }
 }
 
@@ -74,7 +74,7 @@ export const FileOperationsContext = createContext<FileOperationsStore | null>(n
 
 export function useFileOperations() {
     const context = useContext(FileOperationsContext);
-    if (! context) {
+    if (!context) {
         throw new Error('useFileOperations must be used within a FileOperationsContext.Provider');
     }
     return context;
@@ -84,5 +84,4 @@ export enum SshFileType {
     PEM = 'PEM',
     Key = 'Key',
     PFX = 'PFX',
-  }
-  
+}
