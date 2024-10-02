@@ -1,4 +1,4 @@
-import { ApicizeResult, ApicizeTestResult } from "@apicize/lib-typescript";
+import { ApicizeExecutedTestResponse, ApicizeExecutionRun, ApicizeRequest, ApicizeResponse, ApicizeTestResult } from "@apicize/lib-typescript";
 import { OverridableStringUnion } from '@mui/types'
 import { SvgIconPropsColorOverrides } from "@mui/material"
 
@@ -7,29 +7,48 @@ export interface WorkbookExecutionResponse {
      statusText: string
 }
 
-export interface WorkbookExecutionGroupSummaryRequest {
-     status?: number
-     statusText?: string
-     milliseconds: number,
-     requestName: string,
-     tests?: ApicizeTestResult[] 
-     errorMessage?: string
-}
+export type WorkbookExecutionResult = WorkbookExecutionGroupResult | WorkbookExecutionRequestResult
 
-export interface WorkbookExecutionGroupSummary {
-     success: boolean
+export interface WorkbookExecutionGroupResult {
+     type: 'group'
+     name: string
      executedAt: number
-     milliseconds: number
-     allTestsSucceeded: boolean
-     requests?: WorkbookExecutionGroupSummaryRequest[]
-     infoColor: InfoColorType
+     duration: number
+     requestsWithPassedTestsCount: number
+     requestsWithFailedTestsCount: number
+     requestsWithErrors: number
+     passedTestCount: number
+     failedTestCount: number
+     items?: WorkbookExecutionGroupItem[]
+ }
+
+export interface WorkbookExecutionGroupItem {
+     name: string
+     executedAt: number
+     duration: number
+     errorMessage?: string
+     tests?: ApicizeTestResult[]
+     children?: WorkbookExecutionGroupItem[]
 }
 
-export interface WorkbookExecutionResult extends ApicizeResult {
+export interface WorkbookExecutionRequestResult {
+     type: 'request'
+     name: string
+     executedAt: number
+     duration: number
+     request?: ApicizeRequest
+     response?: ApicizeResponse
+     tests?: ApicizeExecutedTestResponse
+     success: boolean
+     passedTestCount?: number
+     failedTestCount?: number
+     errorMessage?: string
+     requestsWithPassedTestsCount: number
+     requestsWithFailedTestsCount: number
+     requestsWithErrors: number
      longTextInResponse: boolean
-     infoColor: InfoColorType
      disableOtherPanels: boolean
-     hasRequest: boolean
+
 }
 
 export interface WorkbookExecutionRun {
@@ -38,14 +57,14 @@ export interface WorkbookExecutionRun {
 }
 
 export interface WorkbookExecutionResultMenuItem {
-     index: number, // -1 = summary for group
-     title: string,
+     requestOrGroupId: string
+     title: string
+     index: number
 }
 
 export interface WorkbookExecutionRunMenuItem {
      title: string,
      results: WorkbookExecutionResultMenuItem[]
-     groupSummary?: WorkbookExecutionGroupSummary
 }
 
 export interface WorkbookExecution {
@@ -54,9 +73,8 @@ export interface WorkbookExecution {
      runIndex: number
      resultIndex: number
      runs: WorkbookExecutionRunMenuItem[]
-
      panel: string
-     results: Map<string, WorkbookExecutionResult>
+     results: WorkbookExecutionResult[]
 }
 
 export type InfoColorType = OverridableStringUnion<

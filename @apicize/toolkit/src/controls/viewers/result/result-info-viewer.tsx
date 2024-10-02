@@ -4,62 +4,70 @@ import CheckIcon from '@mui/icons-material/Check';
 import BlockIcon from '@mui/icons-material/Block';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import beautify from "js-beautify";
-import { WorkbookExecutionGroupSummary, WorkbookExecutionResult } from "../../../models/workbook/workbook-execution";
+import { WorkbookExecutionGroupResult, WorkbookExecutionRequestResult, WorkbookExecutionGroupItem } from "../../../models/workbook/workbook-execution";
 import { observer } from "mobx-react-lite";
-import { EditableEntityType } from "../../../models/workbook/editable-entity-type";
-import { EditableWorkbookRequest, EditableWorkbookRequestGroup } from "../../../models/workbook/editable-workbook-request";
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
+import { toJS } from "mobx";
 
-const ResultSummary = (props: { sx: SxProps, summary: WorkbookExecutionGroupSummary }) => {
+const GroupResult = (props: { sx: SxProps, group: WorkbookExecutionGroupResult }) => {
     let idx = 0
+
+    const fmtMinSec = (value: number, subZero: string | null = null) => {
+        if (value === 0 && subZero) {
+            return subZero
+        }
+        const m = Math.floor(value / 60000)
+        value -= m * 60000
+        const s = Math.floor(value / 1000)
+        value -= s * 1000
+        return `${m.toLocaleString().padStart(2, '0')}:${s.toString().padStart(2, '0')}${(0.1).toLocaleString()[1]}${value.toString().padEnd(3, '0')}`
+        
+    }
+
+    const renderGroupItem = (item: WorkbookExecutionGroupItem) => {
+        const children = (item.children && item.children.length > 0) ? item.children : null
+        return <Box key={`test-summary-${idx++}`}>
+            <Typography sx={{ marginTop: '0.5rem', marginBottom: '0.25rem', paddingTop: 0, color: '#80000' }} component='div'>
+                {item.name} (@{fmtMinSec(item.executedAt, '(Start)')}, {item.duration.toLocaleString()} ms)
+            </Typography>
+            {
+                item.errorMessage
+                    ? <TestInfo isError={true} text={item.errorMessage} />
+                    : (item.tests && item.tests.length > 0)
+                        ? item.tests.map(test => (
+                            <TestResult
+                                key={`test-${idx++}`}
+                                name={test.testName}
+                                success={test.success}
+                                error={test.error}
+                                logs={test.logs} />
+                        ))
+                        : children ? null : <TestInfo isError={false} text='(No Tests)' />
+            }
+            {
+                children
+                    ? <Box sx={{ paddingLeft: '2em' }}>{children.map(child => renderGroupItem(child))}</Box>
+                    : null
+            }
+        </Box>
+    }
+
     return (
         <Box key={`test-summary-${idx++}`} sx={props.sx}>
+            <TestInfo text={`Executed At: ${props.group.executedAt > 0 ? `${props.group.executedAt.toLocaleString()}` : '(Start)'}`} />
+            {(props.group.duration && props.group.duration > 0)
+                ? (<TestInfo text={`Duration: ${props.group.duration.toLocaleString()} ms`} />)
+                : (<></>)}
             {
-                props.summary.requests?.map(request => {
-                    const subtitleParts: string[] = []
-                    if (request.status) {
-                        subtitleParts.push(`${request.status} ${request.statusText}`)
-                    }
-                    subtitleParts.push(`${request.milliseconds.toLocaleString()} ms`)
-                    const title = `${request.requestName} (${subtitleParts.join(', ')})`
-                    return (
-                        <Box key={`test-summary-${idx++}`}>
-                            <Typography sx={{ marginTop: '0.5rem', marginBottom: '0.25rem', paddingTop: 0, color: '#80000' }} component='div'>
-                                {title}
-                            </Typography>
-                            {
-                                request.errorMessage
-                                    ? (<TestInfo isError={true} text={`${request.errorMessage}`} />)
-                                    : null
-                            }
-                            {
-                                request.tests
-                                    ? (
-                                        <Box>
-                                            {
-                                                request.tests.map(test => (<TestResult
-                                                    key={`test-${idx++}`}
-                                                    name={test.testName}
-                                                    success={test.success}
-                                                    error={test.error}
-                                                    logs={test.logs} />))
-                                            }
-                                        </Box>
-                                    )
-                                    : null
-                            }
-                        </Box>
-                    )
-                })
+                props.group.items?.map(renderGroupItem)
             }
         </Box>
     )
 }
 
-const ResultDetail = (props: { result: WorkbookExecutionResult, sx: SxProps }) => {
+const RequestResult = (props: { result: WorkbookExecutionRequestResult, sx: SxProps }) => {
     let idx = 0
-    const executedAt = props.result.executedAt > 0 ? `${props.result.executedAt.toLocaleString()}` : '(Start)'
     return (<Box sx={props.sx}>
         <Box sx={{ marginBottom: '1rem' }}>
             {((props.result.errorMessage?.length ?? 0) == 0)
@@ -68,17 +76,17 @@ const ResultDetail = (props: { result: WorkbookExecutionResult, sx: SxProps }) =
             {props.result.response
                 ? (<TestInfo text={`Status: ${props.result.response.status} ${props.result.response.statusText}`} />)
                 : (<></>)}
-            <TestInfo text={`Executed At: ${executedAt}`} />
-            {(props.result.milliseconds && props.result.milliseconds > 0)
-                ? (<TestInfo text={`Duration: ${props.result.milliseconds.toLocaleString()} ms`} />)
+            <TestInfo text={`Executed At: ${props.result.executedAt > 0 ? `${props.result.executedAt.toLocaleString()}` : '(Start)'}`} />
+            {(props.result.duration && props.result.duration > 0)
+                ? (<TestInfo text={`Duration: ${props.result.duration.toLocaleString()} ms`} />)
                 : (<></>)}
             {/* {props.tokenCached
                 ? (<TestInfo text='OAuth bearer token retrieved from cache' />)
                 : (<></>)} */}
         </Box>
         {
-            props.result.tests
-                ? (props.result.tests.map(test => (<TestResult
+            props.result.tests?.results
+                ? (props.result.tests?.results.map(test => (<TestResult
                     key={`test-${idx++}`}
                     name={test.testName}
                     success={test.success}
@@ -125,52 +133,30 @@ const TestResult = (props: { name: string[], success: boolean, logs?: string[], 
     </Stack>
 )
 
-export const ResultInfoViewer = observer((props: {
-    requestOrGroupId: string, runIndex: number, resultIndex: number
- }) => {
+export const ResultInfoViewer = observer((props: { requestOrGroupId: string, index: number }) => {
     const workspace = useWorkspace()
     const clipboardCtx = useClipboard()
-    
-    const request = workspace.active?.entityType === EditableEntityType.Request
-        ? workspace.active as EditableWorkbookRequest
-        : null
 
+    let title: string | null = null
+    let group: WorkbookExecutionGroupResult | null = null
+    let request: WorkbookExecutionRequestResult | null = null
 
-    const group = workspace.active?.entityType === EditableEntityType.Group
-        ? workspace.active as EditableWorkbookRequestGroup
-        : null
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
 
-    if (! (request || group)) {
+    if (result?.type === 'group') {
+        group = result
+        title = `Group Execution ${group.requestsWithFailedTestsCount === 0 && group.requestsWithErrors === 0 ? "Completed" : "Failed"}`
+    } else if (result?.type === 'request') {
+        request = result
+        title = `Request Execution ${result.success ? "Completed" : "Failed"}`
+    } else {
         return null
     }
+
 
     const copyToClipboard = (data: any) => {
         const text = beautify.js_beautify(JSON.stringify(data), {})
         clipboardCtx.writeTextToClipboard(text)
-    }
-
-    let summary: WorkbookExecutionGroupSummary | undefined
-    let result: WorkbookExecutionResult | undefined
-    let title: string | null = null
-
-    if ((group && props.resultIndex === -1)) {
-        summary = workspace.getExecutionGroupSummary(props.requestOrGroupId, props.runIndex)
-        if (summary) {
-            title = `Group Execution ${summary.allTestsSucceeded ? "Completed" : "Failed"}`
-            if (summary.milliseconds) {
-                title += ` (${summary.milliseconds.toLocaleString()} ms)`
-            }
-        }
-        result = undefined
-    } else {
-        result = workspace.getExecutionResult(props.requestOrGroupId, props.runIndex, props.resultIndex)
-        if (result) {
-            title = `Request Execution ${result.success ? "Completed" : "Failed"}`
-        }
-    }
-
-    if (!title || (!(result || summary))) {
-        return null
     }
 
     return (
@@ -181,15 +167,15 @@ export const ResultInfoViewer = observer((props: {
                     aria-label="copy results to clipboard"
                     title="Copy Results to Clipboard"
                     sx={{ marginLeft: '1rem' }}
-                    onClick={_ => copyToClipboard(result ?? summary)}>
+                    onClick={_ => copyToClipboard(result)}>
                     <ContentCopyIcon />
                 </IconButton>
             </Typography>
             {(
-                result ? <ResultDetail result={result} sx={{ overflow: 'auto', bottom: 0, position: 'relative' }}  /> : null
+                request ? <RequestResult result={request} sx={{ overflow: 'auto', bottom: 0, position: 'relative' }} /> : null
             )}
             {(
-                summary ? <ResultSummary summary={summary} sx={{ overflow: 'auto', bottom: 0, position: 'relative' }} /> : null
+                group ? <GroupResult group={group} sx={{ overflow: 'auto', bottom: 0, position: 'relative' }} /> : null
             )}
 
         </Stack >

@@ -11,13 +11,13 @@ import { ClipboardProvider } from './providers/clipboard.provider';
 import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
 import { WorkspaceProvider } from './providers/workspace.provider';
-import { ApicizeExecutionResults } from '@apicize/lib-typescript';
+import { ApicizeExecution } from '@apicize/lib-typescript';
 import { ApicizeSettings, ApicizeSettingsProvider, useApicizeSettings } from './providers/apicize-settings.provider';
 import { ConfigurableTheme } from './controls/configurable-theme';
 import { SettingsDialog } from './controls/settings-dialog';
 
 const store = new WorkspaceStore({
-  onExecuteRequest: (workspace, requestId) => core.invoke<ApicizeExecutionResults>
+  onExecuteRequest: (workspace, requestId) => core.invoke<ApicizeExecution>
     ('run_request', { workspace, requestId }),
   onCancelRequest: (requestId) => core.invoke(
     'cancel_request', { requestId }),

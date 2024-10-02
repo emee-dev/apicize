@@ -4,15 +4,18 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
 
-export function ResultRawPreview(props: {
-    requestOrGroupId: string,
-    runIndex: number,
-    resultIndex: number,
-}) {
+export function ResultRawPreview(props: { requestOrGroupId: string, index: number }) {
     const workspace = useWorkspace()
     const clipboard = useClipboard()
 
-    const body = workspace.getExecutionResultBody(props.requestOrGroupId, props.runIndex, props.resultIndex)
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
+
+    if (result?.type !== 'request') {
+        return null
+    }
+
+    const body = result.response?.body
+
     let has_text = body?.text !== undefined
     let preview = has_text ? body?.text : body?.data
     return (

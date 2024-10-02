@@ -42,6 +42,13 @@ export function addNestedEntity<T extends Identifiable>(
         targetId?: string | null,
     ) {
     storage.entities.set(entity.id, entity)
+    if (asGroup) {
+        if (storage.childIds) {
+            storage.childIds.set(entity.id, [])
+        } else {
+            storage.childIds = new Map([[entity.id, []]])
+        }
+    }
     if (targetId) {
         if (storage.childIds) {
             const group = storage.childIds.get(targetId)
@@ -55,13 +62,6 @@ export function addNestedEntity<T extends Identifiable>(
         if (idx !== -1) {
             storage.topLevelIds.splice(idx, 0, entity.id)
             return
-        }
-    }
-    if (asGroup) {
-        if (storage.childIds) {
-            storage.childIds.set(entity.id, [])
-        } else {
-            storage.childIds = new Map([[entity.id, []]])
         }
     }
     storage.topLevelIds.push(entity.id)

@@ -9,13 +9,21 @@ import { useWorkspace } from "../../../contexts/workspace.context";
 
 export const ResultRequestViewer = observer((props: {
     requestOrGroupId: string,
-    runIndex: number,
-    resultIndex: number,
+    index: number,
 }) => {
     const workspace = useWorkspace()
     const clipboard = useClipboard()
 
-    const request = workspace.getExecutionRequest(props.requestOrGroupId, props.runIndex, props.resultIndex)
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
+
+    if (result?.type !== 'request') {
+        return null
+    }
+
+    const request = result.request
+    if (! request) return null
+
+
     const text = beautify.js_beautify(JSON.stringify(request), {})
     return (
         <Stack sx={{ bottom: 0, overflow: 'hidden', position: 'relative', height: '100%', display: 'flex' }}>

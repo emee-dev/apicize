@@ -41,6 +41,4 @@ pub struct ApicizeSettings {
    /// Color scheme for UI app
    #[serde(default = "default_color_scheme")]
    pub color_scheme: ColorScheme,
-
-
 }

@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.6.0
+
+* Tauri 2.0 release
+* Improved nested group handling
+* Updated CLI to use color formatting and arg parsing
+
 # 0.5.12
 
 * Configurable text size and light/dark scheme

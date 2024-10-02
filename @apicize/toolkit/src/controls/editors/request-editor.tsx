@@ -20,7 +20,6 @@ import { RequestParametersEditor } from './request/request-parameters-editor';
 import { observer } from 'mobx-react-lite';
 import { EditableEntityType } from '../../models/workbook/editable-entity-type';
 import { EditableWorkbookRequest, EditableWorkbookRequestGroup } from '../../models/workbook/editable-workbook-request';
-import { RunInformation } from '../../models/workbook/run-information';
 import { RunToolbar } from '../run-toolbar';
 import { useWorkspace } from '../../contexts/workspace.context';
 

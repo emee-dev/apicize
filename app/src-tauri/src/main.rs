@@ -1,20 +1,18 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::{collections::HashMap, path::PathBuf, sync::Arc, time::Instant};
 use tauri_plugin_clipboard::Clipboard;
 use tokio_util::sync::CancellationToken;
 // use tauri_plugin_log::{Target, TargetKind};
 
 use apicize_lib::{
-    models::{
-        apicize::ApicizeExecutionResults, ApicizeSettings, Workspace
-    },
+    models::{apicize::ApicizeExecution, ApicizeSettings, Workspace},
     oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token},
 };
 use tauri::{Emitter, Manager, State};
 
-use std::sync::{OnceLock, Mutex};
+use std::sync::{Mutex, OnceLock};
 
 fn main() {
     tauri::Builder::default()
@@ -29,7 +27,7 @@ fn main() {
         //             // Target::new(TargetKind::Webview),                ])
         //         ])
         //         .build(),
-        // )        
+        // )
         // .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
@@ -61,7 +59,7 @@ fn main() {
                 app.handle().plugin(
                     shortcut_builder
                         .with_handler(move |_app, shortcut, _event| {
-                            let focused = _app.get_window("main").unwrap().is_focused().unwrap();
+                            let focused = _app.get_webview_window("main").unwrap().is_focused().unwrap();
                             if focused {
                                 if shortcut == &ctrl_n_shortcut {
                                     handle.emit("shortcut", "new").unwrap()
@@ -91,21 +89,21 @@ fn main() {
 
 #[tauri::command]
 async fn open_workspace(path: String) -> Result<Workspace, String> {
-    match Workspace::open(&path) {
+    match Workspace::open(&PathBuf::from(path)) {
         Ok((workspace, warnings)) => {
             clear_all_oauth2_tokens().await;
             for warning in warnings {
                 println!("Warning: {}", warning);
             }
             Ok(workspace)
-        },
+        }
         Err(err) => Err(format!("{}", err.error)),
     }
 }
 
 #[tauri::command]
 fn save_workspace(workspace: Workspace, path: String) -> Result<(), String> {
-    match workspace.save(& PathBuf::from(path)) {
+    match workspace.save(&PathBuf::from(path)) {
         Ok(..) => Ok(()),
         Err(err) => Err(format!("{}", err.error)),
     }
@@ -136,27 +134,30 @@ fn cancellation_tokens() -> &'static Mutex<HashMap<String, CancellationToken>> {
 }
 
 #[tauri::command]
-async fn run_request(
-    workspace: Workspace,
-    request_id: String,
-) -> Result<ApicizeExecutionResults, String> {
+async fn run_request(workspace: Workspace, request_id: String) -> Result<ApicizeExecution, String> {
     let arc_workspace = Arc::new(workspace);
+    let arc_test_started = Arc::new(Instant::now());
     let cancellation = CancellationToken::new();
-    
     {
-        cancellation_tokens().lock().unwrap().insert(request_id.clone(), cancellation.clone());
+        cancellation_tokens()
+            .lock()
+            .unwrap()
+            .insert(request_id.clone(), cancellation.clone());
     }
 
-    let result = match Workspace::run(arc_workspace.clone(), &request_id, Some(cancellation))
-    .await
-    {
-        Ok(response) => Ok(response),
-        Err(err) => Err(format!("{}", err)),
-    };
-        
+    let response = Workspace::run(
+        arc_workspace.clone(),
+        &request_id,
+        Some(cancellation),
+        arc_test_started,
+    ).await;
+
     cancellation_tokens().lock().unwrap().remove(&request_id);
-    // println!("Received {}", serde_json::to_string(&result).unwrap());
-    result
+    
+    match response {
+        Ok(result) => Ok(result),
+        Err(err) => Err(err.to_string())
+    }
 }
 
 #[tauri::command]
@@ -182,8 +183,8 @@ fn get_clipboard_image_base64(clipboard: State<Clipboard>) -> Result<String, Str
             } else {
                 Err(String::from("Clipboard does not contain an image"))
             }
-        },
-        Err(msg) => Err(msg)
+        }
+        Err(msg) => Err(msg),
     }
 }
 
@@ -194,9 +195,5 @@ fn get_clipboard_image_base64(clipboard: State<Clipboard>) -> Result<String, Str
 
 #[tauri::command]
 fn is_release_mode() -> bool {
-    return if cfg!(debug_assertions) {
-        false
-    } else {
-        true
-    }
+    return if cfg!(debug_assertions) { false } else { true };
 }

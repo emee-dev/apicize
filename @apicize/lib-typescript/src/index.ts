@@ -1,9 +1,11 @@
-export { WorkbookNameValuePair, WorkbookBody, WorkbookBodyType, WorkbookBodyTypes, WorkbookBodyData, WorkbookMethod, WorkbookMethods, WorkbookRequestEntry, 
-    WorkbookRequest, WorkbookRequestGroup, WorkbookGroupExecution } from './models/workbook/workbook-request'
-export { ApicizeRequest } from './models/lib/apicize-request'
-export { ApicizeResponse } from './models/lib/apicize-response'
-export { ApicizeTestResult } from './models/lib/apicize-test-result'
-export { ApicizeResult, ApicizeResults, ApicizeExecutionResults } from './models/lib/apicize-result'
+export {
+    WorkbookNameValuePair, WorkbookBody, WorkbookBodyType, WorkbookBodyTypes, WorkbookBodyData, WorkbookMethod, WorkbookMethods, WorkbookRequestEntry,
+    WorkbookRequest, WorkbookRequestGroup, WorkbookGroupExecution
+} from './models/workbook/workbook-request'
+export {
+    ApicizeExecution, ApicizeExecutionRun, ApicizeExecutionItem, ApicizeExecutionRequest, ApicizeExecutionGroup,
+    ApicizeRequest, ApicizeResponse, ApicizeBody, ApicizeExecutedTestResponse, ApicizeTestResult
+} from './models/lib/apicize-execution'
 export { WorkbookAuthorization, WorkbookAuthorizationType, WorkbookBaseAuthorization, WorkbookBasicAuthorization, WorkbookApiKeyAuthorization, WorkbookOAuth2ClientAuthorization } from './models/workbook/workbook-authorization'
 export { WorkbookCertificate, WorkbookCertificateType, WorkbookBaseCertificate, WorkbookPkcs8PemCertificate, WorkbookPkcs12Certificate, WorkbookPemCertificate } from './models/workbook/workbook-certificate'
 export { WorkbookProxy } from './models/workbook/workbook-proxy'

@@ -1,7 +1,7 @@
 {
   "name": "app",
   "private": true,
-  "version": "0.5.12",
+  "version": "0.6.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,13 +11,13 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@apicize/toolkit": "^0.5.12",
+    "@apicize/toolkit": "^0.6.0",
     "@dnd-kit/core": "^6.1.0",
     "@mui/material": "^6.1.1",
     "@mui/system": "^6.1.1",
-    "@tauri-apps/plugin-dialog": "^2.0.0-beta",
-    "@tauri-apps/plugin-fs": "^2.0.0-beta",
-    "@tauri-apps/plugin-global-shortcut": "^2.0.0-beta",
+    "@tauri-apps/plugin-dialog": "^2.0.0",
+    "@tauri-apps/plugin-fs": "^2.0.0",
+    "@tauri-apps/plugin-global-shortcut": "^2.0.0",
     "mobx": "^6.13.1",
     "mobx-react-lite": "^4.0.7",
     "react": "^18.2.0",
@@ -28,8 +28,8 @@
     "valibot": "^0.36.0"
   },
   "devDependencies": {
-    "@tauri-apps/api": "^2.0.0-rc.5",
-    "@tauri-apps/cli": "^2.0.0-rc.16",
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/cli": "^2.0.0",
     "@vitejs/plugin-react": "^4.3.1",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",

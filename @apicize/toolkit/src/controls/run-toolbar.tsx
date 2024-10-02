@@ -6,6 +6,7 @@ import { EditableEntityType } from "../models/workbook/editable-entity-type";
 import { EditableWorkbookRequest } from "../models/workbook/editable-workbook-request";
 import { useWorkspace } from "../contexts/workspace.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
+import { toJS } from "mobx";
 
 export const RunToolbar = observer(() => {
     const workspace = useWorkspace()
@@ -104,7 +105,7 @@ export const RunToolbar = observer(() => {
                         : <></>
                 }
                 {
-                    execution.runs.length > 0 && execution.runs.at(execution.runIndex)?.groupSummary
+                    execution.runs.length > 0 && (execution.runs.at(execution.runIndex)?.results.length ?? 0) > 1
                         ? <Grid2>
                             <FormControl>
                                 <InputLabel id='result-id'>Results</InputLabel>

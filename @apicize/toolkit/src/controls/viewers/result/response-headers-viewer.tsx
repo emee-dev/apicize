@@ -3,13 +3,17 @@ import { GenerateIdentifier } from "../../../services/random-identifier-generato
 import { Stack, Typography } from "@mui/material"
 import { useWorkspace } from "../../../contexts/workspace.context"
 
-export function ResponseHeadersViewer(props: {requestOrGroupId: string, runIndex: number, resultIndex: number}) {
+export function ResponseHeadersViewer(props: { requestOrGroupId: string, index: number }) {
     const workspace = useWorkspace()
 
-    const resultHeaders = workspace.getExecutionResultHeaders(props.requestOrGroupId, props.runIndex, props.resultIndex)
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
+
+    if (result?.type !== 'request') {
+        return null
+    }
 
     const headers = []
-    for (const [name, value] of Object.entries(resultHeaders ?? {})) {
+    for (const [name, value] of Object.entries(result.response?.headers ?? {})) {
         headers.push({
             id: GenerateIdentifier(),
             name,

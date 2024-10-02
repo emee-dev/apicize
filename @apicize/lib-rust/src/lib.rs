@@ -10,8 +10,9 @@ pub mod models;
 pub mod oauth2_client_tokens;
 
 use apicize::{
-    ApicizeBody, ApicizeExecutionResults, ApicizeRequest, ApicizeResponse, ApicizeResult,
-    ApicizeTestResponse,
+    ApicizeBody, ApicizeExecution, ApicizeExecutionGroup, ApicizeExecutionItem,
+    ApicizeExecutionRequest, ApicizeExecutionRun, ApicizeExecutionRunItem, ApicizeRequest,
+    ApicizeResponse, ExecutedTestResponse,
 };
 use async_recursion::async_recursion;
 use dirs::{config_dir, document_dir};
@@ -251,7 +252,7 @@ impl ApicizeSettings {
     fn get_settings_filename() -> path::PathBuf {
         if let Some(directory) = config_dir() {
             let dir = directory.join("apicize");
-            if ! dir.exists() {
+            if !dir.exists() {
                 create_dir(&dir).unwrap()
             }
             dir.join("settings.son")
@@ -583,7 +584,7 @@ impl Workspace {
     /// Open a workspace using the specified workbook, taking into account private parameters file (if existing)
     /// and global settings
     pub fn open(
-        workbook_file_name: &String,
+        workbook_file_name: &PathBuf,
     ) -> Result<(Workspace, Vec<String>), SerializationFailure> {
         let mut wkspc_requests = IndexedRequests {
             top_level_ids: vec![],
@@ -640,8 +641,7 @@ impl Workspace {
         );
 
         // Populate entries from private parameter files, if any
-        let workbook_path = PathBuf::from(workbook_file_name);
-        let mut private_path = workbook_path.clone();
+        let mut private_path = workbook_file_name.clone();
         private_path.set_extension("apicize-priv");
 
         if Path::new(&private_path).is_file() {
@@ -680,7 +680,7 @@ impl Workspace {
 
         // Populate from workbook
         let mut wkbk: Workbook;
-        match open_data_file(&workbook_path) {
+        match open_data_file(workbook_file_name) {
             Ok(success) => {
                 wkbk = success.data;
             }
@@ -920,48 +920,11 @@ impl Workspace {
         return Ok(successes);
     }
 
-    // /// Returns variables to use from specified scenario (if any)
-    // fn set_variables_from_scenario(
-    //     &self,
-    //     selected_scenario: &Option<Selection>,
-    //     previous: &HashMap<String, Value>,
-    // ) -> HashMap<String, Value> {
-    //     match selected_scenario {
-    //         Some(selected) => {
-    //             if selected.id.is_empty() {
-    //                 // A blank ID indicates that we want to clear all variables
-    //                 return HashMap::new();
-    //             } else {
-    //                 // Merge in values from the specified scenario
-    //                 let scenario = self.scenarios.entities.get(&selected.id).unwrap();
-    //                 let mut result = previous.clone();
-    //                 if let Some(vars) = &scenario.variables {
-    //                     for pair in vars {
-    //                         let enabled = if let Some(disabled) = pair.disabled {
-    //                             !disabled
-    //                         } else {
-    //                             true
-    //                         };
-    //                         if enabled {
-    //                             result.insert(pair.name.clone(), json!(&pair.value));
-    //                         }
-    //                     }
-    //                 }
-    //                 result
-    //             }
-    //         }
-    //         None => {
-    //             // If no scenario is specified, return previous values as-is
-    //             previous.clone()
-    //         }
-    //     }
-    // }
-
     fn execute_test(
         request: &WorkbookRequest,
         response: &ApicizeResponse,
         variables: &HashMap<String, Value>,
-    ) -> Result<Option<ApicizeTestResponse>, ExecutionError> {
+    ) -> Result<Option<ExecutedTestResponse>, ExecutionError> {
         // Create a new Isolate and make it the current one.
         let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
 
@@ -1011,7 +974,7 @@ impl Workspace {
 
         let result = value.to_string(tc);
         let s = result.unwrap().to_rust_string_lossy(tc);
-        let test_response: ApicizeTestResponse = serde_json::from_str(&s).unwrap();
+        let test_response: ExecutedTestResponse = serde_json::from_str(&s).unwrap();
 
         Ok(Some(test_response))
     }
@@ -1053,7 +1016,7 @@ impl Workspace {
                 if let Some(selected) = current.get_selected_scenario() {
                     if selected.id == NO_SELECTION_ID {
                         allow_scenario = false;
-                    } else {
+                    } else if scenario.is_none() {
                         scenario = self.scenarios.entities.get(&selected.id);
                     }
                 }
@@ -1062,7 +1025,7 @@ impl Workspace {
                 if let Some(selected) = current.get_selected_authorization() {
                     if selected.id == NO_SELECTION_ID {
                         allow_authorization = false
-                    } else {
+                    } else if authorization.is_none() {
                         authorization = self.authorizations.entities.get(&selected.id);
                         if let Some(matching_auth) = authorization {
                             if let WorkbookAuthorization::OAuth2Client {
@@ -1086,7 +1049,7 @@ impl Workspace {
                 if let Some(selected) = current.get_selected_certificate() {
                     if selected.id == NO_SELECTION_ID {
                         allow_certificate = false
-                    } else {
+                    } else if certificate.is_none() {
                         certificate = self.certificates.entities.get(&selected.id)
                     }
                 }
@@ -1095,7 +1058,7 @@ impl Workspace {
                 if let Some(selected) = current.get_selected_proxy() {
                     if selected.id == NO_SELECTION_ID {
                         allow_proxy = false
-                    } else {
+                    } else if proxy.is_none() {
                         proxy = self.proxies.entities.get(&selected.id)
                     }
                 }
@@ -1155,23 +1118,14 @@ impl Workspace {
             proxy = None
         }
 
-        let mut result_variables = if let Some(active_scenario) = scenario {
+        let mut result_variables = variables.clone();
+        if let Some(active_scenario) = scenario {
             if let Some(variables) = &active_scenario.variables {
-                HashMap::from_iter(
-                    variables
-                        .iter()
-                        .map(|pair| (pair.name.clone(), Value::from(pair.value.clone()))),
-                )
-            } else {
-                HashMap::new()
+                for pair in variables {
+                    result_variables.insert(pair.name.clone(), Value::from(pair.value.clone()));
+                }
             }
-        } else {
-            HashMap::new()
         };
-
-        variables.iter().for_each(|(key, value)| {
-            result_variables.insert(key.clone(), value.clone());
-        });
 
         return (
             result_variables,
@@ -1190,27 +1144,18 @@ impl Workspace {
         tests_started: Arc<Instant>,
         request_id: String,
         variables: Arc<HashMap<String, Value>>,
-        parent_name: Arc<Option<Vec<String>>>,
         run: u32,
-        total_runs: u32,
-    ) -> (Vec<ApicizeResult>, HashMap<String, Value>) {
+    ) -> ApicizeExecutionRunItem {
         let request = workspace.requests.entities.get(&request_id).unwrap();
-        let request_name = Arc::new(if let Some(parent) = parent_name.as_ref() {
-            let mut cloned = parent.clone();
-            cloned.push(request.get_name().clone());
-            Some(cloned)
-        } else {
-            Some(vec![request.get_name().clone()])
-        });
+        let name = request.get_name();
+        let executed_at = tests_started.elapsed().as_millis();
+        let start_instant = Instant::now();
 
         match request {
             WorkbookRequestEntry::Info(info) => {
-                let now = Instant::now();
-
+                let request_response: ApicizeExecutionRequest;
                 let (variables, authorization, certificate, proxy, auth_certificate, auth_proxy) =
                     workspace.retrieve_parameters(request, &variables);
-
-                let executed_at = tests_started.elapsed().as_millis();
 
                 let dispatch_response = info
                     .dispatch(
@@ -1222,7 +1167,6 @@ impl Workspace {
                         auth_proxy,
                     )
                     .await;
-                let milliseconds = now.elapsed().as_millis();
 
                 match &dispatch_response {
                     Ok((request, response)) => {
@@ -1231,82 +1175,85 @@ impl Workspace {
                             Ok(test_results) => {
                                 let mut test_count = 0;
                                 let mut failed_test_count = 0;
-                                let (reported_test_results, reported_test_scenario) =
-                                    match test_results {
-                                        Some(results) => {
-                                            if let Some(test_results) = &results.results {
-                                                test_count = test_results.len();
-                                                failed_test_count = failed_test_count
-                                                    + test_results
-                                                        .iter()
-                                                        .filter(|r| !r.success)
-                                                        .count();
-                                            }
-                                            (results.results, results.variables)
+                                let reported_response = match test_results {
+                                    Some(response) => {
+                                        if let Some(test_results) = &response.results {
+                                            test_count = test_results.len();
+                                            failed_test_count = failed_test_count
+                                                + test_results
+                                                    .iter()
+                                                    .filter(|r| !r.success)
+                                                    .count();
                                         }
-                                        None => (None, HashMap::new()),
-                                    };
+                                        Some(response)
+                                    }
+                                    None => None,
+                                };
 
-                                let test_result = (
-                                    vec![ApicizeResult {
-                                        request_id: info.id.clone(),
-                                        run: run.clone(),
-                                        total_runs,
-                                        request: Some(request.clone()),
-                                        response: Some(response.clone()),
-                                        tests: reported_test_results,
-                                        executed_at,
-                                        milliseconds,
-                                        success: true,
-                                        test_count: Some(test_count),
-                                        failed_test_count: Some(failed_test_count),
-                                        error_message: None,
-                                    }],
-                                    reported_test_scenario,
-                                );
-                                test_result
+                                request_response = ApicizeExecutionRequest {
+                                    id: request_id.clone(),
+                                    name: name.clone(),
+                                    request: Some(request.clone()),
+                                    response: Some(response.clone()),
+                                    tests: reported_response,
+                                    executed_at,
+                                    duration: start_instant.elapsed().as_millis(),
+                                    success: true,
+                                    passed_test_count: Some(test_count),
+                                    failed_test_count: Some(failed_test_count),
+                                    error_message: None,
+                                };
                             }
-                            Err(err) => (
-                                vec![ApicizeResult {
-                                    request_id: info.id.clone(),
-                                    run: run.clone(),
-                                    total_runs,
+                            Err(err) => {
+                                request_response = ApicizeExecutionRequest {
+                                    id: request_id.clone(),
+                                    name: name.clone(),
                                     request: Some(request.clone()),
                                     response: Some(response.clone()),
                                     tests: None,
                                     executed_at,
-                                    milliseconds,
+                                    duration: start_instant.elapsed().as_millis(),
                                     success: false,
-                                    test_count: None,
+                                    passed_test_count: None,
                                     failed_test_count: None,
                                     error_message: Some(format!("{}", err)),
-                                }],
-                                HashMap::new(),
-                            ),
+                                };
+                            }
                         }
                     }
-                    Err(err) => (
-                        vec![ApicizeResult {
-                            request_id: info.id.clone(),
-                            run: run.clone(),
-                            total_runs,
+                    Err(err) => {
+                        request_response = ApicizeExecutionRequest {
+                            id: request_id.clone(),
+                            name: name.clone(),
                             request: None,
                             response: None,
                             tests: None,
                             executed_at,
-                            milliseconds,
+                            duration: start_instant.elapsed().as_millis(),
                             success: false,
-                            test_count: None,
+                            passed_test_count: None,
                             failed_test_count: None,
                             error_message: Some(format!("{}", err)),
-                        }],
-                        HashMap::new(),
-                    ),
+                        }
+                    }
+                }
+
+                ApicizeExecutionRunItem {
+                    run,
+                    item: ApicizeExecutionItem::Request(request_response),
                 }
             }
             WorkbookRequestEntry::Group(group) => {
+                let group_response: ApicizeExecutionGroup;
+
+                let mut requests_with_passed_tests_count: usize = 0;
+                let mut requests_with_failed_tests_count: usize = 0;
+                let mut requests_with_errors: usize = 0;
+                let mut passed_test_count: usize = 0;
+                let mut failed_test_count: usize = 0;
+
                 // Recursively run requests located in groups...
-                let mut results: Vec<ApicizeResult> = Vec::new();
+                let mut items: Vec<ApicizeExecutionItem> = Vec::new();
 
                 let (variables, ..) = workspace.retrieve_parameters(request, &variables);
 
@@ -1323,56 +1270,87 @@ impl Workspace {
                     .into_iter();
 
                 if group.execution == WorkbookExecution::Concurrent {
-                    let mut runs = JoinSet::new();
+                    let mut child_runs = JoinSet::new();
 
                     for id in group_child_ids {
                         let cloned_workspace = workspace.clone();
                         let cloned_started = tests_started.clone();
                         let cloned_id = id.clone();
                         let cloned_variables = arc_variables.clone();
-                        let cloned_request_name = request_name.clone();
 
-                        runs.spawn(Workspace::run_int(
+                        child_runs.spawn(Workspace::run_int(
                             cloned_workspace,
                             cloned_started,
                             cloned_id,
                             cloned_variables,
-                            cloned_request_name,
                             run,
-                            total_runs,
                         ));
                     }
 
-                    while let Some(result) = runs.join_next().await {
-                        if let Ok(r) = result {
-                            results.extend(r.0);
+                    while let Some(child_results) = child_runs.join_next().await {
+                        if let Ok(child_result) = child_results {
+                            let totals = &child_result.item.get_totals();
+                            requests_with_passed_tests_count +=
+                                totals.requests_with_passed_tests_count;
+                            requests_with_failed_tests_count +=
+                                totals.requests_with_failed_tests_count;
+                            requests_with_errors += totals.requests_with_errors;
+                            passed_test_count += totals.passed_test_count;
+                            failed_test_count += totals.failed_test_count;
+                            items.push(child_result.item);
                         }
                     }
+
+                    // Note: we do not update variables here, since requests are run concurrently, there
+                    // is no way to know which one we should use
                 } else {
                     for id in group_child_ids {
                         let cloned_workspace = workspace.clone();
                         let cloned_started = tests_started.clone();
                         let cloned_id = id.clone();
                         let cloned_variables = arc_variables.clone();
-                        let cloned_request_name = request_name.clone();
 
-                        let (group_test_results, group_vars) = Workspace::run_int(
+                        let child_result = Workspace::run_int(
                             cloned_workspace,
                             cloned_started,
                             cloned_id,
                             cloned_variables,
-                            cloned_request_name,
                             run,
-                            total_runs,
                         )
                         .await;
 
-                        results.extend(group_test_results);
-                        arc_variables = Arc::new(group_vars.clone());
+                        let totals = &child_result.item.get_totals();
+                        requests_with_passed_tests_count += totals.requests_with_passed_tests_count;
+                        requests_with_failed_tests_count += totals.requests_with_failed_tests_count;
+                        requests_with_errors += totals.requests_with_errors;
+                        passed_test_count += totals.passed_test_count;
+                        failed_test_count += totals.failed_test_count;
+
+                        items.push(child_result.item);
+
+                        if let Some(variables) = &totals.variables {
+                            arc_variables = Arc::new(variables.clone());
+                        }
                     }
                 }
 
-                return (results, arc_variables.as_ref().clone());
+                group_response = ApicizeExecutionGroup {
+                    id: request_id,
+                    name: name.clone(),
+                    executed_at,
+                    duration: start_instant.elapsed().as_millis(),
+                    requests_with_passed_tests_count,
+                    requests_with_failed_tests_count,
+                    requests_with_errors,
+                    passed_test_count,
+                    failed_test_count,
+                    items,
+                };
+
+                ApicizeExecutionRunItem {
+                    run,
+                    item: ApicizeExecutionItem::Group(group_response),
+                }
             }
         }
     }
@@ -1382,22 +1360,9 @@ impl Workspace {
         workspace: Arc<Workspace>,
         request_id: &String,
         cancellation_token: Option<CancellationToken>,
-    ) -> Result<ApicizeExecutionResults, RunError> {
-        let request_entry: &WorkbookRequestEntry;
-        match workspace.requests.entities.get(request_id) {
-            Some(entry) => request_entry = entry,
-            None => {
-                return Err(RunError::Other(format!(
-                    "Request ID \"{request_id}\" is invalid"
-                )));
-            }
-        }
-
-        let cancellation = match cancellation_token {
-            Some(t) => t,
-            None => CancellationToken::new(),
-        };
-
+        tests_started: Arc<Instant>,
+    ) -> Result<ApicizeExecution, String> {
+        let start_instant = Instant::now();
         // Ensure V8 is initialized
         V8_INIT.call_once(|| {
             let platform = v8::new_unprotected_default_platform(0, false).make_shared();
@@ -1405,83 +1370,134 @@ impl Workspace {
             v8::V8::initialize();
         });
 
-        // Set up defaults
-        let total_runs = request_entry.get_runs();
-        let mut runs: JoinSet<Option<(Vec<ApicizeResult>, HashMap<String, Value>)>> =
-            JoinSet::new();
+        let cancellation = match cancellation_token {
+            Some(t) => t,
+            None => CancellationToken::new(),
+        };
 
-        let tests_started = Instant::now();
-        let arc_tests_started = Arc::new(tests_started);
+        let mut execution_runs: Vec<ApicizeExecutionRun> = Vec::new();
 
-        let mut results: Vec<ApicizeResult> = Vec::new();
-        for run in 0..total_runs {
-            let cloned_tests_started = arc_tests_started.clone();
-            let cloned_request_id = request_id.clone();
-            let cloned_workspace = workspace.clone();
+        match workspace.requests.entities.get(request_id) {
+            Some(request_entry) => {
+                // Set up defaults
+                let total_runs = request_entry.get_runs();
+                let mut runs: JoinSet<Option<ApicizeExecutionRunItem>> = JoinSet::new();
 
-            let cloned_token = cancellation.clone();
-            let no_name = Arc::new(None);
+                for run in 0..total_runs {
+                    let cloned_tests_started = tests_started.clone();
+                    let cloned_workspace = workspace.clone();
+                    let cloned_request_id = request_id.clone();
+                    let cloned_token = cancellation.clone();
 
-            runs.spawn(async move {
-                select! {
-                    _ = cloned_token.cancelled() => None,
-                    result = Workspace::run_int(
-                        cloned_workspace,
-                        cloned_tests_started,
-                        cloned_request_id,
-                        Arc::new(HashMap::new()),
-                        no_name,
-                        run,
-                        total_runs,
-                    ) => {
-                        Some(result)
-                    }
+                    runs.spawn(async move {
+                        select! {
+                            _ = cloned_token.cancelled() => None,
+                            result = Workspace::run_int(
+                                cloned_workspace,
+                                cloned_tests_started,
+                                cloned_request_id,
+                                Arc::new(HashMap::new()),
+                                run,
+                            ) => {
+                                Some(result)
+                            }
+                        }
+                    });
                 }
-            });
-        }
 
-        let mut caught: Option<RunError> = None;
+                let mut completed_runs = runs.join_all().await;
+                completed_runs.sort_by(|r1, r2| {
+                    let sort1: i32 = match r1 {
+                        Some(ri) => ri.run as i32,
+                        None => -1,
+                    };
+                    let sort2 = match r2 {
+                        Some(ri) => ri.run as i32,
+                        None => -1,
+                    };
 
-        while let Some(result) = runs.join_next().await {
-            match result {
-                Ok(result_or_cancel) => match result_or_cancel {
-                    Some(mut result) => {
-                        results.append(&mut result.0);
+                    sort1.cmp(&sort2)
+                });
+
+                for run_result in completed_runs {
+                    let mut request_runs: Vec<ApicizeExecutionItem> = Vec::new();
+                    let mut requests_with_passed_tests_count: usize = 0;
+                    let mut requests_with_failed_tests_count: usize = 0;
+                    let mut requests_with_errors: usize = 0;
+                    let mut passed_test_count: usize = 0;
+                    let mut failed_test_count: usize = 0;
+
+                    match run_result {
+                        Some(result) => {
+                            let totals = result.item.get_totals();
+                            requests_with_passed_tests_count +=
+                                totals.requests_with_passed_tests_count;
+                            requests_with_failed_tests_count +=
+                                totals.requests_with_failed_tests_count;
+                            requests_with_errors += totals.requests_with_errors;
+                            passed_test_count += totals.passed_test_count;
+                            failed_test_count += totals.failed_test_count;
+                            request_runs.push(result.item);
+                        }
+                        None => request_runs.push(ApicizeExecutionItem::Request(
+                            ApicizeExecutionRequest {
+                                id: String::from(request_id),
+                                name: String::from(request_entry.get_name()),
+                                executed_at: tests_started.elapsed().as_millis(),
+                                duration: start_instant.elapsed().as_millis(),
+                                request: None,
+                                response: None,
+                                tests: None,
+                                success: false,
+                                passed_test_count: None,
+                                failed_test_count: None,
+                                error_message: Some(String::from("Cancelled")),
+                            },
+                        )),
                     }
-                    None => {
-                        caught = Some(RunError::Cancelled);
-                    }
-                },
-                Err(err) => {
-                    Some(RunError::JoinError(err));
+
+                    execution_runs.push(ApicizeExecutionRun {
+                        executed_at: tests_started.elapsed().as_millis(),
+                        duration: start_instant.elapsed().as_millis(),
+                        requests_with_passed_tests_count,
+                        requests_with_failed_tests_count,
+                        requests_with_errors,
+                        passed_test_count,
+                        failed_test_count,
+                        items: request_runs,
+                    });
                 }
             }
-        }
-
-        match caught {
-            Some(caught_error) => Err(caught_error),
             None => {
-                let mut results_by_run: Vec<Vec<ApicizeResult>> =
-                    vec![vec![]; usize::try_from(total_runs).unwrap()];
-
-                results.sort_by(|a, b| {
-                    let mut ord = a.run.cmp(&b.run);
-                    if ord.is_eq() {
-                        ord = a.executed_at.cmp(&b.executed_at);
-                    }
-                    ord
+                execution_runs.push(ApicizeExecutionRun {
+                    executed_at: tests_started.elapsed().as_millis(),
+                    duration: start_instant.elapsed().as_millis(),
+                    requests_with_passed_tests_count: 0,
+                    requests_with_failed_tests_count: 0,
+                    requests_with_errors: 1,
+                    passed_test_count: 0,
+                    failed_test_count: 0,
+                    items: vec![ApicizeExecutionItem::Request(ApicizeExecutionRequest {
+                        id: String::from(request_id),
+                        name: String::from(""),
+                        executed_at: tests_started.elapsed().as_millis(),
+                        duration: start_instant.elapsed().as_millis(),
+                        request: None,
+                        response: None,
+                        tests: None,
+                        success: false,
+                        passed_test_count: None,
+                        failed_test_count: None,
+                        error_message: Some(format!("Request ID {} is invalid", request_id)),
+                    })],
                 });
-
-                results.drain(..).for_each(|r| {
-                    results_by_run[usize::try_from(r.run).unwrap()].push(r);
-                });
-
-                Ok(ApicizeExecutionResults {
-                    runs: results_by_run,
-                    milliseconds: tests_started.elapsed().as_millis(),
-                })
             }
         }
+
+        Ok(ApicizeExecution {
+            duration: tests_started.elapsed().as_millis(),
+            runs: execution_runs,
+        })
     }
 }
 
@@ -1543,15 +1559,11 @@ impl WorkbookRequest {
             .timeout(timeout);
 
         // Add certificate to builder if configured
-        let request_certificate: Option<WorkbookCertificate>;
         if let Some(active_cert) = certificate {
-            request_certificate = Some(active_cert.clone());
             match active_cert.append_to_builder(reqwest_builder) {
                 Ok(updated_builder) => reqwest_builder = updated_builder,
                 Err(err) => return Err(err),
             }
-        } else {
-            request_certificate = None;
         }
 
         // Add proxy to builder if configured
@@ -1799,7 +1811,6 @@ impl WorkbookRequest {
                                 method: self.method.as_ref().unwrap().as_str().to_string(),
                                 headers: request_headers,
                                 body: request_body,
-                                certificate: request_certificate,
                                 variables: if variables.len() > 0 {
                                     Some(variables.clone())
                                 } else {

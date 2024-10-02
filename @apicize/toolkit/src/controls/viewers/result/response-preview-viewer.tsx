@@ -6,16 +6,18 @@ import beautify from "js-beautify";
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
 
-export function ResultResponsePreview(props: {
-    requestOrGroupId: string,
-    runIndex: number,
-    resultIndex: number,
-}) {
+export function ResultResponsePreview(props: { requestOrGroupId: string,  index: number }) {
     const workspace = useWorkspace()
     const clipboard = useClipboard()
 
-    const headers = workspace.getExecutionResultHeaders(props.requestOrGroupId, props.runIndex, props.resultIndex)
-    const body = workspace.getExecutionResultBody(props.requestOrGroupId, props.runIndex, props.resultIndex)
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
+
+    if (result?.type !== 'request') {
+        return null
+    }
+
+    const headers = result?.response?.headers
+    const body = result?.response?.body
 
     let extension = ''
     for (const [name, value] of Object.entries(headers ?? {})) {
@@ -61,7 +63,7 @@ export function ResultResponsePreview(props: {
                         aria-label="copy image to clipboard"
                         title="Copy Image to Clipboard"
                         sx={{ marginLeft: '16px' }}
-                        onClick={_ => { if (body?.data) clipboard.writeImageToClipboard(body.data) } } >
+                        onClick={_ => { if (body?.data) clipboard.writeImageToClipboard(body.data) }} >
                         <ContentCopyIcon />
                     </IconButton>)
                     : showTextCopy
