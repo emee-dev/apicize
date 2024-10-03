@@ -79,7 +79,7 @@ jobs:
             release_for: Linux-x86_64
             target: x86_64-unknown-linux-gnu
             bin: apicize-run
-            name: apicuze-run-Linux-x86_64.tar.gz
+            name: Apicize-run-Linux-x86_64.tar.gz
           # - os_name: Windows-x86_64
           #   os: windows-latest
           #   release_for: Windows-x86_64
@@ -106,3 +106,9 @@ jobs:
           args: "--locked --release"
           strip: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish artifacts and release
+        uses: houseabsolute/actions-rust-release@v0
+        with:
+          executable-name: apicize-run
+          target: ${{ matrix.platform.target }}
+        # if: matrix.toolchain == 'stable'
