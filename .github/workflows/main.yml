@@ -101,6 +101,8 @@ jobs:
         uses: houseabsolute/actions-rust-cross@v0
         with:
           command: ${{ matrix.platform.command }}
+          working-directory: "@apicize/cli"
           target: ${{ matrix.platform.target }}
           args: "--locked --release"
           strip: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
