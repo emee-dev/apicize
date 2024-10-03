@@ -10,20 +10,19 @@ import { useClipboard } from "../../../contexts/clipboard.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
 import { toJS } from "mobx";
 
+const fmtMinSec = (value: number, subZero: string | null = null) => {
+    if (value === 0 && subZero) {
+        return subZero
+    }
+    const m = Math.floor(value / 60000)
+    value -= m * 60000
+    const s = Math.floor(value / 1000)
+    value -= s * 1000
+    return `${m.toLocaleString().padStart(2, '0')}:${s.toString().padStart(2, '0')}${(0.1).toLocaleString()[1]}${value.toString().padEnd(3, '0')}`   
+}
+
 const GroupResult = (props: { sx: SxProps, group: WorkbookExecutionGroupResult }) => {
     let idx = 0
-
-    const fmtMinSec = (value: number, subZero: string | null = null) => {
-        if (value === 0 && subZero) {
-            return subZero
-        }
-        const m = Math.floor(value / 60000)
-        value -= m * 60000
-        const s = Math.floor(value / 1000)
-        value -= s * 1000
-        return `${m.toLocaleString().padStart(2, '0')}:${s.toString().padStart(2, '0')}${(0.1).toLocaleString()[1]}${value.toString().padEnd(3, '0')}`
-        
-    }
 
     const renderGroupItem = (item: WorkbookExecutionGroupItem) => {
         const children = (item.children && item.children.length > 0) ? item.children : null
@@ -55,7 +54,7 @@ const GroupResult = (props: { sx: SxProps, group: WorkbookExecutionGroupResult }
 
     return (
         <Box key={`test-summary-${idx++}`} sx={props.sx}>
-            <TestInfo text={`Executed At: ${props.group.executedAt > 0 ? `${props.group.executedAt.toLocaleString()}` : '(Start)'}`} />
+            <TestInfo text={`Executed At: ${props.group.executedAt > 0 ? `${fmtMinSec(props.group.executedAt)}` : '(Start)'}`} />
             {(props.group.duration && props.group.duration > 0)
                 ? (<TestInfo text={`Duration: ${props.group.duration.toLocaleString()} ms`} />)
                 : (<></>)}
@@ -76,7 +75,7 @@ const RequestResult = (props: { result: WorkbookExecutionRequestResult, sx: SxPr
             {props.result.response
                 ? (<TestInfo text={`Status: ${props.result.response.status} ${props.result.response.statusText}`} />)
                 : (<></>)}
-            <TestInfo text={`Executed At: ${props.result.executedAt > 0 ? `${props.result.executedAt.toLocaleString()}` : '(Start)'}`} />
+            <TestInfo text={`Executed At: ${props.result.executedAt > 0 ? `${fmtMinSec(props.result.executedAt)}` : '(Start)'}`} />
             {(props.result.duration && props.result.duration > 0)
                 ? (<TestInfo text={`Duration: ${props.result.duration.toLocaleString()} ms`} />)
                 : (<></>)}
