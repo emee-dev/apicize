@@ -29,7 +29,7 @@ const GroupResult = (props: { sx: SxProps, group: WorkbookExecutionGroupResult }
         const children = (item.children && item.children.length > 0) ? item.children : null
         return <Box key={`test-summary-${idx++}`}>
             <Typography sx={{ marginTop: '0.5rem', marginBottom: '0.25rem', paddingTop: 0, color: '#80000' }} component='div'>
-                {item.name} (@{fmtMinSec(item.executedAt, '(Start)')}, {item.duration.toLocaleString()} ms)
+                {item.name} ({fmtMinSec(item.executedAt, 'Start')}, {item.duration.toLocaleString()} ms)
             </Typography>
             {
                 item.errorMessage

@@ -57,7 +57,7 @@ export const ResultsViewer = observer((props: {
 
 
     let panel = requestExecution?.panel
-    if (resultIndex === -1 && panel !== 'Info') {
+    if (executionGroupResult && panel !== 'Info') {
         panel = 'Info'
     }
 

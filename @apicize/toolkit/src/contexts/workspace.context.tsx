@@ -1223,9 +1223,9 @@ export class WorkspaceStore {
         }
 
         // Recursively build a menu for each item in a run and the accompanying result payloads
-        const generateRunItems = (menu: WorkbookExecutionResultMenuItem[], items: ApicizeExecutionItem[], parentTitle = '') => {
+        const generateRunItems = (menu: WorkbookExecutionResultMenuItem[], items: ApicizeExecutionItem[], level: number, parentTitle = '') => {
             items.forEach(item => {
-                const title = parentTitle.length > 0
+                let title = (level > 1 && parentTitle.length > 0)
                     ? `${parentTitle}, ${GetTitle(item)}`
                     : GetTitle(item)
 
@@ -1270,10 +1270,10 @@ export class WorkspaceStore {
                         } as WorkbookExecutionGroupResult)
                         menu.push({
                             requestOrGroupId: item.id,
-                            title,
+                            title: title + ' (Summary)',
                             index: newIndexedResults.length - 1
                         })
-                        generateRunItems(menu, group.items, title)
+                        generateRunItems(menu, group.items, level + 1, title)
                         break
                     default:
                         return
@@ -1283,7 +1283,7 @@ export class WorkspaceStore {
 
         executionResults.runs.forEach((run, runIndex) => {
             const results: WorkbookExecutionResultMenuItem[] = []
-            generateRunItems(results, run.items, '')
+            generateRunItems(results, run.items, 0, '')
 
             newRunList.push({
                 title: `Run ${runIndex + 1} of ${executionResults.runs.length}`,

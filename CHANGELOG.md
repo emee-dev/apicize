@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.6.1
+
+* Fix help screen in light mode
+* Improve results dropdown
+
 # 0.6.0
 
 * Tauri 2.0 release

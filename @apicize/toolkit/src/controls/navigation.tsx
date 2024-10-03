@@ -938,7 +938,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                 backgroundColor: '#202020'
             })
         }) ]}>
-            <Box display='flex' flexDirection='row' sx={{ marginBottom: '0.2em', paddingLeft: '0.1em' }}>
+            <Box display='flex' flexDirection='row' sx={{ marginBottom: '0.2em', paddingLeft: '0.5em', paddingRight: '0.5em' }}>
                 <Box sx={{ width: '100%', marginRight: '8px' }}>
                     <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()} sx={{ marginLeft: '0.2em' }}>
                         <PostAddIcon />
@@ -971,6 +971,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     aria-label='request navigator'
                     // defaultCollapseIcon={<ExpandMoreIcon />}
                     // defaultExpandIcon={<ChevronRightIcon />}
+                    sx={{marginLeft: '0.25em', paddingRight: '0.5em'}}
                     expandedItems={workspace.expandedItems}
                     selectedItems={workspace.active ? `${workspace.active.entityType}-${workspace.active.id}` : ''}
                     multiSelect={false}
