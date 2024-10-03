@@ -268,7 +268,7 @@ async fn main() {
                 } else {
                     format!("{} {}", "(Unnamed)".blue(), request.get_id().blue())
                 },
-                "...."
+                "..."
             );
             let result = Workspace::run(
                 arc_workspace.clone(),

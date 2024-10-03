@@ -930,7 +930,7 @@ impl Workspace {
 
         // Create a stack-allocated handle scope.
         let scope = &mut v8::HandleScope::new(isolate);
-        let context = v8::Context::new(scope);
+        let context = v8::Context::new(scope, Default::default());
         let scope = &mut v8::ContextScope::new(scope, context);
 
         let mut init_code = String::new();
