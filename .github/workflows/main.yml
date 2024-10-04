@@ -86,5 +86,5 @@ jobs:
             allowUpdates: true
             artifacts: ./@apicize/cli/target/debian/apicize-run_0.6.1-1_amd64.deb
             body: 'See the assets to download this version and install.'
-            name: ${GITHUB_REF}-cli
+            name: Apicize v${{ github.ref_name }}
             token: ${{ secrets.GITHUB_TOKEN }}
