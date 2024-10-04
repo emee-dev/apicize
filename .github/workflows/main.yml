@@ -71,6 +71,7 @@ jobs:
   publish-cli:
     name: Release apicize-run
     runs-on: Ubuntu-22.04
+    needs: ['publish-tauri']
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -87,4 +88,8 @@ jobs:
             artifacts: ./@apicize/cli/target/debian/apicize-run_0.6.1-1_amd64.deb
             body: 'See the assets to download this version and install.'
             name: Apicize v${{ github.ref_name }}
+            omitBodyDuringUpdate: true
+            omitPrereleaseDuringUpdate: true
+            removeArtifacts: false
+            replacesArtifacts: false
             token: ${{ secrets.GITHUB_TOKEN }}
