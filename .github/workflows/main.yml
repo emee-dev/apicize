@@ -61,35 +61,35 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: apicize-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'Apicize v__VERSION__'
+          releaseName: 'Apicize __VERSION__'
           releaseBody: 'See the assets to download this version and install.'
           # releaseDraft: true
           prerelease: false
           args: --verbose ${{ matrix.args }}
           projectPath: ./app
 
-  # publish-cli:
-  #   name: Release apicize-run
-  #   runs-on: Ubuntu-22.04
-  #   needs: ['publish-tauri']
-  #   steps:
-  #     - name: checkout
-  #       uses: actions/checkout@v4
-  #     - name: install rust and cargo-deb
-  #       run: curl https://sh.rustup.rs -sSf | sh -s -- -y && cargo install cargo-deb
-  #       working-directory: ./@apicize/cli
-  #     - name: build Debian package
-  #       run: cargo deb
-  #       working-directory: ./@apicize/cli
-  #     - name: deploy release
-  #       uses: ncipollo/release-action@v1
-  #       with:
-  #           allowUpdates: true
-  #           artifacts: ./@apicize/cli/target/debian/apicize-run_0.6.1-1_amd64.deb
-  #           body: 'See the assets to download this version and install.'
-  #           name: Apicize v${{ github.ref_name }}
-  #           omitBodyDuringUpdate: true
-  #           omitPrereleaseDuringUpdate: true
-  #           removeArtifacts: false
-  #           replacesArtifacts: false
-  #           token: ${{ secrets.GITHUB_TOKEN }}
+  publish-cli:
+    name: Release apicize-run
+    runs-on: Ubuntu-22.04
+    needs: ['publish-tauri']
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: install rust and cargo-deb
+        run: curl https://sh.rustup.rs -sSf | sh -s -- -y && cargo install cargo-deb
+        working-directory: ./@apicize/cli
+      - name: build Debian package
+        run: cargo deb
+        working-directory: ./@apicize/cli
+      - name: deploy release
+        uses: ncipollo/release-action@v1
+        with:
+            allowUpdates: true
+            artifacts: ./@apicize/cli/target/debian/apicize-run_0.6.1-1_amd64.deb
+            body: 'See the assets to download this version and install.'
+            name: Apicize ${{ github.ref_name }}
+            omitBodyDuringUpdate: true
+            omitPrereleaseDuringUpdate: true
+            removeArtifacts: false
+            replacesArtifacts: false
+            token: ${{ secrets.GITHUB_TOKEN }}
