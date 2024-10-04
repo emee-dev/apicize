@@ -74,8 +74,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - name: install cargo-deb
-        run: rust update && cargo install cargo-deb
+      - name: install rust and cargo-deb
+        run: curl https://sh.rustup.rs -sSf | sh -s -- -y && cargo install cargo-deb
         working-directory: ./@apicize/cli
       - name: build Debian package
         run: cargo deb
