@@ -26,7 +26,9 @@
   "bundle": {
     "active": true,
     "category": "DeveloperTool",
-    "copyright": "",
+    "homepage": "https://www.apicize.com",
+    "copyright": "2024 Jason Terando",
+    "license": "MIT License",
     "externalBin": [],
     "icon": [
       "icons/32x32.png",
@@ -37,7 +39,7 @@
     ],
     "fileAssociations": [
       {
-        "description": "Apicize Workbooks",
+        "description": "Apicize is an HTTP testing tool",
         "ext": [
           "apicize"
         ]

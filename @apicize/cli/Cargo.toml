@@ -2,6 +2,11 @@
 name = "apicize-run"
 version = "0.6.1"
 description = "Apicize CLI test runner"
+authors = ["Apicize"]
+license = "MIT"
+license-file = "LICENSE.md"
+homepage = "www.apicize.com/cli.html"
+repository = "https://github.com/apicize/Apicize.git"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -17,3 +22,9 @@ tokio = "1.35.1"
 
 [target.x86_64-unknown-linux-musl.dependencies]
 openssl = { version = "*", features = ["vendored"] }
+
+[package.metadata.packager]
+before-packaging-command = "cargo build --release"
+
+[package.metadata.deb]
+maintainer = "Jason Terando"

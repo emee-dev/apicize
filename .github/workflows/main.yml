@@ -69,46 +69,21 @@ jobs:
   #         projectPath: ./app
 
   publish-cli:
-    name: Release - ${{ matrix.platform.release_for }}
-    runs-on: ${{ matrix.platform.os }}
-    strategy:
-      matrix:
-        platform:
-          - os_name: Linux-x86_64
-            os: ubuntu-20.04
-            release_for: Linux-x86_64
-            target: x86_64-unknown-linux-gnu
-            bin: apicize-run
-            name: Apicize-run-Linux-x86_64.tar.gz
-          # - os_name: Windows-x86_64
-          #   os: windows-latest
-          #   release_for: Windows-x86_64
-          #   target: x86_64-pc-windows-msvc
-          #   bin: apicize-run.exe
-          #   name: apicuze-run-Windows-x86_64.zip
-          #   command: both
-          # - os_name: macOS-x86_64
-          #   os: macOS-latest
-          #   release_for: macOS-x86_64
-          #   target: x86_64-apple-darwin
-          #   bin: apicize-run
-          #   name: apicize-run-Darwin-x86_64.tar.gz
-          #   command: both
+    name: Release apicize-run
+    runs-on: Ubuntu-22.04
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v4
-      - name: Build binary
-        uses: houseabsolute/actions-rust-cross@v0
+      - name: install cargo-deb
+        run: rust update && cargo install cargo-deb
+        working-directory: ./@apicize/cli
+      - name: build Debian package
+        run: cargo deb
+        working-directory: ./@apicize/cli
+      - name: deploy release
+        uses: ncipollo/release-action@v1
         with:
-          command: ${{ matrix.platform.command }}
-          working-directory: "@apicize/cli"
-          target: ${{ matrix.platform.target }}
-          args: "--locked --release"
-          strip: true
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish artifacts and release
-        uses: houseabsolute/actions-rust-release@v0
-        with:
-          executable-name: apicize-run
-          target: ${{ matrix.platform.target }}
-        # if: matrix.toolchain == 'stable'
+            allowUpdates: true
+            artifacts: ./@apicize/cli/target/debian/apicize-run_0.6.1-1_amd64.deb
+            body: 'See the assets to download this version and install.'
+            token: ${{ secrets.GITHUB_TOKEN }}
