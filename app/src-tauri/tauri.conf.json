@@ -1,7 +1,7 @@
 {
   "$schema": "../../node_modules/@tauri-apps/cli/config.schema.json",
   "identifier": "apicize.app",
-  "productName": "Apicize",
+  "productName": "apicize",
   "version": "0.6.1",
   "app": {
     "security": {
@@ -28,7 +28,7 @@
     "category": "DeveloperTool",
     "homepage": "https://www.apicize.com",
     "copyright": "2024 Jason Terando",
-    "license": "MIT License",
+    "license": "MIT",
     "externalBin": [],
     "icon": [
       "icons/32x32.png",
@@ -50,6 +50,7 @@
         "depends": []
       }
     },
+    "shortDescription": "Apicize is an HTTP testing tool",
     "longDescription": "Apicize",
     "macOS": {
       "entitlements": null,
@@ -61,7 +62,6 @@
     "resources": [
       "./help"
     ],
-    "shortDescription": "HTTP testing tool",
     "targets": [
       "deb",
       "rpm",
