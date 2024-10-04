@@ -7,6 +7,7 @@ on:
 
 jobs:
   publish-tauri:
+    name: Release Tauri app
     permissions:
       contents: write
     strategy:
@@ -23,6 +24,10 @@ jobs:
             args: ''
 
     runs-on: ${{ matrix.platform }}
+    outputs:
+      appVersion: ${{ steps.deploy-tauri.outputs.appVersion }}
+      releaseUploadUrl: ${{ steps.deploy-tauri.outputs.releaseUploadUrl }}
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -56,7 +61,9 @@ jobs:
         run: yarn build-deps
         working-directory: ./
 
-      - uses: tauri-apps/tauri-action@v0
+      - id: deploy-tauri
+        name: deploy tauri
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -71,7 +78,7 @@ jobs:
   publish-cli:
     name: Release apicize-run
     runs-on: Ubuntu-22.04
-    needs: ['publish-tauri']
+    needs: 'publish-tauri'
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -81,15 +88,12 @@ jobs:
       - name: build Debian package
         run: cargo deb
         working-directory: ./@apicize/cli
-      - name: deploy release
-        uses: ncipollo/release-action@v1
+      - name: add Debian package to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-            allowUpdates: true
-            artifacts: ./@apicize/cli/target/debian/apicize-run_0.6.1-1_amd64.deb
-            body: 'See the assets to download this version and install.'
-            name: Apicize ${{ github.ref_name }}
-            omitBodyDuringUpdate: true
-            omitPrereleaseDuringUpdate: true
-            removeArtifacts: false
-            replacesArtifacts: false
-            token: ${{ secrets.GITHUB_TOKEN }}
+            upload_url: ${{needs.publish-tauri.outputs.releaseUploadUrl}}
+            asset_path: ./@apicize/cli/target/debian/apicize-run_0.6.1-1_amd64.deb
+            asset_name: apicize-run_0.6.1-1_amd64.deb
+            asset_content_type: application/gzip
