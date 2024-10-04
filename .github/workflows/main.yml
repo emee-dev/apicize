@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: apicize-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'Apicize __VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
+          releaseName: 'apicize __VERSION__'
+          releaseBody: 'See the assets to download this version and install.  Assets beginning with "apicize_" are the GUI app, assets beginning wtih "apicize-run_" are the CLI runner'
           # releaseDraft: true
           prerelease: false
           args: --verbose ${{ matrix.args }}
@@ -94,6 +94,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
             upload_url: ${{needs.publish-tauri.outputs.releaseUploadUrl}}
-            asset_path: ./@apicize/cli/target/debian/apicize-run_0.6.1-1_amd64.deb
-            asset_name: apicize-run_0.6.1-1_amd64.deb
+            asset_path: ./@apicize/cli/target/debian/Apicize-Run_0.6.1-1_amd64.deb
+            asset_name: Apicize-Run_0.6.1-1_amd64.deb
             asset_content_type: application/gzip
