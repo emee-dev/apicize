@@ -98,7 +98,7 @@ jobs:
         run: cargo generate-rpm
         working-directory: ./@apicize/cli
       - name: remove stubbed release number from .rpm file name
-        run: run mv ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-999.x86_64.rpm ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
+        run: mv ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-999.x86_64.rpm ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
         working-directory: ./@apicize/cli
       - name: add .rpm package to release
         uses: actions/upload-release-asset@v1
