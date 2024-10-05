@@ -38,9 +38,11 @@ jobs:
         with:
           node-version: lts/*
           cache: 'yarn'
+      - name: install rust
+        run: curl https://sh.rustup.rs -sSf | sh -s -- -y
       - name: install rust and dependencies
+        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
         run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
         # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
