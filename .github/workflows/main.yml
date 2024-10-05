@@ -61,9 +61,12 @@ jobs:
     runs-on: Ubuntu-22.04
     needs: 'publish-tauri'
     steps:
-      - name: install cargo-deb
-        run: cargo install cargo-deb
-        working-directory: ./@apicize/cli
+      - uses: actions/checkout@v4
+      - name: install rust and cargo-db
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          install cargo-deb
+          working-directory: ./@apicize/cli
       - name: build .deb package
         run: cargo deb
         working-directory: ./@apicize/cli
@@ -82,9 +85,11 @@ jobs:
     runs-on: Ubuntu-22.04
     needs: 'publish-tauri'
     steps:
-      - name: cargo-generate-rpm
-        run: cargo install cargo-generate-rpm
-        working-directory: ./@apicize/cli
+      - name: install rust and cargo-generate-rpm
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          cargo install cargo-generate-rpm
+          working-directory: ./@apicize/cli
       - name: build application
         run: cargo build && strip -s ./target/release/apicize-run
         working-directory: ./@apicize/cli
