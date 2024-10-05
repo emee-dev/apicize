@@ -2,6 +2,8 @@ name: 'publish'
 
 on:
   push:
+    branches:
+      - cli-build
     tags:
       - '*'
 
@@ -65,8 +67,7 @@ jobs:
       - name: install rust and cargo-db
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
-          install cargo-deb
-          working-directory: ./@apicize/cli
+          cargo install cargo-deb
       - name: build .deb package
         run: cargo deb
         working-directory: ./@apicize/cli
@@ -89,7 +90,6 @@ jobs:
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           cargo install cargo-generate-rpm
-          working-directory: ./@apicize/cli
       - name: build application
         run: cargo build && strip -s ./target/release/apicize-run
         working-directory: ./@apicize/cli
