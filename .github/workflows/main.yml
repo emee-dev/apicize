@@ -50,7 +50,7 @@ jobs:
         with:
           tagName: apicize-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
           releaseName: 'apicize __VERSION__'
-          releaseBody: 'See the assets to download this version and install.  Assets beginning with "apicize_" are the GUI app, assets beginning wtih "apicize-run_" are the CLI runner'
+          releaseBody: 'See the assets to download this version and install.  Assets beginning with "apicize_" are the GUI app, assets beginning wtih "apicize-run_" are the CLI runner.'
           # releaseDraft: true
           prerelease: false
           args: --verbose
@@ -96,6 +96,7 @@ jobs:
         working-directory: ./@apicize/cli
       - name: build .rpm package
         run: cargo generate-rpm
+        working-directory: ./@apicize/cli
       - name: remove stubbed release number from .rpm file name
         run: run mv ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-999.x86_64.rpm ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
         working-directory: ./@apicize/cli
