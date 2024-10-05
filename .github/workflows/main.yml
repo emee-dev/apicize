@@ -71,14 +71,11 @@ jobs:
         run: cargo deb
         working-directory: ./@apicize/cli
       - name: add .deb package to release
-        uses: actions/upload-release-asset@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-            upload_url: ${{needs.publish-tauri.outputs.releaseUploadUrl}}
-            asset_path: ./@apicize/cli/target/debian/apicize-run_${{needs.publish-tauri.outputs.appVersion}}_amd64.deb
-            asset_name: apicize-run_${{needs.publish-tauri.outputs.appVersion}}_amd64.deb
-            asset_content_type: application/gzip
+            files: ./@apicize/cli/target/debian/apicize-run_${{needs.publish-tauri.outputs.appVersion}}_amd64.deb
 
   publish-cli-rpm:
     name: Release apicize-run as .rpm
@@ -101,11 +98,8 @@ jobs:
         run: mv ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-999.x86_64.rpm ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
         working-directory: ./@apicize/cli
       - name: add .rpm package to release
-        uses: actions/upload-release-asset@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-            upload_url: ${{needs.publish-tauri.outputs.releaseUploadUrl}}
-            asset_path: ./@apicize/cli/./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
-            asset_name: apicize-run_${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
-            asset_content_type: application/octet-stream
+            files: ./@apicize/cli/./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
