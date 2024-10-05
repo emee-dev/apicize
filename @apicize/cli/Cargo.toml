@@ -27,8 +27,11 @@ before-packaging-command = "cargo build --release"
 
 [package.metadata.deb]
 maintainer = "Jason Terando"
+revision = ""
 
 [package.metadata.generate-rpm]
 assets = [
     { source = "target/release/apicize-run", dest = "/usr/bin/apicize-run", mode = "755" }
 ]
+# We have to "fake" a release here so we can remove it later
+release = "999"

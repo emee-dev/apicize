@@ -10,20 +10,7 @@ jobs:
     name: Release Tauri app
     permissions:
       contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'macos-latest' # for Arm based macs (M1 and above).
-            args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest' # for Intel based macs.
-            args: '--target x86_64-apple-darwin'
-          - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
-            args: ''
-          - platform: 'windows-latest'
-            args: ''
-
-    runs-on: ${{ matrix.platform }}
+    runs-on: ubuntu-22.04
     outputs:
       appVersion: ${{ steps.deploy-tauri.outputs.appVersion }}
       releaseUploadUrl: ${{ steps.deploy-tauri.outputs.releaseUploadUrl }}
@@ -40,15 +27,9 @@ jobs:
           node-version: lts/*
           cache: 'yarn'
 
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+      - name: install rust and dependencies
         run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
         # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
@@ -72,7 +53,7 @@ jobs:
           releaseBody: 'See the assets to download this version and install.  Assets beginning with "apicize_" are the GUI app, assets beginning wtih "apicize-run_" are the CLI runner'
           # releaseDraft: true
           prerelease: false
-          args: --verbose ${{ matrix.args }}
+          args: --verbose
           projectPath: ./app
 
   publish-cli-deb:
@@ -80,10 +61,8 @@ jobs:
     runs-on: Ubuntu-22.04
     needs: 'publish-tauri'
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: install rust and cargo-deb
-        run: curl https://sh.rustup.rs -sSf | sh -s -- -y && cargo install cargo-deb
+      - name: install cargo-deb
+        run: cargo install cargo-deb
         working-directory: ./@apicize/cli
       - name: build .deb package
         run: cargo deb
@@ -103,16 +82,16 @@ jobs:
     runs-on: Ubuntu-22.04
     needs: 'publish-tauri'
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: install rust and cargo-generate-rpm
-        run: curl https://sh.rustup.rs -sSf | sh -s -- -y && cargo install cargo-generate-rpm
+      - name: cargo-generate-rpm
+        run: cargo install cargo-generate-rpm
         working-directory: ./@apicize/cli
       - name: build application
-        run: cargo build && strip -s target/release/apicize-run
+        run: cargo build && strip -s ./target/release/apicize-run
         working-directory: ./@apicize/cli
       - name: build .rpm package
         run: cargo generate-rpm
+      - name: remove release from .rpm file name
+        run: run mv ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-999.x86_64.rpm ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
         working-directory: ./@apicize/cli
       - name: add .rpm package to release
         uses: actions/upload-release-asset@v1
@@ -120,6 +99,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
             upload_url: ${{needs.publish-tauri.outputs.releaseUploadUrl}}
-            asset_path: ./@apicize/cli/target/debian/apicize-run_${{needs.publish-tauri.outputs.appVersion}}_x86_64.rpm
-            asset_name: apicize-run_${{needs.publish-tauri.outputs.appVersion}}_x86_64.rpm
+            asset_path: ./@apicize/cli/./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
+            asset_name: apicize-run_${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
             asset_content_type: application/octet-stream
