@@ -18,17 +18,15 @@ jobs:
       releaseUploadUrl: ${{ steps.deploy-tauri.outputs.releaseUploadUrl }}
     
     steps:
-      - uses: actions/checkout@v4
-
+      - name: checkout project
+        uses: actions/checkout@v4
       - name: enable Corepack
         run: corepack enable      
-
       - name: setup node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: 'yarn'
-
       - name: install rust and dependencies
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
@@ -63,7 +61,8 @@ jobs:
     runs-on: Ubuntu-22.04
     needs: 'publish-tauri'
     steps:
-      - uses: actions/checkout@v4
+      - name: checkout project
+        uses: actions/checkout@v4
       - name: install rust and cargo-db
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
@@ -86,6 +85,8 @@ jobs:
     runs-on: Ubuntu-22.04
     needs: 'publish-tauri'
     steps:
+      - name: checkout project
+        uses: actions/checkout@v4
       - name: install rust and cargo-generate-rpm
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
