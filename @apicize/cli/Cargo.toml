@@ -19,10 +19,7 @@ serde = "1.0.210"
 serde_json = "1.0.110"
 tokio = "1.35.1"
 
-[target.aarch64-unknown-linux-gnu]
-rustflags = ["-C", "target-feature=+crt-static"]
-
-[target.x86_64-unknown-linux-musl.dependencies]
+[target.x86_64-unknown-linux-gnu.dependencies]
 openssl = { version = "0.10", features = ["vendored"] }
 
 [package.metadata.packager]
@@ -34,7 +31,7 @@ revision = ""
 
 [package.metadata.generate-rpm]
 assets = [
-    { source = "target/release/apicize-run", dest = "/usr/bin/apicize-run", mode = "755" }
+    { source = "./target/x86_64-unknown-linux-gnu/release/apicize-run", dest = "/usr/bin/apicize-run", mode = "755" }
 ]
 release = "1"
 

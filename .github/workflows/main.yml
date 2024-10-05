@@ -88,7 +88,7 @@ jobs:
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           cargo install cargo-generate-rpm
       - name: build application
-        run: RUSTFLAGS="-C target-feature=+crt-static" cargo build --target x86_64-unknown-linux-gnu
+        run: RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --target x86_64-unknown-linux-gnu
         working-directory: ./@apicize/cli
       - name: build .rpm package
         run: cargo generate-rpm
