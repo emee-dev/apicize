@@ -91,7 +91,7 @@ jobs:
         run: RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --target x86_64-unknown-linux-gnu
         working-directory: ./@apicize/cli
       - name: build .rpm package
-        run: cargo generate-rpm
+        run: cargo generate-rpm --payload-compress=gzip
         working-directory: ./@apicize/cli
       # - name: remove stubbed release number from .rpm file name
       #   run: mv ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-999.x86_64.rpm ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
