@@ -47,7 +47,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: apicize-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'apicize __VERSION__'
+          releaseName: 'Apicize __VERSION__'
           releaseBody: 'See the assets to download this version and install.  Assets beginning with "apicize_" are the GUI app, assets beginning wtih "apicize-run_" are the CLI runner.'
           # releaseDraft: true
           prerelease: false
@@ -74,6 +74,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          name: 'Apicize ${{needs.publish-tauri.outputs.appVersion}}'
           files: ./@apicize/cli/target/debian/apicize-run_${{needs.publish-tauri.outputs.appVersion}}_amd64.deb
 
   publish-cli-rpm:
@@ -102,4 +103,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          name: 'Apicize ${{needs.publish-tauri.outputs.appVersion}}'
           files: ./@apicize/cli/./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-1.x86_64.rpm
