@@ -88,18 +88,18 @@ jobs:
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           cargo install cargo-generate-rpm
       - name: build application
-        run: cargo build --release
+        run: RUSTFLAGS="-C target-feature=+crt-static" cargo build --target x86_64-unknown-linux-gnu
         working-directory: ./@apicize/cli
       - name: build .rpm package
         run: cargo generate-rpm
         working-directory: ./@apicize/cli
-      - name: remove stubbed release number from .rpm file name
-        run: mv ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-999.x86_64.rpm ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
-        working-directory: ./@apicize/cli
+      # - name: remove stubbed release number from .rpm file name
+      #   run: mv ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-999.x86_64.rpm ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
+      #   working-directory: ./@apicize/cli
       - name: add .rpm package to release
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ./@apicize/cli/./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
+          files: ./@apicize/cli/./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-1.x86_64.rpm
