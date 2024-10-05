@@ -75,6 +75,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: 'Apicize ${{needs.publish-tauri.outputs.appVersion}}'
+          tag_name: 'apicize-v${{needs.publish-tauri.outputs.appVersion}}'
           files: ./@apicize/cli/target/debian/apicize-run_${{needs.publish-tauri.outputs.appVersion}}_amd64.deb
 
   publish-cli-rpm:
@@ -104,4 +105,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: 'Apicize ${{needs.publish-tauri.outputs.appVersion}}'
+          tag_name: 'apicize-v${{needs.publish-tauri.outputs.appVersion}}'
           files: ./@apicize/cli/./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-1.x86_64.rpm
