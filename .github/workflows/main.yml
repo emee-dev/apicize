@@ -75,8 +75,8 @@ jobs:
           args: --verbose ${{ matrix.args }}
           projectPath: ./app
 
-  publish-cli:
-    name: Release apicize-run
+  publish-cli-deb:
+    name: Release apicize-run as .deb
     runs-on: Ubuntu-22.04
     needs: 'publish-tauri'
     steps:
@@ -85,15 +85,41 @@ jobs:
       - name: install rust and cargo-deb
         run: curl https://sh.rustup.rs -sSf | sh -s -- -y && cargo install cargo-deb
         working-directory: ./@apicize/cli
-      - name: build Debian package
+      - name: build .deb package
         run: cargo deb
         working-directory: ./@apicize/cli
-      - name: add Debian package to release
+      - name: add .deb package to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
             upload_url: ${{needs.publish-tauri.outputs.releaseUploadUrl}}
-            asset_path: ./@apicize/cli/target/debian/apicize-run_0.6.1-1_amd64.deb
-            asset_name: apicize-run_0.6.1-1_amd64.deb
+            asset_path: ./@apicize/cli/target/debian/apicize-run_${{needs.publish-tauri.outputs.appVersion}}_amd64.deb
+            asset_name: apicize-run_${{needs.publish-tauri.outputs.appVersion}}_amd64.deb
             asset_content_type: application/gzip
+
+  publish-cli-rpm:
+    name: Release apicize-run as .rpm
+    runs-on: Ubuntu-22.04
+    needs: 'publish-tauri'
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: install rust and cargo-generate-rpm
+        run: curl https://sh.rustup.rs -sSf | sh -s -- -y && cargo install cargo-generate-rpm
+        working-directory: ./@apicize/cli
+      - name: build application
+        run: cargo build && strip -s target/release/apicize-run
+        working-directory: ./@apicize/cli
+      - name: build .rpm package
+        run: cargo generate-rpm
+        working-directory: ./@apicize/cli
+      - name: add .rpm package to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+            upload_url: ${{needs.publish-tauri.outputs.releaseUploadUrl}}
+            asset_path: ./@apicize/cli/target/debian/apicize-run_${{needs.publish-tauri.outputs.appVersion}}_x86_64.rpm
+            asset_name: apicize-run_${{needs.publish-tauri.outputs.appVersion}}_x86_64.rpm
+            asset_content_type: application/octet-stream
