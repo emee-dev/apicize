@@ -92,11 +92,11 @@ jobs:
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           cargo install cargo-generate-rpm
       - name: build application
-        run: cargo build && strip -s ./target/release/apicize-run
+        run: cargo build --release
         working-directory: ./@apicize/cli
       - name: build .rpm package
         run: cargo generate-rpm
-      - name: remove release from .rpm file name
+      - name: remove stubbed release number from .rpm file name
         run: run mv ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-999.x86_64.rpm ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
         working-directory: ./@apicize/cli
       - name: add .rpm package to release
