@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.6.2
+
+* Add deployment packages for CLI
+
 # 0.6.1
 
 * Fix help screen in light mode
