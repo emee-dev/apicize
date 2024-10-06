@@ -250,14 +250,12 @@ impl Parameters {
 }
 
 impl ApicizeSettings {
-
     fn get_settings_directory() -> path::PathBuf {
         if let Some(directory) = config_dir() {
             return directory.join("apicize");
         } else {
             panic!("Operating system did not provide configuration directory")
         }
-
     }
 
     /// Return the file name for settings
@@ -288,9 +286,13 @@ impl ApicizeSettings {
     /// Save Apicize common environment to the specified name in the default path
     pub fn save(&self) -> Result<SerializationSaveSuccess, SerializationFailure> {
         let dir = Self::get_settings_directory();
-        if ! Path::new(&dir).is_dir() {
+        if !Path::new(&dir).is_dir() {
             if let Err(err) = create_dir_all(&dir) {
-                panic!("Unable to create {} - {}", &dir.to_string_lossy(), err.to_string());
+                panic!(
+                    "Unable to create {} - {}",
+                    &dir.to_string_lossy(),
+                    err.to_string()
+                );
             }
         }
         save_data_file(&Self::get_settings_filename(), self)
@@ -934,6 +936,7 @@ impl Workspace {
         request: &WorkbookRequest,
         response: &ApicizeResponse,
         variables: &HashMap<String, Value>,
+        tests_started: Arc<Instant>,
     ) -> Result<Option<ExecutedTestResponse>, ExecutionError> {
         // Create a new Isolate and make it the current one.
         let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
@@ -959,12 +962,17 @@ impl Workspace {
             return Ok(None);
         }
 
+        let cloned_tests_started = *tests_started;
+
         let mut init_code = String::new();
         init_code.push_str(&format!(
-            "runTestSuite({}, {}, {}, () => {{{}}})",
+            "runTestSuite({}, {}, {}, {}, () => {{{}}})",
             serde_json::to_string(request).unwrap(),
             serde_json::to_string(response).unwrap(),
             serde_json::to_string(variables).unwrap(),
+            std::time::UNIX_EPOCH.elapsed().unwrap().as_millis()
+                - cloned_tests_started.elapsed().as_millis()
+                + 1,
             request.test.as_ref().unwrap()
         ));
 
@@ -1180,7 +1188,8 @@ impl Workspace {
 
                 match &dispatch_response {
                     Ok((request, response)) => {
-                        let test_response = Workspace::execute_test(&info, response, &variables);
+                        let test_response =
+                            Workspace::execute_test(&info, response, &variables, tests_started);
                         match test_response {
                             Ok(test_results) => {
                                 let mut test_count = 0;

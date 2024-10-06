@@ -1,6 +1,28 @@
+
+let request = {};
+let response = {};
+let variables = {};
+let testOffset = 0;
+let names = [];
+let inIt = false;
+let results = [];
 let logs = []
+
+fmtMinSec = (value, subZero = null) => {
+    if (value === 0 && subZero) {
+        return subZero
+    }
+    const m = Math.floor(value / 60000)
+    value -= m * 60000
+    const s = Math.floor(value / 1000)
+    value -= s * 1000
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}${(0.1).toString()[1]}${value.toString().padEnd(3, '0')}`
+}
+
+
 appendLog = (type, message, ...optionalParams) => {
-    logs.push(`${(new Date()).toTimeString().replace(' ()', '')} [${type}] ${format(message, ...optionalParams)}`)
+    const timestamp = fmtMinSec(Date.now() - testOffset)
+    logs.push(`${timestamp} [${type}] ${format(message, ...optionalParams)}`)
 }
 clearLog = () => logs = [];
 
@@ -13,12 +35,6 @@ console = {
     debug: (msg, ...args) => appendLog('debug', msg, ...args),
 };
 
-var request = {};
-var response = {};
-var variables = {};
-var names = [];
-var inIt = false;
-var results = [];
 
 function pushResult(result) {
     results.push({
@@ -56,11 +72,12 @@ function it(behavior, run) {
     }
 }
 
-const runTestSuite = (request1, response1, variables1, testSuite) => {
+const runTestSuite = (request1, response1, variables1, testOffset1, testSuite) => {
     request = request1
     response = response1
     variables = variables1 ?? {}
-    console.log('variables', variables)
+    testOffset = testOffset1
+    // console.log('variables', variables)
     names = []
     clearLog()
     results = []

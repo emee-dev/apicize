@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.6.3
+
+* Set log timestamps as relative to start of execution
+
 # 0.6.2
 
 * Add deployment packages for CLI
