@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.6.4
+
+* Return product name back to sentence case
+
 # 0.6.3
 
 * Set log timestamps as relative to start of execution

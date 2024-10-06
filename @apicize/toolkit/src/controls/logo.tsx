@@ -4,7 +4,7 @@ import { useWorkspace } from "../contexts/workspace.context";
 
 export function logo() {
     const workspace = useWorkspace()
-    let name = workspace.appName[0].toUpperCase() + workspace.appName.substring(1)
+    let name = workspace.appName
     let version = workspace.appVersion
 
     return <Box display='flex'>
