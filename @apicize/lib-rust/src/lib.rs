@@ -15,7 +15,7 @@ use apicize::{
     ApicizeResponse, ExecutedTestResponse,
 };
 use async_recursion::async_recursion;
-use dirs::{config_dir, document_dir};
+use dirs::{config_dir, document_dir, home_dir};
 use encoding_rs::{Encoding, UTF_8};
 use mime::Mime;
 use reqwest::{Body, Client, ClientBuilder, Error, Identity, Proxy};
@@ -50,8 +50,10 @@ pub fn cleanup_v8() {
 fn get_workbooks_directory() -> path::PathBuf {
     if let Some(directory) = document_dir() {
         directory.join("apicize")
+    } else if let Some(directory) = home_dir() {
+        directory.join("apicize")
     } else {
-        panic!("Operating system did not provide document directory")
+        panic!("Operating system did not provide document or home directory")
     }
 }
 
