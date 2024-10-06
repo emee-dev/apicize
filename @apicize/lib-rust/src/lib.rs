@@ -21,7 +21,7 @@ use mime::Mime;
 use reqwest::{Body, Client, ClientBuilder, Error, Identity, Proxy};
 use serde_json::Value;
 use std::collections::HashSet;
-use std::fs::create_dir;
+use std::fs::create_dir_all;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Once};
 use std::time::{Duration, Instant};
@@ -248,17 +248,19 @@ impl Parameters {
 }
 
 impl ApicizeSettings {
-    /// Return the file name for settings
-    fn get_settings_filename() -> path::PathBuf {
+
+    fn get_settings_directory() -> path::PathBuf {
         if let Some(directory) = config_dir() {
-            let dir = directory.join("apicize");
-            if !dir.exists() {
-                create_dir(&dir).unwrap()
-            }
-            dir.join("settings.son")
+            return directory.join("apicize");
         } else {
             panic!("Operating system did not provide configuration directory")
         }
+
+    }
+
+    /// Return the file name for settings
+    fn get_settings_filename() -> path::PathBuf {
+        return Self::get_settings_directory().join("settings.json");
     }
 
     /// Open Apicize common environment from the specified name in the default path
@@ -283,6 +285,12 @@ impl ApicizeSettings {
 
     /// Save Apicize common environment to the specified name in the default path
     pub fn save(&self) -> Result<SerializationSaveSuccess, SerializationFailure> {
+        let dir = Self::get_settings_directory();
+        if ! Path::new(&dir).is_dir() {
+            if let Err(err) = create_dir_all(&dir) {
+                panic!("Unable to create {} - {}", &dir.to_string_lossy(), err.to_string());
+            }
+        }
         save_data_file(&Self::get_settings_filename(), self)
     }
 }
