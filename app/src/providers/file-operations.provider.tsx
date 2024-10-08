@@ -3,10 +3,9 @@ import * as core from '@tauri-apps/api/core'
 import * as dialog from '@tauri-apps/plugin-dialog'
 import * as path from '@tauri-apps/api/path'
 import { exists, readFile, readTextFile, copyFile, mkdir } from "@tauri-apps/plugin-fs"
-import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useFeedback, WorkspaceStore } from "@apicize/toolkit";
+import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useApicizeSettings, useFeedback, WorkspaceStore } from "@apicize/toolkit";
 import { StoredGlobalSettings, Workspace } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
-import { useApicizeSettings } from "./apicize-settings.provider";
 
 /**
  * Implementation of file opeartions via Tauri

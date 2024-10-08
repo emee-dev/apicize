@@ -3,7 +3,7 @@ import {
     WorkbookBasicAuthorization, WorkbookOAuth2ClientAuthorization, Selection
 } from "@apicize/lib-typescript"
 import { Editable } from "../editable"
-import { computed, observable } from "mobx"
+import { computed, makeObservable, observable } from "mobx"
 import { NO_SELECTION } from "../store"
 import { EditableEntityType } from "./editable-entity-type"
 
@@ -25,7 +25,7 @@ export class EditableWorkbookAuthorization extends Editable<WorkbookAuthorizatio
     @observable accessor selectedCertificate: Selection | undefined = undefined
     @observable accessor selectedProxy: Selection | undefined = undefined
 
-    static fromWorkspace(entry: WorkbookAuthorization): EditableWorkbookAuthorization {
+    static fromWorkbook(entry: WorkbookAuthorization): EditableWorkbookAuthorization {
         let result = new EditableWorkbookAuthorization()
         result.id = entry.id
         result.name = entry.name ?? ''
@@ -56,7 +56,7 @@ export class EditableWorkbookAuthorization extends Editable<WorkbookAuthorizatio
         return result
     }
 
-    toWorkspace(): WorkbookAuthorization {
+    toWorkbook(): WorkbookAuthorization {
         let result: WorkbookAuthorization
         switch (this.type) {
             case WorkbookAuthorizationType.ApiKey:

@@ -8,5 +8,6 @@ export enum EditableEntityType {
     Scenario = 's',
     Authorization = 'a',
     Certificate = 'c',
-    Proxy = 'p'
+    Proxy = 'p',
+    Defaults = 'd',
 }

@@ -1,4 +1,4 @@
-import { useApicizeSettings } from "../providers/apicize-settings.provider"
+import { useApicizeSettings } from "@apicize/toolkit"
 import { createTheme, ThemeProvider } from "@mui/material/styles"
 import { observer } from "mobx-react-lite"
 import { ReactNode } from "react"

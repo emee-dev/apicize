@@ -10,6 +10,7 @@ import SaveAsIcon from '@mui/icons-material/SaveAs'
 import HelpIcon from '@mui/icons-material/Help'
 import SendIcon from '@mui/icons-material/Send'
 import LockIcon from '@mui/icons-material/Lock'
+import InputIcon from '@mui/icons-material/Input';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -28,7 +29,7 @@ import { EditableItem } from "../models/editable";
 import { EditableEntityType } from "../models/workbook/editable-entity-type";
 import { useFileOperations } from "../contexts/file-operations.context";
 import { useWorkspace } from "../contexts/workspace.context";
-import { useFeedback } from "../contexts/feedback.context";
+import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 
 interface MenuPosition {
     id: string
@@ -937,31 +938,26 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             ...theme.applyStyles('dark', {
                 backgroundColor: '#202020'
             })
-        }) ]}>
-            <Box display='flex' flexDirection='row' sx={{ marginBottom: '0.2em', paddingLeft: '0.5em', paddingRight: '0.5em' }}>
-                <Box sx={{ width: '100%', marginRight: '8px' }}>
-                    <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()} sx={{ marginLeft: '0.2em' }}>
-                        <PostAddIcon />
-                    </IconButton>
-                    <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook(undefined, true)} sx={{ marginLeft: '0.2em' }}>
-                        <FileOpenIcon />
-                    </IconButton>
-                    <IconButton aria-label='save' title='Save Workbook (Ctrl + S)' disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()} sx={{ marginLeft: '0.2em' }}>
-                        <SaveIcon />
-                    </IconButton>
-                    <IconButton aria-label='save' title='Save Workbook As (Ctrl + Shift + S)' onClick={() => fileOps.saveWorkbookAs()} sx={{ marginLeft: '0.2em' }}>
-                        <SaveAsIcon />
-                    </IconButton>
-                    <Box sx={{ float: 'right' }}>
-                        {
-                            props.onSettings
-                                ? <IconButton aria-label='settings' title='Settings' sx={{ marginRight: '0.2em' }} onClick={props.onSettings}><SettingsIcon /></IconButton>
-                                : null
-                        }
-                        <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }}>
-                            <HelpIcon />
+        })]}>
+            <Box display='flex' flexDirection='row' sx={{ marginBottom: '0.2em', marginLeft: '1em', marginRight: '.75em' }}>
+                <Box width='100%' display='flex' fontSize='2em' >
+                    <Box display='flex' flexGrow={1} gap='0.4em'>
+                        <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()}>
+                            <PostAddIcon />
+                        </IconButton>
+                        <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook(undefined, true)}>
+                            <FileOpenIcon />
+                        </IconButton>
+                        <IconButton aria-label='save' title='Save Workbook (Ctrl + S)' disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()}>
+                            <SaveIcon />
+                        </IconButton>
+                        <IconButton aria-label='save' title='Save Workbook As (Ctrl + Shift + S)' onClick={() => fileOps.saveWorkbookAs()}>
+                            <SaveAsIcon />
                         </IconButton>
                     </Box>
+                    <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }} sx={{ alignSelf: 'flex-end' }}>
+                        <HelpIcon />
+                    </IconButton>
                 </Box>
             </Box>
             <DndContext onDragMove={onDragMove} onDragCancel={onDragCancel} onDragEnd={onDragEnd} sensors={sensors}>
@@ -971,7 +967,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     aria-label='request navigator'
                     // defaultCollapseIcon={<ExpandMoreIcon />}
                     // defaultExpandIcon={<ChevronRightIcon />}
-                    sx={{marginLeft: '0.25em', paddingRight: '0.5em'}}
+                    sx={{ marginLeft: '0.25em', paddingRight: '0.5em' }}
                     expandedItems={workspace.expandedItems}
                     selectedItems={workspace.active ? `${workspace.active.entityType}-${workspace.active.id}` : ''}
                     multiSelect={false}
@@ -1092,6 +1088,19 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                                 )
                         }
                     </NavTreeSection>
+                    <TreeItem itemId="wkbk-defaults" label={(
+                        <Box
+                            component='span'
+                            display='flex'
+                            justifyContent='space-between'
+                            alignItems='center'
+                        >
+                            <SettingsIcon className='nav-folder' />
+                            <Box className='nav-node-text' sx={{ flexGrow: 1, paddingTop: '8px', paddingBottom: '8px' }}>
+                                Defaults &amp; Settings
+                            </Box>
+                        </Box>
+                    )} onClick={() => workspace.changeActive(EditableEntityType.Defaults, '')} />
                 </SimpleTreeView>
             </DndContext>
             <RequestsMenu />
@@ -1100,6 +1109,6 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             <AuthMenu />
             <CertMenu />
             <ProxyMenu />
-        </Stack>
+        </Stack >
     )
 })

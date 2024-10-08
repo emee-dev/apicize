@@ -10,6 +10,7 @@ import { EditableWorkbookProxy } from "../models/workbook/editable-workbook-prox
 import { DEFAULT_SELECTION, NO_SELECTION } from "../models/store";
 import { EditableWorkbookCertificate } from "../models/workbook/editable-workbook-certificate";
 import { toJS } from "mobx";
+import { EditableWorkbookDefaults } from "../models/workbook/editable-workbook-defaults";
 
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
@@ -84,7 +85,7 @@ function editableIndexToStoredWorkspace<S extends Identifiable>(
 ): IndexedEntities<S> {
     const entities = new Map<string, S>()
     for (const [id, entity] of index.entities) {
-        entities.set(id, entity.toWorkspace())
+        entities.set(id, entity.toWorkbook())
     }
 
     return {
@@ -104,10 +105,7 @@ export function newEditableWorkspace(): EditableWorkspace {
         authorizations: { entities: new Map(), topLevelIds: [] },
         certificates: { entities: new Map(), topLevelIds: [] },
         proxies: { entities: new Map(), topLevelIds: [] },
-        selectedScenario: NO_SELECTION,
-        selectedAuthorization: NO_SELECTION,
-        selectedCertificate: NO_SELECTION,
-        selectedProxy: NO_SELECTION,
+        defaults: EditableWorkbookDefaults.new(),
     }
 }
 
@@ -125,41 +123,36 @@ export function storedWorkspaceToEditableWorkspace(workspace: Workspace): Editab
             entities: new Map(Object.values(workspace.requests.entities)
                 .map(e => [e.id, e['url'] === undefined
                     ? EditableWorkbookRequestGroup.fromWorkspace(e)
-                    : EditableWorkbookRequest.fromWorkspace(e)
+                    : EditableWorkbookRequest.fromWorkbook(e)
                 ])),
             childIds: workspace.requests.childIds ? new Map(Object.entries(workspace.requests.childIds)) : undefined
         },
         scenarios: {
             topLevelIds: workspace.scenarios.topLevelIds,
             entities: new Map(
-                Object.values(workspace.scenarios.entities).map(e => ([e.id, EditableWorkbookScenario.fromWorkspace(e)]))
+                Object.values(workspace.scenarios.entities).map(e => ([e.id, EditableWorkbookScenario.fromWorkbook(e)]))
             )
         },
         authorizations: {
             topLevelIds: workspace.authorizations.topLevelIds,
             entities: new Map(
-                Object.values(workspace.authorizations.entities).map(e => ([e.id, EditableWorkbookAuthorization.fromWorkspace(e)]))
+                Object.values(workspace.authorizations.entities).map(e => ([e.id, EditableWorkbookAuthorization.fromWorkbook(e)]))
             )
         },
         certificates: {
             topLevelIds: workspace.certificates.topLevelIds,
             entities: new Map(
-                Object.values(workspace.certificates.entities).map(e => ([e.id, EditableWorkbookCertificate.fromWorkspace(e)]))
+                Object.values(workspace.certificates.entities).map(e => ([e.id, EditableWorkbookCertificate.fromWorkbook(e)]))
             )
         },
         proxies: {
             topLevelIds: workspace.proxies.topLevelIds,
             entities: new Map(
-                Object.values(workspace.proxies.entities).map(e => ([e.id, EditableWorkbookProxy.fromWorkspace(e)]))
+                Object.values(workspace.proxies.entities).map(e => ([e.id, EditableWorkbookProxy.fromWorkbook(e)]))
             )
         },
-        // not supporting top-level selection defaults at this time
-        selectedScenario: NO_SELECTION,
-        selectedAuthorization: NO_SELECTION,
-        selectedCertificate: NO_SELECTION,
-        selectedProxy: NO_SELECTION,
+        defaults: EditableWorkbookDefaults.fromWorkbook(workspace)
     }
-
 }
 
 export function editableToNameValuePair(pair: EditableNameValuePair) {
@@ -189,14 +182,11 @@ export function editableWorkspaceToStoredWorkspace(
     authorizations: IndexedEntities<EditableWorkbookAuthorization>,
     certificates: IndexedEntities<EditableWorkbookCertificate>,
     proxies: IndexedEntities<EditableWorkbookProxy>,
-    selectedScenario: Selection,
-    selectedAuthorization: Selection,
-    selectedCertificate: Selection,
-    selectedProxy: Selection,
+    defaults: EditableWorkbookDefaults,
 ): Workspace {
     const requestEntities = new Map<string, WorkbookRequestEntry>()
     for (const [id, request] of requests.entities) {
-        requestEntities.set(id, request.toWorkspace())
+        requestEntities.set(id, request.toWorkbook())
     }
     const result = {
         version: 1.0,
@@ -209,10 +199,7 @@ export function editableWorkspaceToStoredWorkspace(
         authorizations: editableIndexToStoredWorkspace<WorkbookAuthorization>(authorizations),
         certificates: editableIndexToStoredWorkspace<WorkbookCertificate>(certificates),
         proxies: editableIndexToStoredWorkspace<WorkbookProxy>(proxies),
-        selectedScenario: (selectedScenario === DEFAULT_SELECTION) ? undefined : selectedScenario,
-        selectedAuthorization: (selectedAuthorization === DEFAULT_SELECTION) ? undefined : selectedAuthorization,
-        selectedCertificate: (selectedCertificate === DEFAULT_SELECTION) ? undefined : selectedCertificate,
-        selectedProxy: (selectedProxy === DEFAULT_SELECTION) ? undefined : selectedProxy,
+        defaults: defaults.toWorkbook()
     }
     return result
 }

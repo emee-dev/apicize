@@ -89,7 +89,7 @@ fn main() {
 
 #[tauri::command]
 async fn open_workspace(path: String) -> Result<Workspace, String> {
-    match Workspace::open(&PathBuf::from(path)) {
+    match Workspace::open(&PathBuf::from(path), None) {
         Ok((workspace, warnings)) => {
             clear_all_oauth2_tokens().await;
             for warning in warnings {

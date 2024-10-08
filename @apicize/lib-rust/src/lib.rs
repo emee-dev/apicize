@@ -38,6 +38,16 @@ static V8_INIT: Once = Once::new();
 
 const NO_SELECTION_ID: &str = "\tNONE\t";
 
+/// State of a selected option
+pub enum SelectedOption<T> {
+    /// Use default parent selection (if available)
+    UseDefault,
+    /// Do not send a value for this selection
+    Off,
+    /// Use this value
+    Some(T),
+}
+
 /// Cleanup V8 platform, should only be called once at end of application
 pub fn cleanup_v8() {
     unsafe {
@@ -47,7 +57,7 @@ pub fn cleanup_v8() {
 }
 
 /// Return default workbooks directory
-fn get_workbooks_directory() -> path::PathBuf {
+pub fn get_workbooks_directory() -> path::PathBuf {
     if let Some(directory) = document_dir() {
         directory.join("apicize")
     } else if let Some(directory) = home_dir() {
@@ -66,10 +76,7 @@ impl Workbook {
         authorizations: Vec<WorkbookAuthorization>,
         certificates: Vec<WorkbookCertificate>,
         proxies: Vec<WorkbookProxy>,
-        selected_scenario: Option<Selection>,
-        selected_authorization: Option<Selection>,
-        selected_certificate: Option<Selection>,
-        selected_proxy: Option<Selection>,
+        defaults: Option<WorkbookDefaults>,
     ) -> Result<SerializationSaveSuccess, SerializationFailure> {
         let save_scenarios = if scenarios.is_empty() {
             None
@@ -99,10 +106,7 @@ impl Workbook {
             authorizations: save_authorizations,
             certificates: save_certiificates,
             proxies: save_proxies,
-            selected_scenario,
-            selected_authorization,
-            selected_certificate,
-            selected_proxy,
+            defaults,
         };
 
         save_data_file(&file_name, &workbook)
@@ -111,7 +115,7 @@ impl Workbook {
 
 impl Parameters {
     /// Return the file name for globals
-    fn get_globals_filename() -> path::PathBuf {
+    pub fn get_globals_filename() -> path::PathBuf {
         if let Some(directory) = config_dir() {
             directory.join("apicize").join("globals.json")
         } else {
@@ -128,8 +132,13 @@ impl Parameters {
 
     /// Return global parameters information
     pub fn open_global_parameters(
+        global_parameters_filename: Option<PathBuf>,
     ) -> Result<SerializationOpenSuccess<Parameters>, SerializationFailure> {
-        Self::open(Self::get_globals_filename())
+        Self::open(if let Some(filename) = global_parameters_filename {
+            filename.clone()
+        } else {
+            Self::get_globals_filename()
+        })
     }
 
     /// Return workbook private parameter information
@@ -574,22 +583,35 @@ impl Workspace {
     }
 
     /// Find entity (Scenario, Authorization, etc.)
-    fn find_matching_selection<'a, T: WorkspaceEntity<T>>(
-        selection: &Selection,
+    pub fn find_matching_selection<'a, T: WorkspaceEntity<T>>(
+        selection: &Option<Selection>,
         list: &'a IndexedEntities<T>,
-    ) -> Option<&'a T> {
-        if let Some(found) = list.entities.get(&selection.id) {
-            Some(&found)
-        } else {
-            list.entities.values().find(|v| {
-                let (_, name) = v.get_id_and_name();
-                name.eq_ignore_ascii_case(&selection.name)
-            })
+    ) -> SelectedOption<&'a T> {
+        match selection {
+            Some(s) => {
+                if s.id == NO_SELECTION_ID {
+                    SelectedOption::Off
+                } else if let Some(found) = list.entities.get(&s.id) {
+                    SelectedOption::Some(found)
+                } else {
+                    match list.entities.values().find(|v| {
+                        let (_, name) = v.get_id_and_name();
+                        name.eq_ignore_ascii_case(&s.name)
+                    }) {
+                        Some(found_by_name) => SelectedOption::Some(&found_by_name),
+                        None => SelectedOption::UseDefault,
+                    }
+                }
+            }
+            None => SelectedOption::UseDefault,
         }
     }
 
     /// Find matching scenario, if any
-    pub fn find_scenario<'a>(&self, selection: &Selection) -> Option<&WorkbookScenario> {
+    pub fn find_scenario<'a>(
+        &self,
+        selection: &Option<Selection>,
+    ) -> SelectedOption<&WorkbookScenario> {
         Workspace::find_matching_selection(selection, &self.scenarios)
     }
 
@@ -597,6 +619,7 @@ impl Workspace {
     /// and global settings
     pub fn open(
         workbook_file_name: &PathBuf,
+        globals_filename: Option<PathBuf>,
     ) -> Result<(Workspace, Vec<String>), SerializationFailure> {
         let mut wkspc_requests = IndexedRequests {
             top_level_ids: vec![],
@@ -622,7 +645,7 @@ impl Workspace {
 
         // Populate entries from global storage
         let mut globals: Parameters;
-        match Parameters::open_global_parameters() {
+        match Parameters::open_global_parameters(globals_filename) {
             Ok(success) => {
                 globals = success.data;
             }
@@ -742,10 +765,7 @@ impl Workspace {
             authorizations: wkspc_authorizations,
             certificates: wkspc_certificates,
             proxies: wkspc_proxies,
-            selected_scenario: wkbk.selected_scenario,
-            selected_authorization: wkbk.selected_authorization,
-            selected_certificate: wkbk.selected_certificate,
-            selected_proxy: wkbk.selected_proxy,
+            defaults: wkbk.defaults,
             warnings: None,
         };
 
@@ -890,6 +910,13 @@ impl Workspace {
             &mut wkbk_proxies,
         );
 
+        let defaults = match &self.defaults {
+            Some(defaults) => {
+                Some(defaults.clone())
+            }
+            None => None,
+        };
+
         let mut successes: Vec<SerializationSaveSuccess> = vec![];
 
         match Workbook::save_workbook(
@@ -899,10 +926,7 @@ impl Workspace {
             wkbk_authorizations,
             wkbk_certificates,
             wkbk_proxies,
-            self.selected_scenario.clone(),
-            self.selected_authorization.clone(),
-            self.selected_certificate.clone(),
-            self.selected_proxy.clone(),
+            defaults,
         ) {
             Ok(success) => successes.push(success),
             Err(error) => return Err(error),
@@ -1031,62 +1055,68 @@ impl Workspace {
         while !done {
             // Set the credential values at the current request value
             if allow_scenario {
-                if let Some(selected) = current.get_selected_scenario() {
-                    if selected.id == NO_SELECTION_ID {
+                match Self::find_matching_selection(
+                    current.get_selected_scenario(),
+                    &self.scenarios,
+                ) {
+                    SelectedOption::UseDefault => {}
+                    SelectedOption::Off => {
+                        scenario = None;
                         allow_scenario = false;
-                    } else if scenario.is_none() {
-                        scenario = self.scenarios.entities.get(&selected.id);
+                    }
+                    SelectedOption::Some(s) => {
+                        scenario = Some(s);
                     }
                 }
             }
             if allow_authorization {
-                if let Some(selected) = current.get_selected_authorization() {
-                    if selected.id == NO_SELECTION_ID {
-                        allow_authorization = false
-                    } else if authorization.is_none() {
-                        authorization = self.authorizations.entities.get(&selected.id);
-                        if let Some(matching_auth) = authorization {
-                            if let WorkbookAuthorization::OAuth2Client {
-                                selected_certificate,
-                                selected_proxy,
-                                ..
-                            } = matching_auth
-                            {
-                                if let Some(cert) = selected_certificate {
-                                    auth_certificate = self.certificates.entities.get(&cert.id);
-                                }
-                                if let Some(proxy) = selected_proxy {
-                                    auth_proxy = self.proxies.entities.get(&proxy.id);
-                                }
-                            }
-                        }
+                match Self::find_matching_selection(
+                    current.get_selected_authorization(),
+                    &self.authorizations,
+                ) {
+                    SelectedOption::UseDefault => {}
+                    SelectedOption::Off => {
+                        authorization = None;
+                        allow_authorization = false;
+                    }
+                    SelectedOption::Some(s) => {
+                        authorization = Some(s);
                     }
                 }
             }
             if allow_certificate {
-                if let Some(selected) = current.get_selected_certificate() {
-                    if selected.id == NO_SELECTION_ID {
-                        allow_certificate = false
-                    } else if certificate.is_none() {
-                        certificate = self.certificates.entities.get(&selected.id)
+                match Self::find_matching_selection(
+                    current.get_selected_certificate(),
+                    &self.certificates,
+                ) {
+                    SelectedOption::UseDefault => {}
+                    SelectedOption::Off => {
+                        certificate = None;
+                        allow_certificate = false;
+                    }
+                    SelectedOption::Some(s) => {
+                        certificate = Some(s);
                     }
                 }
             }
             if allow_proxy {
-                if let Some(selected) = current.get_selected_proxy() {
-                    if selected.id == NO_SELECTION_ID {
-                        allow_proxy = false
-                    } else if proxy.is_none() {
-                        proxy = self.proxies.entities.get(&selected.id)
+                match Self::find_matching_selection(current.get_selected_proxy(), &self.proxies) {
+                    SelectedOption::UseDefault => {}
+                    SelectedOption::Off => {
+                        proxy = None;
+                        allow_proxy = false;
+                    }
+                    SelectedOption::Some(s) => {
+                        proxy = Some(s);
                     }
                 }
             }
 
-            done = (scenario.is_some()
-                && authorization.is_some()
-                && certificate.is_some()
-                && proxy.is_some())
-                || (!(allow_scenario && allow_authorization && allow_certificate && allow_proxy));
+            done = ((scenario.is_some() || !allow_scenario)
+                && (authorization.is_some() || !allow_authorization)
+                && (certificate.is_some())
+                || !allow_certificate)
+                && (proxy.is_some() || !allow_proxy);
 
             if !done {
                 // Get the parent
@@ -1120,20 +1150,45 @@ impl Workspace {
             }
         }
 
-        if !allow_scenario {
-            scenario = None
+        // Load from workbook defaults if required
+        if let Some(defaults) = &self.defaults {
+            if scenario.is_none() && allow_scenario {
+                if let SelectedOption::Some(v) = Self::find_matching_selection(&defaults.selected_scenario, &self.scenarios) {
+                    scenario = Some(v);
+                }
+            }
+            if authorization.is_none() && allow_authorization {
+                if let SelectedOption::Some(v) = Self::find_matching_selection(&defaults.selected_authorization, &self.authorizations) {
+                    authorization = Some(v);
+                }
+            }
+            if certificate.is_none() && allow_certificate {
+                if let SelectedOption::Some(v) = Self::find_matching_selection(&defaults.selected_certificate, &self.certificates) {
+                    certificate = Some(v);
+                }
+            }
+            if proxy.is_none() && allow_proxy {
+                if let SelectedOption::Some(v) = Self::find_matching_selection(&defaults.selected_proxy, &self.proxies) {
+                    proxy = Some(v);
+                }
+            }
         }
 
-        if !allow_authorization {
-            authorization = None
-        }
-
-        if !allow_certificate {
-            certificate = None
-        }
-
-        if !allow_proxy {
-            proxy = None
+        // Set up OAuth2 cert/proxy if specified
+        if let Some(auth) = &authorization {
+            if let WorkbookAuthorization::OAuth2Client {
+                selected_certificate,
+                selected_proxy,
+                ..
+            } = auth
+            {
+                if let Some(cert) = selected_certificate {
+                    auth_certificate = self.certificates.entities.get(&cert.id);
+                }
+                if let Some(proxy) = selected_proxy {
+                    auth_proxy = self.proxies.entities.get(&proxy.id);
+                }
+            }
         }
 
         let mut result_variables = variables.clone();
@@ -2119,35 +2174,87 @@ impl SelectableOptions for Workspace {
     }
 
     fn get_selected_scenario(&self) -> &Option<Selection> {
-        &self.selected_scenario
+        if let Some(defaults) = &self.defaults {
+            &defaults.selected_scenario
+        } else {
+            &None
+        }
     }
 
     fn get_selected_authorization(&self) -> &Option<Selection> {
-        &self.selected_authorization
+        if let Some(defaults) = &self.defaults {
+            &defaults.selected_authorization
+        } else {
+            &None
+        }
     }
 
     fn get_selected_certificate(&self) -> &Option<Selection> {
-        &self.selected_certificate
+        if let Some(defaults) = &self.defaults {
+            &defaults.selected_certificate
+        } else {
+            &None
+        }
     }
 
     fn get_selected_proxy(&self) -> &Option<Selection> {
-        &self.selected_proxy
+        if let Some(defaults) = &self.defaults {
+            &defaults.selected_proxy
+        } else {
+            &None
+        }
     }
 
     fn set_scenario(&mut self, value: Option<Selection>) {
-        self.selected_scenario = value;
+        if let Some(defaults) = self.defaults.as_mut() {
+            defaults.selected_scenario = value;
+        } else {
+            self.defaults = Some(WorkbookDefaults {
+                selected_scenario: value,
+                selected_authorization: None,
+                selected_certificate: None,
+                selected_proxy: None,
+            });
+        }
     }
 
     fn set_authorization(&mut self, value: Option<Selection>) {
-        self.selected_authorization = value;
+        if let Some(defaults) = self.defaults.as_mut() {
+            defaults.selected_authorization = value;
+        } else {
+            self.defaults = Some(WorkbookDefaults {
+                selected_scenario: None,
+                selected_authorization: value,
+                selected_certificate: None,
+                selected_proxy: None,
+            });
+        }
     }
 
     fn set_certificate(&mut self, value: Option<Selection>) {
-        self.selected_certificate = value;
+        if let Some(defaults) = self.defaults.as_mut() {
+            defaults.selected_certificate = value;
+        } else {
+            self.defaults = Some(WorkbookDefaults {
+                selected_scenario: None,
+                selected_authorization: None,
+                selected_certificate: value,
+                selected_proxy: None,
+            });
+        }
     }
 
     fn set_proxy(&mut self, value: Option<Selection>) {
-        self.selected_proxy = value;
+        if let Some(defaults) = self.defaults.as_mut() {
+            defaults.selected_proxy = value;
+        } else {
+            self.defaults = Some(WorkbookDefaults {
+                selected_scenario: None,
+                selected_authorization: None,
+                selected_certificate: None,
+                selected_proxy: value,
+            });
+        }
     }
 }
 

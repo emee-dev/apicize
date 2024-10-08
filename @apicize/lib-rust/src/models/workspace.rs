@@ -1,10 +1,10 @@
 //! Workspace models submodule
-//! 
+//!
 //! This submodule defines modules used to manage workspaces
 
-use std::collections::HashMap;
 use super::workbook::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Entity with a unique identifier
 pub trait WorkspaceEntity<T> {
@@ -32,7 +32,7 @@ pub struct IndexedRequests {
     pub child_ids: Option<HashMap<String, Vec<String>>>,
 
     /// Entities indexed by ID
-    pub entities: HashMap<String, WorkbookRequestEntry>
+    pub entities: HashMap<String, WorkbookRequestEntry>,
 }
 
 /// Generic for indexed, ordered entities
@@ -43,7 +43,7 @@ pub struct IndexedEntities<T> {
     pub top_level_ids: Vec<String>,
 
     /// Entities indexed by ID
-    pub entities: HashMap<String, T>
+    pub entities: HashMap<String, T>,
 }
 
 /// Data type for entities used by Apicize during testing and editing.  This will be
@@ -66,18 +66,9 @@ pub struct Workspace {
     /// Proxies for the workspace
     pub proxies: IndexedEntities<WorkbookProxy>,
 
-    /// Default selected scenario to use for testing
-    pub selected_scenario: Option<Selection>,
+    /// Default values for requests and groups
+    pub defaults: Option<WorkbookDefaults>,
 
-    /// Default selected authorization to use for testing
-    pub selected_authorization: Option<Selection>,
-
-    /// Default selected certificate to use for testing
-    pub selected_certificate: Option<Selection>,
-
-    /// Default selected proxy to use for testing
-    pub selected_proxy: Option<Selection>,
-
-    /// Warnigns retarding workspace
+    /// Warnings regarding workspace
     pub warnings: Option<Vec<String>>,
 }

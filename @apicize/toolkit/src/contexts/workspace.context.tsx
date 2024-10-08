@@ -23,6 +23,7 @@ import { EditableEntityType } from "../models/workbook/editable-entity-type"
 import { EditableItem } from "../models/editable"
 import { MAX_TEXT_RENDER_LENGTH } from "../controls/viewers/text-viewer"
 import { createContext, useContext } from "react"
+import { EditableWorkbookDefaults } from "../models/workbook/editable-workbook-defaults"
 
 export class WorkspaceStore {
     /**
@@ -185,10 +186,7 @@ export class WorkspaceStore {
             this.workspace.authorizations,
             this.workspace.certificates,
             this.workspace.proxies,
-            this.workspace.selectedScenario,
-            this.workspace.selectedAuthorization,
-            this.workspace.selectedCertificate,
-            this.workspace.selectedProxy,
+            this.workspace.defaults,
         )
     }
 
@@ -241,6 +239,11 @@ export class WorkspaceStore {
                 if (!p) throw new Error(`Invalid proxy ID ${id}`)
                 this.active = p
                 this.nextHelpTopic = 'proxies'
+                break
+            case EditableEntityType.Defaults:
+                this.hideHelp()
+                this.active = this.workspace.defaults
+                this.nextHelpTopic = 'requests'
                 break
             default:
                 this.active = null
@@ -623,35 +626,51 @@ export class WorkspaceStore {
         }
 
         const defaultScenario = activeScenarioId == DEFAULT_SELECTION_ID
-            ? 'None Configured'
+            ? this.workspace.defaults.selectedScenario.id === NO_SELECTION_ID
+                ? 'None Configured'
+                : GetTitle(this.workspace.scenarios.entities.get(this.workspace.defaults.selectedScenario.id))
             : activeScenarioId === NO_SELECTION_ID
                 ? 'Off'
                 : GetTitle(this.workspace.scenarios.entities.get(activeScenarioId))
 
         const defaultAuthorization = activeAuthorizationId == DEFAULT_SELECTION_ID
-            ? 'None Configured'
+            ? this.workspace.defaults.selectedAuthorization.id === NO_SELECTION_ID
+                ? 'None Configured'
+                : GetTitle(this.workspace.authorizations.entities.get(this.workspace.defaults.selectedAuthorization.id))
             : activeAuthorizationId === NO_SELECTION_ID
                 ? 'Off'
                 : GetTitle(this.workspace.authorizations.entities.get(activeAuthorizationId))
 
         const defaultCertificate = activeCertificateId == DEFAULT_SELECTION_ID
-            ? 'None Configured'
+            ? this.workspace.defaults.selectedCertificate.id === NO_SELECTION_ID
+                ? 'None Configured'
+                : GetTitle(this.workspace.certificates.entities.get(this.workspace.defaults.selectedCertificate.id))
             : activeCertificateId === NO_SELECTION_ID
                 ? 'Off'
                 : GetTitle(this.workspace.certificates.entities.get(activeCertificateId))
 
         const defaultProxy = activeProxyId == DEFAULT_SELECTION_ID
-            ? 'None Configured'
+            ? this.workspace.defaults.selectedProxy.id === NO_SELECTION_ID
+                ? 'None Configured'
+                : GetTitle(this.workspace.proxies.entities.get(this.workspace.defaults.selectedProxy.id))
             : activeProxyId === NO_SELECTION_ID
                 ? 'Off'
                 : GetTitle(this.workspace.proxies.entities.get(activeProxyId))
-
 
         return {
             scenarios: this.buildEntityList(this.workspace.scenarios, defaultScenario),
             authorizations: this.buildEntityList(this.workspace.authorizations, defaultAuthorization),
             certificates: this.buildEntityList(this.workspace.certificates, defaultCertificate),
             proxies: this.buildEntityList(this.workspace.proxies, defaultProxy),
+        }
+    }
+
+    getDefaultParameterLists() {
+        return {
+            scenarios: this.buildEntityList(this.workspace.scenarios),
+            authorizations: this.buildEntityList(this.workspace.authorizations),
+            certificates: this.buildEntityList(this.workspace.certificates),
+            proxies: this.buildEntityList(this.workspace.proxies),
         }
     }
 
@@ -662,10 +681,7 @@ export class WorkspaceStore {
             this.workspace.authorizations,
             this.workspace.certificates,
             this.workspace.proxies,
-            this.workspace.selectedScenario,
-            this.workspace.selectedAuthorization,
-            this.workspace.selectedCertificate,
-            this.workspace.selectedProxy,
+            this.workspace.defaults,
         )
     }
 
@@ -720,6 +736,9 @@ export class WorkspaceStore {
             if (entity.selectedScenario?.id === id) {
                 entity.selectedScenario = undefined
             }
+        }
+        if (this.workspace.defaults.selectedScenario.id == id) {
+            this.workspace.defaults.selectedScenario = NO_SELECTION
         }
         removeEntity(id, this.workspace.scenarios)
         this.clearActive()
@@ -799,6 +818,9 @@ export class WorkspaceStore {
             if (entity.selectedAuthorization?.id === id) {
                 entity.selectedAuthorization = undefined
             }
+        }
+        if (this.workspace.defaults.selectedAuthorization.id == id) {
+            this.workspace.defaults.selectedAuthorization = NO_SELECTION
         }
 
         removeEntity(id, this.workspace.authorizations)
@@ -992,6 +1014,10 @@ export class WorkspaceStore {
                 entity.selectedCertificate = undefined
             }
         }
+        if (this.workspace.defaults.selectedCertificate.id == id) {
+            this.workspace.defaults.selectedCertificate = NO_SELECTION
+        }
+
         removeEntity(id, this.workspace.certificates)
         this.clearActive()
         this.dirty = true
@@ -1101,6 +1127,9 @@ export class WorkspaceStore {
             if (entity.selectedProxy?.id === id) {
                 entity.selectedProxy = undefined
             }
+        }
+        if (this.workspace.defaults.selectedProxy.id == id) {
+            this.workspace.defaults.selectedProxy = NO_SELECTION
         }
         removeEntity(id, this.workspace.proxies)
         this.clearActive()
@@ -1386,6 +1415,50 @@ export class WorkspaceStore {
         const execution = this.requestExecutions.get(requestOrGroupId)
         if (!execution) throw new Error(`Invalid Request ID ${requestOrGroupId}`)
         execution.resultIndex = resultIndex
+    }
+
+    @action
+    setDefaultScenarioId(entityId: string) {
+        if (this.active?.entityType === EditableEntityType.Defaults) {
+            const defaults = this.active as EditableWorkbookDefaults
+            defaults.selectedScenario = entityId == NO_SELECTION_ID
+                ? NO_SELECTION
+                : { id: entityId, name: GetTitle(this.workspace.scenarios.entities.get(entityId)) }
+            this.dirty = true
+        }
+    }
+
+    @action
+    setDefaultAuthorizationId(entityId: string) {
+        if (this.active?.entityType === EditableEntityType.Defaults) {
+            const defaults = this.active as EditableWorkbookDefaults
+            defaults.selectedAuthorization = entityId == NO_SELECTION_ID
+                ? NO_SELECTION
+                : { id: entityId, name: GetTitle(this.workspace.authorizations.entities.get(entityId)) }
+            this.dirty = true
+        }
+    }
+
+    @action
+    setDefaultCertificateId(entityId: string) {
+        if (this.active?.entityType === EditableEntityType.Defaults) {
+            const defaults = this.active as EditableWorkbookDefaults
+            defaults.selectedCertificate = entityId == NO_SELECTION_ID
+                ? NO_SELECTION
+                : { id: entityId, name: GetTitle(this.workspace.certificates.entities.get(entityId)) }
+            this.dirty = true
+        }
+    }
+
+    @action
+    setDefaultProxyId(entityId: string) {
+        if (this.active?.entityType === EditableEntityType.Defaults) {
+            const defaults = this.active as EditableWorkbookDefaults
+            defaults.selectedProxy = entityId == NO_SELECTION_ID
+                ? NO_SELECTION
+                : { id: entityId, name: GetTitle(this.workspace.proxies.entities.get(entityId)) }
+            this.dirty = true
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 import { Selection, WorkbookBody, WorkbookBodyType, WorkbookGroupExecution, WorkbookMethod, WorkbookNameValuePair, WorkbookRequest, WorkbookRequestGroup } from "@apicize/lib-typescript"
 import { Editable } from "../editable"
-import { computed, observable, toJS } from "mobx"
+import { computed, makeObservable, observable, toJS } from "mobx"
 import { EditableNameValuePair } from "./editable-name-value-pair"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EditableEntityType } from "./editable-entity-type"
@@ -30,7 +30,7 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
     @observable accessor selectedCertificate: Selection | undefined = undefined
     @observable accessor selectedProxy: Selection | undefined = undefined
 
-    static fromWorkspace(entry: WorkbookRequest): EditableWorkbookRequest {
+    static fromWorkbook(entry: WorkbookRequest): EditableWorkbookRequest {
         const result = new EditableWorkbookRequest()
         result.id = entry.id
         result.name = entry.name ?? ''
@@ -76,7 +76,7 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
         return result
     }
 
-    toWorkspace(): WorkbookRequest {
+    toWorkbook(): WorkbookRequest {
         const result: WorkbookRequest = {
             id: this.id,
             name: this.name,
@@ -194,7 +194,7 @@ export class EditableWorkbookRequestGroup extends Editable<WorkbookRequestGroup>
         return result
     }
 
-    toWorkspace(): WorkbookRequestGroup {
+    toWorkbook(): WorkbookRequestGroup {
         return {
             id: this.id,
             name: this.name,

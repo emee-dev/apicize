@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.6.5
+
+* Add in workbook parameter defaults
+* Move workbook defaults and global settings to a navigation item
+
 # 0.6.4
 
 * Return product name back to sentence case

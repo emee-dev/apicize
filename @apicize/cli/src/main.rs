@@ -1,11 +1,9 @@
-use apicize_lib;
-use apicize_lib::cleanup_v8;
 use apicize_lib::models::apicize::{ApicizeExecution, ApicizeExecutionItem};
 use apicize_lib::models::settings::ApicizeSettings;
-use apicize_lib::models::Workspace;
+use apicize_lib::models::{Parameters, Workspace};
+use apicize_lib::{cleanup_v8, get_workbooks_directory};
 use clap::Parser;
 use colored::Colorize;
-use core::panic;
 use num_format::{SystemLocale, ToFormattedString};
 use std::ffi::OsStr;
 use std::path::PathBuf;
@@ -19,6 +17,12 @@ use std::time::Instant;
 struct Args {
     /// Name of the file to run
     file: String,
+    /// Manuall specified global parameter file name
+    #[arg(short, long)]
+    globals: Option<String>,
+    /// Print configuration information
+    #[arg(short, long, default_value_t = false)]
+    info: bool,
     /// Name of the output file name for test results
     output: Option<String>,
 }
@@ -183,11 +187,13 @@ fn render_execution(
                 );
                 println!("{}", "--------------------------------------".white());
             }
-        },
+        }
         Err(err) => {
-            println!("{}{}", 
-            format!("{:width$}", "", width = level * 3),
-            err.red());
+            println!(
+                "{}{}",
+                format!("{:width$}", "", width = level * 3),
+                err.red()
+            );
         }
     }
 
@@ -197,10 +203,31 @@ fn render_execution(
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     let args = Args::parse();
+
     let stored_settings: Option<ApicizeSettings> = match ApicizeSettings::open() {
         Ok(serialized_settings) => Some(serialized_settings.data),
         Err(_err) => None,
     };
+
+    let globals_filename = match args.globals {
+        Some(filename) => Some(PathBuf::from(filename)),
+        None => None,
+    };
+
+    if args.info {
+        let global_filename = if let Some(filename) = &globals_filename {
+            String::from(filename.to_string_lossy())
+        } else {
+            let default_globals_filename = Parameters::get_globals_filename();
+            String::from(default_globals_filename.to_string_lossy())
+        };
+        println!("Global parameters: {}", &global_filename);
+
+        println!(
+            "Default workbooks directory: {}",
+            get_workbooks_directory().to_string_lossy()
+        );
+    }
 
     let locale = SystemLocale::default().unwrap();
     let mut file_name = PathBuf::from(&args.file);
@@ -226,7 +253,8 @@ async fn main() {
     }
 
     if !found {
-        panic!("Apicize file \"{}\" not found", &args.file);
+        eprintln!("Error: Apicize file \"{}\" not found", &args.file);
+        std::process::exit(-1);
     }
 
     println!(
@@ -236,7 +264,7 @@ async fn main() {
     );
 
     let workspace: Workspace;
-    match Workspace::open(&file_name) {
+    match Workspace::open(&file_name, globals_filename) {
         Ok((wkspc, warnings)) => {
             workspace = wkspc;
             for warning in warnings {

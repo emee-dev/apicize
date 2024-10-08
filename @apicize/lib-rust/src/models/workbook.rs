@@ -1,7 +1,6 @@
 //! Workbook models submodule
 //! 
 //! This submodule defines modules used to store Workbooks
-
 use super::utility::*;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -371,6 +370,24 @@ pub struct WorkbookProxy {
     pub url: String,
 }
 
+/// Defaults for the workbook
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkbookDefaults {
+    /// Selected scenario, if applicable
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selected_scenario: Option<Selection>,
+    /// Selected authorization, if applicable
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selected_authorization: Option<Selection>,
+    /// Selected certificate, if applicable
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selected_certificate: Option<Selection>,
+    /// Selected proxy, if applicable
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selected_proxy: Option<Selection>,
+}
+
 /// Persisted Apcizize requests and scenario definitions
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Workbook {
@@ -390,18 +407,9 @@ pub struct Workbook {
     /// Workbook proxy servers
     #[serde(skip_serializing_if = "Option::is_none")]
     pub proxies: Option<Vec<WorkbookProxy>>,
-    /// Selected scenario, if applicable
+    /// Workbook defaults
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub selected_scenario: Option<Selection>,
-    /// Selected authorization, if applicable
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub selected_authorization: Option<Selection>,
-    /// Selected certificate, if applicable
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub selected_certificate: Option<Selection>,
-    /// Selected proxy, if applicable
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub selected_proxy: Option<Selection>,
+    pub defaults: Option<WorkbookDefaults>,
 }
 
 /// Persisted Apicize authorization, client certificate and other parameter

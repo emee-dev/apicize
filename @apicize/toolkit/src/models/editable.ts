@@ -21,5 +21,5 @@ export abstract class Editable<T> implements EditableItem {
 
     public abstract readonly entityType: EditableEntityType
 
-    abstract toWorkspace(): T
+    abstract toWorkbook(): T
 }

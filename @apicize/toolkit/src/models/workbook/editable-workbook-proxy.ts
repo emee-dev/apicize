@@ -1,6 +1,6 @@
 import { Persistence, WorkbookProxy } from "@apicize/lib-typescript"
 import { Editable } from "../editable"
-import { computed, observable } from "mobx"
+import { computed, makeObservable, observable } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
 
 export class EditableWorkbookProxy extends Editable<WorkbookProxy> {
@@ -8,7 +8,7 @@ export class EditableWorkbookProxy extends Editable<WorkbookProxy> {
     @observable accessor persistence = Persistence.Private
     @observable accessor url = ''
 
-    static fromWorkspace(entry: WorkbookProxy): EditableWorkbookProxy {
+    static fromWorkbook(entry: WorkbookProxy): EditableWorkbookProxy {
         const result = new EditableWorkbookProxy()
         result.id = entry.id
         result.name = entry.name ?? ''
@@ -17,7 +17,7 @@ export class EditableWorkbookProxy extends Editable<WorkbookProxy> {
         return result
     }
 
-    toWorkspace(): WorkbookProxy {
+    toWorkbook(): WorkbookProxy {
         return {
             id: this.id,
             name: this.name,
@@ -35,9 +35,9 @@ export class EditableWorkbookProxy extends Editable<WorkbookProxy> {
     }
 
     @computed get invalid() {
-        return ! (
+        return !(
             this.nameInvalid
             || this.urlInvalid
         )
-    }    
+    }
 }

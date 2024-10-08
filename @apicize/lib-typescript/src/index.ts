@@ -10,6 +10,7 @@ export { WorkbookAuthorization, WorkbookAuthorizationType, WorkbookBaseAuthoriza
 export { WorkbookCertificate, WorkbookCertificateType, WorkbookBaseCertificate, WorkbookPkcs8PemCertificate, WorkbookPkcs12Certificate, WorkbookPemCertificate } from './models/workbook/workbook-certificate'
 export { WorkbookProxy } from './models/workbook/workbook-proxy'
 export { WorkbookScenario } from './models/workbook/workbook-scenario'
+export { WorkbookDefaults } from './models/workbook/workbook-defaults'
 export { StoredGlobalSettings } from './models/storage/stored-global-settings'
 export { IndexedEntities, addEntity, getEntity, removeEntity, moveEntity } from './models/indexed-entities'
 export { IndexedNestedRequests, addNestedEntity, getNestedEntity, removeNestedEntity, moveNestedEntity, findNestedEntity, findParentEntity } from './models/indexed-nested-entities'

@@ -6,6 +6,7 @@ import { Selection } from './selection'
 import { IndexedEntities } from './indexed-entities'
 import { IndexedNestedRequests } from './indexed-nested-entities'
 import { WorkbookRequestEntry } from './workbook/workbook-request'
+import { WorkbookDefaults } from './workbook/workbook-defaults'
 
 /**
  * A workspace is an indexed view of an Apicize workbook,
@@ -19,8 +20,5 @@ export interface Workspace {
     scenarios: IndexedEntities<WorkbookScenario>,
     certificates: IndexedEntities<WorkbookCertificate>,
     proxies: IndexedEntities<WorkbookProxy>,
-    selectedScenario?: Selection
-    selectedAuthorization?: Selection
-    selectedCertificate?: Selection
-    selectedProxy?: Selection
+    defaults: WorkbookDefaults
 }

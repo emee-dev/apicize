@@ -1,6 +1,6 @@
 import { WorkbookCertificateType, Persistence, WorkbookCertificate } from "@apicize/lib-typescript"
 import { Editable } from "../editable"
-import { computed, observable } from "mobx"
+import { computed, makeObservable, observable } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
 
 
@@ -13,13 +13,13 @@ export class EditableWorkbookCertificate extends Editable<WorkbookCertificate> {
     @observable accessor pfx = ''
     @observable accessor password = ''
 
-    static fromWorkspace(entry: WorkbookCertificate) : EditableWorkbookCertificate {
+    static fromWorkbook(entry: WorkbookCertificate): EditableWorkbookCertificate {
         const result = new EditableWorkbookCertificate()
         result.id = entry.id
         result.name = entry.name ?? ''
         result.persistence = entry.persistence ?? Persistence.Private
 
-        switch(entry.type) {
+        switch (entry.type) {
             case WorkbookCertificateType.PKCS8_PEM:
                 result.pem = entry.pem
                 result.key = entry.key ?? ''
@@ -34,11 +34,11 @@ export class EditableWorkbookCertificate extends Editable<WorkbookCertificate> {
             default:
                 throw new Error('Invalid certificate type')
         }
-        
+
         return result
     }
 
-    toWorkspace(): WorkbookCertificate {
+    toWorkbook(): WorkbookCertificate {
         return {
             id: this.id,
             name: this.name,
@@ -48,16 +48,16 @@ export class EditableWorkbookCertificate extends Editable<WorkbookCertificate> {
                 ? this.pem : undefined,
             key: this.type === WorkbookCertificateType.PKCS8_PEM
                 ? this.key : undefined,
-            pfx: this.type === WorkbookCertificateType.PKCS12 
+            pfx: this.type === WorkbookCertificateType.PKCS12
                 ? this.pfx : undefined,
-            password: this.type === WorkbookCertificateType.PKCS12 
+            password: this.type === WorkbookCertificateType.PKCS12
                 ? this.password : undefined
         } as unknown as WorkbookCertificate
     }
 
     @computed get nameInvalid() {
         return ((this.name?.length ?? 0) === 0)
-    }    
+    }
 
     @computed get pemInvalid() {
         return (this.type === WorkbookCertificateType.PKCS8_PEM || this.type === WorkbookCertificateType.PEM)
@@ -65,16 +65,16 @@ export class EditableWorkbookCertificate extends Editable<WorkbookCertificate> {
     }
 
     @computed get keyInvalid() {
-        return this.type === WorkbookCertificateType.PKCS8_PEM 
+        return this.type === WorkbookCertificateType.PKCS8_PEM
             ? ((this.key?.length ?? 0) === 0) : false
-    }    
+    }
 
     @computed get pfxInvalid() {
         return ((this.pfx?.length ?? 0) === 0)
     }
 
     @computed get invalid() {
-        switch(this.type) {
+        switch (this.type) {
             case WorkbookCertificateType.PKCS8_PEM:
                 return this.nameInvalid
                     || this.pemInvalid
@@ -83,7 +83,7 @@ export class EditableWorkbookCertificate extends Editable<WorkbookCertificate> {
                 return this.nameInvalid
                     || this.pemInvalid
             case WorkbookCertificateType.PKCS12:
-                return this.nameInvalid 
+                return this.nameInvalid
                     || this.pfxInvalid
             default:
                 return false
