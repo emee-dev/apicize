@@ -63,7 +63,7 @@ jobs:
         with:
           tagName: apicize-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
           releaseName: 'Apicize __VERSION__'
-          releaseBody: 'See the assets to download this version and install.  Assets beginning with "apicize_" are the GUI app, assets beginning wtih "apicize-run_" are the CLI runner.'
+          releaseBody: 'See the assets to download this version and install.  Assets beginning with "Apicize_" are the GUI app, assets beginning wtih "Apicize-run_" are the CLI runner.'
           # releaseDraft: true
           prerelease: false
           args: --verbose
