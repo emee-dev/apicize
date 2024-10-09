@@ -6,10 +6,11 @@ use clap::Parser;
 use colored::Colorize;
 use num_format::{SystemLocale, ToFormattedString};
 use std::ffi::OsStr;
+use std::io::{stderr, stdout, Write};
 use std::path::PathBuf;
-use std::process;
 use std::sync::Arc;
 use std::time::Instant;
+use std::{fs, process};
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -17,13 +18,14 @@ use std::time::Instant;
 struct Args {
     /// Name of the file to run
     file: String,
-    /// Manuall specified global parameter file name
+    /// Global parameter file name (overriding default location, if available)
     #[arg(short, long)]
     globals: Option<String>,
     /// Print configuration information
     #[arg(short, long, default_value_t = false)]
     info: bool,
     /// Name of the output file name for test results
+    #[arg(short, long)]
     output: Option<String>,
 }
 
@@ -36,7 +38,12 @@ fn duration_to_ms(d: u128, locale: &SystemLocale) -> String {
     format!("{:02}:{:02}{}{:03}", mins, secs, locale.decimal(), ms)
 }
 
-fn render_execution_item(item: &ApicizeExecutionItem, level: usize, locale: &SystemLocale) {
+fn render_execution_item(
+    item: &ApicizeExecutionItem,
+    level: usize,
+    locale: &SystemLocale,
+    feedback: &mut Box<dyn Write>,
+) {
     let prefix = format!("{:width$}", "", width = level * 3);
     match item {
         ApicizeExecutionItem::Group(group) => {
@@ -47,9 +54,9 @@ fn render_execution_item(item: &ApicizeExecutionItem, level: usize, locale: &Sys
                 duration_to_ms(group.executed_at, locale),
                 &group.duration.to_formatted_string(locale),
             );
-            println!("{}", title.white());
+            writeln!(feedback, "{}", title.white()).unwrap();
             for child in &group.items {
-                render_execution_item(&child, level + 1, locale);
+                render_execution_item(&child, level + 1, locale, feedback);
             }
         }
         ApicizeExecutionItem::Request(request) => {
@@ -60,7 +67,7 @@ fn render_execution_item(item: &ApicizeExecutionItem, level: usize, locale: &Sys
                 duration_to_ms(request.executed_at, locale),
                 &request.duration.to_formatted_string(locale),
             );
-            println!("{}", title.white());
+            writeln!(feedback, "{}", title.white()).unwrap();
 
             if let Some(test_response) = &request.tests {
                 if let Some(test_results) = &test_response.results {
@@ -73,17 +80,18 @@ fn render_execution_item(item: &ApicizeExecutionItem, level: usize, locale: &Sys
                             &result.test_name.join(" ").blue()
                         );
                         if let Some(err) = &result.error {
-                            println!(" {}", "[ERROR]".red());
-                            println!("{}{}", test_prefix2, err.red().dimmed());
+                            writeln!(feedback, " {}", "[ERROR]".red()).unwrap();
+                            writeln!(feedback, "{}{}", test_prefix2, err.red().dimmed()).unwrap();
                         } else if result.success {
-                            println!(" {}", "[PASS]".green());
+                            writeln!(feedback, " {}", "[PASS]".green()).unwrap();
                         } else {
-                            println!(" {}", "[FAIL]".yellow());
+                            writeln!(feedback, " {}", "[FAIL]".yellow()).unwrap();
                         }
 
                         if let Some(logs) = &result.logs {
                             for log in logs {
-                                println!("{}{}", test_prefix2, log.white().dimmed());
+                                writeln!(feedback, "{}{}", test_prefix2, log.white().dimmed())
+                                    .unwrap();
                             }
                         }
                     }
@@ -93,10 +101,11 @@ fn render_execution_item(item: &ApicizeExecutionItem, level: usize, locale: &Sys
     }
 }
 
-fn render_execution(
+fn process_execution(
     execution_result: &Result<ApicizeExecution, String>,
     level: usize,
     locale: &SystemLocale,
+    feedback: &mut Box<dyn Write>,
 ) -> usize {
     let mut failure_count = 0;
 
@@ -116,21 +125,29 @@ fn render_execution(
 
                 if execution.runs.len() > 1 {
                     ctr = ctr + 1;
-                    println!(
+                    writeln!(
+                        feedback,
                         "{}Run {} of {}",
                         format!("{:width$}", "", width = level * 3),
                         ctr,
                         execution.runs.len()
-                    );
+                    )
+                    .unwrap();
                 }
 
                 for run_item in &run.items {
-                    render_execution_item(&run_item, use_level, locale);
+                    render_execution_item(&run_item, use_level, locale, feedback);
                 }
 
-                println!();
-                println!("{}", "--------------- Totals ---------------".white());
-                println!(
+                writeln!(feedback).unwrap();
+                writeln!(
+                    feedback,
+                    "{}",
+                    "--------------- Totals ---------------".white()
+                )
+                .unwrap();
+                writeln!(
+                    feedback,
                     "{}{}",
                     "Passed Tests: ".white(),
                     if run.passed_test_count > 0 {
@@ -138,9 +155,11 @@ fn render_execution(
                     } else {
                         "0".white()
                     }
-                );
+                )
+                .unwrap();
 
-                println!(
+                writeln!(
+                    feedback,
                     "{}{}",
                     "Failed Tests: ".white(),
                     if run.failed_test_count > 0 {
@@ -148,9 +167,11 @@ fn render_execution(
                     } else {
                         "0".white()
                     }
-                );
+                )
+                .unwrap();
 
-                println!(
+                writeln!(
+                    feedback,
                     "{}{}",
                     "Requests with passed tests: ".white(),
                     if run.requests_with_passed_tests_count > 0 {
@@ -160,9 +181,11 @@ fn render_execution(
                     } else {
                         "0".white()
                     }
-                );
+                )
+                .unwrap();
 
-                println!(
+                writeln!(
+                    feedback,
                     "{}{}",
                     "Requests with failed tests: ".white(),
                     if run.requests_with_failed_tests_count > 0 {
@@ -173,9 +196,11 @@ fn render_execution(
                     } else {
                         "0".white()
                     }
-                );
+                )
+                .unwrap();
 
-                println!(
+                writeln!(
+                    feedback,
                     "{}{}",
                     "Requests with errors: ".white(),
                     if run.requests_with_errors > 0 {
@@ -184,16 +209,24 @@ fn render_execution(
                     } else {
                         "0".white()
                     }
-                );
-                println!("{}", "--------------------------------------".white());
+                )
+                .unwrap();
+                writeln!(
+                    feedback,
+                    "{}",
+                    "--------------------------------------".white()
+                )
+                .unwrap();
             }
         }
         Err(err) => {
-            println!(
+            writeln!(
+                feedback,
                 "{}{}",
                 format!("{:width$}", "", width = level * 3),
                 err.red()
-            );
+            )
+            .unwrap();
         }
     }
 
@@ -203,6 +236,16 @@ fn render_execution(
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     let args = Args::parse();
+
+    let mut send_output_to = args.output.unwrap_or(String::from(""));
+    if send_output_to.to_lowercase() == "stdout" {
+        send_output_to = String::from("--");
+    }
+    let mut feedback: Box<dyn std::io::Write> = if send_output_to == "--" {
+        Box::new(stderr())
+    } else {
+        Box::new(stdout())
+    };
 
     let stored_settings: Option<ApicizeSettings> = match ApicizeSettings::open() {
         Ok(serialized_settings) => Some(serialized_settings.data),
@@ -221,12 +264,15 @@ async fn main() {
             let default_globals_filename = Parameters::get_globals_filename();
             String::from(default_globals_filename.to_string_lossy())
         };
-        println!("Global parameters: {}", &global_filename);
 
-        println!(
+        writeln!(feedback, "Global parameters: {}", &global_filename).unwrap();
+
+        writeln!(
+            feedback,
             "Default workbooks directory: {}",
             get_workbooks_directory().to_string_lossy()
-        );
+        )
+        .unwrap();
     }
 
     let locale = SystemLocale::default().unwrap();
@@ -253,26 +299,33 @@ async fn main() {
     }
 
     if !found {
-        eprintln!("Error: Apicize file \"{}\" not found", &args.file);
+        eprintln!(
+            "{}",
+            format!("Error: Apicize file \"{}\" not found", &args.file).red()
+        );
         std::process::exit(-1);
     }
 
-    println!(
-        "{}{}",
-        "Opening ".white(),
-        &file_name.to_string_lossy().white()
-    );
+    writeln!(
+        feedback,
+        "{}",
+        format!("Opening {}", &file_name.to_string_lossy()).white()
+    )
+    .unwrap();
 
     let workspace: Workspace;
     match Workspace::open(&file_name, globals_filename) {
         Ok((wkspc, warnings)) => {
             workspace = wkspc;
             for warning in warnings {
-                println!("WARNING: {warning}");
+                writeln!(feedback, "{}", format!("WARNING: {warning}").yellow()).unwrap();
             }
         }
         Err(err) => {
-            println!("Unable to read {}: {}", err.file_name, err.error);
+            eprintln!(
+                "{}",
+                format!("Unable to read {}: {}", err.file_name, err.error).red()
+            );
             process::exit(-2);
         }
     }
@@ -288,16 +341,16 @@ async fn main() {
     for request_id in request_ids {
         if let Some(request) = arc_workspace.requests.entities.get(&request_id) {
             let name = request.get_name();
-            println!(
-                "{}{}{}",
-                "Calling ".blue(),
+            writeln!(
+                feedback,
+                "{}",
                 if name.len() > 0 {
-                    format!("{}", name.blue())
+                    format!("Calling {}", name).blue()
                 } else {
-                    format!("{} {}", "(Unnamed)".blue(), request.get_id().blue())
-                },
-                "..."
-            );
+                    format!("Calling {} (Unnamed)", request.get_id()).blue()
+                }
+            )
+            .unwrap();
             let result = Workspace::run(
                 arc_workspace.clone(),
                 &request_id,
@@ -309,24 +362,46 @@ async fn main() {
         }
     }
 
-    println!();
-    println!("{}", "--------------- Results --------------".white());
+    writeln!(feedback).unwrap();
+    writeln!(
+        feedback,
+        "{}",
+        "--------------- Results --------------".white()
+    )
+    .unwrap();
 
     let mut failure_count = 0;
     let mut execution_ctr = 0;
-    for execution in executions {
-        println!();
+    for execution in &executions {
+        writeln!(feedback).unwrap();
         execution_ctr = execution_ctr + 1;
-        failure_count += render_execution(&execution, 0, &locale);
+        failure_count += process_execution(&execution, 0, &locale, &mut feedback);
     }
 
-    // if let Some(output_filename) = args.output {
-    //     let serialized = serde_json::to_string(&output_results).unwrap();
-    //     match fs::write(&output_filename, serialized) {
-    //         Ok(_) => println!("Test results written to {}", output_filename.blue()),
-    //         Err(ref err) => panic!("Unable to write {} - {}", output_filename, err),
-    //     }
-    // }
+    if send_output_to.len() > 0 {
+        let serialized = serde_json::to_string(&executions).unwrap();
+
+        let dest: &str;
+        let result = if send_output_to == "--" {
+            dest = "STDOUT";
+            write!(stdout(), "{}", serialized)
+        } else {
+            dest = send_output_to.as_str();
+            fs::write(&send_output_to, serialized)
+        };
+
+        match result {
+            Ok(_) => writeln!(
+                feedback,
+                "{}",
+                format!("Test results written to {}", dest).blue()
+            )
+            .unwrap(),
+            Err(ref err) => {
+                panic!("Unable to write {} - {}", dest, err)
+            }
+        }
+    }
 
     cleanup_v8();
     process::exit(failure_count as i32);

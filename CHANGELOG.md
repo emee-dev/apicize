@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.6.6
+
+* Added output file name parameter to CLI
+* Prevented inheritance of parameters when value is set
+
 # 0.6.5
 
 * Add in workbook parameter defaults

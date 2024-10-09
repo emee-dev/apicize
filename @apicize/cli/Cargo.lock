@@ -98,7 +98,7 @@ dependencies = [
 
 [[package]]
 name = "apicize-run"
-version = "0.6.5"
+version = "0.6.6"
 dependencies = [
  "apicize_lib",
  "clap",
@@ -112,7 +112,7 @@ dependencies = [
 
 [[package]]
 name = "apicize_lib"
-version = "0.6.5"
+version = "0.6.6"
 dependencies = [
  "async-recursion",
  "async-trait",

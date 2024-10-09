@@ -911,9 +911,7 @@ impl Workspace {
         );
 
         let defaults = match &self.defaults {
-            Some(defaults) => {
-                Some(defaults.clone())
-            }
+            Some(defaults) => Some(defaults.clone()),
             None => None,
         };
 
@@ -1054,7 +1052,7 @@ impl Workspace {
 
         while !done {
             // Set the credential values at the current request value
-            if allow_scenario {
+            if allow_scenario && scenario.is_none() {
                 match Self::find_matching_selection(
                     current.get_selected_scenario(),
                     &self.scenarios,
@@ -1069,7 +1067,7 @@ impl Workspace {
                     }
                 }
             }
-            if allow_authorization {
+            if allow_authorization && authorization.is_none() {
                 match Self::find_matching_selection(
                     current.get_selected_authorization(),
                     &self.authorizations,
@@ -1084,7 +1082,7 @@ impl Workspace {
                     }
                 }
             }
-            if allow_certificate {
+            if allow_certificate && certificate.is_none() {
                 match Self::find_matching_selection(
                     current.get_selected_certificate(),
                     &self.certificates,
@@ -1099,7 +1097,7 @@ impl Workspace {
                     }
                 }
             }
-            if allow_proxy {
+            if allow_proxy && proxy.is_none() {
                 match Self::find_matching_selection(current.get_selected_proxy(), &self.proxies) {
                     SelectedOption::UseDefault => {}
                     SelectedOption::Off => {
@@ -1153,22 +1151,32 @@ impl Workspace {
         // Load from workbook defaults if required
         if let Some(defaults) = &self.defaults {
             if scenario.is_none() && allow_scenario {
-                if let SelectedOption::Some(v) = Self::find_matching_selection(&defaults.selected_scenario, &self.scenarios) {
+                if let SelectedOption::Some(v) =
+                    Self::find_matching_selection(&defaults.selected_scenario, &self.scenarios)
+                {
                     scenario = Some(v);
                 }
             }
             if authorization.is_none() && allow_authorization {
-                if let SelectedOption::Some(v) = Self::find_matching_selection(&defaults.selected_authorization, &self.authorizations) {
+                if let SelectedOption::Some(v) = Self::find_matching_selection(
+                    &defaults.selected_authorization,
+                    &self.authorizations,
+                ) {
                     authorization = Some(v);
                 }
             }
             if certificate.is_none() && allow_certificate {
-                if let SelectedOption::Some(v) = Self::find_matching_selection(&defaults.selected_certificate, &self.certificates) {
+                if let SelectedOption::Some(v) = Self::find_matching_selection(
+                    &defaults.selected_certificate,
+                    &self.certificates,
+                ) {
                     certificate = Some(v);
                 }
             }
             if proxy.is_none() && allow_proxy {
-                if let SelectedOption::Some(v) = Self::find_matching_selection(&defaults.selected_proxy, &self.proxies) {
+                if let SelectedOption::Some(v) =
+                    Self::find_matching_selection(&defaults.selected_proxy, &self.proxies)
+                {
                     proxy = Some(v);
                 }
             }
