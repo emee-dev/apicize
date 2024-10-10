@@ -1,5 +1,5 @@
 import { ButtonGroup, ToggleButton, Grid, TextField, FormControl, InputLabel, Select, MenuItem, Grid2 } from "@mui/material";
-import { Stack } from "@mui/system";
+import { Stack, SxProps } from "@mui/system";
 import { observer } from "mobx-react-lite";
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
 import { EditableEntityType } from "../models/workbook/editable-entity-type";
@@ -8,7 +8,7 @@ import { useWorkspace } from "../contexts/workspace.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 import { toJS } from "mobx";
 
-export const RunToolbar = observer(() => {
+export const RunToolbar = observer((props: {sx?: SxProps}) => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
     
@@ -50,7 +50,7 @@ export const RunToolbar = observer(() => {
     }
 
     return (
-        <Stack direction={'row'} sx={{ flexGrow: 0 }}>
+        <Stack direction={'row'} flexGrow={0} sx={props.sx}>
             <ButtonGroup
                 sx={{ marginRight: '24px' }}
                 orientation='vertical'

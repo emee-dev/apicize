@@ -12,7 +12,6 @@ export class EditableWorkbookDefaults extends Editable<WorkbookDefaults> {
     @observable accessor selectedProxy: Selection = NO_SELECTION
 
     static new() {
-        debugger
         const result = new EditableWorkbookDefaults()
         result.id = ''
         result.name = ''
@@ -20,7 +19,6 @@ export class EditableWorkbookDefaults extends Editable<WorkbookDefaults> {
     }
 
     static fromWorkbook(workspace: Workspace): EditableWorkbookDefaults {
-        debugger
         const result = new EditableWorkbookDefaults()
         result.id = crypto.randomUUID()
         result.name = ''

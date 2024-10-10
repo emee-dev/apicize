@@ -73,7 +73,9 @@ export const ResultsViewer = observer((props: {
         | 'warning',
         SvgIconPropsColorOverrides
     > | undefined = undefined
-    if (executionRequestResult) {
+    if (requestExecution?.running) {
+        infoColor = 'disabled'
+    } else if (executionRequestResult) {
         infoColor = executionRequestResult.request
             ? ((executionRequestResult.failedTestCount ?? 0) > 0 ? 'warning' : 'success')
             : 'error'

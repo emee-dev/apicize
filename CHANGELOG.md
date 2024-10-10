@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.6.7
+
+* Added STDIN/STDOUt support to CLI
+* Fixed multi-run output in GUI
+* Added some additional help content
+
 # 0.6.6
 
 * Added output file name parameter to CLI

@@ -1,15 +1,19 @@
 //! Shared models submodule
-//! 
+//!
 //! This submodule defines information used globally
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fmt::Debug;
-use std::{fs, io};
+use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::{fs, io};
 use thiserror::Error;
 
-use crate::{IndexedEntities, Persistence, Selection, WorkbookAuthorization, WorkbookCertificate, WorkbookProxy, WorkbookScenario};
+use crate::{
+    IndexedEntities, Persistence, Selection, WorkbookAuthorization, WorkbookCertificate,
+    WorkbookProxy, WorkbookScenario,
+};
 
 /// Trait to describe oneself
 pub trait Identifyiable {
@@ -68,7 +72,7 @@ impl SelectableOptionDefaultType {
     }
 }
 
-/// Trait indicating scenarios, authorizations, etc. can be 
+/// Trait indicating scenarios, authorizations, etc. can be
 pub trait SelectableOptions {
     /// Validate all selections
     fn validate_selections(
@@ -105,99 +109,98 @@ pub trait SelectableOptions {
     fn set_proxy(&mut self, value: Option<Selection>);
 }
 
-
-
 /// Implement helpers for setting serde default values
 impl Persistence {
     /// Return the private enum value for setting persistence defaults
-    pub fn private() -> Self { Persistence::Private }
+    pub fn private() -> Self {
+        Persistence::Private
+    }
     /// Return the Shared enum value for setting persistence defaults
-    pub fn global() -> Self { Persistence::Global }
+    pub fn global() -> Self {
+        Persistence::Global
+    }
 }
 
 /// Open the specified data file
-pub fn open_data_file<'a, T: DeserializeOwned>(input_file_name: &PathBuf) -> Result<SerializationOpenSuccess<T>, SerializationFailure> {
+pub fn open_data_file<'a, T: DeserializeOwned>(
+    input_file_name: &PathBuf,
+) -> Result<SerializationOpenSuccess<T>, SerializationFailure> {
     let file_name = String::from(input_file_name.to_string_lossy());
-    match fs::read_to_string(input_file_name) {
-        Ok(text) => {
-            match serde_json::from_str::<T>(&text) {
-                Ok(data) => {
-                    Ok(SerializationOpenSuccess {
-                        file_name,
-                        data,
-                    })
-                },
-                Err(err) => {
-                    Err(SerializationFailure {
-                        file_name,
-                        error: SerializationError::JSON(err)
-                    })
-                }
+    match std::fs::File::open(input_file_name) {
+        Ok(mut f) => open_data_stream(file_name, &mut f),
+        Err(err) => Err(SerializationFailure {
+            file_name,
+            error: SerializationError::IO(err),
+        }),
+    }
+}
 
-            }
-        },
-        Err(err) => {
-            Err(SerializationFailure {
+/// Open the specified data stream
+pub fn open_data_stream<'a, T: DeserializeOwned>(
+    file_name: String,
+    reader: &mut dyn Read,
+) -> Result<SerializationOpenSuccess<T>, SerializationFailure> {
+    let mut text = String::new();
+    match reader.read_to_string(&mut text) {
+        Ok(_) => match serde_json::from_str::<T>(&text) {
+            Ok(data) => Ok(SerializationOpenSuccess { file_name, data }),
+            Err(err) => Err(SerializationFailure {
                 file_name,
-                error: SerializationError::IO(err)
-            })
-        }
-    } 
+                error: SerializationError::JSON(err),
+            }),
+        },
+        Err(err) => Err(SerializationFailure {
+            file_name,
+            error: SerializationError::IO(err),
+        }),
+    }
 }
 
 /// Save the specified data file
-pub fn save_data_file<'a, T: Serialize>(output_file_name: &PathBuf, data: &T) -> Result<SerializationSaveSuccess, SerializationFailure> {
+pub fn save_data_file<'a, T: Serialize>(
+    output_file_name: &PathBuf,
+    data: &T,
+) -> Result<SerializationSaveSuccess, SerializationFailure> {
     let file_name = String::from(output_file_name.to_string_lossy());
     match serde_json::to_string(data) {
-        Ok(text) => {
-            match fs::write(output_file_name, text) {
-                Ok(()) => {
-                    Ok(SerializationSaveSuccess {
-                        file_name,
-                        operation: SerializationOperation::Save
-                    })
-                },
-                Err(err) => {
-                    Err(SerializationFailure {
-                        file_name,
-                        error: SerializationError::IO(err)
-                    })
-                }
-            }
-        },
-        Err(err) => {
-            Err(SerializationFailure {
+        Ok(text) => match fs::write(output_file_name, text) {
+            Ok(()) => Ok(SerializationSaveSuccess {
                 file_name,
-                error: SerializationError::JSON(err)
-            })
-        }
+                operation: SerializationOperation::Save,
+            }),
+            Err(err) => Err(SerializationFailure {
+                file_name,
+                error: SerializationError::IO(err),
+            }),
+        },
+        Err(err) => Err(SerializationFailure {
+            file_name,
+            error: SerializationError::JSON(err),
+        }),
     }
-}    
+}
 
 /// Delete the specified file, if it exists
-pub fn delete_data_file(delete_file_name: &PathBuf) -> Result<SerializationSaveSuccess, SerializationFailure> {
+pub fn delete_data_file(
+    delete_file_name: &PathBuf,
+) -> Result<SerializationSaveSuccess, SerializationFailure> {
     let file_name = String::from(delete_file_name.to_string_lossy());
     if Path::new(&delete_file_name).is_file() {
         match fs::remove_file(delete_file_name) {
-            Ok(()) => {
-                Ok(SerializationSaveSuccess {
-                    file_name,
-                    operation: SerializationOperation::Delete
-                })
-            },
-            Err(err) => {
-                Err(SerializationFailure {
-                    file_name,
-                    error: SerializationError::IO(err)
-                })
-            }
+            Ok(()) => Ok(SerializationSaveSuccess {
+                file_name,
+                operation: SerializationOperation::Delete,
+            }),
+            Err(err) => Err(SerializationFailure {
+                file_name,
+                error: SerializationError::IO(err),
+            }),
         }
     } else {
         Ok(SerializationSaveSuccess {
             file_name,
-            operation: SerializationOperation::None
+            operation: SerializationOperation::None,
         })
-
     }
 }
 
@@ -208,7 +211,7 @@ pub enum SerializationOperation {
     /// File deleted
     Delete,
     /// No operation taken
-    None
+    None,
 }
 
 /// Information on open success, including data
@@ -218,7 +221,6 @@ pub struct SerializationOpenSuccess<T> {
     /// Data
     pub data: T,
 }
-
 
 /// Information on save success
 pub struct SerializationSaveSuccess {
@@ -233,7 +235,7 @@ pub struct SerializationFailure {
     /// Name of file that was opened or saved
     pub file_name: String,
     /// Error on serialization/deserialization
-    pub error: SerializationError
+    pub error: SerializationError,
 }
 
 /// Represents errors occurring during Workbook serialization and deserialization

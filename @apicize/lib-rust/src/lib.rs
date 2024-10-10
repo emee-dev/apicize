@@ -181,7 +181,7 @@ impl Parameters {
         )
     }
 
-    /// Return parameters information
+    /// Return parameters information or default if parameters file does not exist
     fn open(
         credential_file_name: PathBuf,
     ) -> Result<SerializationOpenSuccess<Parameters>, SerializationFailure> {
@@ -465,7 +465,7 @@ impl Workspace {
 
     /// Populate indexes
     fn populate_indexes<T: Clone + WorkspaceEntity<T>>(
-        entities: &mut Option<Vec<T>>,
+        entities: &Option<Vec<T>>,
         index: &mut IndexedEntities<T>,
         persistence: Persistence,
     ) {
@@ -615,10 +615,47 @@ impl Workspace {
         Workspace::find_matching_selection(selection, &self.scenarios)
     }
 
-    /// Open a workspace using the specified workbook, taking into account private parameters file (if existing)
-    /// and global settings
+    /// Open the specified workbook and globals file names
     pub fn open(
         workbook_file_name: &PathBuf,
+        globals_filename: Option<PathBuf>,
+    ) -> Result<(Workspace, Vec<String>), SerializationFailure> {
+        // Open workbook
+        let mut wkbk: Workbook;
+        match open_data_file(workbook_file_name) {
+            Ok(success) => {
+                wkbk = success.data;
+            }
+            Err(error) => {
+                return Err(error);
+            }
+        }
+
+        // Load private parameters if file exists
+        let privates: Option<Parameters>;
+        let mut private_path = workbook_file_name.clone();
+        private_path.set_extension("apicize-priv");
+        if Path::new(&private_path).is_file() {
+            match Parameters::open_workbook_private_parameters(&private_path) {
+                Ok(success) => {
+                    privates = Some(success.data);
+                }
+                Err(error) => {
+                    return Err(error);
+                }
+            }
+        } else {
+            privates = None;
+        }
+
+        Self::open2(&mut wkbk, privates, globals_filename)
+    }
+
+    /// Open a workspace using the specified workbook, taking into account private parameters file (if existing)
+    /// and global settings
+    pub fn open2(
+        wkbk: &mut Workbook,
+        privates: Option<Parameters>,
         globals_filename: Option<PathBuf>,
     ) -> Result<(Workspace, Vec<String>), SerializationFailure> {
         let mut wkspc_requests = IndexedRequests {
@@ -643,7 +680,7 @@ impl Workspace {
             entities: HashMap::new(),
         };
 
-        // Populate entries from global storage
+        // Open globals using either the specified file name or falling back to the default name,
         let mut globals: Parameters;
         match Parameters::open_global_parameters(globals_filename) {
             Ok(success) => {
@@ -654,6 +691,7 @@ impl Workspace {
             }
         }
 
+        // Populate entries from global storage
         Self::populate_indexes(
             &mut globals.scenarios,
             &mut wkspc_scenarios,
@@ -676,52 +714,23 @@ impl Workspace {
         );
 
         // Populate entries from private parameter files, if any
-        let mut private_path = workbook_file_name.clone();
-        private_path.set_extension("apicize-priv");
-
-        if Path::new(&private_path).is_file() {
-            let mut private: Parameters;
-
-            match Parameters::open_workbook_private_parameters(&private_path) {
-                Ok(success) => {
-                    private = success.data;
-                }
-                Err(error) => {
-                    return Err(error);
-                }
-            }
-
+        if let Some(private) = privates {
             Self::populate_indexes(
-                &mut private.scenarios,
+                &private.scenarios,
                 &mut wkspc_scenarios,
                 Persistence::Private,
             );
             Self::populate_indexes(
-                &mut private.authorizations,
+                &private.authorizations,
                 &mut wkspc_authorizations,
                 Persistence::Private,
             );
             Self::populate_indexes(
-                &mut private.certificates,
+                &private.certificates,
                 &mut wkspc_certificates,
                 Persistence::Private,
             );
-            Self::populate_indexes(
-                &mut private.proxies,
-                &mut wkspc_proxies,
-                Persistence::Private,
-            );
-        }
-
-        // Populate from workbook
-        let mut wkbk: Workbook;
-        match open_data_file(workbook_file_name) {
-            Ok(success) => {
-                wkbk = success.data;
-            }
-            Err(error) => {
-                return Err(error);
-            }
+            Self::populate_indexes(&private.proxies, &mut wkspc_proxies, Persistence::Private);
         }
 
         let mut warnings: Vec<String> = vec![];
@@ -746,8 +755,6 @@ impl Workspace {
 
         Self::populate_indexes(&mut wkbk.proxies, &mut wkspc_proxies, Persistence::Workbook);
 
-        Self::populate_indexes(&mut wkbk.proxies, &mut wkspc_proxies, Persistence::Workbook);
-
         Self::populate_requests(
             &mut wkbk.requests,
             &mut wkspc_requests,
@@ -765,7 +772,7 @@ impl Workspace {
             authorizations: wkspc_authorizations,
             certificates: wkspc_certificates,
             proxies: wkspc_proxies,
-            defaults: wkbk.defaults,
+            defaults: wkbk.defaults.clone(),
             warnings: None,
         };
 
@@ -1461,33 +1468,67 @@ impl Workspace {
 
         match workspace.requests.entities.get(request_id) {
             Some(request_entry) => {
+                let sequential = if let WorkbookRequestEntry::Group(group) = request_entry {
+                    group.execution == WorkbookExecution::Sequential
+                } else {
+                    true
+                };
+
                 // Set up defaults
                 let total_runs = request_entry.get_runs();
-                let mut runs: JoinSet<Option<ApicizeExecutionRunItem>> = JoinSet::new();
+                let mut completed_runs: Vec<Option<ApicizeExecutionRunItem>>;
 
-                for run in 0..total_runs {
-                    let cloned_tests_started = tests_started.clone();
-                    let cloned_workspace = workspace.clone();
-                    let cloned_request_id = request_id.clone();
-                    let cloned_token = cancellation.clone();
+                if sequential {
+                    completed_runs = Vec::new();
+                    let variables = Arc::new(HashMap::new());
 
-                    runs.spawn(async move {
-                        select! {
+                    for run in 0..total_runs {
+                        let cloned_tests_started = tests_started.clone();
+                        let cloned_workspace = workspace.clone();
+                        let cloned_request_id = request_id.clone();
+                        let cloned_token = cancellation.clone();
+
+                        completed_runs.push(                            select! {
                             _ = cloned_token.cancelled() => None,
                             result = Workspace::run_int(
                                 cloned_workspace,
                                 cloned_tests_started,
                                 cloned_request_id,
-                                Arc::new(HashMap::new()),
+                                variables.clone(),
                                 run,
                             ) => {
                                 Some(result)
                             }
-                        }
-                    });
+                        });
+                    }
+
+                } else {
+                    let mut runs: JoinSet<Option<ApicizeExecutionRunItem>> = JoinSet::new();
+                    for run in 0..total_runs {
+                        let cloned_tests_started = tests_started.clone();
+                        let cloned_workspace = workspace.clone();
+                        let cloned_request_id = request_id.clone();
+                        let cloned_token = cancellation.clone();
+
+                        runs.spawn(async move {
+                            select! {
+                                _ = cloned_token.cancelled() => None,
+                                result = Workspace::run_int(
+                                    cloned_workspace,
+                                    cloned_tests_started,
+                                    cloned_request_id,
+                                    Arc::new(HashMap::new()),
+                                    run,
+                                ) => {
+                                    Some(result)
+                                }
+                            }
+                        });
+                    }
+
+                    completed_runs = runs.join_all().await;
                 }
 
-                let mut completed_runs = runs.join_all().await;
                 completed_runs.sort_by(|r1, r2| {
                     let sort1: i32 = match r1 {
                         Some(ri) => ri.run as i32,

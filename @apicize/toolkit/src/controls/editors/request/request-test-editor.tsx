@@ -17,6 +17,7 @@ export const RequestTestEditor = observer(() => {
     return null
   }
 
+  workspace.nextHelpTopic = 'requests/test'
   const request = workspace.active as EditableWorkbookRequest
 
   return (

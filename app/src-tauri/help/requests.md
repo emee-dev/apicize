@@ -18,4 +18,5 @@ Requests are configured using the following panes:
 ### See Also
 
 * [**Workbooks**](help:workbooks)
+* [**Running Tests and Viewing Results**](help:running-tests)
 * [**Testing**](help:testing)

@@ -1,7 +1,5 @@
 .help {
-  /* margin: 1rem; */
   overflow: auto;
-  display: flex;
   width: 100%;
   padding: 1em;
   background-color: #03021f;
@@ -12,18 +10,18 @@
   background-color: #1d1d24;
 }
 
-.help p {
+.help p, .help ul {
   margin-bottom: 1em;
 }
 
 .help-text {
   display: block;
-  flex-grow: 1;
   padding-right: 36px;
+  margin-bottom: 1em;
 }
 
 .help-text img {
-  margin: 2em 0 2em 0;
+  margin: 0 0 1em 0;
 }
 
 .help-toolbar {
@@ -84,6 +82,10 @@ pre.log {
   padding: 16px 24px 16px 82px;
   /* padding: 8px 16px 8px 8px; */
   height: 100vh;
+}
+
+.editor-title {
+  margin-top: 0.1em;
 }
 
 .editor-title .MuiSvgIcon-root {

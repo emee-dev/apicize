@@ -13,7 +13,9 @@
         "height": 800,
         "resizable": true,
         "title": "Apicize",
-        "width": 1200
+        "width": 1200,
+        "minWidth": 900,
+        "minHeight": 700
       }
     ]
   },

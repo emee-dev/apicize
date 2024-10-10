@@ -14,6 +14,7 @@ export const RequestParametersEditor = observer(() => {
         return null
     }
 
+    workspace.nextHelpTopic = 'requests/parameters'
     const requestEntry = workspace.active as EditableWorkbookRequest
 
     let credIndex = 0
@@ -28,7 +29,7 @@ export const RequestParametersEditor = observer(() => {
     return (
         <Stack spacing={3}>
             <FormControl>
-                <InputLabel id='scenario-label-id'>Scenarios</InputLabel>
+                <InputLabel id='scenario-label-id'>Scenario</InputLabel>
                 <Select
                     labelId='scenario-label'
                     aria-labelledby='scenario-label-id'

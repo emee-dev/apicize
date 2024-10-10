@@ -12,6 +12,7 @@ export const RequestInfoEditor = observer(() => {
         return null
     }
 
+    workspace.nextHelpTopic = 'requests/info'
     const request = workspace.active as EditableWorkbookRequest
 
     const methodMenuItems = () => {

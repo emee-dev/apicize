@@ -11,6 +11,7 @@ export const RequestHeadersEditor = observer(() => {
     return null
   }
 
+  workspace.nextHelpTopic = 'requests/headers'
   const request = workspace.active as EditableWorkbookRequest
   return (<NameValueEditor
     title='request headers'

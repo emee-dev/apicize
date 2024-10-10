@@ -32,6 +32,7 @@ export const RequestBodyEditor = observer(() => {
     return null
   }
 
+  workspace.nextHelpTopic = 'requests/body'
   const request = workspace.active as EditableWorkbookRequest
 
   const headerDoesNotMatchType = (bodyType: WorkbookBodyType | undefined | null) => {

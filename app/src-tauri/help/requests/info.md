@@ -10,7 +10,7 @@ Use this pane to set basic information about your request.
 * **Timeout**: How long to wait for a response from the endpoint (in milliseconds)
 * **# of Runs**: How many *concurrent* runs to launch when the request is being launched directly (i.e. not as part of the group)
 
-:image[requests/info.jpg]
+:image[requests/info.webp]
 
 ### See Also
 

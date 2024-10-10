@@ -164,7 +164,7 @@ export function NameValueEditor(props: {
     return (
         <Box
             sx={{
-                width: '100%',
+                width: '98%',
                 '& .actions': {
                     color: 'text.secondary',
                 },
@@ -174,19 +174,29 @@ export function NameValueEditor(props: {
             }}
         >
             <DataGrid
-                autoHeight
                 aria-label={props.title}
+                sx={{ position: 'relative' }}
                 rows={data}
                 columns={columns}
                 editMode="row"
+                // resizeThrottleMs={200}
                 rowModesModel={rowModesModel}
                 onRowModesModelChange={handleRowModesModelChange}
                 onRowEditStop={handleRowEditStop}
                 processRowUpdate={processRowUpdate}
+                // sx={{
+                //     [`& .${gridClasses.cell}:focus, & .${gridClasses.cell}:focus-within`]: {
+                //         outline: 'none',
+                //     },
+                //     [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]:
+                //     {
+                //         outline: 'none',
+                //     },
+                // }}
                 slots={{
                     footer: editToolbar,
                 }}
-                // // slotProps={{
+                // slotProps={{
                 //   toolbar: { setRows: setRowHeaders, setRowModesModel },
                 // }}
                 disableColumnFilter

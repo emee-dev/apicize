@@ -2,6 +2,7 @@ import { Box, IconButton, Link, LinkProps, Typography, TypographyProps, Typograp
 import HomeIcon from '@mui/icons-material/Home';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
+import AltRouteIcon from '@mui/icons-material/AltRoute'
 import { createElement, Fragment, HTMLAttributes, useState } from 'react'
 import { jsx, jsxs } from 'react/jsx-runtime'
 import { visit } from 'unist-util-visit';
@@ -209,6 +210,8 @@ export const HelpPanel = observer(() => {
                 return <ViewListOutlinedIcon className='help-icon' />
             case 'body':
                 return <ArticleOutlinedIcon className='help-icon' />
+            case 'parameters':
+                return <AltRouteIcon className='help-icon' />
             case 'test':
                 return <ScienceIcon className='help-icon' />
             case 'authorization':

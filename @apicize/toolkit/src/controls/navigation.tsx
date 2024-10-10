@@ -248,7 +248,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                             <Box className='nav-node-text'>
                                 {GetTitle(props.item)}
                             </Box>
-                            {isRunning ? <PlayArrowIcon className='running-icon' /> : null}
+                            {isRunning ? <PlayArrowIcon className='running-icon' color="success" /> : null}
                             <IconButton
                                 sx={{
                                     visibility: props.item.id === workspace.active?.id ? 'normal' : 'hidden'

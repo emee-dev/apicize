@@ -29,6 +29,7 @@ export const RequestEditor = observer((props: {
     const [panel, setPanel] = React.useState<string>('Info')
 
     const workspace = useWorkspace()
+    workspace.nextHelpTopic = 'requests/headers'
 
     const request = (workspace.active?.entityType === EditableEntityType.Request && !workspace.helpVisible)
         ? workspace.active as EditableWorkbookRequest
@@ -42,14 +43,14 @@ export const RequestEditor = observer((props: {
         if (newValue) setPanel(newValue)
     }
 
-    if (! (request || group)) {
+    if (!(request || group)) {
         return null
     }
 
     const usePanel = (group && panel !== 'Info' && panel !== 'Parameters')
         ? 'Info' : panel
 
-    return  (
+    return (
         <Stack direction='column' className='editor-panel' sx={{ ...props.sx, display: 'flex' }}>
             <Stack sx={{ height: '50vh', paddingBottom: '48px', flexBasis: 2 }}>
                 {
@@ -62,16 +63,18 @@ export const RequestEditor = observer((props: {
                                     exclusive
                                     onChange={handlePanelChanged}
                                     value={usePanel}
-                                    sx={{ marginRight: '24px' }}
+                                    sx={{ marginRight: '24px', zIndex: 100 }}
                                     aria-label="text alignment">
                                     <ToggleButton value="Info" title="Show Group Info" aria-label='show info'><DisplaySettingsIcon /></ToggleButton>
                                     <ToggleButton value="Parameters" title="Show Group Parameters" aria-label='show test'><AltRouteIcon /></ToggleButton>
                                 </ToggleButtonGroup>
-                                <Box className='panels' sx={{ flexGrow: 1 }}>
+                                <Box className='panels' flexGrow={1}>
                                     <EditorTitle icon={<FolderIcon />} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'} />
-                                    {usePanel === 'Info' ? <RequestGroupEditor />
-                                        : usePanel === 'Parameters' ? <RequestParametersEditor />
-                                            : null}
+                                    <Box>
+                                        {usePanel === 'Info' ? <RequestGroupEditor />
+                                            : usePanel === 'Parameters' ? <RequestParametersEditor />
+                                                : null}
+                                    </Box>
                                 </Box>
                             </Box>
                         )
@@ -84,7 +87,7 @@ export const RequestEditor = observer((props: {
                                         exclusive
                                         onChange={handlePanelChanged}
                                         value={usePanel}
-                                        sx={{ marginRight: '24px' }}
+                                        sx={{ marginRight: '24px', zIndex: 100 }}
                                         aria-label="text alignment">
                                         <ToggleButton value="Info" title="Show Request Info" aria-label='show info'><DisplaySettingsIcon /></ToggleButton>
                                         <ToggleButton value="Query String" title="Show Request Query String" aria-label='show query string'><ViewListIcon /></ToggleButton>
@@ -108,9 +111,9 @@ export const RequestEditor = observer((props: {
                             null
                 }
             </Stack>
-            <RunToolbar />
+            <RunToolbar sx={{ zIndex: 50 }} />
             <ResultsViewer
-                sx={{ paddingTop: '48px', flexGrow: 1 }}
+                sx={{ paddingTop: '48px', flexGrow: 1, zIndex: 50 }}
             />
         </Stack>
     )

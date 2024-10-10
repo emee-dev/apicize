@@ -12,7 +12,7 @@ edition = "2021"
 
 [dependencies]
 apicize_lib = { path = "../lib-rust", version = "^0.6.6" }
-clap = { version = "4.5.18", features = ["derive"] }
+clap = { version = "4.5.19", features = ["derive"] }
 colored = "2.1.0"
 num-format = { version = "0.4.4", features = ["with-system-locale"] }
 serde = "1.0.210"

@@ -1221,7 +1221,6 @@ export class WorkspaceStore {
         let allRequestsSucceeded = true
         let allTestsSucceeded = true
 
-
         const buildGroupItems = (group: ApicizeExecutionGroup): WorkbookExecutionGroupItem[] | undefined => {
             const results: WorkbookExecutionGroupItem[] = []
             for (const item of group.items) {
@@ -1407,7 +1406,14 @@ export class WorkspaceStore {
     changeRunIndex(requestOrGroupId: string, runIndex: number) {
         const execution = this.requestExecutions.get(requestOrGroupId)
         if (!execution) throw new Error(`Invalid Request ID ${requestOrGroupId}`)
+        
+        let resultIndex = null;
+        const currentResultRequestId = execution.runs[execution.runIndex]?.results?.find(r => r.index === execution.resultIndex)?.requestOrGroupId;
+        if (currentResultRequestId) {
+            resultIndex = execution.runs[runIndex].results?.find(r => r.requestOrGroupId === currentResultRequestId)?.index;
+        }
         execution.runIndex = runIndex
+        execution.resultIndex = resultIndex ?? execution.runs[runIndex].results[0].index;
     }
 
     @action

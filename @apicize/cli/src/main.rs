@@ -1,22 +1,22 @@
 use apicize_lib::models::apicize::{ApicizeExecution, ApicizeExecutionItem};
 use apicize_lib::models::settings::ApicizeSettings;
-use apicize_lib::models::{Parameters, Workspace};
+use apicize_lib::models::{open_data_stream, Parameters, Workspace};
 use apicize_lib::{cleanup_v8, get_workbooks_directory};
 use clap::Parser;
 use colored::Colorize;
 use num_format::{SystemLocale, ToFormattedString};
+use std::collections::HashMap;
 use std::ffi::OsStr;
-use std::io::{stderr, stdout, Write};
+use std::io::{stderr, stdin, stdout, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 use std::{fs, process};
 
-/// Simple program to greet a person
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(version, about, long_about = None, allow_hyphen_values = true)]
 struct Args {
-    /// Name of the file to run
+    /// Name of the file to process (or - to read STDIN)
     file: String,
     /// Global parameter file name (overriding default location, if available)
     #[arg(short, long)]
@@ -24,7 +24,7 @@ struct Args {
     /// Print configuration information
     #[arg(short, long, default_value_t = false)]
     info: bool,
-    /// Name of the output file name for test results
+    /// Name of the output file name for test results (or - to write to STDOUT)
     #[arg(short, long)]
     output: Option<String>,
 }
@@ -127,10 +127,14 @@ fn process_execution(
                     ctr = ctr + 1;
                     writeln!(
                         feedback,
-                        "{}Run {} of {}",
-                        format!("{:width$}", "", width = level * 3),
-                        ctr,
-                        execution.runs.len()
+                        "{}",
+                        format!(
+                            "{}Run {} of {}",
+                            format!("{:width$}", "", width = level * 3),
+                            ctr,
+                            execution.runs.len()
+                        )
+                        .white()
                     )
                     .unwrap();
                 }
@@ -239,13 +243,21 @@ async fn main() {
 
     let mut send_output_to = args.output.unwrap_or(String::from(""));
     if send_output_to.to_lowercase() == "stdout" {
-        send_output_to = String::from("--");
+        send_output_to = String::from("-");
     }
-    let mut feedback: Box<dyn std::io::Write> = if send_output_to == "--" {
+    let mut feedback: Box<dyn std::io::Write> = if send_output_to == "-" {
         Box::new(stderr())
     } else {
         Box::new(stdout())
     };
+
+    writeln!(
+        feedback,
+        "{}",
+        "------------ Initializtion -----------".white()
+    )
+    .unwrap();
+    writeln!(feedback).unwrap();
 
     let stored_settings: Option<ApicizeSettings> = match ApicizeSettings::open() {
         Ok(serialized_settings) => Some(serialized_settings.data),
@@ -276,81 +288,100 @@ async fn main() {
     }
 
     let locale = SystemLocale::default().unwrap();
-    let mut file_name = PathBuf::from(&args.file);
-
-    let mut found = file_name.as_path().is_file();
-
-    // Try adding extension if not in file name
-    if !found {
-        if file_name.extension() != Some(&OsStr::new("apicize")) {
-            file_name.set_extension("apicize");
-            found = file_name.as_path().is_file();
-        }
-    }
-
-    // Try settings workbook path if defined
-    if !found {
-        if let Some(dir) = stored_settings.and_then(|s| s.workbook_directory) {
-            let mut temp = PathBuf::from(dir);
-            temp.push(&file_name);
-            file_name = temp;
-            found = file_name.as_path().is_file();
-        }
-    }
-
-    if !found {
-        eprintln!(
-            "{}",
-            format!("Error: Apicize file \"{}\" not found", &args.file).red()
-        );
-        std::process::exit(-1);
-    }
-
-    writeln!(
-        feedback,
-        "{}",
-        format!("Opening {}", &file_name.to_string_lossy()).white()
-    )
-    .unwrap();
-
     let workspace: Workspace;
-    match Workspace::open(&file_name, globals_filename) {
-        Ok((wkspc, warnings)) => {
-            workspace = wkspc;
-            for warning in warnings {
-                writeln!(feedback, "{}", format!("WARNING: {warning}").yellow()).unwrap();
+    let warnings: Vec<String>;
+
+    if args.file == "-" {
+        match open_data_stream(String::from("STDIN"), &mut stdin()) {
+            Ok(mut success) => match Workspace::open2(&mut success.data, None, globals_filename) {
+                Ok((opened_workspace, opened_warnings)) => {
+                    workspace = opened_workspace;
+                    warnings = opened_warnings;
+                }
+                Err(err) => {
+                    eprintln!("{}", format!("Unable to read STDIN: {}", err.error).red());
+                    process::exit(-2);
+                }
+            },
+            Err(err) => {
+                eprintln!("{}", format!("Unable to read STDIN: {}", err.error).red());
+                process::exit(-2);
             }
         }
-        Err(err) => {
+    } else {
+        let mut file_name = PathBuf::from(&args.file);
+
+        let mut found = file_name.as_path().is_file();
+
+        // Try adding extension if not in file name
+        if !found {
+            if file_name.extension() != Some(&OsStr::new("apicize")) {
+                file_name.set_extension("apicize");
+                found = file_name.as_path().is_file();
+            }
+        }
+
+        // Try settings workbook path if defined
+        if !found {
+            if let Some(dir) = stored_settings.and_then(|s| s.workbook_directory) {
+                let mut temp = PathBuf::from(dir);
+                temp.push(&file_name);
+                file_name = temp;
+                found = file_name.as_path().is_file();
+            }
+        }
+
+        if !found {
             eprintln!(
                 "{}",
-                format!("Unable to read {}: {}", err.file_name, err.error).red()
+                format!("Error: Apicize file \"{}\" not found", &args.file).red()
             );
-            process::exit(-2);
+            std::process::exit(-1);
         }
+
+        writeln!(
+            feedback,
+            "{}",
+            format!("Opening {}", &file_name.to_string_lossy()).white()
+        )
+        .unwrap();
+
+        match Workspace::open(&file_name, globals_filename) {
+            Ok((opened_workspace, opened_warnings)) => {
+                workspace = opened_workspace;
+                warnings = opened_warnings;
+            }
+            Err(err) => {
+                eprintln!(
+                    "{}",
+                    format!("Unable to read {}: {}", err.file_name, err.error).red()
+                );
+                process::exit(-2);
+            }
+        }
+    }
+
+    for warning in warnings {
+        writeln!(feedback, "{}", format!("WARNING: {warning}").yellow()).unwrap();
     }
 
     // initialize_v8();
 
     let request_ids = workspace.requests.top_level_ids.to_owned();
     let arc_workspace = Arc::new(workspace);
-    let mut executions: Vec<Result<ApicizeExecution, String>> = Vec::new();
+    let mut executions: HashMap<String, Result<ApicizeExecution, String>> = HashMap::new();
 
     let start = Instant::now();
     let arc_test_started = Arc::new(start);
     for request_id in request_ids {
         if let Some(request) = arc_workspace.requests.entities.get(&request_id) {
-            let name = request.get_name();
-            writeln!(
-                feedback,
-                "{}",
-                if name.len() > 0 {
-                    format!("Calling {}", name).blue()
-                } else {
-                    format!("Calling {} (Unnamed)", request.get_id()).blue()
-                }
-            )
-            .unwrap();
+            let mut name = request.get_name().clone();
+            if name.len() == 0 {
+                name = format!("{} (Unnamed)", request.get_id());
+            }
+
+            writeln!(feedback, "{}", format!("Calling {}", name).blue()).unwrap();
+            
             let result = Workspace::run(
                 arc_workspace.clone(),
                 &request_id,
@@ -358,7 +389,8 @@ async fn main() {
                 arc_test_started.clone(),
             )
             .await;
-            executions.push(result);
+
+            executions.insert(name, result);
         }
     }
 
@@ -372,7 +404,7 @@ async fn main() {
 
     let mut failure_count = 0;
     let mut execution_ctr = 0;
-    for execution in &executions {
+    for execution in executions.values() {
         writeln!(feedback).unwrap();
         execution_ctr = execution_ctr + 1;
         failure_count += process_execution(&execution, 0, &locale, &mut feedback);
@@ -382,7 +414,7 @@ async fn main() {
         let serialized = serde_json::to_string(&executions).unwrap();
 
         let dest: &str;
-        let result = if send_output_to == "--" {
+        let result = if send_output_to == "-" {
             dest = "STDOUT";
             write!(stdout(), "{}", serialized)
         } else {
