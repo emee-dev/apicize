@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.6.8
+
+* Display warnings when specified parameters are not found in private or global files
+
 # 0.6.7
 
 * Added STDIN/STDOUt support to CLI

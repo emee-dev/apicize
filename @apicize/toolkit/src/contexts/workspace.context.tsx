@@ -401,6 +401,11 @@ export class WorkspaceStore {
         this.changeActive(EditableEntityType.Request, entry.id)
     }
 
+    @action
+    deleteWorkspaceWarning(warningId: string) {
+        this.workspace.defaults.warnings?.delete(warningId)
+    }
+
     getRequest(id: string) {
         return this.workspace.requests.entities.get(id)
     }
@@ -585,6 +590,16 @@ export class WorkspaceStore {
                     ? NO_SELECTION
                     : { id: entityId, name: GetTitle(this.workspace.proxies.entities.get(entityId)) }
             this.dirty = true
+        }
+    }
+
+    @action
+    deleteRequestWarning(warningId: string) {
+        if (this.active?.entityType === EditableEntityType.Request || this.active?.entityType === EditableEntityType.Group) {
+            const request = this.active as EditableWorkbookRequest
+            if (request.warnings) {
+                request.warnings.delete(warningId)
+            }
         }
     }
 

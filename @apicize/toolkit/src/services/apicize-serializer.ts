@@ -11,6 +11,7 @@ import { DEFAULT_SELECTION, NO_SELECTION } from "../models/store";
 import { EditableWorkbookCertificate } from "../models/workbook/editable-workbook-certificate";
 import { toJS } from "mobx";
 import { EditableWorkbookDefaults } from "../models/workbook/editable-workbook-defaults";
+import { GenerateIdentifier } from "./random-identifier-generator";
 
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
@@ -117,7 +118,7 @@ export function newEditableWorkspace(): EditableWorkspace {
  * @returns 
  */
 export function storedWorkspaceToEditableWorkspace(workspace: Workspace): EditableWorkspace {
-    return {
+    const result = {
         requests: {
             topLevelIds: workspace.requests.topLevelIds,
             entities: new Map(Object.values(workspace.requests.entities)
@@ -151,8 +152,14 @@ export function storedWorkspaceToEditableWorkspace(workspace: Workspace): Editab
                 Object.values(workspace.proxies.entities).map(e => ([e.id, EditableWorkbookProxy.fromWorkbook(e)]))
             )
         },
-        defaults: EditableWorkbookDefaults.fromWorkbook(workspace)
+        defaults: EditableWorkbookDefaults.fromWorkbook(workspace),
     }
+
+    if (workspace.warnings && (workspace.warnings.length > 0)) {
+        result.defaults.warnings = new Map(workspace.warnings.map(w => [GenerateIdentifier(), w]))
+    }
+
+    return result
 }
 
 export function editableToNameValuePair(pair: EditableNameValuePair) {
@@ -199,8 +206,7 @@ export function editableWorkspaceToStoredWorkspace(
         authorizations: editableIndexToStoredWorkspace<WorkbookAuthorization>(authorizations),
         certificates: editableIndexToStoredWorkspace<WorkbookCertificate>(certificates),
         proxies: editableIndexToStoredWorkspace<WorkbookProxy>(proxies),
-        defaults: defaults.toWorkbook()
+        defaults: defaults.toWorkbook(),
     }
     return result
 }
-

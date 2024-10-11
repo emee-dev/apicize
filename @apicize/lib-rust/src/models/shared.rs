@@ -11,14 +11,13 @@ use std::{fs, io};
 use thiserror::Error;
 
 use crate::{
-    IndexedEntities, Persistence, Selection, WorkbookAuthorization, WorkbookCertificate,
-    WorkbookProxy, WorkbookScenario,
+    Persistence, Selection,
 };
 
 /// Trait to describe oneself
-pub trait Identifyiable {
+pub trait Identifable {
     /// Return ID and name of object
-    fn get_id_and_name(&self) -> (String, String);
+    fn get_id_and_name(&self) -> (&String, &String);
 }
 
 /// Trait to describe how an entity will be persisted
@@ -74,16 +73,6 @@ impl SelectableOptionDefaultType {
 
 /// Trait indicating scenarios, authorizations, etc. can be
 pub trait SelectableOptions {
-    /// Validate all selections
-    fn validate_selections(
-        &self,
-        scenarios: &IndexedEntities<WorkbookScenario>,
-        authorizations: &IndexedEntities<WorkbookAuthorization>,
-        certificates: &IndexedEntities<WorkbookCertificate>,
-        proxies: &IndexedEntities<WorkbookProxy>,
-        default_type: &SelectableOptionDefaultType,
-    ) -> Option<Vec<String>>;
-
     /// Get selected scenario, if any
     fn get_selected_scenario(&self) -> &Option<Selection>;
 
@@ -97,16 +86,16 @@ pub trait SelectableOptions {
     fn get_selected_proxy(&self) -> &Option<Selection>;
 
     /// Set selected scenario, if any
-    fn set_scenario(&mut self, value: Option<Selection>);
+    fn set_selected_scenario(&mut self, value: Option<Selection>);
 
     /// Set selected authorization, if any
-    fn set_authorization(&mut self, value: Option<Selection>);
+    fn set_selected_authorization(&mut self, value: Option<Selection>);
 
     /// Set selected certificate, if any
-    fn set_certificate(&mut self, value: Option<Selection>);
+    fn set_selected_certificate(&mut self, value: Option<Selection>);
 
     /// Set selected proxy, if any
-    fn set_proxy(&mut self, value: Option<Selection>);
+    fn set_selected_proxy(&mut self, value: Option<Selection>);
 }
 
 /// Implement helpers for setting serde default values

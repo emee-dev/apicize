@@ -90,6 +90,47 @@ impl Display for WorkbookRequestEntry {
     }
 }
 
+impl Warnings for Workspace {
+    fn get_warnings(&self) -> &Option<Vec<String>> {
+        &self.warnings
+    }
+
+    fn add_warning(&mut self, warning: String) {
+        match &mut self.warnings {
+            Some(warnings) => warnings.push(warning),
+            None => self.warnings = Some(vec![warning])
+        }
+    }
+}
+
+/// Implement warnings trait for requests and groups
+impl Warnings for WorkbookRequestEntry {
+    /// Retrieve warnings
+    fn get_warnings(&self) -> &Option<Vec<String>> {
+        match self {
+            WorkbookRequestEntry::Info(request) => &request.warnings,
+            WorkbookRequestEntry::Group(group) => &group.warnings,
+        }
+    }
+
+    fn add_warning(&mut self, warning: String) {
+        match self {
+            WorkbookRequestEntry::Info(request) => {
+                match &mut request.warnings {
+                    Some(warnings) => warnings.push(warning),
+                    None => request.warnings = Some(vec![warning])
+                }
+            }
+            WorkbookRequestEntry::Group(group) => {
+                match &mut group.warnings {
+                    Some(warnings) => warnings.push(warning),
+                    None => group.warnings = Some(vec![warning])
+                }
+            }
+        }
+    }
+}
+
 
 /*
 #[cfg(test)]

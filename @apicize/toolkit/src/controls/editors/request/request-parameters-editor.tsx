@@ -1,6 +1,6 @@
 import { EntitySelection } from '../../../models/workbook/entity-selection'
-import { MenuItem, FormControl, InputLabel, Select } from '@mui/material'
-import { Stack } from '@mui/system'
+import { MenuItem, FormControl, InputLabel, Select, Alert } from '@mui/material'
+import { Box, Stack } from '@mui/system'
 import { DEFAULT_SELECTION_ID } from '../../../models/store'
 import { EditableWorkbookRequest } from '../../../models/workbook/editable-workbook-request'
 import { EditableEntityType } from '../../../models/workbook/editable-entity-type'

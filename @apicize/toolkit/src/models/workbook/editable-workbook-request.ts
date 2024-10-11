@@ -23,6 +23,7 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
     @observable public accessor referrerPolicy = undefined
     @observable public accessor duplex = undefined
     @observable public accessor test = ''
+    @observable public accessor warnings: Map<string, string> | undefined = undefined
 
     @observable accessor runs = 0
     @observable accessor selectedScenario: Selection | undefined = undefined
@@ -72,6 +73,9 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
             }
         }
         result.test = entry.test ?? ''
+        result.warnings = entry.warnings
+            ? new Map(entry.warnings.map(w => [GenerateIdentifier(), w]))
+            : new Map<string, string>()
 
         return result
     }
@@ -164,6 +168,7 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
     @computed get invalid() {
         return this.nameInvalid
             || this.urlInvalid
+            || (this.warnings?.size ?? 0) > 0
     }
 }
 
@@ -177,6 +182,7 @@ export class EditableWorkbookRequestGroup extends Editable<WorkbookRequestGroup>
     @observable accessor selectedAuthorization: Selection | undefined = undefined
     @observable accessor selectedCertificate: Selection | undefined = undefined
     @observable accessor selectedProxy: Selection | undefined = undefined
+    @observable accessor warnings: Map<string, string> | undefined = undefined
 
     static fromWorkspace(entry: WorkbookRequestGroup): EditableWorkbookRequestGroup {
         const result = new EditableWorkbookRequestGroup()
@@ -190,6 +196,9 @@ export class EditableWorkbookRequestGroup extends Editable<WorkbookRequestGroup>
         result.selectedAuthorization = entry.selectedAuthorization ?? undefined
         result.selectedCertificate = entry.selectedCertificate ?? undefined
         result.selectedProxy = entry.selectedProxy ?? undefined
+        result.warnings = entry.warnings
+            ? new Map(entry.warnings.map(w => [GenerateIdentifier(), w]))
+            : new Map<string, string>()
 
         return result
     }

@@ -2,15 +2,12 @@
 //!
 //! This submodule defines modules used to manage workspaces
 
-use super::workbook::*;
+use super::{workbook::*, Identifable};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// Entity with a unique identifier
-pub trait WorkspaceEntity<T> {
-    /// Return ID and name of object
-    fn get_id_and_name(&self) -> (String, String);
-
+/// Trait representing parameter entity with a unique identifier
+pub trait WorkspaceParameter<T> {
     /// Get persistence
     fn get_persistence(&self) -> Option<Persistence>;
 
@@ -19,6 +16,15 @@ pub trait WorkspaceEntity<T> {
 
     /// Set persistence
     fn clear_persistence(&mut self);
+}
+
+/// Entity that has warnings that should be shown to user upon access
+pub trait Warnings {
+    /// Retrieve warnings
+    fn get_warnings(&self) -> &Option<Vec<String>>;
+
+    /// Set warnings
+    fn add_warning(&mut self, warning: String);
 }
 
 /// Generic for indexed, ordered entities, optionally with children
@@ -44,6 +50,18 @@ pub struct IndexedEntities<T> {
 
     /// Entities indexed by ID
     pub entities: HashMap<String, T>,
+}
+
+/// Implemented IndexEntry methods
+impl<T: Identifable> IndexedEntities<T> {
+    /// Find a match based upon ID or name
+    pub fn find_match(&self, selection: &Selection) -> bool {
+        self.entities.contains_key(&selection.id)
+            || self
+                .entities
+                .values()
+                .any(|e| e.get_id_and_name().1.to_lowercase() == selection.name.to_lowercase())
+    }
 }
 
 /// Data type for entities used by Apicize during testing and editing.  This will be

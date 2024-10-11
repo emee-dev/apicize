@@ -20,5 +20,6 @@ export interface Workspace {
     scenarios: IndexedEntities<WorkbookScenario>,
     certificates: IndexedEntities<WorkbookCertificate>,
     proxies: IndexedEntities<WorkbookProxy>,
-    defaults: WorkbookDefaults
+    defaults: WorkbookDefaults,
+    warnings?: string[],
 }

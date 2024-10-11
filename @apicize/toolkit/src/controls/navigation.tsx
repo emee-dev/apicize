@@ -10,7 +10,6 @@ import SaveAsIcon from '@mui/icons-material/SaveAs'
 import HelpIcon from '@mui/icons-material/Help'
 import SendIcon from '@mui/icons-material/Send'
 import LockIcon from '@mui/icons-material/Lock'
-import InputIcon from '@mui/icons-material/Input';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -1096,7 +1095,10 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                             alignItems='center'
                         >
                             <SettingsIcon className='nav-folder' />
-                            <Box className='nav-node-text' sx={{ flexGrow: 1, paddingTop: '8px', paddingBottom: '8px' }}>
+                            <Box className='nav-node-text' display='flex' flexGrow={1} paddingTop='8px' paddingBottom='8px' alignItems='center'>
+                                {
+                                    workspace.workspace.defaults.invalid ? (<WarningAmberIcon sx={{ color: '#FFFF00', marginRight: '0.25em' }} />) : null
+                                }
                                 Defaults &amp; Settings
                             </Box>
                         </Box>

@@ -8,6 +8,7 @@ import { jsx, jsxs } from 'react/jsx-runtime'
 import { visit } from 'unist-util-visit';
 import { Node as DastNode } from 'mdast';
 import SendIcon from '@mui/icons-material/Send';
+import SettingsIcon from '@mui/icons-material/Settings';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings'
 import LanguageIcon from '@mui/icons-material/Language'
 import ViewListIcon from '@mui/icons-material/ViewList'
@@ -222,6 +223,10 @@ export const HelpPanel = observer(() => {
                 return <SecurityIcon className='help-icon' />
             case 'proxy':
                 return <AirlineStopsIcon className='help-icon' />
+            case 'settings':
+                return <SettingsIcon className='help-icon' />
+            case 'display':
+                return <DisplaySettingsIcon className='help-icon' />
             default:
                 return null
         }

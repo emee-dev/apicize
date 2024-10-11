@@ -10,6 +10,7 @@ import { RequestInfoEditor } from './request/request-info-editor'
 import { RequestHeadersEditor } from './request/request-headers-editor'
 import SendIcon from '@mui/icons-material/Send';
 import ScienceIcon from '@mui/icons-material/Science';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { RequestQueryStringEditor } from './request/request-query-string-editor'
 import { RequestBodyEditor } from './request/request-body-editor'
 import { RequestTestEditor } from './request/request-test-editor'
@@ -22,6 +23,7 @@ import { EditableEntityType } from '../../models/workbook/editable-entity-type';
 import { EditableWorkbookRequest, EditableWorkbookRequestGroup } from '../../models/workbook/editable-workbook-request';
 import { RunToolbar } from '../run-toolbar';
 import { useWorkspace } from '../../contexts/workspace.context';
+import { RequestWarningsEditor } from './request/request-warnings.editor';
 
 export const RequestEditor = observer((props: {
     sx: SxProps
@@ -47,8 +49,21 @@ export const RequestEditor = observer((props: {
         return null
     }
 
-    const usePanel = (group && panel !== 'Info' && panel !== 'Parameters')
+    let usePanel = (
+        (group && panel !== 'Info' && panel !== 'Parameters')
+    )
         ? 'Info' : panel
+
+
+    let hasWarnings =
+        (request?.warnings?.size ?? 0) > 0 || (group?.warnings?.size ?? 0) > 0
+
+    if (usePanel === 'Warnings') {
+        // If user cleared warnings, switch to Parameters
+        if ((request?.warnings?.size ?? 0) === 0 && panel === 'Warnings') {
+            usePanel = 'Parameters'
+        }
+    }
 
     return (
         <Stack direction='column' className='editor-panel' sx={{ ...props.sx, display: 'flex' }}>
@@ -67,6 +82,11 @@ export const RequestEditor = observer((props: {
                                     aria-label="text alignment">
                                     <ToggleButton value="Info" title="Show Group Info" aria-label='show info'><DisplaySettingsIcon /></ToggleButton>
                                     <ToggleButton value="Parameters" title="Show Group Parameters" aria-label='show test'><AltRouteIcon /></ToggleButton>
+                                    {
+                                        hasWarnings
+                                            ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
+                                            : null
+                                    }
                                 </ToggleButtonGroup>
                                 <Box className='panels' flexGrow={1}>
                                     <EditorTitle icon={<FolderIcon />} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'} />
@@ -95,6 +115,11 @@ export const RequestEditor = observer((props: {
                                         <ToggleButton value="Body" title="Show Request Body" aria-label='show body'><ArticleOutlinedIcon /></ToggleButton>
                                         <ToggleButton value="Test" title="Show Request Test" aria-label='show test'><ScienceIcon /></ToggleButton>
                                         <ToggleButton value="Parameters" title="Show Request Parameters" aria-label='show test'><AltRouteIcon /></ToggleButton>
+                                        {
+                                            hasWarnings
+                                                ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
+                                                : null
+                                        }
                                     </ToggleButtonGroup>
                                     <Box className='panels' sx={{ flexGrow: 1 }}>
                                         <EditorTitle icon={<SendIcon />} name={(request.name.length > 0) ? `${request.name} - ${panel}` : `(Unnamed) - ${panel}`} />
@@ -104,7 +129,8 @@ export const RequestEditor = observer((props: {
                                                     : usePanel === 'Body' ? <RequestBodyEditor />
                                                         : usePanel === 'Test' ? <RequestTestEditor />
                                                             : usePanel === 'Parameters' ? <RequestParametersEditor />
-                                                                : null}
+                                                                : usePanel === 'Warnings' ? <RequestWarningsEditor />
+                                                                    : null}
                                     </Box>
                                 </Box>
                             ) :

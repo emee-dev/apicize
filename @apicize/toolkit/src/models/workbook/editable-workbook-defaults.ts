@@ -3,6 +3,7 @@ import { Editable } from "../editable"
 import { computed, makeObservable, observable, toJS } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
 import { NO_SELECTION, NO_SELECTION_ID } from "../store"
+import { GenerateIdentifier } from "../../services/random-identifier-generator"
 
 export class EditableWorkbookDefaults extends Editable<WorkbookDefaults> {
     public readonly entityType = EditableEntityType.Defaults
@@ -10,6 +11,7 @@ export class EditableWorkbookDefaults extends Editable<WorkbookDefaults> {
     @observable accessor selectedAuthorization: Selection  = NO_SELECTION
     @observable accessor selectedCertificate: Selection = NO_SELECTION
     @observable accessor selectedProxy: Selection = NO_SELECTION
+    @observable accessor warnings: Map<string, string> | undefined = undefined
 
     static new() {
         const result = new EditableWorkbookDefaults()
@@ -20,7 +22,7 @@ export class EditableWorkbookDefaults extends Editable<WorkbookDefaults> {
 
     static fromWorkbook(workspace: Workspace): EditableWorkbookDefaults {
         const result = new EditableWorkbookDefaults()
-        result.id = crypto.randomUUID()
+        result.id = GenerateIdentifier()
         result.name = ''
         result.selectedScenario = workspace?.defaults?.selectedScenario ?? NO_SELECTION
         result.selectedAuthorization = workspace?.defaults?.selectedAuthorization ?? NO_SELECTION
@@ -38,6 +40,6 @@ export class EditableWorkbookDefaults extends Editable<WorkbookDefaults> {
         } 
     }
     @computed get invalid() {
-        return false
+        return (this.warnings?.size ?? 0) > 0
     }
 }

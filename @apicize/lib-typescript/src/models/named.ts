@@ -11,5 +11,5 @@ export interface Named {
  * @returns Name if set or "(Unnamed)" if not set
  */
 export function GetTitle(entity?: Named): string {
-    return (entity?.name && entity.name.length  > 0) ? entity.name : '(Unnamed)'
+    return (entity?.name && entity.name.length  > 0) ? entity.name : 'Unnamed'
 }

@@ -72,7 +72,8 @@ export interface WorkbookRequest extends Identifiable, Named, Executable {
     referrer?: string
     referrerPolicy?: ReferrerPolicy
     duplex?: RequestDuplex
-    test?: string
+    test?: string,
+    warnings?: string[],
 }
 
 export enum WorkbookGroupExecution {
@@ -82,4 +83,5 @@ export enum WorkbookGroupExecution {
 
 export interface WorkbookRequestGroup extends Identifiable, Named, Executable {
     execution: WorkbookGroupExecution
+    warnings?: string[],
 }

@@ -59,7 +59,11 @@ fn main() {
                 app.handle().plugin(
                     shortcut_builder
                         .with_handler(move |_app, shortcut, _event| {
-                            let focused = _app.get_webview_window("main").unwrap().is_focused().unwrap();
+                            let focused = _app
+                                .get_webview_window("main")
+                                .unwrap()
+                                .is_focused()
+                                .unwrap();
                             if focused {
                                 if shortcut == &ctrl_n_shortcut {
                                     handle.emit("shortcut", "new").unwrap()
@@ -89,12 +93,9 @@ fn main() {
 
 #[tauri::command]
 async fn open_workspace(path: String) -> Result<Workspace, String> {
-    match Workspace::open(&PathBuf::from(path), None) {
-        Ok((workspace, warnings)) => {
+    match Workspace::open_from_file(&PathBuf::from(path), None) {
+        Ok(workspace) => {
             clear_all_oauth2_tokens().await;
-            for warning in warnings {
-                println!("Warning: {}", warning);
-            }
             Ok(workspace)
         }
         Err(err) => Err(format!("{}", err.error)),
@@ -150,13 +151,14 @@ async fn run_request(workspace: Workspace, request_id: String) -> Result<Apicize
         &request_id,
         Some(cancellation),
         arc_test_started,
-    ).await;
+    )
+    .await;
 
     cancellation_tokens().lock().unwrap().remove(&request_id);
-    
+
     match response {
         Ok(result) => Ok(result),
-        Err(err) => Err(err.to_string())
+        Err(err) => Err(err.to_string()),
     }
 }
 

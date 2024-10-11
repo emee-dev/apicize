@@ -1,12 +1,12 @@
 //! Workbook models submodule
-//! 
+//!
 //! This submodule defines modules used to store Workbooks
-use super::utility::*;
+use super::{utility::*, Identifable};
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
+use serde_json::Value;
 use serde_with::base64::{Base64, Standard};
 use serde_with::formats::Unpadded;
-use serde_json::Value;
+use serde_with::serde_as;
 
 /// Enumeration of HTTP methods
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -40,7 +40,6 @@ pub struct WorkbookNameValuePair {
     pub disabled: Option<bool>,
 }
 
-
 /// Apicize Request body
 #[serde_as]
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -73,7 +72,7 @@ pub enum WorkbookRequestBody {
         /// Base-64 encoded binary data
         #[serde_as(as = "Base64<Standard, Unpadded>")]
         data: Vec<u8>,
-    }
+    },
 }
 
 /// Specifies persistence options for non-request entities
@@ -99,6 +98,12 @@ pub struct Selection {
     pub name: String,
 }
 
+impl Identifable for Selection {
+    fn get_id_and_name(&self) -> (&String, &String) {
+        return (&self.id, &self.name);
+    }
+}
+
 /// Indicator on workbook child execution order
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 #[serde(rename_all = "UPPERCASE")]
@@ -106,7 +111,7 @@ pub enum WorkbookExecution {
     /// Group children execute sequentially
     Sequential,
     /// Group children execute concurrently
-    Concurrent
+    Concurrent,
 }
 
 /// Information required to dispatch and test an Apicize Request
@@ -160,7 +165,6 @@ pub struct WorkbookRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub warnings: Option<Vec<String>>,
 }
-
 
 /// A group of Apicize Requests
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -337,7 +341,7 @@ pub enum WorkbookCertificate {
         /// Optional key file, if not combining in PKCS8 format
         #[serde_as(as = "Base64<Standard, Unpadded>")]
         key: Vec<u8>,
-    },    
+    },
     /// PEM encoded certificate and key file
     #[serde(rename = "PEM")]
     PEM {
@@ -352,7 +356,7 @@ pub enum WorkbookCertificate {
         /// Certificate information
         #[serde_as(as = "Base64<Standard, Unpadded>")]
         pem: Vec<u8>,
-    },        
+    },
 }
 
 /// An HTTP or SOCKS5 proxy that can be used to tunnel requests

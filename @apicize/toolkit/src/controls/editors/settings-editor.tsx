@@ -1,15 +1,15 @@
-import { Stack, SxProps, FormControl, InputLabel, MenuItem, Select, Box, ToggleButton, ToggleButtonGroup, IconButton, SupportedColorScheme } from '@mui/material'
+import { Stack, SxProps, FormControl, InputLabel, MenuItem, Select, Box, ToggleButton, ToggleButtonGroup, IconButton, SupportedColorScheme, Alert } from '@mui/material'
 import { observer } from 'mobx-react-lite';
 import { useWorkspace } from '../../contexts/workspace.context';
 import { useFileOperations } from '../../contexts/file-operations.context';
 import { useFeedback, ToastSeverity } from '../../contexts/feedback.context';
-import { DEFAULT_SELECTION_ID } from '../../models/store';
 import { EntitySelection } from '../../models/workbook/entity-selection';
 import { EditorTitle } from '../editor-title';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import AltRouteIcon from '@mui/icons-material/AltRoute'
 import SettingsIcon from '@mui/icons-material/Settings';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
 import React, { useRef, useState } from 'react';
 import { useApicizeSettings } from '../../contexts/apicize-settings.context';
@@ -20,6 +20,8 @@ const ParametersEditor = observer(() => {
     const workspace = useWorkspace()
     if (workspace.active?.entityType !== EditableEntityType.Defaults || workspace.helpVisible) return null
     const defaults = workspace.active as EditableWorkbookDefaults
+
+    workspace.nextHelpTopic = 'settings/parameters'
 
     let credIndex = 0
     const itemsFromSelections = (selections: EntitySelection[]) => {
@@ -94,11 +96,14 @@ const ParametersEditor = observer(() => {
 })
 
 const DisplaySettingsEditor = observer(() => {
+    const workspace = useWorkspace()
     const feedback = useFeedback()
     const settings = useApicizeSettings()
     const fileOps = useFileOperations()
     const [canIncrease, setCanIncrease] = useState(settings.fontSize > 6)
     const [canDecrease, setCanDecrease] = useState(settings.fontSize < 48)
+
+    workspace.nextHelpTopic = 'settings/display'
 
     let saveCtr = 0
     const checkSave = (ctr: number) => {
@@ -135,15 +140,15 @@ const DisplaySettingsEditor = observer(() => {
 
     return <Box>
         <EditorTitle icon={<SettingsIcon />} name='Settings - Display' />
-        <Stack direction={'column'} spacing={3} marginTop='3em'>
-            <Stack direction={'row'} spacing={'1em'}>
-                <InputLabel id='text-size-label-id'>Text Size:</InputLabel>
+        <Stack direction={'column'} spacing={2} marginTop='3em'>
+            <Stack direction={'row'} display='flex' alignItems='center' justifyContent='left'>
+                <InputLabel id='text-size-label-id' sx={{width: '8em'}} >Text Size:</InputLabel>
                 <IconButton onClick={() => increase()} aria-label="increase font size" disabled={!canIncrease}><AddIcon /></IconButton>
                 <IconButton onClick={() => decrease()} aria-label="decrease font size" disabled={!canDecrease}><RemoveIcon /></IconButton>
-                <Box>{settings.fontSize}</Box>
+                <Box marginLeft='2em'>{settings.fontSize}</Box>
             </Stack>
-            <Stack direction={'row'} spacing={'1em'} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
-                <InputLabel id='color-mode-label-id'>Color Mode:</InputLabel>
+            <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                <InputLabel id='color-mode-label-id' sx={{width: '8em'}}>Color Mode:</InputLabel>
                 <Select
                     value={settings.colorScheme}
                     onChange={(event) => setScheme(event.target.value as SupportedColorScheme)}
@@ -154,6 +159,20 @@ const DisplaySettingsEditor = observer(() => {
             </Stack>
         </Stack>
     </Box >
+})
+
+const EditWarningsEditor = observer((props: { warnings: Map<string, string> | undefined }) => {
+    const workspace = useWorkspace()
+    return props.warnings ? (
+        <Box>
+            {
+                [...props.warnings.entries()].map(e =>
+                    <Alert variant='outlined' severity='warning' onClose={() => workspace.deleteWorkspaceWarning(e[0])}>
+                        {e[1]}
+                    </Alert>)
+            }
+        </Box>
+    ) : null
 })
 
 export const SettingsEditor = observer((props: { sx: SxProps }) => {
@@ -171,6 +190,13 @@ export const SettingsEditor = observer((props: { sx: SxProps }) => {
         }
     }
 
+    let hasWarnings = (workspace.workspace.defaults.warnings?.size ?? 0) > 0
+
+    let usePanel = panel
+    if (usePanel === 'Warnings' && !hasWarnings) {
+        usePanel = 'Parameters'
+    }
+
     return (
         <Stack direction='column' className='editor-panel' sx={{ ...props.sx, display: 'flex' }}>
             <Stack sx={{ height: '50vh', paddingBottom: '48px', flexBasis: 2 }}>
@@ -180,16 +206,22 @@ export const SettingsEditor = observer((props: { sx: SxProps }) => {
                         orientation='vertical'
                         exclusive
                         onChange={handlePanelChanged}
-                        value={panel}
+                        value={usePanel}
                         sx={{ marginRight: '24px' }}
                         aria-label="text alignment">
                         <ToggleButton value="Parameters" title="Show Default Request Parameters" aria-label='show default parameters'><AltRouteIcon /></ToggleButton>
                         <ToggleButton value="Display" title="Show Display Setttings" aria-label='show display settings'><DisplaySettingsIcon /></ToggleButton>
+                        ({
+                            hasWarnings
+                                ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
+                                : null
+                        })
                     </ToggleButtonGroup>
                     <Box className='panels' sx={{ flexGrow: 1 }}>
-                        {panel === 'Parameters' ? <ParametersEditor />
-                            : panel === 'Display' ? <DisplaySettingsEditor />
-                                : null}
+                        {usePanel === 'Parameters' ? <ParametersEditor />
+                            : usePanel === 'Display' ? <DisplaySettingsEditor />
+                                : usePanel === 'Warnings' ? <EditWarningsEditor warnings={workspace.workspace.defaults?.warnings} />
+                                    : null}
                     </Box>
                 </Box>
             </Stack>

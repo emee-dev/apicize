@@ -1,6 +1,6 @@
 use apicize_lib::models::apicize::{ApicizeExecution, ApicizeExecutionItem};
 use apicize_lib::models::settings::ApicizeSettings;
-use apicize_lib::models::{open_data_stream, Parameters, Workspace};
+use apicize_lib::models::{open_data_stream, Parameters, Warnings, Workspace};
 use apicize_lib::{cleanup_v8, get_workbooks_directory};
 use clap::Parser;
 use colored::Colorize;
@@ -81,7 +81,7 @@ fn render_execution_item(
                         );
                         if let Some(err) = &result.error {
                             writeln!(feedback, " {}", "[ERROR]".red()).unwrap();
-                            writeln!(feedback, "{}{}", test_prefix2, err.red().dimmed()).unwrap();
+                            writeln!(feedback, "{}{}", test_prefix2, err.red()).unwrap();
                         } else if result.success {
                             writeln!(feedback, " {}", "[PASS]".green()).unwrap();
                         } else {
@@ -289,20 +289,20 @@ async fn main() {
 
     let locale = SystemLocale::default().unwrap();
     let workspace: Workspace;
-    let warnings: Vec<String>;
 
     if args.file == "-" {
         match open_data_stream(String::from("STDIN"), &mut stdin()) {
-            Ok(mut success) => match Workspace::open2(&mut success.data, None, globals_filename) {
-                Ok((opened_workspace, opened_warnings)) => {
-                    workspace = opened_workspace;
-                    warnings = opened_warnings;
+            Ok(mut success) => {
+                match Workspace::open_from_workbook(&mut success.data, None, globals_filename) {
+                    Ok(opened_workspace) => {
+                        workspace = opened_workspace;
+                    }
+                    Err(err) => {
+                        eprintln!("{}", format!("Unable to read STDIN: {}", err.error).red());
+                        process::exit(-2);
+                    }
                 }
-                Err(err) => {
-                    eprintln!("{}", format!("Unable to read STDIN: {}", err.error).red());
-                    process::exit(-2);
-                }
-            },
+            }
             Err(err) => {
                 eprintln!("{}", format!("Unable to read STDIN: {}", err.error).red());
                 process::exit(-2);
@@ -346,10 +346,9 @@ async fn main() {
         )
         .unwrap();
 
-        match Workspace::open(&file_name, globals_filename) {
-            Ok((opened_workspace, opened_warnings)) => {
+        match Workspace::open_from_file(&file_name, globals_filename) {
+            Ok(opened_workspace) => {
                 workspace = opened_workspace;
-                warnings = opened_warnings;
             }
             Err(err) => {
                 eprintln!(
@@ -361,8 +360,28 @@ async fn main() {
         }
     }
 
-    for warning in warnings {
-        writeln!(feedback, "{}", format!("WARNING: {warning}").yellow()).unwrap();
+    if let Some(warnings) = workspace.get_warnings() {
+        for warning in warnings {
+            writeln!(
+                feedback,
+                "{}",
+                format!("WARNING [Workbook]: {warning}").yellow()
+            )
+            .unwrap();
+        }
+    }
+
+    for request in workspace.requests.entities.values().into_iter() {
+        if let Some(warnings) = request.get_warnings() {
+            for warning in warnings {
+                writeln!(
+                    feedback,
+                    "{}",
+                    format!("WARNING [Workbook]: {warning}").yellow()
+                )
+                .unwrap();
+            }
+        }
     }
 
     // initialize_v8();
@@ -381,7 +400,7 @@ async fn main() {
             }
 
             writeln!(feedback, "{}", format!("Calling {}", name).blue()).unwrap();
-            
+
             let result = Workspace::run(
                 arc_workspace.clone(),
                 &request_id,
