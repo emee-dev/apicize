@@ -25,7 +25,7 @@ export const ConfirmationDialog = observer(() => {
                 paddingRight: '24px',
                 paddingLeft: '24px'
             }}>
-                <DialogContentText id="alert-dialog-description">
+                <DialogContentText id="alert-dialog-description" sx={{whiteSpace: 'pre-wrap'}}>
                     {feedback.confirmOptions.message ?? 'Proceed?'}
                 </DialogContentText>
             </DialogContent>

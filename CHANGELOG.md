@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.6.9
+
+* Display warning on save if any auths or certs are stored directly in Workbook (not priv or local global)
+
 # 0.6.8
 
 * Display warnings when specified parameters are not found in private or global files

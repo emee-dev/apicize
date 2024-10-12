@@ -51,6 +51,7 @@ export class WorkspaceStore {
     @observable accessor workbookFullName = ''
     @observable accessor workbookDisplayName = '(New Workbook)'
     @observable accessor dirty: boolean = false
+    @observable accessor warnOnWorkspaceCreds: boolean = true
     @observable accessor invalidItems = new Set<string>()
 
     @observable accessor executingRequestIDs: string[] = []
@@ -131,6 +132,7 @@ export class WorkspaceStore {
         this.workbookFullName = ''
         this.workbookDisplayName = ''
         this.dirty = false
+        this.warnOnWorkspaceCreds = true
         this.workspace = newEditableWorkspace()
         this.expandedItems = ['hdr-r', 'hdr-s', 'hdr-a', 'hdr-c', 'hdr-p']
         this.requestExecutions.clear()
@@ -168,6 +170,7 @@ export class WorkspaceStore {
         this.workbookFullName = fileName
         this.workbookDisplayName = displayName
         this.dirty = false
+        this.warnOnWorkspaceCreds = true
         this.requestExecutions.clear()
         this.invalidItems.clear()
     }
@@ -255,6 +258,25 @@ export class WorkspaceStore {
     @action
     clearActive() {
         this.active = null
+    }
+
+    /***
+     * Return list of authorizations and/or certificates that are stored directly
+     * in the workspace
+     */
+    public listWorkspaceCredentials() {
+        let publics = []
+        for (const auth of this.workspace.authorizations.entities.values()) {
+            if (auth.persistence === Persistence.Workbook) {
+                publics.push(auth)
+            }
+        }
+        for (const cert of this.workspace.certificates.entities.values()) {
+            if (cert.persistence === Persistence.Workbook) {
+                publics.push(cert)
+            }
+        }
+        return publics
     }
 
     /**
@@ -1421,7 +1443,7 @@ export class WorkspaceStore {
     changeRunIndex(requestOrGroupId: string, runIndex: number) {
         const execution = this.requestExecutions.get(requestOrGroupId)
         if (!execution) throw new Error(`Invalid Request ID ${requestOrGroupId}`)
-        
+
         let resultIndex = null;
         const currentResultRequestId = execution.runs[execution.runIndex]?.results?.find(r => r.index === execution.resultIndex)?.requestOrGroupId;
         if (currentResultRequestId) {

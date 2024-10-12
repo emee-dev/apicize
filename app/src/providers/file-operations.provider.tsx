@@ -4,7 +4,7 @@ import * as dialog from '@tauri-apps/plugin-dialog'
 import * as path from '@tauri-apps/api/path'
 import { exists, readFile, readTextFile, copyFile, mkdir } from "@tauri-apps/plugin-fs"
 import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useApicizeSettings, useFeedback, WorkspaceStore } from "@apicize/toolkit";
-import { StoredGlobalSettings, Workspace } from "@apicize/lib-typescript";
+import { GetTitle, StoredGlobalSettings, Workspace } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
 
 /**
@@ -123,10 +123,10 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
     }
 
     /**
-     * Launches a new workbook
+     * Launches a new workspace
      * @returns 
      */
-    const newWorkbook = async () => {
+    const newWorkspace = async () => {
         if (workspaceStore.dirty) {
             if (! await feedback.confirm({
                 title: 'New Workbook',
@@ -150,7 +150,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      * @param doUpdateSettings 
      * @returns 
      */
-    const openWorkbook = async (fileName?: string, doUpdateSettings?: boolean) => {
+    const openWorkspace = async (fileName?: string, doUpdateSettings?: boolean) => {
         if (workspaceStore.dirty) {
             if (! await feedback.confirm({
                 title: 'Open Workbook',
@@ -194,10 +194,10 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
     }
 
     /**
-     * Saves the current workbook under its current name
+     * Saves the current worspake under its current name
      * @returns 
      */
-    const saveWorkbook = async () => {
+    const saveWorkspace = async () => {
         try {
             if (!(workspaceStore.workbookFullName && workspaceStore.workbookFullName.length > 0)) {
                 return
@@ -212,6 +212,22 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                     defaultToCancel: true
                 })) {
                     return
+                }
+            }
+
+            if (workspaceStore.warnOnWorkspaceCreds) {
+                const creds = workspaceStore.listWorkspaceCredentials()
+                if (creds.length > 0) {
+                    if (! await feedback.confirm({
+                        title: 'Save Workbook',
+                        message: `Your workspace has authorizations or certifiations stored directly in the workbook, which will be included if you share the workbook; are you sure you want to save?\n\n${creds.map(c => GetTitle(c)).join(', ')}`,
+                        okButton: 'Yes',
+                        cancelButton: 'No',
+                        defaultToCancel: true
+                    })) {
+                        return
+                    }
+                    workspaceStore.warnOnWorkspaceCreds = false
                 }
             }
 
@@ -249,6 +265,22 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 }
             }
 
+            if (workspaceStore.warnOnWorkspaceCreds) {
+                const creds = workspaceStore.listWorkspaceCredentials()
+                if (creds.length > 0) {
+                    if (! await feedback.confirm({
+                        title: 'Save Workbook',
+                        message: `Your workspace has authorizations or certifiations stored directly in the workbook, which will be included if you share the workbook; are you sure you want to save?\n\n${creds.map(c => GetTitle(c)).join(', ')}`,
+                        okButton: 'Yes',
+                        cancelButton: 'No',
+                        defaultToCancel: true
+                    })) {
+                        return
+                    }
+                    workspaceStore.warnOnWorkspaceCreds = false
+                }
+            }
+            
             let fileName = await dialog.save({
                 title: 'Save Apicize Workbook',
                 defaultPath: ((workspaceStore.workbookFullName?.length ?? 0) > 0)
@@ -417,7 +449,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 _defaultRequested.current = true
                 if (settings.lastWorkbookFileName && (settings.lastWorkbookFileName?.length ?? 0) > 0) {
                     if (await exists(settings.lastWorkbookFileName)) {
-                        await openWorkbook(settings.lastWorkbookFileName, false)
+                        await openWorkspace(settings.lastWorkbookFileName, false)
                     }
                 } else {
                     if (! await exists(settings.workbookDirectory)) {
@@ -425,7 +457,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                         const demoFileSource = await join(await resourceDir(), 'help', `demo.apicize`)
                         const demoFileDest = await join(settings.workbookDirectory, `demo.apicize`)
                         await copyFile(demoFileSource, demoFileDest)
-                        await openWorkbook(demoFileDest, true)
+                        await openWorkspace(demoFileDest, true)
                     }
                 }
             } catch (e) {
@@ -435,9 +467,9 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
     })()
 
     const fileOpsStore = new FileOperationsStore({
-        onNewWorkbook: newWorkbook,
-        onOpenWorkbook: openWorkbook,
-        onSaveWorkbook: saveWorkbook,
+        onNewWorkbook: newWorkspace,
+        onOpenWorkbook: openWorkspace,
+        onSaveWorkbook: saveWorkspace,
         onSaveWorkbookAs: saveWorkbookAs,
         onOpenSshFile: openSsshFile,
         onOpenFile: openFile,
