@@ -100,7 +100,7 @@ pub struct Selection {
 
 impl Identifable for Selection {
     fn get_id_and_name(&self) -> (&String, &String) {
-        return (&self.id, &self.name);
+        (&self.id, &self.name)
     }
 }
 

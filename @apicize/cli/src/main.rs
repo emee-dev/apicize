@@ -32,9 +32,9 @@ struct Args {
 fn duration_to_ms(d: u128, locale: &SystemLocale) -> String {
     let mut ms = d;
     let mins: u128 = ms / 60000;
-    ms = ms - mins * 60000;
+    ms -= mins * 60000;
     let secs: u128 = ms / 1000;
-    ms = ms - secs * 1000;
+    ms -= secs * 1000;
     format!("{:02}:{:02}{}{:03}", mins, secs, locale.decimal(), ms)
 }
 
@@ -56,7 +56,7 @@ fn render_execution_item(
             );
             writeln!(feedback, "{}", title.white()).unwrap();
             for child in &group.items {
-                render_execution_item(&child, level + 1, locale, feedback);
+                render_execution_item(child, level + 1, locale, feedback);
             }
         }
         ApicizeExecutionItem::Request(request) => {
@@ -111,7 +111,7 @@ fn process_execution(
 
     match execution_result {
         Ok(execution) => {
-            let use_level: usize = if (&execution.runs).len() > 1 {
+            let use_level: usize = if (execution.runs).len() > 1 {
                 level + 1
             } else {
                 level
@@ -124,13 +124,14 @@ fn process_execution(
                 }
 
                 if execution.runs.len() > 1 {
-                    ctr = ctr + 1;
+                    ctr += 1;
+                    let padding = format!("{:width$}", "", width = level * 3);
                     writeln!(
                         feedback,
                         "{}",
                         format!(
                             "{}Run {} of {}",
-                            format!("{:width$}", "", width = level * 3),
+                            padding,
                             ctr,
                             execution.runs.len()
                         )
@@ -140,7 +141,7 @@ fn process_execution(
                 }
 
                 for run_item in &run.items {
-                    render_execution_item(&run_item, use_level, locale, feedback);
+                    render_execution_item(run_item, use_level, locale, feedback);
                 }
 
                 writeln!(feedback).unwrap();
@@ -224,10 +225,11 @@ fn process_execution(
             }
         }
         Err(err) => {
+            let padding = format!("{:width$}", "", width = level * 3);
             writeln!(
                 feedback,
                 "{}{}",
-                format!("{:width$}", "", width = level * 3),
+                padding,
                 err.red()
             )
             .unwrap();
@@ -264,10 +266,7 @@ async fn main() {
         Err(_err) => None,
     };
 
-    let globals_filename = match args.globals {
-        Some(filename) => Some(PathBuf::from(filename)),
-        None => None,
-    };
+    let globals_filename = args.globals.map(PathBuf::from);
 
     if args.info {
         let global_filename = if let Some(filename) = &globals_filename {
@@ -314,11 +313,9 @@ async fn main() {
         let mut found = file_name.as_path().is_file();
 
         // Try adding extension if not in file name
-        if !found {
-            if file_name.extension() != Some(&OsStr::new("apicize")) {
-                file_name.set_extension("apicize");
-                found = file_name.as_path().is_file();
-            }
+        if !found && file_name.extension() != Some(OsStr::new("apicize")) {
+            file_name.set_extension("apicize");
+            found = file_name.as_path().is_file();
         }
 
         // Try settings workbook path if defined
@@ -371,7 +368,7 @@ async fn main() {
         }
     }
 
-    for request in workspace.requests.entities.values().into_iter() {
+    for request in workspace.requests.entities.values() {
         if let Some(warnings) = request.get_warnings() {
             for warning in warnings {
                 writeln!(
@@ -395,7 +392,7 @@ async fn main() {
     for request_id in request_ids {
         if let Some(request) = arc_workspace.requests.entities.get(&request_id) {
             let mut name = request.get_name().clone();
-            if name.len() == 0 {
+            if name.is_empty() {
                 name = format!("{} (Unnamed)", request.get_id());
             }
 
@@ -422,14 +419,12 @@ async fn main() {
     .unwrap();
 
     let mut failure_count = 0;
-    let mut execution_ctr = 0;
     for execution in executions.values() {
         writeln!(feedback).unwrap();
-        execution_ctr = execution_ctr + 1;
-        failure_count += process_execution(&execution, 0, &locale, &mut feedback);
+        failure_count += process_execution(execution, 0, &locale, &mut feedback);
     }
 
-    if send_output_to.len() > 0 {
+    if ! send_output_to.is_empty() {
         let serialized = serde_json::to_string(&executions).unwrap();
 
         let dest: &str;

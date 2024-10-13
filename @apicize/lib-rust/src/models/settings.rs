@@ -5,11 +5,11 @@
 use serde::{Deserialize, Serialize};
 
 fn default_font_size() -> i32 {
-    return 12
+    12
 }
 
 fn default_color_scheme() -> ColorScheme {
-    return ColorScheme::Dark
+    ColorScheme::Dark
 }
 
 #[derive(Serialize, Deserialize, PartialEq)]

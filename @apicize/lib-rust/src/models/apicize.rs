@@ -140,9 +140,9 @@ pub struct ApicizeExecution {
 /// Request or group that was executed
 pub enum ApicizeExecutionItem {
     /// Request group that is executed
-    Group(ApicizeExecutionGroup),
+    Group(Box<ApicizeExecutionGroup>),
     /// Request that is executed
-    Request(ApicizeExecutionRequest),
+    Request(Box<ApicizeExecutionRequest>),
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -185,11 +185,7 @@ impl ApicizeExecutionItem {
                 requests_with_errors: if request.success { 0 } else { 1 },
                 passed_test_count: request.passed_test_count.unwrap_or(0),
                 failed_test_count: request.failed_test_count.unwrap_or(0),
-                variables: if let Some(response) = &request.tests {
-                    Some(response.variables.clone())
-                } else {
-                    None
-                },
+                variables: request.tests.as_ref().map(|r| r.variables.clone()) 
             },
         }
     }

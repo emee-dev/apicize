@@ -21,23 +21,19 @@ lazy_static! {
 
 /// Return cached oauth2 token, with indicator of whether value was cached
 pub async fn get_oauth2_client_credentials(
-    id: &String,
-    token_url: &String,
-    client_id: &String,
-    client_secret: &String,
+    id: &str,
+    token_url: &str,
+    client_id: &str,
+    client_secret: &str,
     scope: &Option<String>,
     certificate: Option<&WorkbookCertificate>,
     proxy: Option<&WorkbookProxy>,
 ) -> Result<(String, bool), ExecutionError> {
-    let cloned_id = id.clone();
-    let cloned_token_url = token_url.clone();
-    let cloned_client_id = client_id.clone();
-    let cloned_client_secret = client_secret.clone();
     let cloned_scope = scope.clone();
 
     // Check cache and return if token found and not expired
     let mut tokens = OAUTH2_TOKEN_CACHE.lock().await;
-    let valid_token = match tokens.get(&cloned_id) {
+    let valid_token = match tokens.get(id) {
         Some((expiration, cached_token)) => {
             let now = Instant::now();
             if expiration.gt(&now) {
@@ -57,11 +53,11 @@ pub async fn get_oauth2_client_credentials(
     // in oauth2 library dependencies do not implement Copy
     // match spawn_blocking(move || {
     // Retrieve an access token
-    let mut client = BasicClient::new(ClientId::new(cloned_client_id))
-        .set_token_uri(TokenUrl::new(cloned_token_url).expect("Unable to parse OAuth token URL"));
+    let mut client = BasicClient::new(ClientId::new(String::from(client_id)))
+        .set_token_uri(TokenUrl::new(String::from(token_url)).expect("Unable to parse OAuth token URL"));
 
-    if !cloned_client_secret.trim().is_empty() {
-        client = client.set_client_secret(ClientSecret::new(cloned_client_secret));
+    if !client_secret.trim().is_empty() {
+        client = client.set_client_secret(ClientSecret::new(String::from(client_secret)));
     }
 
     let mut token_request = client.exchange_client_credentials();
@@ -108,7 +104,7 @@ pub async fn get_oauth2_client_credentials(
                 None => Instant::now(),
             };
             let token = token_response.access_token().secret().clone();
-            tokens.insert(cloned_id, (expiration, token.clone()));
+            tokens.insert(String::from(id), (expiration, token.clone()));
             Ok((token, false))
         }
         Err(err) => Err(ExecutionError::OAuth2(err)),

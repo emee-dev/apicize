@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.6.10
+
+* Add Clippy/lint to pipeline and clean up
+
 # 0.6.9
 
 * Display warning on save if any auths or certs are stored directly in Workbook (not priv or local global)

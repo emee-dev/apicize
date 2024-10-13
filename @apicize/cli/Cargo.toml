@@ -1,17 +1,19 @@
 [package]
 name = "apicize-run"
-version = "0.6.9"
+version = "0.6.10"
 description = "Apicize CLI test runner"
 authors = ["Apicize"]
 license = "MIT"
 homepage = "www.apicize.com/cli.html"
 repository = "https://github.com/apicize/Apicize.git"
 edition = "2021"
+rust-version = "1.70"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-apicize_lib = { path = "../lib-rust", version = "^0.6.9" }
+apicize_lib = { path = "../lib-rust", version = "^0.6.10" }
 clap = { version = "4.5.19", features = ["derive"] }
 colored = "2.1.0"
 num-format = { version = "0.4.4", features = ["with-system-locale"] }
@@ -21,6 +23,13 @@ tokio = "1.35.1"
 
 [target.x86_64-unknown-linux-gnu.dependencies]
 openssl = { version = "0.10", features = ["vendored"] }
+
+[profile.release]
+opt-level = 'z'     # Optimize for size
+lto = true          # Enable link-time optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations
+panic = 'abort'     # Abort on panic
+strip = true        # Strip symbols from binary*
 
 [package.metadata.packager]
 before-packaging-command = "cargo build --release"

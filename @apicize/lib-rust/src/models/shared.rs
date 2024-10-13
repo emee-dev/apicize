@@ -111,7 +111,7 @@ impl Persistence {
 }
 
 /// Open the specified data file
-pub fn open_data_file<'a, T: DeserializeOwned>(
+pub fn open_data_file<T: DeserializeOwned>(
     input_file_name: &PathBuf,
 ) -> Result<SerializationOpenSuccess<T>, SerializationFailure> {
     let file_name = String::from(input_file_name.to_string_lossy());
@@ -125,7 +125,7 @@ pub fn open_data_file<'a, T: DeserializeOwned>(
 }
 
 /// Open the specified data stream
-pub fn open_data_stream<'a, T: DeserializeOwned>(
+pub fn open_data_stream<T: DeserializeOwned>(
     file_name: String,
     reader: &mut dyn Read,
 ) -> Result<SerializationOpenSuccess<T>, SerializationFailure> {
@@ -146,7 +146,7 @@ pub fn open_data_stream<'a, T: DeserializeOwned>(
 }
 
 /// Save the specified data file
-pub fn save_data_file<'a, T: Serialize>(
+pub fn save_data_file<T: Serialize>(
     output_file_name: &PathBuf,
     data: &T,
 ) -> Result<SerializationSaveSuccess, SerializationFailure> {

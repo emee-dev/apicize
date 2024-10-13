@@ -165,9 +165,8 @@ async fn run_request(workspace: Workspace, request_id: String) -> Result<Apicize
 #[tauri::command]
 async fn cancel_request(request_id: String) {
     let tokens = cancellation_tokens().lock().unwrap();
-    let token = tokens.get(&request_id);
-    if token.is_some() {
-        token.unwrap().cancel()
+    if let Some(token) = tokens.get(&request_id) {
+        token.cancel()
     }
 }
 
@@ -197,5 +196,5 @@ fn get_clipboard_image_base64(clipboard: State<Clipboard>) -> Result<String, Str
 
 #[tauri::command]
 fn is_release_mode() -> bool {
-    return if cfg!(debug_assertions) { false } else { true };
+    ! cfg!(debug_assertions)
 }
