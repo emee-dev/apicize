@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.6.11
+
+* Fix variable substitution issue on requests
+
 # 0.6.10
 
 * Add Clippy/lint to pipeline and clean up
