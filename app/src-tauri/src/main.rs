@@ -136,6 +136,7 @@ fn cancellation_tokens() -> &'static Mutex<HashMap<String, CancellationToken>> {
 
 #[tauri::command]
 async fn run_request(workspace: Workspace, request_id: String) -> Result<ApicizeExecution, String> {
+
     let arc_workspace = Arc::new(workspace);
     let arc_test_started = Arc::new(Instant::now());
     let cancellation = CancellationToken::new();

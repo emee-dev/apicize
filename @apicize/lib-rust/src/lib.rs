@@ -67,7 +67,6 @@ pub fn get_workbooks_directory() -> path::PathBuf {
     }
 }
 
-
 struct ParameterResult<'a> {
     variables: HashMap<String, Value>,
     authorization: Option<&'a WorkbookAuthorization>,
@@ -1256,7 +1255,7 @@ impl Workspace {
 
                 let dispatch_response = info
                     .dispatch(
-                        &variables,
+                        &params.variables,
                         params.authorization,
                         params.certificate,
                         params.proxy,
@@ -1567,8 +1566,8 @@ impl Workspace {
                             failed_test_count += totals.failed_test_count;
                             request_runs.push(result.item);
                         }
-                        None => request_runs.push(ApicizeExecutionItem::Request(
-                            Box::new(ApicizeExecutionRequest {
+                        None => request_runs.push(ApicizeExecutionItem::Request(Box::new(
+                            ApicizeExecutionRequest {
                                 id: String::from(request_id),
                                 name: String::from(request_entry.get_name()),
                                 executed_at: tests_started.elapsed().as_millis(),
@@ -1580,8 +1579,8 @@ impl Workspace {
                                 passed_test_count: None,
                                 failed_test_count: None,
                                 error_message: Some(String::from("Cancelled")),
-                            }),
-                        )),
+                            },
+                        ))),
                     }
 
                     execution_runs.push(ApicizeExecutionRun {
@@ -1605,19 +1604,21 @@ impl Workspace {
                     requests_with_errors: 1,
                     passed_test_count: 0,
                     failed_test_count: 0,
-                    items: vec![ApicizeExecutionItem::Request(Box::new(ApicizeExecutionRequest {
-                        id: String::from(request_id),
-                        name: String::from(""),
-                        executed_at: tests_started.elapsed().as_millis(),
-                        duration: start_instant.elapsed().as_millis(),
-                        request: None,
-                        response: None,
-                        tests: None,
-                        success: false,
-                        passed_test_count: None,
-                        failed_test_count: None,
-                        error_message: Some(format!("Request ID {} is invalid", request_id)),
-                    }))],
+                    items: vec![ApicizeExecutionItem::Request(Box::new(
+                        ApicizeExecutionRequest {
+                            id: String::from(request_id),
+                            name: String::from(""),
+                            executed_at: tests_started.elapsed().as_millis(),
+                            duration: start_instant.elapsed().as_millis(),
+                            request: None,
+                            response: None,
+                            tests: None,
+                            success: false,
+                            passed_test_count: None,
+                            failed_test_count: None,
+                            error_message: Some(format!("Request ID {} is invalid", request_id)),
+                        },
+                    ))],
                 });
             }
         }
