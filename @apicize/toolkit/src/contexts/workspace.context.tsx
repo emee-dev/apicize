@@ -467,10 +467,10 @@ export class WorkspaceStore {
     }
 
     @action
-    setRequestQueryStringParams(value: EditableNameValuePair[]) {
+    setRequestQueryStringParams(value: EditableNameValuePair[] | undefined) {
         if (this.active?.entityType === EditableEntityType.Request) {
             const request = this.active as EditableWorkbookRequest
-            request.queryStringParams = value
+            request.queryStringParams = value ?? []
             this.dirty = true
         }
     }
@@ -830,10 +830,10 @@ export class WorkspaceStore {
     }
 
     @action
-    setScenarioVariables(value: EditableNameValuePair[]) {
+    setScenarioVariables(value: EditableNameValuePair[] | undefined) {
         if (this.active?.entityType === EditableEntityType.Scenario) {
             const scenario = this.active as EditableWorkbookScenario
-            scenario.variables = value
+            scenario.variables = value || []
         }
     }
 

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import Box from '@mui/material/Box'
-import { Button, FormControl, IconButton, InputLabel, MenuItem, Select, Stack } from '@mui/material'
+import { Button, FormControl, Grid2, IconButton, InputLabel, MenuItem, Select, Stack } from '@mui/material'
 import { GenerateIdentifier } from '../../../services/random-identifier-generator'
 import { EditableNameValuePair } from '../../../models/workbook/editable-name-value-pair'
 import { NameValueEditor } from '../name-value-editor'
@@ -77,7 +77,7 @@ export const RequestBodyEditor = observer(() => {
     workspace.setRequestBodyData(toJS(value) ?? '', WorkbookBodyType.Text)
   }
 
-  const updateBodyAsFormData = (data: EditableNameValuePair[]) => {
+  const updateBodyAsFormData = (data: EditableNameValuePair[] | undefined) => {
     workspace.setRequestBodyData(toJS(data), WorkbookBodyType.Form)
   }
 
@@ -116,7 +116,7 @@ export const RequestBodyEditor = observer(() => {
       const img = await clipboard.getClipboardImage()
       workspace.setRequestBodyData(img, WorkbookBodyType.Raw)
       feedback.toast('Image pasted from clipboard', ToastSeverity.Success)
-    } catch(e) {
+    } catch (e) {
       feedback.toast(`Unable to access clipboard image - ${e}`, ToastSeverity.Error)
     }
   }
@@ -124,9 +124,9 @@ export const RequestBodyEditor = observer(() => {
   const openFile = async () => {
     try {
       const data = await fileOps.openFile()
-      if (! data) return
+      if (!data) return
       workspace.setRequestBodyData(data, WorkbookBodyType.Raw)
-    } catch(e) {
+    } catch (e) {
       feedback.toast(`Unable to open file - ${e}`, ToastSeverity.Error)
     }
   }
@@ -143,8 +143,8 @@ export const RequestBodyEditor = observer(() => {
   }
 
   return (
-    <Stack direction='column' spacing={3}>
-      <Stack direction='row' sx={{ justifyContent: 'space-between' }}>
+    <Grid2 container direction='column' spacing={3} position='relative' width='100%' height='100%'>
+      <Grid2 direction='row' sx={{ justifyContent: 'space-between' }}>
         <FormControl>
           <InputLabel id='request-body-type-label-id'>Body Content Type</InputLabel>
           <Select
@@ -162,7 +162,7 @@ export const RequestBodyEditor = observer(() => {
           </Select>
         </FormControl>
         <Button disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
-      </Stack>
+      </Grid2>
       {request.body.type == WorkbookBodyType.None
         ? <></>
         : request.body.type == WorkbookBodyType.Form
@@ -185,36 +185,38 @@ export const RequestBodyEditor = observer(() => {
               <IconButton aria-label='load body from file' title='Load Body from File' onClick={() => openFile()} sx={{ marginRight: '4px' }}>
                 <FileOpenIcon />
               </IconButton>
-              <IconButton aria-label='copy body from clipboard' title='Paste Body from Clipboard' disabled={! clipboard.hasImage} 
+              <IconButton aria-label='copy body from clipboard' title='Paste Body from Clipboard' disabled={!clipboard.hasImage}
                 onClick={() => pasteImageFromClipboard()} sx={{ marginRight: '4px' }}>
                 <ContentPasteGoIcon />
               </IconButton>
               <Box padding='10px'>{request.body.data ? request.body.data.length.toLocaleString() + ' Bytes' : '(None)'}</Box>
             </Stack>
             :
-            <AceEditor
-              mode={mode}
-              theme='monokai'
-              fontSize='1rem'
-              lineHeight='1rem'
-              width='100%'
-              height='10rem'
-              showGutter={true}
-              showPrintMargin={false}
-              tabSize={3}
-              setOptions={{
-                useWorker: false,
-                foldStyle: "markbegin",
-                displayIndentGuides: true,
-                enableAutoIndent: true,
-                fixedWidthGutter: true,
-                showLineNumbers: true,
-              }}
-              onChange={updateBodyAsText}
-              name='request body editor'
-              value={request.body.data as string}
-            />
+            <Grid2 flexGrow={1}>
+              <AceEditor
+                mode={mode}
+                theme='monokai'
+                fontSize='1rem'
+                lineHeight='1rem'
+                width='100%'
+                height='100%'
+                showGutter={true}
+                showPrintMargin={false}
+                tabSize={3}
+                setOptions={{
+                  useWorker: false,
+                  foldStyle: "markbegin",
+                  displayIndentGuides: true,
+                  enableAutoIndent: true,
+                  fixedWidthGutter: true,
+                  showLineNumbers: true,
+                }}
+                onChange={updateBodyAsText}
+                name='request body editor'
+                value={request.body.data as string}
+              />
+            </Grid2>
       }
-    </Stack>
+    </Grid2>
   )
 })

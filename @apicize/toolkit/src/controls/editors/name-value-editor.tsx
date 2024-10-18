@@ -1,208 +1,93 @@
 import { EditableNameValuePair } from "../../models/workbook/editable-name-value-pair";
 import { Box } from "@mui/system";
-import AddIcon from '@mui/icons-material/Add'
-import EditIcon from '@mui/icons-material/Edit'
-import DeleteIcon from '@mui/icons-material/DeleteOutlined'
-import SaveIcon from '@mui/icons-material/Save'
-import CancelIcon from '@mui/icons-material/Close'
-import {
-    GridRowModesModel,
-    GridRowModes,
-    DataGrid,
-    GridColDef,
-    GridActionsCellItem,
-    GridEventListener,
-    GridRowId,
-    GridRowEditStopReasons,
-    GridFooterContainer,
-} from '@mui/x-data-grid'
-import React from "react";
+import { Button, Grid2, IconButton, Stack, TextField } from "@mui/material";
+import { toJS } from "mobx";
 import { GenerateIdentifier } from "../../services/random-identifier-generator";
-import { Button } from "@mui/material";
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export function NameValueEditor(props: {
     values: EditableNameValuePair[] | undefined,
     title: string,
     nameHeader: string,
     valueHeader: string,
-    onUpdate: (pair: EditableNameValuePair[]) => void
+    onUpdate: (pair: EditableNameValuePair[] | undefined) => void
 }) {
-    const [data, setData] = React.useState(props.values ?? [])
-    const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>({})
-
-    React.useEffect(() => {
-        setData(props.values ?? [])
-    }, [props.values])
-
-    const editToolbar = () => {
-        const handleAddClick = () => {
-            const id = GenerateIdentifier()
-            setData([...data, {
-                id,
-                name: '',
-                value: '',
-                isNew: true
-            }])
-            setRowModesModel({
-                ...rowModesModel,
-                [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' }
-            })
-        }
-
-        return (
-            <GridFooterContainer>
-                <Button color="primary" startIcon={<AddIcon />} onClick={handleAddClick}>
-                    Add
-                </Button>
-            </GridFooterContainer>
-        )
-    }
-
-    const handleRowEditStop: GridEventListener<'rowEditStop'> = (params, event) => {
-        if (params.reason === GridRowEditStopReasons.rowFocusOut) {
-            event.defaultMuiPrevented = true
-        }
-    }
-
-    const handleEditClick = (id: GridRowId) => () => {
-        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } })
-    }
-
-    const handleSaveClick = (id: GridRowId) => () => {
-        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } })
-    }
-
-    const handleDeleteClick = (id: GridRowId) => () => {
-        const updatedRows = data.filter((row) => row.id !== id)
-        // setData(updatedRows)
-        props.onUpdate(updatedRows)
-    }
-
-    const handleCancelClick = (id: GridRowId) => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: GridRowModes.View, ignoreModifications: true },
+    const onAdd = () => {
+        const values = toJS(props.values ?? [])
+        values.push({
+            id: GenerateIdentifier(),
+            name: '',
+            value: ''
         })
+        props.onUpdate(values)
+    }
 
-        const editedRow = data.find((row) => row.id === id)
-        if (editedRow!.isNew) {
-            const updatedRows = data.filter((row) => row.id !== id)
-            // setData(updatedRows)
-            props.onUpdate(updatedRows)
+    const onDelete = (id: string) => {
+        const values = toJS(props.values ?? []).filter(v => v.id !== id)
+        props.onUpdate(values)
+    }
+
+    const onNameUpdate = (id: string, value: string) => {
+        if (!props.values) return
+        const values = toJS(props.values)
+        const match = values.find(v => v.id === id)
+        if (match) {
+            match.name = value
+            props.onUpdate(values)
         }
     }
 
-    const processRowUpdate = (newRow: EditableNameValuePair) => {
-        const updatedRow = { ...newRow, isNew: false }
-        const updatedRows = data.map((row) => (row.id === newRow.id ? updatedRow : row))
-        setData(updatedRows)
-        props.onUpdate(updatedRows)
-        return updatedRow
+    const onValueUpdate = (id: string, value: string) => {
+        if (!props.values) return
+        const values = toJS(props.values)
+        const match = values.find(v => v.id === id)
+        if (match) {
+            match.value = value
+            props.onUpdate(values)
+        }
     }
 
-    const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
-        setRowModesModel(newRowModesModel)
-    }
 
-    const columns: GridColDef[] = [
-        {
-            field: 'actions',
-            type: 'actions',
-            headerName: 'Actions',
-            headerAlign: 'left',
-            width: 110,
-            align: 'left',
-            cellClassName: 'actions',
-            getActions: ({ id }) => {
-                const isInEditMode = id ? rowModesModel[id]?.mode === GridRowModes.Edit : GridRowModes.View
-                if (isInEditMode) {
-                    return [
-                        <GridActionsCellItem
-                            icon={<SaveIcon />}
-                            label="Save"
-                            aria-label="save updated value"
-                            sx={{
-                                color: 'primary.main',
-                            }}
-                            onClick={handleSaveClick(id)}
-                        />,
-                        <GridActionsCellItem
-                            icon={<CancelIcon />}
-                            label="Cancel"
-                            aria-label="cancel updates"
-                            className="textPrimary"
-                            onClick={handleCancelClick(id)}
-                            color="inherit"
-                        />,
-                    ]
-                }
+    return <Stack direction='column'>
+        <Grid2 container spacing={4} maxWidth='80em'>
+            {
+                (props.values ?? []).map(value => [
+                    <Grid2 container rowSpacing={2} spacing={1} size={12}>
+                        <Grid2 size={{ md: 12, lg: 5 }}>
+                            <TextField
+                                id={`${value.id}-name`}
+                                label={props.nameHeader}
+                                aria-label={props.nameHeader}
+                                size="small"
+                                value={value.name}
+                                onChange={(e) => onNameUpdate(value.id, e.target.value)}
+                                fullWidth
+                            />
+                        </Grid2>
+                        <Grid2 size={{ md: 11, lg: 5 }}>
+                            <TextField
+                                id={`${value.id}-value`}
+                                label={props.valueHeader}
+                                aria-label={props.valueHeader}
+                                size="small"
+                                value={value.value}
+                                onChange={(e) => onValueUpdate(value.id, e.target.value)}
+                                fullWidth
+                            />
+                        </Grid2>
+                        <Grid2 className='namevalue-col-btn' size={{ md: 1, lg: 2 }}>
+                            <IconButton aria-label="delete" onClick={() => onDelete(value.id)}>
+                                <DeleteIcon />
+                            </IconButton>
+                        </Grid2>
+                    </Grid2>
+                ])
+            }
+            <Box>
+                <Button variant="contained" aria-label="add" startIcon={<AddIcon />} onClick={() => onAdd()}>Add {props.title}</Button>
+            </Box>
 
-                return [
-                    <GridActionsCellItem
-                        icon={<EditIcon />}
-                        label="Edit"
-                        aria-label="edit value"
-                        className="textPrimary"
-                        onClick={handleEditClick(id)}
-                        color="inherit"
-                    />,
-                    <GridActionsCellItem
-                        icon={<DeleteIcon />}
-                        aria-label="delete value"
-                        label="Delete"
-                        onClick={handleDeleteClick(id)}
-                        color="inherit"
-                    />,
-                ]
-            },
-        },
-        // { field: 'id', headerName: 'ID', width: 128, editable: false },
-        { field: 'name', headerName: props.nameHeader, width: 320, editable: true },
-        { field: 'value', headerName: props.valueHeader, flex: 1, editable: true, sortable: false },
-    ]
-
-    return (
-        <Box
-            sx={{
-                width: '98%',
-                '& .actions': {
-                    color: 'text.secondary',
-                },
-                '& .textPrimary': {
-                    color: 'text.primary',
-                },
-            }}
-        >
-            <DataGrid
-                aria-label={props.title}
-                sx={{ position: 'relative' }}
-                rows={data}
-                columns={columns}
-                editMode="row"
-                // resizeThrottleMs={200}
-                rowModesModel={rowModesModel}
-                onRowModesModelChange={handleRowModesModelChange}
-                onRowEditStop={handleRowEditStop}
-                processRowUpdate={processRowUpdate}
-                // sx={{
-                //     [`& .${gridClasses.cell}:focus, & .${gridClasses.cell}:focus-within`]: {
-                //         outline: 'none',
-                //     },
-                //     [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]:
-                //     {
-                //         outline: 'none',
-                //     },
-                // }}
-                slots={{
-                    footer: editToolbar,
-                }}
-                // slotProps={{
-                //   toolbar: { setRows: setRowHeaders, setRowModesModel },
-                // }}
-                disableColumnFilter
-                disableColumnSelector
-                disableDensitySelector
-            />
-        </Box>
-    )
+        </Grid2>
+    </Stack>
 }

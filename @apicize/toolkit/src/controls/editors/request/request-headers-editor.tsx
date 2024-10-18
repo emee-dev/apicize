@@ -3,6 +3,8 @@ import { EditableEntityType } from '../../../models/workbook/editable-entity-typ
 import { EditableWorkbookRequest } from '../../../models/workbook/editable-workbook-request'
 import { observer } from 'mobx-react-lite'
 import { useWorkspace } from '../../../contexts/workspace.context'
+import { Box } from '@mui/material'
+import { action } from 'mobx'
 
 export const RequestHeadersEditor = observer(() => {
   const workspace = useWorkspace()
@@ -13,11 +15,14 @@ export const RequestHeadersEditor = observer(() => {
 
   workspace.nextHelpTopic = 'requests/headers'
   const request = workspace.active as EditableWorkbookRequest
-  return (<NameValueEditor
-    title='request headers'
-    values={request.headers}
-    nameHeader='Header'
-    valueHeader='Value'
-    onUpdate={(pairs) => workspace.setRequestHeaders(pairs)} />
+  return (
+    <Box width='100%' height='100' position='relative'>
+      <NameValueEditor
+        title='request header'
+        values={request.headers}
+        nameHeader='Header'
+        valueHeader='Value'
+        onUpdate={(pairs) => workspace.setRequestHeaders(pairs)} />
+    </Box>
   )
 })

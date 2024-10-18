@@ -15,7 +15,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apicize/lib-typescript@npm:^0.6.11, @apicize/lib-typescript@workspace:@apicize/lib-typescript":
+"@apicize/lib-typescript@npm:^0.7.0, @apicize/lib-typescript@workspace:@apicize/lib-typescript":
   version: 0.0.0-use.local
   resolution: "@apicize/lib-typescript@workspace:@apicize/lib-typescript"
   dependencies:
@@ -23,18 +23,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@apicize/toolkit@npm:^0.6.11, @apicize/toolkit@workspace:@apicize/toolkit":
+"@apicize/toolkit@npm:^0.7.0, @apicize/toolkit@workspace:@apicize/toolkit":
   version: 0.0.0-use.local
   resolution: "@apicize/toolkit@workspace:@apicize/toolkit"
   dependencies:
-    "@apicize/lib-typescript": "npm:^0.6.11"
+    "@apicize/lib-typescript": "npm:^0.7.0"
     "@dnd-kit/core": "npm:^6.1.0"
     "@emotion/react": "npm:^11.11.1"
     "@emotion/styled": "npm:^11.11.0"
     "@mui/icons-material": "npm:^6.1.1"
     "@mui/material": "npm:^6.1.1"
     "@mui/system": "npm:^6.1.1"
-    "@mui/x-data-grid": "npm:^7.19.0"
     "@mui/x-tree-view": "npm:^7.19.0"
     "@types/hast": "npm:^3.0.4"
     "@types/jest": "npm:^29.5.3"
@@ -1415,32 +1414,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mui/x-data-grid@npm:^7.19.0":
-  version: 7.19.0
-  resolution: "@mui/x-data-grid@npm:7.19.0"
-  dependencies:
-    "@babel/runtime": "npm:^7.25.6"
-    "@mui/utils": "npm:^5.16.6"
-    "@mui/x-internals": "npm:7.18.0"
-    clsx: "npm:^2.1.1"
-    prop-types: "npm:^15.8.1"
-    reselect: "npm:^5.1.1"
-  peerDependencies:
-    "@emotion/react": ^11.9.0
-    "@emotion/styled": ^11.8.1
-    "@mui/material": ^5.15.14 || ^6.0.0
-    "@mui/system": ^5.15.14 || ^6.0.0
-    react: ^17.0.0 || ^18.0.0
-    react-dom: ^17.0.0 || ^18.0.0
-  peerDependenciesMeta:
-    "@emotion/react":
-      optional: true
-    "@emotion/styled":
-      optional: true
-  checksum: 10c0/274640bf18429082c9bc4f03bb7ace897876c4e59cca9ee47eec7ad6c82df20e835e3851a86f0010b46341e946559a8c359c4f4a4e53f60d1c481601481f5b81
-  languageName: node
-  linkType: hard
-
 "@mui/x-internals@npm:7.18.0":
   version: 7.18.0
   resolution: "@mui/x-internals@npm:7.18.0"
@@ -2679,7 +2652,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:app"
   dependencies:
-    "@apicize/toolkit": "npm:^0.6.11"
+    "@apicize/toolkit": "npm:^0.7.0"
     "@dnd-kit/core": "npm:^6.1.0"
     "@mui/material": "npm:^6.1.1"
     "@mui/system": "npm:^6.1.1"
@@ -8326,13 +8299,6 @@ __metadata:
   version: 2.1.1
   resolution: "require-directory@npm:2.1.1"
   checksum: 10c0/83aa76a7bc1531f68d92c75a2ca2f54f1b01463cb566cf3fbc787d0de8be30c9dbc211d1d46be3497dac5785fe296f2dd11d531945ac29730643357978966e99
-  languageName: node
-  linkType: hard
-
-"reselect@npm:^5.1.1":
-  version: 5.1.1
-  resolution: "reselect@npm:5.1.1"
-  checksum: 10c0/219c30da122980f61853db3aebd173524a2accd4b3baec770e3d51941426c87648a125ca08d8c57daa6b8b086f2fdd2703cb035dd6231db98cdbe1176a71f489
   languageName: node
   linkType: hard
 

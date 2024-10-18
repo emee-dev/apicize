@@ -1,7 +1,8 @@
-import { DataGrid } from "@mui/x-data-grid"
 import { GenerateIdentifier } from "../../../services/random-identifier-generator"
-import { Stack, Typography } from "@mui/material"
+import { Box, Grid2, Stack, Typography } from "@mui/material"
 import { useWorkspace } from "../../../contexts/workspace.context"
+import { toJS } from "mobx"
+import { wrap } from "module"
 
 export function ResponseHeadersViewer(props: { requestOrGroupId: string, index: number }) {
     const workspace = useWorkspace()
@@ -12,37 +13,28 @@ export function ResponseHeadersViewer(props: { requestOrGroupId: string, index: 
         return null
     }
 
-    const headers = []
-    for (const [name, value] of Object.entries(result.response?.headers ?? {})) {
-        headers.push({
-            id: GenerateIdentifier(),
-            name,
-            value
-        })
-    }
+    const headers = Object.entries(result.response?.headers ?? {})
+    console.log('headers', headers)
 
     return (
-        <Stack direction="column" sx={{ flexGrow: 1 }}>
-            <Typography id='response-headers-label-id' variant='h2' sx={{ marginTop: 0 }} component='div'>Response Headers</Typography>
-            <DataGrid
-                aria-labelledby="response-headers-label-id"
-                rows={headers}
-                rowHeight={32}
-                sx={{
-                    width: '100%',
-                    // flexGrow: 1,
-                    // height: 'calc(100% - 96px)',
-                    // maxHeight: 'calc(100% - 96px)'
-                }}
-                columns={[
-                    { field: 'name', headerName: 'Name', width: 320, editable: false },
-                    { field: 'value', headerName: 'Value', flex: 1, editable: false, maxWidth: 1000 },
-                ]}
-                slots={{}}
-                disableColumnFilter
-                disableColumnSelector
-                disableDensitySelector
-            />
+        <Stack direction="column" sx={{ flexGrow: 1, maxWidth: '80em', position: 'absolute', top: '0', bottom: '0' }}>
+            {
+                headers.length > 0
+                    ? <Box overflow='auto' paddingRight='24px' height='100%'>
+                        <Typography variant='h2' sx={{ marginTop: 0, marginBottom: '2em', flexGrow: 0 }} component='div'>Response Headers</Typography>
+                        <Grid2 container rowSpacing='1em'>
+                            {
+                                headers.map(([header, value]) =>
+                                    <Grid2 container size={12}>
+                                        <Grid2 size={{ md: 6, lg: 4 }}>{header}</Grid2>
+                                        <Grid2 size={{ md: 6, lg: 8 }} sx={{wordBreak: 'break-word'}}>{value}</Grid2>
+                                    </Grid2>
+                                )
+                            }
+                        </Grid2>
+                    </Box>
+                    : <Typography variant='h2' sx={{ marginTop: 0, flexGrow: 0 }} component='div'>No headers included in response</Typography>
+            }
         </Stack>
     )
 }

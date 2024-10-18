@@ -1,7 +1,7 @@
 {
   "name": "@apicize/toolkit",
   "private": true,
-  "version": "0.6.11",
+  "version": "0.7.0",
   "description": "UI toolkit for Apicize applications",
   "keywords": [],
   "license": "MIT",
@@ -40,14 +40,13 @@
     "mobx-react-lite": "^4.0.7"
   },
   "dependencies": {
-    "@apicize/lib-typescript": "^0.6.11",
+    "@apicize/lib-typescript": "^0.7.0",
     "@dnd-kit/core": "^6.1.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^6.1.1",
     "@mui/material": "^6.1.1",
     "@mui/system": "^6.1.1",
-    "@mui/x-data-grid": "^7.19.0",
     "@mui/x-tree-view": "^7.19.0",
     "ace-builds": "^1.33.0",
     "js-beautify": "^1.14.11",

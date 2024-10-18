@@ -68,11 +68,18 @@ pre.log {
 }
 
 .editor-panel {
-  flex: 1;
-  margin-left: 0px;
-  padding: 16px 24px 16px 16px;
-  /* padding: 8px 16px 8px 8px; */
+  display: grid;
+  grid-template-rows: 6em auto;
+  column-gap: 3em;
+  row-gap: 2em;
+  grid-template-columns: 1fr;
+  grid-auto-flow: column;
+  padding: 8px 16px 8px 16px; 
   height: 100vh;
+}
+
+.editor-panel.with-executions {
+  grid-template-columns: 1fr 1fr;
 }
 
 
@@ -86,6 +93,9 @@ pre.log {
 
 .editor-title {
   margin-top: 0.1em;
+  padding-left: 0.6em;
+  display: flex;
+  align-content: center;
 }
 
 .editor-title .MuiSvgIcon-root {
@@ -135,4 +145,16 @@ pre.log {
    overflow: auto;
    margin-right: 0.1em;
    padding-right: 0.5em;
+}
+
+
+.namevalue-col-btn {
+  text-align: right;
+}
+
+@media (min-width:1200px) {
+  .namevalue-col-btn {
+    text-align: left;
+  }
+  
 }

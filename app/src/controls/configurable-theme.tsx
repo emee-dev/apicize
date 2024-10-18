@@ -2,7 +2,6 @@ import { useApicizeSettings } from "@apicize/toolkit"
 import { createTheme, ThemeProvider } from "@mui/material/styles"
 import { observer } from "mobx-react-lite"
 import { ReactNode } from "react"
-import "@mui/x-data-grid"
 
 export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
   const settings = useApicizeSettings()
@@ -23,34 +22,34 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
           }
         }
       },
-    //   MuiTreeItem: {
-    //     styleOverrides: {
-    //       content: {
-    //         padding: '0.02em'
-    //       }
-    //     },
-    //   },
-    //   MuiIconButton: {
-    //     defaultProps: {
-    //       sx: { padding: '0.05em' }
-    //     }
-    //   },
-    //   MuiListItemIcon: {
-    //     defaultProps: {
-    //       sx: {
-    //         minWidth: '36px'
-    //       }
-    //     }
-    //   },
-    //   MuiInputBase: {
-    //     styleOverrides: {
-    //       input: {
-    //         "&.code": {
-    //           fontFamily: 'monospace',
-    //         }
-    //       }
-    //     }
-    //   },
+      //   MuiTreeItem: {
+      //     styleOverrides: {
+      //       content: {
+      //         padding: '0.02em'
+      //       }
+      //     },
+      //   },
+      //   MuiIconButton: {
+      //     defaultProps: {
+      //       sx: { padding: '0.05em' }
+      //     }
+      //   },
+      //   MuiListItemIcon: {
+      //     defaultProps: {
+      //       sx: {
+      //         minWidth: '36px'
+      //       }
+      //     }
+      //   },
+      //   MuiInputBase: {
+      //     styleOverrides: {
+      //       input: {
+      //         "&.code": {
+      //           fontFamily: 'monospace',
+      //         }
+      //       }
+      //     }
+      //   },
       MuiTypography: {
         styleOverrides: {
           h1: {

@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.7.0
+
+* Get rid of x-data-grid
+
 # 0.6.11
 
 * Fix variable substitution issue on requests

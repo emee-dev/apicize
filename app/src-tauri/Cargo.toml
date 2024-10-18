@@ -1,6 +1,6 @@
 [package]
 name = "apicize"
-version = "0.6.11"
+version = "0.7.0"
 description = "Apicize HTTP call testing application"
 authors = ["Jason Terando"]
 license = ""
@@ -17,7 +17,7 @@ tauri-build = { version = "2.0.0", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-apicize_lib = { version = "0.6.11", path = "../../@apicize/lib-rust" }
+apicize_lib = { version = "0.7.0", path = "../../@apicize/lib-rust" }
 tauri = { version = "2.0.0", features = ["image-png"] }
 tokio-util = "0.7.11"
 tauri-plugin-fs = "2.0.0"

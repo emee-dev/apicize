@@ -40,9 +40,7 @@ export default function Home() {
                   <Navigation onSettings={() => settings.showSettings = true} />
                   <>
                     <HelpPanel />
-                    <RequestEditor
-                      sx={{ display: 'block', flexGrow: 1 }}
-                    />
+                    <RequestEditor />
                     <ScenarioEditor
                       sx={{ display: 'block', flexGrow: 1 }}
                     />

@@ -13,24 +13,6 @@ import { observer } from "mobx-react-lite";
 
 export const MAX_TEXT_RENDER_LENGTH = 64 * 1024 * 1024
 
-const FlexCodeViewer = (props: { text: string, grammar?: Grammar, language?: string }) => (
-    <pre style={{
-        overflow: 'auto',
-        maxWidth: '100%',
-        maxHeight: '100%',
-        paddingRight: '12px',
-        marginTop: 0,
-        fontSize: '10pt',
-        whiteSpace: 'pre-wrap',
-        lineBreak: 'anywhere'
-    }}>
-        {(props.grammar && props.language)
-            ? (<code dangerouslySetInnerHTML={{
-                __html: highlight(props.text, props.grammar, props.language)
-            }} />)
-            : (<code>{props.text}</code>)}
-    </pre>)
-
 export const TextViewer = observer((props: { text?: string, extension?: string }) => {
     const length = props.text?.length ?? 0
     if (!(props.text && length > 0)) {
@@ -71,17 +53,4 @@ export const TextViewer = observer((props: { text?: string, extension?: string }
             showLineNumbers: true,
         }}
         value={props.text} />
-
-
-    // switch (props.extension) {
-    //     case 'html':
-    //         return (<FlexCodeViewer text={render} grammar={languages.html} language='html' />)
-    //     case 'css':
-    //         return (<FlexCodeViewer text={render} grammar={languages.css} language='css' />)
-    //     case 'js':
-    //         return (<FlexCodeViewer text={render}  grammar={languages.javascript} language='javascript' />)
-    //     case 'json':
-    //         return (<FlexCodeViewer text={render}  grammar={languages.json} language='json' />)
-    //     default:
-    //         return (<FlexCodeViewer text={render} />)
 })

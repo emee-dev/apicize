@@ -26,8 +26,8 @@ export const RequestTestEditor = observer(() => {
       theme='monokai'
       fontSize='1rem'
       lineHeight='1rem'
-      height='20em'
       width='100%'
+      height='100%'
       name='test-editor'
       showGutter={true}
       showPrintMargin={false}

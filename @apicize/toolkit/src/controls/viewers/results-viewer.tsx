@@ -22,7 +22,7 @@ import { WorkbookExecutionGroupResult, WorkbookExecutionRequestResult } from "..
 import { toJS } from "mobx";
 
 export const ResultsViewer = observer((props: {
-    sx: SxProps<Theme>
+    sx?: SxProps<Theme>
 }) => {
     const workspace = useWorkspace()
 
