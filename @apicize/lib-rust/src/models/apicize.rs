@@ -12,7 +12,7 @@ use serde_with::serde_as;
 
 /// Body information used when dispatching an Apicize Request
 #[serde_as]
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ApicizeBody {
     /// Body as data (UTF-8 bytes)
@@ -25,7 +25,7 @@ pub struct ApicizeBody {
 
 /// Information used to dispatch an Apicize request
 #[serde_as]
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ApicizeRequest {
     /// URL
@@ -44,7 +44,7 @@ pub struct ApicizeRequest {
 
 /// Information about the response to a dispatched Apicize request
 #[serde_as]
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ApicizeResponse {
     /// HTTP status code
@@ -62,7 +62,7 @@ pub struct ApicizeResponse {
 }
 
 /// Response from V8 when executing a request's tests
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ExecutedTestResponse {
     /// Results of test
@@ -72,7 +72,7 @@ pub struct ExecutedTestResponse {
 }
 
 /// Information about an executed Apicize test
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TestResult {
     /// Human readable name of the test
@@ -85,7 +85,7 @@ pub struct TestResult {
     pub logs: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 /// Totals of execution results
 pub struct ApicizeExecutionTotals {
@@ -103,7 +103,7 @@ pub struct ApicizeExecutionTotals {
     pub variables: Option<HashMap<String, Value>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 /// Information about an application execution run
 pub struct ApicizeExecutionRun {
@@ -125,7 +125,7 @@ pub struct ApicizeExecutionRun {
     pub items: Vec<ApicizeExecutionItem>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 /// An appicize execution
 pub struct ApicizeExecution {
@@ -135,7 +135,7 @@ pub struct ApicizeExecution {
     pub runs: Vec<ApicizeExecutionRun>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", tag = "type")]
 /// Request or group that was executed
 pub enum ApicizeExecutionItem {
@@ -145,7 +145,7 @@ pub enum ApicizeExecutionItem {
     Request(Box<ApicizeExecutionRequest>),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 /// Request or group that is executed, including run number
 pub struct ApicizeExecutionRunItem {
@@ -191,7 +191,7 @@ impl ApicizeExecutionItem {
     }
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 /// Group to test
 pub struct ApicizeExecutionGroup {
@@ -217,7 +217,7 @@ pub struct ApicizeExecutionGroup {
     pub items: Vec<ApicizeExecutionItem>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 /// Request to test
 pub struct ApicizeExecutionRequest {

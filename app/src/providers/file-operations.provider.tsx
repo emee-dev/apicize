@@ -35,7 +35,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             storedSettings = {
                 workbookDirectory: await path.join(await path.documentDir(), 'apicize'),
                 fontSize: 12,
-                colorScheme: 'dark'
+                colorScheme: 'dark',
+                editorPanels: '',
             }
             feedback.toast(`Unable to access settings: ${e}`, ToastSeverity.Error)
         }
@@ -44,6 +45,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         settings.workbookDirectory = storedSettings.workbookDirectory
         settings.fontSize = storedSettings.fontSize
         settings.colorScheme = storedSettings.colorScheme
+        settings.editorPanels = storedSettings.editorPanels
     }
 
     /**
@@ -56,7 +58,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 workbookDirectory: settings.workbookDirectory,
                 lastWorkbookFileName: settings.lastWorkbookFileName,
                 fontSize: settings.fontSize,
-                colorScheme: settings.colorScheme
+                colorScheme: settings.colorScheme,
+                editorPanels: settings.editorPanels,
             }
             await core.invoke<StoredGlobalSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {
@@ -280,7 +283,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                     workspaceStore.warnOnWorkspaceCreds = false
                 }
             }
-            
+
             let fileName = await dialog.save({
                 title: 'Save Apicize Workbook',
                 defaultPath: ((workspaceStore.workbookFullName?.length ?? 0) > 0)

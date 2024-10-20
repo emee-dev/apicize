@@ -1,4 +1,4 @@
-import { Stack, TextField, SxProps, Grid2 } from '@mui/material'
+import { Stack, TextField, SxProps, Grid2, Box } from '@mui/material'
 import LanguageIcon from '@mui/icons-material/Language';
 import { NameValueEditor } from './name-value-editor';
 import { EditorTitle } from '../editor-title';
@@ -13,9 +13,11 @@ export const ScenarioEditor = observer((props: {sx: SxProps}) => {
     if (workspace.active?.entityType !== EditableEntityType.Scenario || workspace.helpVisible) return null
     const scenario = workspace.active as EditableWorkbookScenario
     return (
-         <Stack direction={'column'} className='editor-panel-no-toolbar' sx={props.sx}>
-            <EditorTitle icon={<LanguageIcon />} name={scenario.name.length > 0 ? scenario.name : '(Unnamed)'} />
-            <Grid2 container direction={'column'} spacing={3} maxWidth={1000}>
+         <Stack direction={'column'} className='editor' sx={props.sx}>
+            <Box className='editor-panel-header'>
+                <EditorTitle icon={<LanguageIcon color='scenario' />} name={scenario.name.length > 0 ? scenario.name : '(Unnamed)'} />
+            </Box>
+            <Grid2 container direction={'column'} spacing={3} className='editor-single-panel'>
                 <Grid2>
                     <TextField
                         id='scenario-name'

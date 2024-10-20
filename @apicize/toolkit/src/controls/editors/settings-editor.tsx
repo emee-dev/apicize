@@ -1,4 +1,4 @@
-import { Stack, SxProps, FormControl, InputLabel, MenuItem, Select, Box, ToggleButton, ToggleButtonGroup, IconButton, SupportedColorScheme, Alert } from '@mui/material'
+import { Stack, SxProps, FormControl, InputLabel, MenuItem, Select, Box, ToggleButton, ToggleButtonGroup, IconButton, SupportedColorScheme, Alert, Button } from '@mui/material'
 import { observer } from 'mobx-react-lite';
 import { useWorkspace } from '../../contexts/workspace.context';
 import { useFileOperations } from '../../contexts/file-operations.context';
@@ -10,6 +10,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import AltRouteIcon from '@mui/icons-material/AltRoute'
 import SettingsIcon from '@mui/icons-material/Settings';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
 import React, { useRef, useState } from 'react';
 import { useApicizeSettings } from '../../contexts/apicize-settings.context';
@@ -32,7 +33,7 @@ const ParametersEditor = observer(() => {
 
     const lists = workspace.getDefaultParameterLists()
 
-    return <Box>
+    return <Box className='editor-panel'>
         <EditorTitle icon={<SettingsIcon />} name='Settings - Default Workbook Parameters' />
         <Stack spacing={3} marginTop='3em'>
             <FormControl>
@@ -112,7 +113,6 @@ const DisplaySettingsEditor = observer(() => {
             if (saveCtr === ctr) {
                 try {
                     saveCtr = 0
-                    console.log('saving settings...')
                     await fileOps.saveSettings()
                 } catch (e) {
                     feedback.toast(`Unable to save Settings - ${e}`, ToastSeverity.Error)
@@ -138,17 +138,17 @@ const DisplaySettingsEditor = observer(() => {
         checkSave(++saveCtr)
     }
 
-    return <Box>
+    return <Box className='editor-panel'>
         <EditorTitle icon={<SettingsIcon />} name='Settings - Display' />
         <Stack direction={'column'} spacing={2} marginTop='3em'>
             <Stack direction={'row'} display='flex' alignItems='center' justifyContent='left'>
-                <InputLabel id='text-size-label-id' sx={{width: '8em'}} >Text Size:</InputLabel>
+                <InputLabel id='text-size-label-id' sx={{ width: '8em' }} >Text Size:</InputLabel>
                 <IconButton onClick={() => increase()} aria-label="increase font size" disabled={!canIncrease}><AddIcon /></IconButton>
                 <IconButton onClick={() => decrease()} aria-label="decrease font size" disabled={!canDecrease}><RemoveIcon /></IconButton>
                 <Box marginLeft='2em'>{settings.fontSize}</Box>
             </Stack>
             <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
-                <InputLabel id='color-mode-label-id' sx={{width: '8em'}}>Color Mode:</InputLabel>
+                <InputLabel id='color-mode-label-id' sx={{ width: '8em' }}>Color Mode:</InputLabel>
                 <Select
                     value={settings.colorScheme}
                     onChange={(event) => setScheme(event.target.value as SupportedColorScheme)}
@@ -157,6 +157,9 @@ const DisplaySettingsEditor = observer(() => {
                     <MenuItem value="dark">Dark</MenuItem>
                 </Select>
             </Stack>
+            <Box paddingTop='2em'>
+                <Button variant="outlined" aria-label="defaults" startIcon={<RestartAltIcon />} onClick={() => settings.resetToDefaults()}>Reset to Defaults</Button>
+            </Box>
         </Stack>
     </Box >
 })
@@ -198,7 +201,7 @@ export const SettingsEditor = observer((props: { sx: SxProps }) => {
     }
 
     return (
-        <Stack direction='column' className='editor-panel' sx={{ ...props.sx, display: 'flex' }}>
+        <Stack direction='column' className='editor' sx={{ ...props.sx, display: 'flex' }}>
             <Stack sx={{ height: '50vh', paddingBottom: '48px', flexBasis: 2 }}>
                 <Box sx={{ display: "flex", bottom: 0 }}>
                     <ToggleButtonGroup

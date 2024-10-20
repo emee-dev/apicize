@@ -55,6 +55,7 @@
     "react-dnd": "^16.0.1",
     "react-dom": "^18.2.0",
     "react-remark": "^2.1.0",
+    "react-resizable-panels": "^2.1.4",
     "rehype-react": "^8.0.0",
     "remark-directive": "^3.0.0",
     "remark-parse": "^11.0.0",

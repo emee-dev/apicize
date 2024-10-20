@@ -202,27 +202,27 @@ export const HelpPanel = observer(() => {
         const name = (attrsWithNode.node as any).properties.name
         switch (name) {
             case 'request':
-                return <SendIcon className='help-icon' />
+                return <SendIcon className='help-icon' color='request' />
             case 'info':
-                return <DisplaySettingsIcon className='help-icon' />
+                return <DisplaySettingsIcon className='help-icon' color='request' />
             case 'query':
-                return <ViewListIcon className='help-icon' />
+                return <ViewListIcon className='help-icon' color='request' />
             case 'headers':
-                return <ViewListOutlinedIcon className='help-icon' />
+                return <ViewListOutlinedIcon className='help-icon' color='request' />
             case 'body':
-                return <ArticleOutlinedIcon className='help-icon' />
+                return <ArticleOutlinedIcon className='help-icon' color='request' />
             case 'parameters':
-                return <AltRouteIcon className='help-icon' />
+                return <AltRouteIcon className='help-icon' color='request' />
             case 'test':
-                return <ScienceIcon className='help-icon' />
+                return <ScienceIcon className='help-icon' color='request' />
             case 'authorization':
-                return <LockIcon className='help-icon' />
+                return <LockIcon className='help-icon' color='authorization' />
             case 'scenario':
-                return <LanguageIcon className='help-icon' />
+                return <LanguageIcon className='help-icon' color='scenario' />
             case 'certificate':
-                return <SecurityIcon className='help-icon' />
+                return <SecurityIcon className='help-icon' color='certificate' />
             case 'proxy':
-                return <AirlineStopsIcon className='help-icon' />
+                return <AirlineStopsIcon className='help-icon' color='proxy' />
             case 'settings':
                 return <SettingsIcon className='help-icon' />
             case 'display':

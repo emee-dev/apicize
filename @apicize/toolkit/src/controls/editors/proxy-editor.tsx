@@ -1,4 +1,4 @@
-import { Stack, TextField, SxProps, Grid2 } from '@mui/material'
+import { Stack, TextField, SxProps, Grid2, Box } from '@mui/material'
 import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import { EditorTitle } from '../editor-title';
 import { PersistenceEditor } from './persistence-editor';
@@ -14,9 +14,11 @@ export const ProxyEditor = observer((props: {
     if (workspace.active?.entityType !== EditableEntityType.Proxy || workspace.helpVisible) return null
     const proxy = workspace.active as EditableWorkbookProxy
     return (
-        <Stack direction={'column'} className='editor-panel-no-toolbar' sx={props.sx}>
-            <EditorTitle icon={<AirlineStopsIcon />} name={proxy.name.length > 0 ? proxy.name : '(Unnamed)'} />
-            <Grid2 container direction={'column'} spacing={3} maxWidth={1000}>
+        <Stack direction={'column'} className='editor' sx={props.sx}>
+            <Box className='editor-panel-header'>
+                <EditorTitle icon={<AirlineStopsIcon color='proxy' />} name={proxy.name.length > 0 ? proxy.name : '(Unnamed)'} />
+            </Box>
+            <Grid2 container direction={'column'} spacing={3} className='editor-single-panel'>
                 <Grid2>
                     <TextField
                         id='proxy-name'

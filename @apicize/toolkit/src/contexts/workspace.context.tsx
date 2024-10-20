@@ -246,7 +246,7 @@ export class WorkspaceStore {
             case EditableEntityType.Defaults:
                 this.hideHelp()
                 this.active = this.workspace.defaults
-                this.nextHelpTopic = 'requests'
+                this.nextHelpTopic = 'settings'
                 break
             default:
                 this.active = null

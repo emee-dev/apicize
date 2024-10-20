@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.7.1
+
+* Switch to splitter view of request/ersponse
+* Fix certificate and proxy validation
+* Other UI cleanup
+
 # 0.7.0
 
 * Get rid of x-data-grid

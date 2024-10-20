@@ -14,7 +14,6 @@ export function ResponseHeadersViewer(props: { requestOrGroupId: string, index: 
     }
 
     const headers = Object.entries(result.response?.headers ?? {})
-    console.log('headers', headers)
 
     return (
         <Stack direction="column" sx={{ flexGrow: 1, maxWidth: '80em', position: 'absolute', top: '0', bottom: '0' }}>

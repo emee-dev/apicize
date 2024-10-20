@@ -1,4 +1,4 @@
-import { ButtonGroup, ToggleButton, Grid, TextField, FormControl, InputLabel, Select, MenuItem, Grid2 } from "@mui/material";
+import { ToggleButton, TextField } from "@mui/material";
 import { Stack, SxProps } from "@mui/system";
 import { observer } from "mobx-react-lite";
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
@@ -6,7 +6,6 @@ import { EditableEntityType } from "../models/workbook/editable-entity-type";
 import { EditableWorkbookRequest } from "../models/workbook/editable-workbook-request";
 import { useWorkspace } from "../contexts/workspace.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
-import { toJS } from "mobx";
 
 export const RunToolbar = observer((props: { sx?: SxProps }) => {
     const workspace = useWorkspace()
@@ -44,7 +43,7 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
     return (
         <Stack direction={'row'} flexGrow={0} sx={props.sx}>
             <ToggleButton value='Run' title='Run selected request' sx={{ marginRight: '1em' }} disabled={execution.running} onClick={handleRunClick()}>
-                <PlayCircleFilledIcon />
+                <PlayCircleFilledIcon color={execution.running ? 'disabled' : 'success'} />
             </ToggleButton>
             <TextField
                 aria-label='Nubmer of Run Attempts'
@@ -53,12 +52,12 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
                 disabled={execution.running}
                 sx={{ width: '8em', flexGrow: 0 }}
                 type='number'
-                InputProps={{
-                    inputProps: {
-                        min: 1, max: 1000
+                slotProps={{
+                    htmlInput: {
+                        min: 1,
+                        max: 1000
                     }
                 }}
-
                 value={request.runs}
                 onChange={e => updateRuns(parseInt(e.target.value))}
             />

@@ -31,11 +31,11 @@ export class EditableWorkbookProxy extends Editable<WorkbookProxy> {
     }
 
     @computed get urlInvalid() {
-        return ! /^[(?:https?),socks5]:\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(this.url)
+        return ! /^(https?|socks5):\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(this.url)
     }
 
     @computed get invalid() {
-        return !(
+        return (
             this.nameInvalid
             || this.urlInvalid
         )

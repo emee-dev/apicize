@@ -6,7 +6,7 @@ import { EditableWorkbookRequest } from "../models/workbook/editable-workbook-re
 import { useWorkspace } from "../contexts/workspace.context";
 import { useFeedback } from "../contexts/feedback.context";
 
-export const RunResultsToolbar = observer((props: { sx?: SxProps }) => {
+export const RunResultsToolbar = observer((props: { className?: string, sx?: SxProps }) => {
     const workspace = useWorkspace()
     const request = ((workspace.active?.entityType === EditableEntityType.Request || workspace.active?.entityType === EditableEntityType.Group)
         && !workspace.helpVisible)
@@ -30,7 +30,7 @@ export const RunResultsToolbar = observer((props: { sx?: SxProps }) => {
 
 
     return (
-        <Stack direction='row' alignItems='center' sx={props.sx}>
+        <Stack direction='row' className={props.className}  sx={props.sx}>
             {
                 execution.runs.length > 1
                     ? <FormControl sx={{marginRight: '1em'}}>
@@ -39,7 +39,7 @@ export const RunResultsToolbar = observer((props: { sx?: SxProps }) => {
                             labelId='run-id'
                             id='run'
                             disabled={execution.running}
-                            label='Run'
+                            label='Runs'
                             sx={{ minWidth: '10em' }}
                             value={execution.runIndex.toString()}
                             onChange={e => updateSelectedRun(parseInt(e.target.value))}
@@ -63,7 +63,7 @@ export const RunResultsToolbar = observer((props: { sx?: SxProps }) => {
                             id='result'
                             value={execution.resultIndex.toString()}
                             disabled={execution.running}
-                            label='Run'
+                            label='Results'
                             sx={{ minWidth: '10em' }}
                             onChange={e => updateSelectedResult(parseInt(e.target.value))}
                         >

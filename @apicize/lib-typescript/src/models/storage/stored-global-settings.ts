@@ -8,4 +8,5 @@ export interface StoredGlobalSettings {
     lastWorkbookFileName?: string
     fontSize: number
     colorScheme: 'dark' | 'light'
+    editorPanels: string
 }

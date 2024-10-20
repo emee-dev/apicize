@@ -1,4 +1,4 @@
-import { Stack, TextField, Grid2, FormControl, InputLabel, MenuItem, Select, IconButton, Typography, SxProps } from '@mui/material'
+import { Stack, TextField, Grid2, FormControl, InputLabel, MenuItem, Select, IconButton, Typography, SxProps, Box } from '@mui/material'
 import SecurityIcon from '@mui/icons-material/Security';
 import FileOpenIcon from '@mui/icons-material/FileOpen';
 import { EditorTitle } from '../editor-title';
@@ -86,14 +86,17 @@ export const CertificateEditor = observer((props: {
     }
 
     return (
-        <Stack direction={'column'} className='editor-panel-no-toolbar' sx={props.sx}>
-            <EditorTitle icon={<SecurityIcon />} name={certificate.name?.length ?? 0 > 0 ? certificate.name : '(Unnamed)'} />
-            <Grid2 container direction={'column'} spacing={3} maxWidth={1000}>
+        <Stack direction={'column'} className='editor' sx={props.sx}>
+            <Box className='editor-panel-header'>
+                <EditorTitle icon={<SecurityIcon color='certificate' />} name={certificate.name?.length ?? 0 > 0 ? certificate.name : '(Unnamed)'} />
+            </Box>
+            <Grid2 container direction={'column'} spacing={3} className='editor-single-panel'>
                 <Grid2>
                     <TextField
                         id='cert-name'
                         label='Name'
                         aria-label='name'
+                        error={certificate.nameInvalid}
                         // size='small'
                         value={certificate.name}
                         onChange={e => workspace.setName(e.target.value)}
@@ -127,7 +130,7 @@ export const CertificateEditor = observer((props: {
                                 <Stack direction={'column'} spacing={3}>
                                     <Stack direction={'row'} spacing={3} position='relative'>
                                         <Typography variant='h6' component='div'>SSL PEM Certificate / Chain</Typography>
-                                        <IconButton color='primary' size='medium' aria-label='open pem certificate chai filen' title='Open Certificate PEM File'
+                                        <IconButton color='primary' size='medium' aria-label='open pem certificate chain filename' title='Open Certificate PEM File'
                                             onClick={() => openFile(SshFileType.PEM)}
                                         ><FileOpenIcon fontSize='inherit' /></IconButton>
                                         <IconButton color='primary' disabled={!clipboard.hasText} size='medium' aria-label='paste-pem' title='Paste PEM from Clipboard'
@@ -137,6 +140,7 @@ export const CertificateEditor = observer((props: {
                                         id='cert-pem'
                                         label='PEM'
                                         aria-label='pem file contents'
+                                        error={certificate.pemInvalid}
                                         multiline
                                         slotProps={{
                                             input: {
@@ -160,6 +164,7 @@ export const CertificateEditor = observer((props: {
                                         id='cert-key'
                                         label='Certificate Key'
                                         aria-label='certificate key file contents'
+                                        error={certificate.keyInvalid}
                                         multiline
                                         slotProps={{
                                             input: {
@@ -177,6 +182,12 @@ export const CertificateEditor = observer((props: {
                         : certificate.type === WorkbookCertificateType.PKCS12 ? (
                             <Grid2>
                                 <Stack direction={'column'} spacing={3}>
+                                    <Stack direction={'row'} spacing={3} position='relative'>
+                                        <Typography variant='h6' component='div'>PFX Certificate</Typography>
+                                        <IconButton color='primary' size='medium' aria-label='open certificate pfx file' title='Open Certificate PFX File'
+                                            onClick={() => openFile(SshFileType.PFX)}
+                                        ><FileOpenIcon fontSize='inherit' /></IconButton>
+                                    </Stack>
                                     <Stack direction={'row'} spacing={3}>
                                         <TextField
                                             id='cert-pfx'
@@ -192,9 +203,6 @@ export const CertificateEditor = observer((props: {
                                             value={certificate.pfx ? base64Encode(Buffer.from(certificate.pfx)) : ''}
                                             fullWidth
                                         />
-                                        <IconButton color='primary' size='medium' aria-label='open certificate pfx file' title='Open Certificate PFX File'
-                                            onClick={() => openFile(SshFileType.PFX)}
-                                        ><FileOpenIcon fontSize='inherit' /></IconButton>
                                     </Stack>
                                     <TextField
                                         id='cert-key'
@@ -210,12 +218,21 @@ export const CertificateEditor = observer((props: {
                         ) : (
                             <Grid2>
                                 <Stack direction={'column'} spacing={3}>
+                                    <Stack direction={'row'} spacing={3} position='relative'>
+                                        <Typography variant='h6' component='div'>SSL PEM Certificate / Chain</Typography>
+                                        <IconButton color='primary' size='medium' aria-label='open pem certificate chain filename' title='Open Certificate PEM File'
+                                            onClick={() => openFile(SshFileType.PEM)}
+                                        ><FileOpenIcon fontSize='inherit' /></IconButton>
+                                        <IconButton color='primary' disabled={!clipboard.hasText} size='medium' aria-label='paste-pem' title='Paste PEM from Clipboard'
+                                            onClick={() => pasteDataFromClipboard(SshFileType.PEM)}><ContentPasteGoIcon fontSize='inherit' /></IconButton>
+                                    </Stack>
                                     <Stack direction={'row'} spacing={3}>
                                         <TextField
                                             id='cert-pem'
                                             label='PEM'
                                             aria-label='pem file contents'
                                             multiline
+                                            error={certificate.pemInvalid}
                                             slotProps={{
                                                 input: {
                                                     readOnly: true,

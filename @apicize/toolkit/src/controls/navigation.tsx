@@ -18,7 +18,7 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import LanguageIcon from '@mui/icons-material/Language'
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
 import { TreeItem } from '@mui/x-tree-view/TreeItem'
-import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack } from '@mui/material'
+import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, useTheme } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import React, { ReactNode, SyntheticEvent, useState } from 'react'
 import { DndContext, DragEndEvent, useDraggable, useDroppable, useSensors, useSensor, PointerSensor, DragCancelEvent, DragMoveEvent } from '@dnd-kit/core'
@@ -28,7 +28,7 @@ import { EditableItem } from "../models/editable";
 import { EditableEntityType } from "../models/workbook/editable-entity-type";
 import { useFileOperations } from "../contexts/file-operations.context";
 import { useWorkspace } from "../contexts/workspace.context";
-import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
+import { useFeedback } from "../contexts/feedback.context";
 
 interface MenuPosition {
     id: string
@@ -39,6 +39,7 @@ interface MenuPosition {
 
 export const Navigation = observer((props: { onSettings?: () => void }) => {
 
+    const theme = useTheme()
     const workspace = useWorkspace()
     const fileOps = useFileOperations()
     const feedback = useFeedback()
@@ -129,11 +130,11 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default' }}
                 >
                     {
-                        props.type === (EditableEntityType.Request || EditableEntityType.Group) ? (<SendIcon className='nav-folder' />) :
-                            props.type === EditableEntityType.Authorization ? (<LockIcon className='nav-folder' />) :
-                                props.type === EditableEntityType.Scenario ? (<LanguageIcon className='nav-folder' />) :
-                                    props.type === EditableEntityType.Proxy ? (<AirlineStopsIcon className='nav-folder' />) :
-                                        props.type === EditableEntityType.Certificate ? (<SecurityIcon className='nav-folder' />) :
+                        props.type === (EditableEntityType.Request || EditableEntityType.Group) ? (<SendIcon className='nav-folder' color='request' />) :
+                            props.type === EditableEntityType.Scenario ? (<LanguageIcon className='nav-folder' color='scenario' />) :
+                                props.type === EditableEntityType.Authorization ? (<LockIcon className='nav-folder' color='authorization' />) :
+                                    props.type === EditableEntityType.Certificate ? (<SecurityIcon className='nav-folder' color='certificate' />) :
+                                        props.type === EditableEntityType.Proxy ? (<AirlineStopsIcon className='nav-folder' color='proxy' />) :
                                             (<></>)
                     }
                     <Box className='nav-node-text' sx={{ flexGrow: 1 }}>
@@ -243,7 +244,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                                 e.stopPropagation()
                             }}
                         >
-                            <FolderIcon className='nav-folder' />
+                            <FolderIcon className='nav-folder' color='folder' />
                             <Box className='nav-node-text'>
                                 {GetTitle(props.item)}
                             </Box>
@@ -305,7 +306,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                         >
                             {
                                 Array.isArray(children)
-                                    ? <FolderIcon sx={{ flexGrow: 0, marginRight: '0.8em' }} />
+                                    ? <FolderIcon color='folder' sx={{ flexGrow: 0, marginRight: '0.8em' }} />
                                     : null
                             }
                             <Box
@@ -313,7 +314,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                                 sx={{ display: 'flex', alignItems: 'center' }}
                             >
                                 {
-                                    props.item.invalid ? (<WarningAmberIcon sx={{ color: '#FFFF00', marginRight: '0.25em' }} />) : null
+                                    props.item.invalid ? (<WarningAmberIcon color='warning' sx={{ marginRight: '0.25em' }} />) : null
                                 }
                                 {GetTitle(props.item)}
                             </Box>
@@ -668,13 +669,13 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             >
                 <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequest(workspace.active?.id)}>
                     <ListItemIcon>
-                        <SendIcon fontSize='small' />
+                        <SendIcon fontSize='small' color='request' />
                     </ListItemIcon>
                     <ListItemText>Add Request</ListItemText>
                 </MenuItem>
                 <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequestGroup(workspace.active?.id)}>
                     <ListItemIcon>
-                        <FolderIcon fontSize='small' />
+                        <FolderIcon fontSize='small' color='folder' />
                     </ListItemIcon>
                     <ListItemText>Add Group</ListItemText>
                 </MenuItem>
@@ -696,25 +697,25 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             >
                 <MenuItem className='navigation-menu-item' onClick={(e) => handleAddRequest(workspace.active?.id)}>
                     <ListItemIcon>
-                        <SendIcon fontSize='small' />
+                        <SendIcon fontSize='small' color='request' />
                     </ListItemIcon>
                     <ListItemText>Add Request</ListItemText>
                 </MenuItem>
                 <MenuItem className='navigation-menu-item' onClick={(e) => handleAddRequestGroup(workspace.active?.id)}>
                     <ListItemIcon>
-                        <FolderIcon fontSize='small' />
+                        <FolderIcon fontSize='small' color='folder' />
                     </ListItemIcon>
                     <ListItemText>Add Request Group</ListItemText>
                 </MenuItem>
                 <MenuItem className='navigation-menu-item' onClick={(e) => handleDupeRequest()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' />
+                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: theme.palette.request.light }} />
                     </ListItemIcon>
                     <ListItemText>Duplicate</ListItemText>
                 </MenuItem>
                 <MenuItem className='navigation-menu-item' onClick={(e) => handleDeleteRequest()}>
                     <ListItemIcon>
-                        <DeleteIcon fontSize='small' />
+                        <DeleteIcon fontSize='small' color='error' />
                     </ListItemIcon>
                     <ListItemText>Delete</ListItemText>
                 </MenuItem>
@@ -737,19 +738,19 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             >
                 <MenuItem onClick={(_) => handleAddScenario(workspace.active?.id)}>
                     <ListItemIcon>
-                        <LanguageIcon fontSize='small' />
+                        <LanguageIcon fontSize='small' color='scenario' />
                     </ListItemIcon>
                     <ListItemText>Add Scenario</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDupeScenario()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' />
+                        <ContentCopyOutlinedIcon fontSize='small'  sx={{ color: theme.palette.scenario.light }} />
                     </ListItemIcon>
                     <ListItemText>Duplicate Scenario</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDeleteScenario()}>
                     <ListItemIcon>
-                        <DeleteIcon fontSize='small' />
+                        <DeleteIcon fontSize='small' color='error' />
                     </ListItemIcon>
                     <ListItemText>Delete Scenario</ListItemText>
                 </MenuItem>
@@ -771,19 +772,19 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             >
                 <MenuItem onClick={(_) => handleAddAuth(workspace.active?.id)}>
                     <ListItemIcon>
-                        <LockIcon fontSize='small' />
+                        <LockIcon fontSize='small' color='authorization' />
                     </ListItemIcon>
                     <ListItemText>Add Authorization</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDupeAuth()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' />
+                        <ContentCopyOutlinedIcon fontSize='small'  sx={{ color: theme.palette.authorization.light }} />
                     </ListItemIcon>
                     <ListItemText>Duplicate Authorization</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDeleteAuth()}>
                     <ListItemIcon>
-                        <DeleteIcon fontSize='small' />
+                        <DeleteIcon fontSize='small' color='error' />
                     </ListItemIcon>
                     <ListItemText>Delete Authorization</ListItemText>
                 </MenuItem>
@@ -805,19 +806,19 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             >
                 <MenuItem onClick={(_) => handleAddCert(workspace.active?.id)}>
                     <ListItemIcon>
-                        <LockIcon fontSize='small' />
+                        <LockIcon fontSize='small' color='certificate' />
                     </ListItemIcon>
                     <ListItemText>Add Certificate</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDupeCert()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' />
+                        <ContentCopyOutlinedIcon fontSize='small'  sx={{ color: theme.palette.certificate.light }} />
                     </ListItemIcon>
                     <ListItemText>Duplicate Certificate</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDeleteCert()}>
                     <ListItemIcon>
-                        <DeleteIcon fontSize='small' />
+                        <DeleteIcon fontSize='small' color='error' />
                     </ListItemIcon>
                     <ListItemText>Delete Certificate</ListItemText>
                 </MenuItem>
@@ -839,19 +840,19 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             >
                 <MenuItem onClick={(_) => handleAddProxy(workspace.active?.id)}>
                     <ListItemIcon>
-                        <LanguageIcon fontSize='small' />
+                        <LanguageIcon fontSize='small' color='proxy' />
                     </ListItemIcon>
                     <ListItemText>Add Proxy</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDupeProxy()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' />
+                        <ContentCopyOutlinedIcon fontSize='small'  sx={{ color: theme.palette.proxy.light }} />
                     </ListItemIcon>
                     <ListItemText>Duplicate Proxy</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDeleteProxy()}>
                     <ListItemIcon>
-                        <DeleteIcon fontSize='small' />
+                        <DeleteIcon fontSize='small' color='error' />
                     </ListItemIcon>
                     <ListItemText>Delete Proxy</ListItemText>
                 </MenuItem>
@@ -932,33 +933,26 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
     }
 
     return (
-        <Stack direction='column' className='nav-selection-pane' sx={[(theme) => ({
-            backgroundColor: '#E0E0E0',
-            ...theme.applyStyles('dark', {
-                backgroundColor: '#202020'
-            })
-        })]}>
-            <Box display='flex' flexDirection='row' sx={{ marginBottom: '0.2em', marginLeft: '1em', marginRight: '.75em' }}>
-                <Box width='100%' display='flex' fontSize='2em' >
-                    <Box display='flex' flexGrow={1} gap='0.4em'>
-                        <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()}>
-                            <PostAddIcon />
-                        </IconButton>
-                        <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook(undefined, true)}>
-                            <FileOpenIcon />
-                        </IconButton>
-                        <IconButton aria-label='save' title='Save Workbook (Ctrl + S)' disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()}>
-                            <SaveIcon />
-                        </IconButton>
-                        <IconButton aria-label='save' title='Save Workbook As (Ctrl + Shift + S)' onClick={() => fileOps.saveWorkbookAs()}>
-                            <SaveAsIcon />
-                        </IconButton>
-                    </Box>
-                    <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }} sx={{ alignSelf: 'flex-end' }}>
-                        <HelpIcon />
+        <Stack bgcolor='navigation.main' direction='column' useFlexGap gap='0.2em' className='nav-selection-pane'>
+            <Stack direction='row' bgcolor='toolbar.main' padding='0.5em 1.5em 0.5em 1em'>
+                <Stack direction='row' useFlexGap gap='0.3em'>
+                    <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()}>
+                        <PostAddIcon />
                     </IconButton>
-                </Box>
-            </Box>
+                    <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook(undefined, true)}>
+                        <FileOpenIcon />
+                    </IconButton>
+                    <IconButton aria-label='save' title='Save Workbook (Ctrl + S)' disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()}>
+                        <SaveIcon />
+                    </IconButton>
+                    <IconButton aria-label='save' title='Save Workbook As (Ctrl + Shift + S)' onClick={() => fileOps.saveWorkbookAs()}>
+                        <SaveAsIcon />
+                    </IconButton>
+                </Stack>
+                <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }} sx={{ alignSelf: 'flex-end', marginLeft: 'auto' }}>
+                    <HelpIcon />
+                </IconButton>
+            </Stack>
             <DndContext onDragMove={onDragMove} onDragCancel={onDragCancel} onDragEnd={onDragEnd} sensors={sensors}>
                 <SimpleTreeView
                     id='navigation'
@@ -966,7 +960,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     aria-label='request navigator'
                     // defaultCollapseIcon={<ExpandMoreIcon />}
                     // defaultExpandIcon={<ChevronRightIcon />}
-                    sx={{ marginLeft: '0.25em', paddingRight: '0.5em' }}
+                    sx={{ paddingRight: '0.8em' }}
                     expandedItems={workspace.expandedItems}
                     selectedItems={workspace.active ? `${workspace.active.entityType}-${workspace.active.id}` : ''}
                     multiSelect={false}

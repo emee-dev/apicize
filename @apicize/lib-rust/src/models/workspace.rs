@@ -28,7 +28,7 @@ pub trait Warnings {
 }
 
 /// Generic for indexed, ordered entities, optionally with children
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct IndexedRequests {
     /// Top level entity IDs
@@ -42,7 +42,7 @@ pub struct IndexedRequests {
 }
 
 /// Generic for indexed, ordered entities
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct IndexedEntities<T> {
     /// Top level entity IDs
@@ -66,7 +66,7 @@ impl<T: Identifable> IndexedEntities<T> {
 
 /// Data type for entities used by Apicize during testing and editing.  This will be
 /// the combination of workbook, workbook credential and global settings values
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Workspace {
     /// Requests for the workspace

@@ -321,6 +321,7 @@ impl ApicizeSettings {
                 workbook_directory: Some(String::from(get_workbooks_directory().to_string_lossy())),
                 font_size: 12,
                 color_scheme: ColorScheme::Dark,
+                editor_panels: String::from(""),
             };
             Ok(SerializationOpenSuccess {
                 file_name: String::from(""),
@@ -1650,7 +1651,7 @@ impl WorkbookRequest {
             Some(WorkbookRequestMethod::Head) => reqwest::Method::HEAD,
             Some(WorkbookRequestMethod::Options) => reqwest::Method::OPTIONS,
             None => reqwest::Method::GET,
-            _ => panic!("Invalid method \"{:?}\"", self.method),
+            _ => panic!("Invalid method"),
         };
 
         let timeout: Duration;

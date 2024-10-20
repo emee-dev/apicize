@@ -9,7 +9,7 @@ use serde_with::formats::Unpadded;
 use serde_with::serde_as;
 
 /// Enumeration of HTTP methods
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum WorkbookRequestMethod {
     /// HTTP GET
@@ -29,7 +29,7 @@ pub enum WorkbookRequestMethod {
 }
 
 /// String name/value pairs used to store values like Apicize headers, query string parameters, etc.
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub struct WorkbookNameValuePair {
     /// Name of value
     pub name: String,
@@ -42,7 +42,7 @@ pub struct WorkbookNameValuePair {
 
 /// Apicize Request body
 #[serde_as]
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(tag = "type")]
 pub enum WorkbookRequestBody {
     /// Text (UTF-8) body data
@@ -76,7 +76,7 @@ pub enum WorkbookRequestBody {
 }
 
 /// Specifies persistence options for non-request entities
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Copy)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum Persistence {
     /// Shared configuration file
@@ -89,7 +89,7 @@ pub enum Persistence {
 
 /// Information about a selected entity, include both ID and name
 /// to give the maximum chance of finding a match
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Selection {
     /// ID of selected entity
@@ -105,7 +105,7 @@ impl Identifable for Selection {
 }
 
 /// Indicator on workbook child execution order
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum WorkbookExecution {
     /// Group children execute sequentially
@@ -115,7 +115,7 @@ pub enum WorkbookExecution {
 }
 
 /// Information required to dispatch and test an Apicize Request
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkbookRequest {
     /// Unique identifier (required to keep track of dispatches and test executions)
@@ -167,7 +167,7 @@ pub struct WorkbookRequest {
 }
 
 /// A group of Apicize Requests
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkbookRequestGroup {
     /// Uniquely identifies group of Apicize requests
@@ -202,7 +202,7 @@ pub struct WorkbookRequestGroup {
 
 /// Apcize Request that is either a specific request to run (Info)
 /// or a group of requests (Group)
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(untagged)]
 pub enum WorkbookRequestEntry {
     /// Request to run
@@ -213,7 +213,7 @@ pub enum WorkbookRequestEntry {
 
 /// A set of variables that can be injected into templated values
 /// when submitting an Apicize Request
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkbookScenario {
     /// Uniquely identifies scenario
@@ -230,7 +230,7 @@ pub struct WorkbookScenario {
 }
 
 /// Authorization information used when dispatching an Apicize Request
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(tag = "type")]
 pub enum WorkbookAuthorization {
     /// Basic authentication (basic authorization header)
@@ -303,7 +303,7 @@ pub enum WorkbookAuthorization {
 
 /// Client certificate used to identify caller
 #[serde_as]
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(tag = "type")]
 pub enum WorkbookCertificate {
     /// PKCS 12 certificate and and password (.p12 or .pfx)
@@ -360,7 +360,7 @@ pub enum WorkbookCertificate {
 }
 
 /// An HTTP or SOCKS5 proxy that can be used to tunnel requests
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub struct WorkbookProxy {
     /// Uniquely identify proxy
     #[serde(default = "generate_uuid")]
@@ -375,7 +375,7 @@ pub struct WorkbookProxy {
 }
 
 /// Defaults for the workbook
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkbookDefaults {
     /// Selected scenario, if applicable
@@ -393,7 +393,7 @@ pub struct WorkbookDefaults {
 }
 
 /// Persisted Apcizize requests and scenario definitions
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq)]
 pub struct Workbook {
     /// Version of workbook format (should not be changed manually)
     pub version: f32,
@@ -417,7 +417,7 @@ pub struct Workbook {
 }
 
 /// Persisted Apicize authorization, client certificate and other parameter
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq)]
 pub struct Parameters {
     /// Version of workbook format (should not be changed manually)
     pub version: f32,

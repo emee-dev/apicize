@@ -12,7 +12,7 @@ export const RequestGroupEditor = observer((props: {
     const group = workspace.active as EditableWorkbookRequestGroup
 
     return (
-        <Grid2 container direction='column' spacing={3} maxWidth={1000} sx={props.sx}>
+        <Grid2 container direction='column' spacing={3} maxWidth='60em' sx={props.sx}>
             <Grid2>
                 <TextField
                     id='group-name'
@@ -33,7 +33,7 @@ export const RequestGroupEditor = observer((props: {
                         id='execution'
                         aria-labelledby='execution-label-id'
                         value={group.execution}
-                        label='Type'
+                        label='Execution Mode'
                         onChange={e => workspace.setGroupExecution(e.target.value as WorkbookGroupExecution)}
                     >
                         <MenuItem value={WorkbookGroupExecution.Sequential}>Sequential</MenuItem>

@@ -4,7 +4,6 @@ import { EditableWorkbookRequest } from '../../../models/workbook/editable-workb
 import { observer } from 'mobx-react-lite'
 import { useWorkspace } from '../../../contexts/workspace.context'
 import { Box } from '@mui/material'
-import { action } from 'mobx'
 
 export const RequestHeadersEditor = observer(() => {
   const workspace = useWorkspace()

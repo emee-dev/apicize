@@ -10,7 +10,8 @@
   background-color: #1d1d24;
 }
 
-.help p, .help ul {
+.help p,
+.help ul {
   margin-bottom: 1em;
 }
 
@@ -67,47 +68,6 @@ pre.log {
   font-size: 0.8em;
 }
 
-.editor-panel {
-  display: grid;
-  grid-template-rows: 6em auto;
-  column-gap: 3em;
-  row-gap: 2em;
-  grid-template-columns: 1fr;
-  grid-auto-flow: column;
-  padding: 8px 16px 8px 16px; 
-  height: 100vh;
-}
-
-.editor-panel.with-executions {
-  grid-template-columns: 1fr 1fr;
-}
-
-
-.editor-panel-no-toolbar {
-  flex: 1;
-  margin-left: 0px;
-  padding: 16px 24px 16px 82px;
-  /* padding: 8px 16px 8px 8px; */
-  height: 100vh;
-}
-
-.editor-title {
-  margin-top: 0.1em;
-  padding-left: 0.6em;
-  display: flex;
-  align-content: center;
-}
-
-.editor-title .MuiSvgIcon-root {
-  margin-right: 20px;
-}
-
-.editor-title .text {
-  display: inline-block;
-  position: relative;
-  top: -3px;
-}
-
 .navigation-menu-item div:nth-child(2) {
   margin-bottom: 0;
   display: inline-block;
@@ -136,15 +96,14 @@ pre.log {
   flex-grow: 1;
   max-width: 50em;
   overflow-y: auto;
-  padding-left: 1em!important;
+  padding-left: 1em !important;
 }
 
 .nav-selection-pane {
   flex-shrink: 0;
-   bottom: 0;
-   overflow: auto;
-   margin-right: 0.1em;
-   padding-right: 0.5em;
+  bottom: 0;
+  overflow: auto;
+  margin-right: 0.1em;
 }
 
 
@@ -152,9 +111,73 @@ pre.log {
   text-align: right;
 }
 
-@media (min-width:1200px) {
-  .namevalue-col-btn {
-    text-align: left;
+.editor-title {
+  margin-top: 0.1em;
+  display: flex;
+  align-content: center;
+}
+
+.editor-title .MuiSvgIcon-root {
+  margin-right: 20px;
+}
+
+.editor-title .text {
+  display: inline-block;
+  position: relative;
+  top: -3px;
+}
+
+.editor {
+  padding: 1.5em;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-single-panel {
+  max-width: 60em;
+}
+
+.editor-panel {
+  display: flex;
+  flex-direction: column;
+  margin: 0 2em 0 2em;
+}
+
+.editor-panel:first-child {
+  margin-left: 0;
+}
+
+.editor-panel:last-child {
+  margin-right: 0;
+}
+
+
+.editor-panel-header {
+  display: flex;
+  align-items: center;
+  margin: 0.5em 0 2.5em 0;
+}
+
+.resize-handle {
+  flex: 0 0 0.2rem;
+  display: flex;
+  justify-content: stretch;
+  align-items: stretch;
+  outline: none;
+  transition: background-color 0.2s linear;
+}
+
+.resize-handle:hover,
+.resize-handle[data-resize-handle-active="keyboard"],
+.resize-handle[data-resize-handle-active="pointer"] {
+  cursor: ew-resize;
+  background-color: #808080;
+}
+
+@media (pointer: coarse) {
+  .resize-handle {
+    flex: 0 0 2rem;
   }
-  
 }

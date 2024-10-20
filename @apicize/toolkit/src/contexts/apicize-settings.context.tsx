@@ -9,6 +9,7 @@ export class ApicizeSettingsStore {
     private _fontSize = 12
     private _colorScheme: SupportedColorScheme = 'dark'
     private _showSettings = false
+    private _editorPanels = ''
 
     constructor() {
         makeAutoObservable(this)
@@ -72,6 +73,20 @@ export class ApicizeSettingsStore {
 
     public set showSettings(onOff: boolean) {
         this._showSettings = onOff
+    }
+
+    public get editorPanels() {
+        return this._editorPanels
+    }
+
+    public set editorPanels(value: string) {
+        this._editorPanels = value
+    }
+
+    public resetToDefaults() {
+        this.fontSize = 12
+        this.colorScheme = 'dark'
+        this.editorPanels = ''
     }
 }
 

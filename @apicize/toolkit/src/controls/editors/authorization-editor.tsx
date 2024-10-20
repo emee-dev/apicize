@@ -1,4 +1,4 @@
-import { TextField, Select, MenuItem, FormControl, InputLabel, Stack, SxProps, Button, Grid2 } from '@mui/material'
+import { TextField, Select, MenuItem, FormControl, InputLabel, Stack, SxProps, Button, Grid2, Box } from '@mui/material'
 import LockIcon from '@mui/icons-material/Lock';
 import { WorkbookAuthorizationType } from '@apicize/lib-typescript';
 import { EditorTitle } from '../editor-title';
@@ -37,9 +37,11 @@ export const AuthorizationEditor = observer((props: {
 
     const auth = workspace.active as EditableWorkbookAuthorization
     return (
-        <Stack className='editor-panel-no-toolbar' direction={'column'} sx={props.sx}>
-            <EditorTitle icon={<LockIcon />} name={auth.name} />
-            <Grid2 container direction={'column'} spacing={3} maxWidth={1000}>
+        <Stack className='editor' direction={'column'} sx={props.sx}>
+            <Box className='editor-panel-header'>
+                <EditorTitle icon={<LockIcon color='authorization' />} name={auth.name} />
+            </Box>
+            <Grid2 container direction={'column'} spacing={3} className='editor-single-panel'>
                 <Grid2>
                     <TextField
                         id='auth-name'
@@ -77,7 +79,7 @@ export const AuthorizationEditor = observer((props: {
                 <Grid2>
                     {
                         auth.type === WorkbookAuthorizationType.ApiKey ?
-                            <Grid2 container direction={'column'} spacing={3} maxWidth={1000} className='authorization-editor-subpanel'>
+                            <Grid2 container direction={'column'} spacing={3} maxWidth='60em' className='authorization-editor-subpanel'>
                                 <Grid2>
                                     <TextField
                                         id='auth-header'
@@ -104,7 +106,7 @@ export const AuthorizationEditor = observer((props: {
                                 </Grid2>
                             </Grid2>
                             : auth.type === WorkbookAuthorizationType.Basic
-                                ? <Grid2 container direction={'column'} spacing={3} maxWidth={1000} className='authorization-editor-subpanel'>
+                                ? <Grid2 container direction={'column'} spacing={3} maxWidth='60em' className='authorization-editor-subpanel'>
                                     <Grid2>
                                         <TextField
                                             id='auth-username'
@@ -129,7 +131,7 @@ export const AuthorizationEditor = observer((props: {
                                     </Grid2>
                                 </Grid2>
                                 : auth.type === WorkbookAuthorizationType.OAuth2Client
-                                    ? <Grid2 container direction={'column'} spacing={3} maxWidth={1000} className='authorization-editor-subpanel'>
+                                    ? <Grid2 container direction={'column'} spacing={3} maxWidth='60em' className='authorization-editor-subpanel'>
                                         <Grid2>
                                             <TextField
                                                 id='auth-oauth2-access-token-url'

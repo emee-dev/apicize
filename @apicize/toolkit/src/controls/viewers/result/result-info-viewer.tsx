@@ -117,14 +117,14 @@ const TestResult = (props: { name: string[], success: boolean, logs?: string[], 
         <Box sx={{ width: '1.5rem', marginRight: '0.5rem' }}>
             {props.success ? (<CheckIcon color='success' />) : (<BlockIcon color='error' />)}
         </Box>
-        <Stack direction='column'>
+        <Stack direction='column' width='98%'>
             <Typography sx={{ marginTop: 0, marginBottom: 0, paddingTop: 0 }} component='div'>
                 {props.name.join(' ')}
             </Typography>
             {(props.error?.length ?? 0) > 0 ? (<Typography
                 sx={{ marginTop: 0, marginBottom: 0, paddingTop: 0, ":first-letter": { textTransform: 'capitalize' } }} color='error'>{props.error}</Typography>) : (<></>)}
             {(props.logs?.length ?? 0) > 0 ? (
-                <Box sx={{ overflow: 'auto', marginTop: '0.25rem', marginBottom: 0 }}>
+                <Box sx={{ marginTop: '0.25rem', marginBottom: 0 }}>
                     <pre className='log'>{props.logs?.join('\n')}</pre>
                 </Box>
             ) : (<></>)}

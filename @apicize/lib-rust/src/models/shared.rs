@@ -4,7 +4,6 @@
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use std::fmt::Debug;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::{fs, io};

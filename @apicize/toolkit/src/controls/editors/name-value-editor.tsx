@@ -48,13 +48,12 @@ export function NameValueEditor(props: {
         }
     }
 
-
-    return <Stack direction='column'>
-        <Grid2 container spacing={4} maxWidth='80em'>
+    return <Stack direction='column' position='relative' width='100%'>
+        <Grid2 container spacing={4}>
             {
                 (props.values ?? []).map(value => [
-                    <Grid2 container rowSpacing={2} spacing={1} size={12}>
-                        <Grid2 size={{ md: 12, lg: 5 }}>
+                    <Grid2 container rowSpacing={2} spacing={1} size={12} columns={13}>
+                        <Grid2 size={{ md: 13, lg: 6 }}>
                             <TextField
                                 id={`${value.id}-name`}
                                 label={props.nameHeader}
@@ -65,7 +64,7 @@ export function NameValueEditor(props: {
                                 fullWidth
                             />
                         </Grid2>
-                        <Grid2 size={{ md: 11, lg: 5 }}>
+                        <Grid2 size={{ md: 12, lg: 6 }}>
                             <TextField
                                 id={`${value.id}-value`}
                                 label={props.valueHeader}
@@ -76,16 +75,16 @@ export function NameValueEditor(props: {
                                 fullWidth
                             />
                         </Grid2>
-                        <Grid2 className='namevalue-col-btn' size={{ md: 1, lg: 2 }}>
+                        <Grid2 className='namevalue-col-btn' size={{ md: 1, lg: 1 }}>
                             <IconButton aria-label="delete" onClick={() => onDelete(value.id)}>
-                                <DeleteIcon />
+                                <DeleteIcon color='primary' />
                             </IconButton>
                         </Grid2>
                     </Grid2>
                 ])
             }
             <Box>
-                <Button variant="contained" aria-label="add" startIcon={<AddIcon />} onClick={() => onAdd()}>Add {props.title}</Button>
+                <Button variant="outlined" aria-label="add" startIcon={<AddIcon />} onClick={() => onAdd()}>Add {props.title}</Button>
             </Box>
 
         </Grid2>

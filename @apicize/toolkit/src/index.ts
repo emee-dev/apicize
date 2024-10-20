@@ -18,3 +18,49 @@ export { useClipboard, ClipboardContext, ClipboardStore } from './contexts/clipb
 export { useFileOperations, FileOperationsContext, FileOperationsStore, SshFileType } from './contexts/file-operations.context'
 export { useWorkspace, WorkspaceContext, WorkspaceStore } from './contexts/workspace.context'
 export { useApicizeSettings, ApicizeSettingsContext, ApicizeSettingsStore } from './contexts/apicize-settings.context'
+
+declare module '@mui/material/styles' {
+    interface Palette {
+        navigation: Palette['primary']
+        toolbar: Palette['primary']
+        folder: Palette['primary']
+        request: Palette['primary']
+        scenario: Palette['primary']
+        authorization: Palette['primary']
+        certificate: Palette['primary']
+        proxy: Palette['primary']
+    }
+
+    interface PaletteOptions {
+        navigation?: PaletteOptions['primary']
+        toolbar?: PaletteOptions['primary']
+        folder?: PaletteOptions['primary']
+        request?: PaletteOptions['primary']
+        scenario?: PaletteOptions['primary']
+        authorization?: PaletteOptions['primary']
+        certificate?: PaletteOptions['primary']
+        proxy?: PaletteOptions['primary']
+    }
+}
+
+declare module '@mui/material/IconButton' {
+    interface IconButtonPropsColorOverrides {
+        folder: true
+        request: true
+        scenario: true
+        authorization: true
+        certificate: true
+        proxy: true
+    }
+}
+
+declare module '@mui/material/SvgIcon' {
+    interface SvgIconPropsColorOverrides {
+        folder: true
+        request: true
+        scenario: true
+        authorization: true
+        certificate: true
+        proxy: true
+    }
+}
