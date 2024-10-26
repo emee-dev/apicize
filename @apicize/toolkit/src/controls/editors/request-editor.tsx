@@ -29,25 +29,6 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { useApicizeSettings } from '../../contexts/apicize-settings.context';
 import { useFileOperations } from '../../contexts/file-operations.context';
 
-const Separator = () => {
-    const [isMoving, setIsMoving] = React.useState(false)
-
-    const activate = () => {
-        setIsMoving(true)
-    }
-
-    const deactivate = () => {
-        setIsMoving(false)
-    }
-
-    return <Box className={isMoving ? 'editor-panel-separator-active' : 'editor-panel-separator'}
-        onMouseDown={() => activate()}
-        onMouseUp={() => deactivate()}
-        onMouseLeave={() => deactivate()}
-    />
-}
-
-
 export const RequestEditor = observer((props: {
     sx?: SxProps
 }) => {
@@ -77,9 +58,8 @@ export const RequestEditor = observer((props: {
         return null
     }
 
-    workspace.nextHelpTopic = 'requests'
     const execution = workspace.getExecution(workspace.active.id)
-    const isExecuted = execution.runs.length > 0
+    const isExecuted = execution.results.size > 0
 
     let usePanel = (
         (group && panel !== 'Info' && panel !== 'Parameters')
@@ -192,13 +172,13 @@ export const RequestEditor = observer((props: {
 
     return isExecuted
         ? <PanelGroup autoSaveId="apicize-request" direction="horizontal" className='editor' storage={sizeStorage}>
-            <Panel id='request-editor' order={0} defaultSize={50} minSize={20}  className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
+            <Panel id='request-editor' order={0} defaultSize={50} minSize={20} className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
                 {requestPanel}
             </Panel>
             <PanelResizeHandle className="resize-handle" hitAreaMargins={{ coarse: 30, fine: 10 }} />
             {
                 <Panel id='results-viewer' order={1} defaultSize={50} minSize={20} className='editor-panel'>
-                    <RunResultsToolbar className='editor-panel-header' />
+                <RunResultsToolbar className='editor-panel-header' />
                     <ResultsViewer sx={{ flexGrow: 1 }} />
                 </Panel>
             }

@@ -9,12 +9,12 @@ import { useWorkspace } from "../../../contexts/workspace.context";
 
 export const ResultRequestViewer = observer((props: {
     requestOrGroupId: string,
-    index: number,
+    executionResultId: string,
 }) => {
     const workspace = useWorkspace()
     const clipboard = useClipboard()
 
-    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.executionResultId)
 
     if (result?.type !== 'request') {
         return null

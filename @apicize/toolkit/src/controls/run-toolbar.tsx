@@ -23,17 +23,13 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
         return null
     }
 
-    const updateRuns = (runs: number) => {
-        workspace.setRequestRuns(runs)
-    }
-
     const handleRunClick = () => async () => {
         try {
             if (!(workspace.active && (workspace.active.entityType === EditableEntityType.Request || workspace.active.entityType === EditableEntityType.Group))) {
                 return
             }
             const requestId = workspace.active.id
-            await workspace.executeRequest(requestId)
+            await workspace.executeRequest(requestId, 1)
         } catch (e) {
             let msg1 = `${e}`
             feedback.toast(msg1, msg1 == 'Cancelled' ? ToastSeverity.Warning : ToastSeverity.Error)
@@ -45,22 +41,6 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
             <ToggleButton value='Run' title='Run selected request' sx={{ marginRight: '1em' }} disabled={execution.running} onClick={handleRunClick()}>
                 <PlayCircleFilledIcon color={execution.running ? 'disabled' : 'success'} />
             </ToggleButton>
-            <TextField
-                aria-label='Nubmer of Run Attempts'
-                placeholder='Attempts'
-                label='# of Runs'
-                disabled={execution.running}
-                sx={{ width: '8em', flexGrow: 0 }}
-                type='number'
-                slotProps={{
-                    htmlInput: {
-                        min: 1,
-                        max: 1000
-                    }
-                }}
-                value={request.runs}
-                onChange={e => updateRuns(parseInt(e.target.value))}
-            />
         </Stack>
     )
 })

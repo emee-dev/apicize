@@ -26,6 +26,8 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
     @observable public accessor warnings: Map<string, string> | undefined = undefined
 
     @observable accessor runs = 0
+    @observable public accessor multiRunExecution = WorkbookGroupExecution.Sequential
+
     @observable accessor selectedScenario: Selection | undefined = undefined
     @observable accessor selectedAuthorization: Selection | undefined = undefined
     @observable accessor selectedCertificate: Selection | undefined = undefined
@@ -37,6 +39,8 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
         result.name = entry.name ?? ''
 
         result.runs = entry.runs
+        result.multiRunExecution = entry.multiRunExecution
+
         result.selectedScenario = entry.selectedScenario ?? undefined
         result.selectedAuthorization = entry.selectedAuthorization ?? undefined
         result.selectedCertificate = entry.selectedCertificate ?? undefined
@@ -95,6 +99,7 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
             keepalive: this.keepalive,
             mode: this.mode,
             runs: this.runs,
+            multiRunExecution: this.multiRunExecution,
             selectedScenario: this.selectedScenario,
             selectedAuthorization: this.selectedAuthorization,
             selectedCertificate: this.selectedCertificate,
@@ -162,7 +167,7 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
     }
 
     @computed get urlInvalid() {
-        return ! /^(?:https?):\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(this.url)
+        return ! /^(\{\{.+\}\}|https?:\/\/)(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?$/.test(this.url)
     }
 
     @computed get invalid() {
@@ -178,6 +183,8 @@ export class EditableWorkbookRequestGroup extends Editable<WorkbookRequestGroup>
     @observable public accessor execution = WorkbookGroupExecution.Sequential
 
     @observable accessor runs = 0
+    @observable public accessor multiRunExecution = WorkbookGroupExecution.Sequential
+
     @observable accessor selectedScenario: Selection | undefined = undefined
     @observable accessor selectedAuthorization: Selection | undefined = undefined
     @observable accessor selectedCertificate: Selection | undefined = undefined
@@ -190,6 +197,7 @@ export class EditableWorkbookRequestGroup extends Editable<WorkbookRequestGroup>
         result.name = entry.name ?? ''
 
         result.execution = entry.execution
+        result.multiRunExecution = entry.multiRunExecution
 
         result.runs = entry.runs
         result.selectedScenario = entry.selectedScenario ?? undefined
@@ -209,6 +217,7 @@ export class EditableWorkbookRequestGroup extends Editable<WorkbookRequestGroup>
             name: this.name,
             runs: this.runs,
             execution: this.execution,
+            multiRunExecution: this.multiRunExecution,
             selectedScenario: this.selectedScenario ?? undefined,
             selectedAuthorization: this.selectedAuthorization ?? undefined,
             selectedCertificate: this.selectedCertificate ?? undefined,

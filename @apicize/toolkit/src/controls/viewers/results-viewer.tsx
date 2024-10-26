@@ -18,8 +18,8 @@ import { RequestRunProgress } from "./result/requuest-run-progress";
 import { observer } from 'mobx-react-lite';
 import { EditableEntityType } from '../../models/workbook/editable-entity-type';
 import { useWorkspace } from "../../contexts/workspace.context";
-import { WorkbookExecutionGroupResult, WorkbookExecutionRequestResult } from "../../models/workbook/workbook-execution";
-import { toJS } from "mobx";
+import { WorkbookExecutionGroup, WorkbookExecutionRequest } from "../../models/workbook/workbook-execution";
+import { MAX_TEXT_RENDER_LENGTH } from "./text-viewer";
 
 export const ResultsViewer = observer((props: {
     sx?: SxProps<Theme>
@@ -31,11 +31,22 @@ export const ResultsViewer = observer((props: {
             && workspace.active.entityType !== EditableEntityType.Group)) {
         return null
     }
+    
+    const requestExecution = workspace.executions.get(workspace.active.id)
+    if (!requestExecution) {
+        return null
+    }
+    
     const requestOrGroupId = workspace.active.id
-
-    const requestExecution = workspace.requestExecutions.get(workspace.active.id)
+    const selectedExecution = requestExecution.resultMenu[requestExecution.resultIndex]
+    const executionResultId = selectedExecution.executionResultId
+    
     const executionResult = workspace.getExecutionResult(workspace.active.id,
-        requestExecution?.resultIndex ?? 0)
+        selectedExecution?.executionResultId)
+    
+    if (!(executionResultId && executionResult)) {
+        return null
+    }
 
     const handlePanelChanged = (_: React.SyntheticEvent, newValue: string) => {
         if (newValue) {
@@ -44,17 +55,20 @@ export const ResultsViewer = observer((props: {
     }
 
     const executionRequestResult = executionResult?.type === 'request'
-        ? executionResult as WorkbookExecutionRequestResult
+        ? executionResult as WorkbookExecutionRequest
         : undefined
     const executionGroupResult = executionResult?.type === 'group'
-        ? executionResult as WorkbookExecutionGroupResult
+        ? executionResult as WorkbookExecutionGroup
         : undefined
 
-    const disableOtherPanels = requestExecution?.running || (executionRequestResult?.disableOtherPanels ?? true)
+    const disableOtherPanels = requestExecution?.running || (
+        executionRequestResult?.response === undefined
+    )
+
+    const longTextInResponse = (executionRequestResult?.response?.body?.text?.length ?? 0)
+        > MAX_TEXT_RENDER_LENGTH
+
     const disableRequest = requestExecution?.running || (!executionRequestResult?.request)
-
-    const resultIndex = requestExecution?.resultIndex ?? NaN
-
 
     let panel = requestExecution?.panel
     if (executionGroupResult && panel !== 'Info') {
@@ -97,22 +111,22 @@ export const ResultsViewer = observer((props: {
                 <ToggleButton value="Info" title="Show Result Info" aria-label='show info' disabled={requestExecution.running}><ScienceIcon color={infoColor ?? 'disabled'} /></ToggleButton>
                 <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' disabled={disableOtherPanels}><ViewListOutlinedIcon /></ToggleButton>
                 <ToggleButton value="Text" title="Show Response Body as Text" aria-label='show body text' disabled={disableOtherPanels}><ArticleOutlinedIcon /></ToggleButton>
-                <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={disableOtherPanels || executionRequestResult?.longTextInResponse === true}><PreviewIcon /></ToggleButton>
+                <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={disableOtherPanels || longTextInResponse}><PreviewIcon /></ToggleButton>
                 <ToggleButton value="Request" title="Show Request" aria-label='show request' disabled={disableRequest}><SendIcon /></ToggleButton>
             </ToggleButtonGroup>
             <Box sx={{ overflow: 'hidden', flexGrow: 1, bottom: '0', position: 'relative' }}>
                 {
                     requestExecution.running ? <RequestRunProgress /> :
-                        panel === 'Info' ? <ResultInfoViewer requestOrGroupId={requestOrGroupId} index={resultIndex} />
-                            : panel === 'Headers' ? <ResponseHeadersViewer requestOrGroupId={requestOrGroupId} index={resultIndex} />
+                        panel === 'Info' ? <ResultInfoViewer requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
+                            : panel === 'Headers' ? <ResponseHeadersViewer requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
                                 : panel === 'Preview' ? <ResultResponsePreview
-                                    requestOrGroupId={requestOrGroupId} index={resultIndex}
+                                    requestOrGroupId={requestOrGroupId} executionResultId={executionResultId}
                                 />
                                     : panel === 'Text' ? <ResultRawPreview
-                                        requestOrGroupId={requestOrGroupId} index={resultIndex}
+                                        requestOrGroupId={requestOrGroupId} executionResultId={executionResultId}
                                     />
                                         : panel === 'Request' ? <ResultRequestViewer
-                                            requestOrGroupId={requestOrGroupId} index={resultIndex} />
+                                            requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
                                             : null
                 }
             </Box>

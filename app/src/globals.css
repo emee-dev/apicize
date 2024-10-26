@@ -15,6 +15,21 @@
   margin-bottom: 1em;
 }
 
+.help table {
+  margin: 1em 0 1em 0;
+  border-collapse: collapse;
+}
+
+.help table thead {
+  border-bottom: 2px solid;
+}
+
+.help td,
+.help th {
+  padding: 0.5em;
+}
+
+
 .help-text {
   display: block;
   padding-right: 36px;
@@ -65,7 +80,7 @@ pre.log {
   margin-bottom: 0;
   white-space: pre-line;
   word-break: break-word;
-  font-size: 0.8em;
+  font-size: 0.9em;
 }
 
 .navigation-menu-item div:nth-child(2) {
@@ -128,7 +143,7 @@ pre.log {
 }
 
 .editor {
-  padding: 1.5em;
+  padding: 0 1.5em 1.5em 1.5em;
   width: 100vw;
   height: 100vh;
   display: flex;
@@ -137,10 +152,14 @@ pre.log {
 
 .editor-single-panel {
   max-width: 60em;
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
 }
 
 .editor-panel {
   display: flex;
+  flex-grow: 1;
   flex-direction: column;
   margin: 0 2em 0 2em;
 }
@@ -153,11 +172,19 @@ pre.log {
   margin-right: 0;
 }
 
-
 .editor-panel-header {
   display: flex;
   align-items: center;
-  margin: 0.5em 0 2.5em 0;
+  height: 8em;
+}
+
+.test-result {
+  line-height: 1;
+  margin-bottom: 0.5em;
+}
+
+.test-details {
+  margin-top: 0.5em;
 }
 
 .resize-handle {
@@ -166,7 +193,7 @@ pre.log {
   justify-content: stretch;
   align-items: stretch;
   outline: none;
-  transition: background-color 0.2s linear;
+  transition: background-color 0.1s linear;
 }
 
 .resize-handle:hover,

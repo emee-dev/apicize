@@ -1,9 +1,12 @@
 //! Apicize models
 //! 
 //! This module defines models used to store and execute Apicize workbook requests
+use apicize::{ApicizeExecution, ApicizeExecutionGroup, ApicizeExecutionGroupRun, ApicizeExecutionItem, ApicizeExecutionRequest, ApicizeExecutionRequestRun, ApicizeExecutionTotals, ExecutionTotals, ExecutionTotalsSource};
 use oauth2::basic::BasicErrorResponseType;
 use oauth2::{RequestTokenError, StandardErrorResponse};
+use serde_json::Value;
 use tokio::task::JoinError;
+use std::collections::HashMap;
 use std::fmt::Display;
 use thiserror::Error;
 
@@ -131,6 +134,175 @@ impl Warnings for WorkbookRequestEntry {
     }
 }
 
+impl ExecutionTotalsSource for ApicizeExecutionItem {
+    /// Retrieve totals for an execution item
+    fn get_totals(&self) -> ApicizeExecutionTotals {
+        match self {
+            ApicizeExecutionItem::Group(group) => ApicizeExecutionTotals {
+                success: group.success,
+                requests_with_passed_tests_count: group.requests_with_passed_tests_count,
+                requests_with_failed_tests_count: group.requests_with_failed_tests_count,
+                requests_with_errors: group.requests_with_errors,
+                passed_test_count: group.passed_test_count,
+                failed_test_count: group.failed_test_count,
+            },
+            ApicizeExecutionItem::Request(request) => ApicizeExecutionTotals {
+                success: request.success,
+                requests_with_passed_tests_count: if request.passed_test_count > 0 { 1 } else { 0 },
+                requests_with_failed_tests_count: if request.failed_test_count > 0 { 1 } else { 0 },
+                requests_with_errors: if request.success { 0 } else { 1 },
+                passed_test_count: request.passed_test_count,
+                failed_test_count: request.failed_test_count,
+            },
+        }
+    }
+
+    /// Retrieve variables for item execution
+    fn get_variables(&self) -> &Option<HashMap<String, Value>> {
+        match self {
+            ApicizeExecutionItem::Group(group) => {
+                if let Some(last_run) = group.runs.last() {
+                    if let Some(last_item) = last_run.items.last() {
+                        last_item.get_variables()
+                    } else {
+                        &None
+                    }
+                } else {
+                    &None
+                }
+            }
+            ApicizeExecutionItem::Request(request) => {
+                if let Some(last_run) = request.runs.last() {
+                    &last_run.variables
+                } else {
+                    &None
+                }
+            }
+        }
+    }
+}
+
+impl ExecutionTotals for ApicizeExecutionItem {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+
+        match self {
+            ApicizeExecutionItem::Group(group) => {
+                group.requests_with_passed_tests_count +=
+                    other_totals.requests_with_passed_tests_count;
+                group.requests_with_failed_tests_count +=
+                    other_totals.requests_with_failed_tests_count;
+                group.requests_with_errors += other_totals.requests_with_errors;
+                group.passed_test_count += other_totals.passed_test_count;
+                group.failed_test_count += other_totals.failed_test_count;
+            }
+            ApicizeExecutionItem::Request(request) => {
+                request.requests_with_passed_tests_count +=
+                    other_totals.requests_with_passed_tests_count;
+                request.requests_with_failed_tests_count +=
+                    other_totals.requests_with_failed_tests_count;
+                request.requests_with_errors += other_totals.requests_with_errors;
+                request.passed_test_count += other_totals.passed_test_count;
+                request.failed_test_count += other_totals.failed_test_count;
+            }
+        }
+    }
+}
+
+impl ExecutionTotals for ApicizeExecutionGroup {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+
+        self.requests_with_passed_tests_count += other_totals.requests_with_passed_tests_count;
+        self.requests_with_failed_tests_count += other_totals.requests_with_failed_tests_count;
+        self.requests_with_errors += other_totals.requests_with_errors;
+        self.passed_test_count += other_totals.passed_test_count;
+        self.failed_test_count += other_totals.failed_test_count;
+    }
+}
+
+impl ExecutionTotals for ApicizeExecutionRequest {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+        self.success = self.success && other_totals.success;
+        self.requests_with_passed_tests_count += other_totals.requests_with_passed_tests_count;
+        self.requests_with_failed_tests_count += other_totals.requests_with_failed_tests_count;
+        self.requests_with_errors += other_totals.requests_with_errors;
+        self.passed_test_count += other_totals.passed_test_count;
+        self.failed_test_count += other_totals.failed_test_count;
+    }
+}
+
+impl ExecutionTotalsSource for ApicizeExecutionRequestRun {
+    /// Retrieve totals for an execution run
+    fn get_totals(&self) -> ApicizeExecutionTotals {
+        ApicizeExecutionTotals {
+            success: self.success,
+            requests_with_passed_tests_count: self.requests_with_passed_tests_count,
+            requests_with_failed_tests_count: self.requests_with_failed_tests_count,
+            requests_with_errors: self.requests_with_errors,
+            passed_test_count: self.passed_test_count,
+            failed_test_count: self.failed_test_count,
+        }
+    }
+
+    fn get_variables(&self) -> &Option<HashMap<String, Value>> {
+        return &self.variables;
+    }
+}
+
+impl ExecutionTotals for ApicizeExecutionRequestRun {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+        self.success = self.success && other_totals.success;
+        self.requests_with_passed_tests_count += other_totals.requests_with_passed_tests_count;
+        self.requests_with_failed_tests_count += other_totals.requests_with_failed_tests_count;
+        self.requests_with_errors += other_totals.requests_with_errors;
+        self.passed_test_count += other_totals.passed_test_count;
+        self.failed_test_count += other_totals.failed_test_count;
+    }
+}
+
+impl ExecutionTotalsSource for ApicizeExecutionGroupRun {
+    /// Retrieve totals for an execution run
+    fn get_totals(&self) -> ApicizeExecutionTotals {
+        ApicizeExecutionTotals {
+            success: self.success,
+            requests_with_passed_tests_count: self.requests_with_passed_tests_count,
+            requests_with_failed_tests_count: self.requests_with_failed_tests_count,
+            requests_with_errors: self.requests_with_errors,
+            passed_test_count: self.passed_test_count,
+            failed_test_count: self.failed_test_count,
+        }
+    }
+
+    fn get_variables(&self) -> &Option<HashMap<String, Value>> {
+        return &self.variables;
+    }
+}
+
+impl ExecutionTotals for ApicizeExecutionGroupRun {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+        self.success = self.success && other_totals.success;
+        self.requests_with_passed_tests_count += other_totals.requests_with_passed_tests_count;
+        self.requests_with_failed_tests_count += other_totals.requests_with_failed_tests_count;
+        self.requests_with_errors += other_totals.requests_with_errors;
+        self.passed_test_count += other_totals.passed_test_count;
+        self.failed_test_count += other_totals.failed_test_count;
+    }
+}
+impl ExecutionTotals for ApicizeExecution {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+        self.success = self.success && other_totals.success;
+        self.requests_with_passed_tests_count += other_totals.requests_with_passed_tests_count;
+        self.requests_with_failed_tests_count += other_totals.requests_with_failed_tests_count;
+        self.requests_with_errors += other_totals.requests_with_errors;
+        self.passed_test_count += other_totals.passed_test_count;
+        self.failed_test_count += other_totals.failed_test_count;
+    }
+}
 
 /*
 #[cfg(test)]

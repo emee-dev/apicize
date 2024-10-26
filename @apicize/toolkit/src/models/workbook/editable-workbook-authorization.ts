@@ -111,7 +111,7 @@ export class EditableWorkbookAuthorization extends Editable<WorkbookAuthorizatio
     }
 
     @computed get accessTokenUrlInvalid() {
-        return ! /(?:https?):\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(this.accessTokenUrl)
+        return ! /^(\{\{.+\}\}|https?:\/\/)(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?$/.test(this.accessTokenUrl)
     }
 
     @computed get clientIdInvalid() {

@@ -22,6 +22,7 @@ import { logo } from './logo';
 import remarkParse from 'remark-parse'
 import remarkRehype from 'remark-rehype'
 import rehypeReact from 'rehype-react'
+import remarkGfm from 'remark-gfm'
 import { LeafDirective } from 'mdast-util-directive'
 import { Element } from 'hast';
 import { Variant } from '@mui/material/styles/createTypography';
@@ -71,6 +72,7 @@ export const HelpPanel = observer(() => {
                 if (helpText.length > 0) {
                     const r = await unified()
                         .use(remarkParse)
+                        .use(remarkGfm)
                         .use(remarkDirective)
                         .use(remarkApicizeDirectives)
                         .use(remarkRehype)

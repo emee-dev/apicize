@@ -13,7 +13,7 @@ pub fn generate_uuid() -> String {
 }
 
 /// Generate the value 1 for default, since serde doesn't suport literal defaults
-pub fn one() -> u32 {
+pub fn one() -> usize {
     1
 }
 

@@ -4,7 +4,7 @@ Your tests have access to the following variables:
 
 * **[request](#request)**:  Information about the submitted request
 * **[response](#response)**:  Information about the received response
-* **scenario**:  Variables that are defined in your workbook's active [scenario](help:scenarios)
+* **variables**:  Variables that are defined in your workbook's active [scenario](help:scenarios)
 
 Generally speaking, you should structure your tests to **describe** something and what **it** should do.  By default, Apicize will create this test for each new request:
 

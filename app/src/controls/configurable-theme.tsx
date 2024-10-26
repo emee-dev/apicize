@@ -117,7 +117,7 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
             marginBottom: '1.0em',
           },
           h3: {
-            fontSize: '1.1em',
+            fontSize: '1.2em',
             fontWeight: 'normal',
             marginTop: '1.5em',
             marginBottom: '1.0em',

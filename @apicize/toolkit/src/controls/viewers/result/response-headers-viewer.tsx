@@ -1,25 +1,23 @@
-import { GenerateIdentifier } from "../../../services/random-identifier-generator"
 import { Box, Grid2, Stack, Typography } from "@mui/material"
 import { useWorkspace } from "../../../contexts/workspace.context"
-import { toJS } from "mobx"
-import { wrap } from "module"
 
-export function ResponseHeadersViewer(props: { requestOrGroupId: string, index: number }) {
+export function ResponseHeadersViewer(props: { requestOrGroupId: string, executionResultId: string }) {
     const workspace = useWorkspace()
 
-    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.executionResultId)
 
     if (result?.type !== 'request') {
         return null
     }
 
     const headers = Object.entries(result.response?.headers ?? {})
+    let hdrCtr = 0
 
     return (
         <Stack direction="column" sx={{ flexGrow: 1, maxWidth: '80em', position: 'absolute', top: '0', bottom: '0' }}>
             {
                 headers.length > 0
-                    ? <Box overflow='auto' paddingRight='24px' height='100%'>
+                    ? <Box overflow='auto' paddingRight='24px' height='100%' key={`header${hdrCtr++}`}>
                         <Typography variant='h2' sx={{ marginTop: 0, marginBottom: '2em', flexGrow: 0 }} component='div'>Response Headers</Typography>
                         <Grid2 container rowSpacing='1em'>
                             {

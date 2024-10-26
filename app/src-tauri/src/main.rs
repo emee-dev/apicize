@@ -8,7 +8,7 @@ use tokio_util::sync::CancellationToken;
 
 use apicize_lib::{
     models::{apicize::ApicizeExecution, ApicizeSettings, Workspace},
-    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token},
+    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token}, test_runner::run,
 };
 use tauri::{Emitter, Manager, State};
 
@@ -136,7 +136,6 @@ fn cancellation_tokens() -> &'static Mutex<HashMap<String, CancellationToken>> {
 
 #[tauri::command]
 async fn run_request(workspace: Workspace, request_id: String) -> Result<ApicizeExecution, String> {
-
     let arc_workspace = Arc::new(workspace);
     let arc_test_started = Arc::new(Instant::now());
     let cancellation = CancellationToken::new();
@@ -147,9 +146,9 @@ async fn run_request(workspace: Workspace, request_id: String) -> Result<Apicize
             .insert(request_id.clone(), cancellation.clone());
     }
 
-    let response = Workspace::run(
+    let response = run(
         arc_workspace.clone(),
-        &request_id,
+        Some(vec![request_id.clone()]),
         Some(cancellation),
         arc_test_started,
     )

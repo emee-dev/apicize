@@ -1,6 +1,6 @@
 import { action, makeObservable, observable, toJS } from "mobx"
 import { DEFAULT_SELECTION_ID, NO_SELECTION, NO_SELECTION_ID } from "../models/store"
-import { WorkbookExecution, WorkbookExecutionGroupItem, WorkbookExecutionGroupResult, WorkbookExecutionRequestResult, WorkbookExecutionResult, WorkbookExecutionResultMenuItem, WorkbookExecutionRunMenuItem } from "../models/workbook/workbook-execution"
+import { WorkbookExecution, WorkbookExecutionGroup, WorkbookExecutionMenuItem, WorkbookExecutionRequest, WorkbookExecutionResult } from "../models/workbook/workbook-execution"
 import { editableWorkspaceToStoredWorkspace, newEditableWorkspace, storedWorkspaceToEditableWorkspace } from "../services/apicize-serializer"
 import { EditableWorkbookRequest, EditableWorkbookRequestGroup } from "../models/workbook/editable-workbook-request"
 import { EditableWorkbookScenario } from "../models/workbook/editable-workbook-scenario"
@@ -10,18 +10,17 @@ import { EditableWorkbookProxy } from "../models/workbook/editable-workbook-prox
 import {
     Identifiable, Named, IndexedEntities, GetTitle, Persistence, addNestedEntity, removeNestedEntity, moveNestedEntity, getNestedEntity, WorkbookGroupExecution,
     addEntity, removeEntity, moveEntity, WorkbookBodyType, WorkbookMethod, WorkbookBodyData, WorkbookAuthorizationType,
-    WorkbookCertificateType, findParentEntity, Workspace, ApicizeRequest, WorkbookRequestGroup,
+    WorkbookCertificateType, findParentEntity, Workspace,
     ApicizeExecution,
     ApicizeExecutionGroup,
     ApicizeExecutionItem,
-    ApicizeExecutionRequest
+    ApicizeExecutionRequest,
 } from "@apicize/lib-typescript"
 import { EntitySelection } from "../models/workbook/entity-selection"
 import { EditableNameValuePair } from "../models/workbook/editable-name-value-pair"
 import { GenerateIdentifier } from "../services/random-identifier-generator"
 import { EditableEntityType } from "../models/workbook/editable-entity-type"
 import { EditableItem } from "../models/editable"
-import { MAX_TEXT_RENDER_LENGTH } from "../controls/viewers/text-viewer"
 import { createContext, useContext } from "react"
 import { EditableWorkbookDefaults } from "../models/workbook/editable-workbook-defaults"
 
@@ -32,9 +31,9 @@ export class WorkspaceStore {
     @observable accessor workspace = newEditableWorkspace()
 
     /**
-     * Request executions underway or completed
+     * Apicize executions underway or completed
      */
-    @observable accessor requestExecutions = new Map<string, WorkbookExecution>()
+    @observable accessor executions = new Map<string, WorkbookExecution>()
 
     @observable accessor active: EditableItem | null = null
 
@@ -59,7 +58,7 @@ export class WorkspaceStore {
     @observable accessor expandedItems = ['hdr-r', 'hdr-s', 'hdr-a', 'hdr-c', 'hdr-p']
 
     constructor(private readonly callbacks: {
-        onExecuteRequest: (workspace: Workspace, requestId: string) => Promise<ApicizeExecution>,
+        onExecuteRequest: (workspace: Workspace, requestId: string, runs?: number) => Promise<ApicizeExecution>,
         onCancelRequest: (requestId: string) => Promise<void>,
         onClearToken: (authorizationId: string) => Promise<void>,
     }) {
@@ -135,7 +134,7 @@ export class WorkspaceStore {
         this.warnOnWorkspaceCreds = true
         this.workspace = newEditableWorkspace()
         this.expandedItems = ['hdr-r', 'hdr-s', 'hdr-a', 'hdr-c', 'hdr-p']
-        this.requestExecutions.clear()
+        this.executions.clear()
         this.invalidItems.clear()
         this.active = null
     }
@@ -171,7 +170,7 @@ export class WorkspaceStore {
         this.workbookDisplayName = displayName
         this.dirty = false
         this.warnOnWorkspaceCreds = true
-        this.requestExecutions.clear()
+        this.executions.clear()
         this.invalidItems.clear()
     }
 
@@ -213,7 +212,7 @@ export class WorkspaceStore {
                 const r = this.workspace.requests.entities.get(id)
                 if (!r) throw new Error(`Invalid request ID ${id}`)
                 this.active = r
-                this.nextHelpTopic = 'requests'
+                this.nextHelpTopic = r.entityType === EditableEntityType.Group ? 'groups' : 'requests'
                 break
             case EditableEntityType.Scenario:
                 this.hideHelp()
@@ -324,7 +323,7 @@ export class WorkspaceStore {
             this.clearActive()
         }
         removeNestedEntity(id, this.workspace.requests)
-        this.requestExecutions.delete(id)
+        this.executions.delete(id)
         this.dirty = true
     }
 
@@ -753,6 +752,19 @@ export class WorkspaceStore {
         if (this.active?.entityType === EditableEntityType.Group) {
             const group = this.active as EditableWorkbookRequestGroup
             group.execution = value
+            this.dirty = true
+        }
+    }
+
+    @action
+    setMultiRunExecution(value: WorkbookGroupExecution) {
+        if (this.active?.entityType === EditableEntityType.Request) {
+            const request = this.active as EditableWorkbookRequest
+            request.multiRunExecution = value
+            this.dirty = true
+        } else if (this.active?.entityType === EditableEntityType.Group) {
+            const group = this.active as EditableWorkbookRequestGroup
+            group.multiRunExecution = value
             this.dirty = true
         }
     }
@@ -1226,145 +1238,114 @@ export class WorkspaceStore {
     }
 
     getExecution(requestOrGroupId: string) {
-        let execution = this.requestExecutions.get(requestOrGroupId)
+        let execution = this.executions.get(requestOrGroupId)
         if (!execution) {
             execution = new WorkbookExecutionEntry(requestOrGroupId)
-            this.requestExecutions.set(requestOrGroupId, execution)
+            this.executions.set(requestOrGroupId, execution)
         }
         return execution
     }
 
     deleteExecution(requestOrGroupId: string) {
-        this.requestExecutions.delete(requestOrGroupId)
+        this.executions.delete(requestOrGroupId)
     }
 
-    getExecutionResult(requestOrGroupId: string, index: number): WorkbookExecutionResult | undefined {
-        return this.requestExecutions.get(requestOrGroupId)?.results[index]
+    getExecutionResult(requestOrGroupId: string, executionResultId: string): WorkbookExecutionResult | undefined {
+        return this.executions.get(requestOrGroupId)?.results.get(executionResultId)
     }
 
     @action
-    reportExecutionResults(execution: WorkbookExecution, group: WorkbookRequestGroup | null, executionResults: ApicizeExecution) {
+    reportExecutionResults(execution: WorkbookExecution, executionResults: ApicizeExecution) {
         execution.running = false
         const previousPanel = execution.panel
 
-        if ((executionResults.runs.length ?? 0) === 0) {
-            this.requestExecutions.delete(execution.requestOrGroupId)
-            return
+        if (executionResults.items.length < 1) return
+
+        const menu: WorkbookExecutionMenuItem[] = []
+        const results = new Map<string, WorkbookExecutionResult>()
+        let allTestsSucceeded: boolean | null = null
+
+        const getTitle = (name: string, runNumber: number, numberOfRuns: number, level: number) => {
+            return numberOfRuns > 1
+                ? ((level === 0) ? `Run ${runNumber + 1} of ${numberOfRuns}` : `${name} (Run ${runNumber + 1} of ${numberOfRuns})`)
+                : name
         }
 
-        const newRunList: WorkbookExecutionRunMenuItem[] = []
-        const newIndexedResults: WorkbookExecutionResult[] = []
+        const addGroupResult = (item: ApicizeExecutionGroup, level: number): string[] => {
+            const executionResultIds: string[] = []
+            const numberOfRuns = item.runs.length
+            for (let runNumber = 0; runNumber < numberOfRuns; runNumber++) {
+                const run = item.runs[runNumber]
+                const title = getTitle(item.name, runNumber, numberOfRuns, level)
+                allTestsSucceeded = (allTestsSucceeded ?? true) && (run.requestsWithErrors + run.requestsWithFailedTestsCount === 0)
+                const group: WorkbookExecutionGroup = {
+                    childExecutionIDs: [],
+                    type: 'group',
+                    id: item.id,
+                    name: item.name,
+                    runNumber: runNumber + 1,
+                    numberOfRuns,
+                    executedAt: run.executedAt,
+                    duration: run.duration,
+                    success: run.success,
+                    requestsWithPassedTestsCount: run.requestsWithPassedTestsCount,
+                    requestsWithFailedTestsCount: run.requestsWithFailedTestsCount,
+                    requestsWithErrors: run.requestsWithErrors,
+                    passedTestCount: run.passedTestCount,
+                    failedTestCount: run.passedTestCount
+                }
+                const executionResultId = GenerateIdentifier()
+                executionResultIds.push(executionResultId)
+                menu.push({ executionResultId, title, level })
+                results.set(executionResultId, group)
 
-        let allRequestsSucceeded = true
-        let allTestsSucceeded = true
-
-        const buildGroupItems = (group: ApicizeExecutionGroup): WorkbookExecutionGroupItem[] | undefined => {
-            const results: WorkbookExecutionGroupItem[] = []
-            for (const item of group.items) {
-                switch (item.type) {
-                    case 'group':
-                        const g = item as ApicizeExecutionGroup
-                        results.push({
-                            name: GetTitle(g),
-                            executedAt: g.executedAt,
-                            duration: g.duration,
-                            children: buildGroupItems(g)
-                        })
-                        break
-                    case 'request':
-                        const r = item as ApicizeExecutionRequest
-                        results.push({
-                            name: GetTitle(r),
-                            executedAt: r.executedAt,
-                            duration: r.duration,
-                            errorMessage: r.errorMessage,
-                            tests: r.tests?.results
-                        })
-                        break
+                for (const child of run.items) {
+                    group.childExecutionIDs = [...group.childExecutionIDs, ...addResult(child, level + 1)]
                 }
             }
-            return results.length > 0 ? results : undefined
-
+            return executionResultIds
         }
 
-        // Recursively build a menu for each item in a run and the accompanying result payloads
-        const generateRunItems = (menu: WorkbookExecutionResultMenuItem[], items: ApicizeExecutionItem[], level: number, parentTitle = '') => {
-            items.forEach(item => {
-                let title = (level > 1 && parentTitle.length > 0)
-                    ? `${parentTitle}, ${GetTitle(item)}`
-                    : GetTitle(item)
-
-                switch (item.type) {
-                    case 'request':
-                        const request = item as ApicizeExecutionRequest
-                        allRequestsSucceeded &&= request.success
-                        allTestsSucceeded &&= (request.passedTestCount ?? 0) > 0
-                            && (request.failedTestCount ?? 0) === 0
-                        newIndexedResults.push({
-                            type: 'request',
-                            name: request.name,
-                            executedAt: request.executedAt,
-                            duration: request.duration,
-                            request: request.request,
-                            response: request.response,
-                            tests: request.tests,
-                            success: request.success,
-                            passedTestCount: request.passedTestCount,
-                            failedTestCount: request.failedTestCount,
-                            errorMessage: request.errorMessage,
-                            longTextInResponse: (request?.response?.body?.text?.length ?? 0) > MAX_TEXT_RENDER_LENGTH,
-                            disableOtherPanels: !request.success
-                        } as WorkbookExecutionRequestResult)
-                        menu.push({
-                            requestOrGroupId: item.id,
-                            title,
-                            index: newIndexedResults.length - 1
-                        })
-                        break
-                    case 'group':
-                        const group = item as ApicizeExecutionGroup
-                        newIndexedResults.push({
-                            type: 'group',
-                            name: group.name,
-                            executedAt: group.executedAt,
-                            duration: group.duration,
-                            requestsWithPassedTestsCount: group.requestsWithPassedTestsCount,
-                            requestsWithFailedTestsCount: group.requestsWithFailedTestsCount,
-                            requestsWithErrors: group.requestsWithErrors,
-                            items: buildGroupItems(group)
-                        } as WorkbookExecutionGroupResult)
-                        menu.push({
-                            requestOrGroupId: item.id,
-                            title: title + ' (Summary)',
-                            index: newIndexedResults.length - 1
-                        })
-                        generateRunItems(menu, group.items, level + 1, title)
-                        break
-                    default:
-                        return
-                }
-            })
+        const addRequestResult = (item: ApicizeExecutionRequest, level: number): string[] => {
+            const executionResultIds: string[] = []
+            const numberOfRuns = item.runs.length
+            for (let runNumber = 0; runNumber < numberOfRuns; runNumber++) {
+                const run = item.runs[runNumber]
+                const title = getTitle(item.name, runNumber, numberOfRuns, level)
+                allTestsSucceeded = (allTestsSucceeded ?? true) && (run.requestsWithErrors + run.requestsWithFailedTestsCount === 0)
+                const executionResultId = GenerateIdentifier()
+                executionResultIds.push(executionResultId)
+                menu.push({ executionResultId, title, level })
+                results.set(executionResultId, {
+                    type: 'request',
+                    id: item.id,
+                    name: item.name,
+                    run: runNumber + 1,
+                    numberOfRuns,
+                    ...run
+                })
+            }
+            return executionResultIds;
         }
 
-        executionResults.runs.forEach((run, runIndex) => {
-            const results: WorkbookExecutionResultMenuItem[] = []
-            generateRunItems(results, run.items, 0, '')
-
-            newRunList.push({
-                title: `Run ${runIndex + 1} of ${executionResults.runs.length}`,
-                results
-            })
-        })
-
-        execution.panel = (!group && previousPanel && allTestsSucceeded) ? previousPanel : 'Info'
-        execution.runs = newRunList
-        execution.results = newIndexedResults
-
-        if (newRunList.length > 0) {
-            execution.runIndex = 0
-            const entry = newRunList[0]
-            execution.resultIndex = 0
+        const addResult = (item: ApicizeExecutionItem, level: number): string[] => {
+            switch (item.type) {
+                case 'group':
+                    return addGroupResult(item, level)
+                    break
+                case 'request':
+                    return addRequestResult(item, level)
+                    break
+            }
         }
+
+        const result = executionResults.items[0]
+        addResult(result, 0)
+        execution.resultMenu = menu
+        execution.resultIndex = (isNaN(execution.resultIndex) || execution.resultIndex >= execution.results.size)
+            ? 0 : execution.resultIndex
+        execution.results = results
+        execution.panel = (result.type === 'request' && previousPanel && allTestsSucceeded) ? previousPanel : 'Info'
     }
 
     // @action
@@ -1373,29 +1354,26 @@ export class WorkspaceStore {
     // }
 
     @action
-    async executeRequest(requestOrGroupId: string) {
-        const request = this.getRequest(requestOrGroupId)
-        const group = request?.entityType === EditableEntityType.Group
-            ? request as WorkbookRequestGroup
-            : null
-        let execution = this.requestExecutions.get(requestOrGroupId)
+    async executeRequest(requestOrGroupId: string, runs?: number) {
+        const requestOrGroup = this.getRequest(requestOrGroupId)
+        let execution = this.executions.get(requestOrGroupId)
         if (execution) {
             execution.running = true
         } else {
             let execution = new WorkbookExecutionEntry(requestOrGroupId)
             execution.running = true
-            this.requestExecutions.set(requestOrGroupId, execution)
+            this.executions.set(requestOrGroupId, execution)
         }
 
-        if (!(execution && (request || group))) throw new Error(`Invalid ID ${requestOrGroupId}`)
+        if (!(execution && requestOrGroup)) throw new Error(`Invalid ID ${requestOrGroupId}`)
 
         let idx = this.executingRequestIDs.indexOf(execution.requestOrGroupId)
         if (idx === -1) {
             this.executingRequestIDs.push(requestOrGroupId)
         }
         try {
-            let executionResults = await this.callbacks.onExecuteRequest(this.getWorkspace(), requestOrGroupId)
-            this.reportExecutionResults(execution, group, executionResults)
+            let executionResults = await this.callbacks.onExecuteRequest(this.getWorkspace(), requestOrGroupId, runs)
+            this.reportExecutionResults(execution, executionResults)
         } finally {
             this.reportExecutionComplete(execution)
         }
@@ -1413,7 +1391,7 @@ export class WorkspaceStore {
 
     @action
     cancelRequest(requestOrGroupId: string) {
-        const match = this.requestExecutions.get(requestOrGroupId)
+        const match = this.executions.get(requestOrGroupId)
         if (match) {
             match.running = false
         }
@@ -1433,29 +1411,16 @@ export class WorkspaceStore {
 
     @action
     changePanel(requestOrGroupId: string, panel: string) {
-        const match = this.requestExecutions.get(requestOrGroupId)
+        const match = this.executions.get(requestOrGroupId)
         if (match) {
             match.panel = panel
         }
     }
 
     @action
-    changeRunIndex(requestOrGroupId: string, runIndex: number) {
-        const execution = this.requestExecutions.get(requestOrGroupId)
-        if (!execution) throw new Error(`Invalid Request ID ${requestOrGroupId}`)
-
-        let resultIndex = null;
-        const currentResultRequestId = execution.runs[execution.runIndex]?.results?.find(r => r.index === execution.resultIndex)?.requestOrGroupId;
-        if (currentResultRequestId) {
-            resultIndex = execution.runs[runIndex].results?.find(r => r.requestOrGroupId === currentResultRequestId)?.index;
-        }
-        execution.runIndex = runIndex
-        execution.resultIndex = resultIndex ?? execution.runs[runIndex].results[0].index;
-    }
-
-    @action
     changeResultIndex(requestOrGroupId: string, resultIndex: number) {
-        const execution = this.requestExecutions.get(requestOrGroupId)
+
+        const execution = this.executions.get(requestOrGroupId)
         if (!execution) throw new Error(`Invalid Request ID ${requestOrGroupId}`)
         execution.resultIndex = resultIndex
     }
@@ -1507,12 +1472,10 @@ export class WorkspaceStore {
 
 class WorkbookExecutionEntry implements WorkbookExecution {
     @observable accessor running = false
-    @observable accessor runIndex = NaN
     @observable accessor resultIndex = NaN
-    @observable accessor runs: WorkbookExecutionRunMenuItem[] = []
-
+    @observable accessor resultMenu: WorkbookExecutionMenuItem[] = []
+    @observable accessor results = new Map<string, WorkbookExecutionRequest | WorkbookExecutionGroup>()
     @observable accessor panel = 'Info'
-    @observable accessor results: WorkbookExecutionResult[] = []
 
     constructor(public readonly requestOrGroupId: string) {
         makeObservable(this)

@@ -1,4 +1,4 @@
-import { ApicizeExecutedTestResponse, ApicizeExecutionRun, ApicizeRequest, ApicizeResponse, ApicizeTestResult } from "@apicize/lib-typescript";
+import { ApicizeExecutionGroup, ApicizeExecutionGroupRun, ApicizeExecutionItem, ApicizeExecutionRequest, ApicizeExecutionRequestRun, ApicizeHttpResponse, ApicizeRequest, ApicizeTestResult } from "@apicize/lib-typescript";
 import { OverridableStringUnion } from '@mui/types'
 import { SvgIconPropsColorOverrides } from "@mui/material"
 
@@ -7,74 +7,47 @@ export interface WorkbookExecutionResponse {
      statusText: string
 }
 
-export type WorkbookExecutionResult = WorkbookExecutionGroupResult | WorkbookExecutionRequestResult
 
-export interface WorkbookExecutionGroupResult {
-     type: 'group'
+export interface WorkbookExecutionMenuItem {
+     executionResultId: string
+     title: string
+     level: number
+}
+
+export type WorkbookExecutionResult = WorkbookExecutionRequest | WorkbookExecutionGroup
+
+export interface WorkbookExecutionRequest extends ApicizeExecutionRequestRun {
+     type: 'request'
+     id: string
      name: string
+     run: number
+     numberOfRuns: number
+}
+
+export interface WorkbookExecutionGroup {
+     childExecutionIDs: string[]
+     type: 'group'
+     id: string
+     name: string
+     runNumber: number
+     numberOfRuns: number
      executedAt: number
      duration: number
+     success: boolean
      requestsWithPassedTestsCount: number
      requestsWithFailedTestsCount: number
      requestsWithErrors: number
      passedTestCount: number
      failedTestCount: number
-     items?: WorkbookExecutionGroupItem[]
- }
-
-export interface WorkbookExecutionGroupItem {
-     name: string
-     executedAt: number
-     duration: number
-     errorMessage?: string
-     tests?: ApicizeTestResult[]
-     children?: WorkbookExecutionGroupItem[]
-}
-
-export interface WorkbookExecutionRequestResult {
-     type: 'request'
-     name: string
-     executedAt: number
-     duration: number
-     request?: ApicizeRequest
-     response?: ApicizeResponse
-     tests?: ApicizeExecutedTestResponse
-     success: boolean
-     passedTestCount?: number
-     failedTestCount?: number
-     errorMessage?: string
-     requestsWithPassedTestsCount: number
-     requestsWithFailedTestsCount: number
-     requestsWithErrors: number
-     longTextInResponse: boolean
-     disableOtherPanels: boolean
-
-}
-
-export interface WorkbookExecutionRun {
-     title: string
-     results: WorkbookExecutionResult[]
-}
-
-export interface WorkbookExecutionResultMenuItem {
-     requestOrGroupId: string
-     title: string
-     index: number
-}
-
-export interface WorkbookExecutionRunMenuItem {
-     title: string,
-     results: WorkbookExecutionResultMenuItem[]
 }
 
 export interface WorkbookExecution {
      requestOrGroupId: string
      running: boolean
-     runIndex: number
-     resultIndex: number
-     runs: WorkbookExecutionRunMenuItem[]
      panel: string
-     results: WorkbookExecutionResult[]
+     resultIndex: number
+     resultMenu: WorkbookExecutionMenuItem[]
+     results: Map<string, WorkbookExecutionResult>
 }
 
 export type InfoColorType = OverridableStringUnion<

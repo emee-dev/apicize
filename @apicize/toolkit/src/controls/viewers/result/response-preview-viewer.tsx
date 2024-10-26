@@ -6,11 +6,11 @@ import beautify from "js-beautify";
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
 
-export function ResultResponsePreview(props: { requestOrGroupId: string,  index: number }) {
+export function ResultResponsePreview(props: { requestOrGroupId: string, executionResultId: string }) {
     const workspace = useWorkspace()
     const clipboard = useClipboard()
 
-    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.executionResultId)
 
     if (result?.type !== 'request') {
         return null

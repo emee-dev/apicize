@@ -104,13 +104,13 @@ impl Identifable for Selection {
     }
 }
 
-/// Indicator on workbook child execution order
+/// Indicator on workbook request execution order
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum WorkbookExecution {
-    /// Group children execute sequentially
+    /// Requests are executed sequentially
     Sequential,
-    /// Group children execute concurrently
+    /// Requests are executed concurrently
     Concurrent,
 }
 
@@ -146,9 +146,12 @@ pub struct WorkbookRequest {
     /// Keep HTTP connection alive
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keep_alive: Option<bool>,
-    /// Number of runs for the group to execute
+    /// Number of runs for the request to execute
     #[serde(default = "one")]
-    pub runs: u32,
+    pub runs: usize,
+    /// Execution of multiple runs
+    #[serde(default = "sequential")]
+    pub multi_run_execution: WorkbookExecution,
     /// Selected scenario, if applicable
     #[serde(skip_serializing_if = "Option::is_none")]
     pub selected_scenario: Option<Selection>,
@@ -177,12 +180,15 @@ pub struct WorkbookRequestGroup {
     pub name: String,
     /// Child items
     pub children: Option<Vec<WorkbookRequestEntry>>,
-    /// Number of runs for the group to execute
-    #[serde(default = "one")]
-    pub runs: u32,
     /// Execution of children
     #[serde(default = "sequential")]
     pub execution: WorkbookExecution,
+    /// Number of runs for the group to execute
+    #[serde(default = "one")]
+    pub runs: usize,
+    /// Execution of multiple runs
+    #[serde(default = "sequential")]
+    pub multi_run_execution: WorkbookExecution,
     /// Selected scenario, if applicable
     #[serde(skip_serializing_if = "Option::is_none")]
     pub selected_scenario: Option<Selection>,

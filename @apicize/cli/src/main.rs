@@ -1,10 +1,12 @@
+use apicize_lib::get_workbooks_directory;
 use apicize_lib::models::apicize::{ApicizeExecution, ApicizeExecutionItem};
 use apicize_lib::models::settings::ApicizeSettings;
 use apicize_lib::models::{open_data_stream, Parameters, Warnings, Workspace};
-use apicize_lib::{cleanup_v8, get_workbooks_directory};
+use apicize_lib::test_runner::{cleanup_v8, run};
 use clap::Parser;
 use colored::Colorize;
 use num_format::{SystemLocale, ToFormattedString};
+use serde::Serialize;
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::io::{stderr, stdin, stdout, Write};
@@ -24,6 +26,9 @@ struct Args {
     /// Print configuration information
     #[arg(short, long, default_value_t = false)]
     info: bool,
+    /// Number of times to run workbook (runs are sequential)
+    #[arg(short, long, default_value_t = 1)]
+    runs: usize,
     /// Name of the output file name for test results (or - to write to STDOUT)
     #[arg(short, long)]
     output: Option<String>,
@@ -55,8 +60,24 @@ fn render_execution_item(
                 &group.duration.to_formatted_string(locale),
             );
             writeln!(feedback, "{}", title.white()).unwrap();
-            for child in &group.items {
-                render_execution_item(child, level + 1, locale, feedback);
+
+            let number_of_runs = group.runs.len();
+            for run in &group.runs {
+                let mut run_level = level;
+                if number_of_runs > 1 {
+                    let run_prefix = format!("{:width$}", "", width = (run_level + 1) * 3);
+                    run_level += 1;
+                    writeln!(
+                        feedback,
+                        "{}{}",
+                        run_prefix,
+                        format!("Run {} of {}", run.run_number, number_of_runs).white()
+                    )
+                    .unwrap();
+                }
+                for child in &run.items {
+                    render_execution_item(child, run_level + 1, locale, feedback);
+                }
             }
         }
         ApicizeExecutionItem::Request(request) => {
@@ -69,10 +90,24 @@ fn render_execution_item(
             );
             writeln!(feedback, "{}", title.white()).unwrap();
 
-            if let Some(test_response) = &request.tests {
-                if let Some(test_results) = &test_response.results {
-                    let test_prefix1 = format!("{:width$}", "", width = (level + 1) * 3);
-                    let test_prefix2 = format!("{:width$}", "", width = (level + 2) * 3);
+            let number_of_runs = request.runs.len();
+            for run in &request.runs {
+                let mut run_level = level;
+                if number_of_runs > 1 {
+                    let run_prefix = format!("{:width$}", "", width = (run_level + 1) * 3);
+                    run_level += 1;
+                    writeln!(
+                        feedback,
+                        "{}{}",
+                        run_prefix,
+                        format!("Run {} of {}", run.run_number, number_of_runs).white()
+                    )
+                    .unwrap();
+                }
+
+                if let Some(test_results) = &run.tests {
+                    let test_prefix1 = format!("{:width$}", "", width = (run_level + 1) * 3);
+                    let test_prefix2 = format!("{:width$}", "", width = (run_level + 2) * 3);
                     for result in test_results {
                         print!(
                             "{}{}",
@@ -107,132 +142,109 @@ fn process_execution(
     locale: &SystemLocale,
     feedback: &mut Box<dyn Write>,
 ) -> usize {
-    let mut failure_count = 0;
-
+    let mut failure_count;
     match execution_result {
         Ok(execution) => {
-            let use_level: usize = if (execution.runs).len() > 1 {
-                level + 1
-            } else {
-                level
-            };
+            failure_count = 0;
+            execution
+                .items
+                .iter()
+                .for_each(|i| render_execution_item(i, 0, locale, feedback));
 
-            let mut ctr = 0;
-            for run in &execution.runs {
-                if ctr > 0 {
-                    println!();
-                }
-
-                if execution.runs.len() > 1 {
-                    ctr += 1;
-                    let padding = format!("{:width$}", "", width = level * 3);
-                    writeln!(
-                        feedback,
-                        "{}",
-                        format!(
-                            "{}Run {} of {}",
-                            padding,
-                            ctr,
-                            execution.runs.len()
-                        )
-                        .white()
-                    )
-                    .unwrap();
-                }
-
-                for run_item in &run.items {
-                    render_execution_item(run_item, use_level, locale, feedback);
-                }
-
-                writeln!(feedback).unwrap();
-                writeln!(
-                    feedback,
-                    "{}",
-                    "--------------- Totals ---------------".white()
-                )
-                .unwrap();
-                writeln!(
-                    feedback,
-                    "{}{}",
-                    "Passed Tests: ".white(),
-                    if run.passed_test_count > 0 {
-                        run.passed_test_count.to_formatted_string(locale).green()
-                    } else {
-                        "0".white()
-                    }
-                )
-                .unwrap();
-
-                writeln!(
-                    feedback,
-                    "{}{}",
-                    "Failed Tests: ".white(),
-                    if run.failed_test_count > 0 {
-                        run.failed_test_count.to_formatted_string(locale).yellow()
-                    } else {
-                        "0".white()
-                    }
-                )
-                .unwrap();
-
-                writeln!(
-                    feedback,
-                    "{}{}",
-                    "Requests with passed tests: ".white(),
-                    if run.requests_with_passed_tests_count > 0 {
-                        run.requests_with_passed_tests_count
-                            .to_formatted_string(locale)
-                            .green()
-                    } else {
-                        "0".white()
-                    }
-                )
-                .unwrap();
-
-                writeln!(
-                    feedback,
-                    "{}{}",
-                    "Requests with failed tests: ".white(),
-                    if run.requests_with_failed_tests_count > 0 {
-                        failure_count += run.requests_with_failed_tests_count;
-                        run.requests_with_failed_tests_count
-                            .to_formatted_string(locale)
-                            .yellow()
-                    } else {
-                        "0".white()
-                    }
-                )
-                .unwrap();
-
-                writeln!(
-                    feedback,
-                    "{}{}",
-                    "Requests with errors: ".white(),
-                    if run.requests_with_errors > 0 {
-                        failure_count += run.requests_with_errors;
-                        run.requests_with_errors.to_formatted_string(locale).red()
-                    } else {
-                        "0".white()
-                    }
-                )
-                .unwrap();
-                writeln!(
-                    feedback,
-                    "{}",
-                    "--------------------------------------".white()
-                )
-                .unwrap();
-            }
-        }
-        Err(err) => {
-            let padding = format!("{:width$}", "", width = level * 3);
+            writeln!(feedback).unwrap();
+            writeln!(
+                feedback,
+                "{}",
+                "--------------- Totals ---------------".white()
+            )
+            .unwrap();
             writeln!(
                 feedback,
                 "{}{}",
-                padding,
-                err.red()
+                "Passed Tests: ".white(),
+                if execution.passed_test_count > 0 {
+                    execution
+                        .passed_test_count
+                        .to_formatted_string(locale)
+                        .green()
+                } else {
+                    "0".white()
+                }
             )
             .unwrap();
+
+            writeln!(
+                feedback,
+                "{}{}",
+                "Failed Tests: ".white(),
+                if execution.failed_test_count > 0 {
+                    execution
+                        .failed_test_count
+                        .to_formatted_string(locale)
+                        .yellow()
+                } else {
+                    "0".white()
+                }
+            )
+            .unwrap();
+
+            writeln!(
+                feedback,
+                "{}{}",
+                "Requests with passed tests: ".white(),
+                if execution.requests_with_passed_tests_count > 0 {
+                    execution
+                        .requests_with_passed_tests_count
+                        .to_formatted_string(locale)
+                        .green()
+                } else {
+                    "0".white()
+                }
+            )
+            .unwrap();
+
+            writeln!(
+                feedback,
+                "{}{}",
+                "Requests with failed tests: ".white(),
+                if execution.requests_with_failed_tests_count > 0 {
+                    failure_count += execution.requests_with_failed_tests_count;
+                    execution
+                        .requests_with_failed_tests_count
+                        .to_formatted_string(locale)
+                        .yellow()
+                } else {
+                    "0".white()
+                }
+            )
+            .unwrap();
+
+            writeln!(
+                feedback,
+                "{}{}",
+                "Requests with errors: ".white(),
+                if execution.requests_with_errors > 0 {
+                    failure_count += execution.requests_with_errors;
+                    execution
+                        .requests_with_errors
+                        .to_formatted_string(locale)
+                        .red()
+                } else {
+                    "0".white()
+                }
+            )
+            .unwrap();
+            writeln!(
+                feedback,
+                "{}",
+                "--------------------------------------".white()
+            )
+            .unwrap();
+        }
+        Err(err) => {
+            let padding = format!("{:width$}", "", width = level * 3);
+            writeln!(feedback, "{}{}", padding, err.red()).unwrap();
+            failure_count = 1;
         }
     }
 
@@ -253,6 +265,7 @@ async fn main() {
         Box::new(stdout())
     };
 
+    writeln!(feedback).unwrap();
     writeln!(
         feedback,
         "{}",
@@ -367,7 +380,6 @@ async fn main() {
             .unwrap();
         }
     }
-
     for request in workspace.requests.entities.values() {
         if let Some(warnings) = request.get_warnings() {
             for warning in warnings {
@@ -385,47 +397,73 @@ async fn main() {
 
     let request_ids = workspace.requests.top_level_ids.to_owned();
     let arc_workspace = Arc::new(workspace);
-    let mut executions: HashMap<String, Result<ApicizeExecution, String>> = HashMap::new();
+    let mut output_file = OutputFile {
+        runs: HashMap::new(),
+    };
 
     let start = Instant::now();
-    let arc_test_started = Arc::new(start);
-    for request_id in request_ids {
-        if let Some(request) = arc_workspace.requests.entities.get(&request_id) {
-            let mut name = request.get_name().clone();
-            if name.is_empty() {
-                name = format!("{} (Unnamed)", request.get_id());
-            }
-
-            writeln!(feedback, "{}", format!("Calling {}", name).blue()).unwrap();
-
-            let result = Workspace::run(
-                arc_workspace.clone(),
-                &request_id,
-                None,
-                arc_test_started.clone(),
-            )
-            .await;
-
-            executions.insert(name, result);
-        }
-    }
-
-    writeln!(feedback).unwrap();
-    writeln!(
-        feedback,
-        "{}",
-        "--------------- Results --------------".white()
-    )
-    .unwrap();
-
     let mut failure_count = 0;
-    for execution in executions.values() {
+    let arc_test_started = Arc::new(start);
+
+    for run_number in 0..args.runs {
+        let mut executions: HashMap<String, Result<ApicizeExecution, String>> = HashMap::new();
+        if args.runs > 1 {
+            writeln!(feedback).unwrap();
+            writeln!(
+                feedback,
+                "{}",
+                format!(
+                    "------- Execution Run {} of {} ---------",
+                    run_number + 1,
+                    args.runs
+                )
+                .white()
+            )
+            .unwrap();
+            writeln!(feedback).unwrap();
+        }
+
+        for request_id in &request_ids {
+            if let Some(request) = arc_workspace.requests.entities.get(request_id) {
+                let mut name = request.get_name().clone();
+                if name.is_empty() {
+                    name = format!("{} (Unnamed)", request.get_id());
+                }
+
+                writeln!(feedback, "{}", format!("Calling {}", name).blue()).unwrap();
+
+                let result = run(
+                    arc_workspace.clone(),
+                    Some(vec![request_id.clone()]),
+                    None,
+                    arc_test_started.clone(),
+                )
+                .await;
+
+                executions.insert(name, result);
+            }
+        }
+
         writeln!(feedback).unwrap();
-        failure_count += process_execution(execution, 0, &locale, &mut feedback);
+        writeln!(
+            feedback,
+            "{}",
+            "--------------- Results --------------".white()
+        )
+        .unwrap();
+
+        let execution_values: Vec<Result<ApicizeExecution, String>> =
+            executions.into_values().collect();
+        for execution in &execution_values {
+            writeln!(feedback).unwrap();
+            failure_count += process_execution(&execution, 0, &locale, &mut feedback);
+        }
+
+        output_file.runs.insert(run_number, execution_values);
     }
 
-    if ! send_output_to.is_empty() {
-        let serialized = serde_json::to_string(&executions).unwrap();
+    if !send_output_to.is_empty() {
+        let serialized = serde_json::to_string(&output_file).unwrap();
 
         let dest: &str;
         let result = if send_output_to == "-" {
@@ -436,6 +474,7 @@ async fn main() {
             fs::write(&send_output_to, serialized)
         };
 
+        writeln!(feedback).unwrap();
         match result {
             Ok(_) => writeln!(
                 feedback,
@@ -451,4 +490,9 @@ async fn main() {
 
     cleanup_v8();
     process::exit(failure_count as i32);
+}
+
+#[derive(Serialize)]
+struct OutputFile {
+    pub runs: HashMap<usize, Vec<Result<ApicizeExecution, String>>>,
 }
