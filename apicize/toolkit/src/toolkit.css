@@ -1,0 +1,211 @@
+.resize-handle {
+  flex: 0 0 0.2rem;
+  display: flex;
+  justify-content: stretch;
+  align-items: stretch;
+  outline: none;
+  transition: background-color 0.1s linear;
+}
+
+.resize-handle:hover,
+.resize-handle[data-resize-handle-active="keyboard"],
+.resize-handle[data-resize-handle-active="pointer"] {
+  cursor: ew-resize;
+  background-color: #808080;
+}
+
+@media (pointer: coarse) {
+  .resize-handle {
+    flex: 0 0 2rem;
+  }
+}
+
+.help {
+  overflow: auto;
+  width: 100%;
+  padding: 1em;
+  background-color: #03021f;
+  color: #fff;
+}
+
+.help h1:first {
+  background-color: #1d1d24;
+}
+
+.help p,
+.help ul,
+.help-text,
+.help-text .MuiTypography-body1,
+.help-text pre,
+.help-text table {
+  margin: 0 1em 1em 1em;
+}
+
+.help img {
+  position: relative;
+  max-width: 98%;
+}
+
+.help table {
+  border-collapse: collapse;
+}
+
+.help table thead {
+  border-bottom: 2px solid;
+}
+
+.help td,
+.help th {
+  padding: 0.5em;
+}
+
+.help-text {
+  display: block;
+  padding-right: 36px;
+}
+
+.help-toolbar {
+  display: inline-block;
+  margin-right: 1em;
+}
+
+.help-toolbar button {
+  font-size: 24px;
+}
+
+
+.MuiTypeographi-h1 .help-icon {
+  margin-right: 0.25em;
+}
+
+.MuiTypeographi-h2 .help-icon {
+  margin-left: 0.25em;
+}
+
+.help-icon {
+  vertical-align: middle;
+}
+
+textarea,
+pre {
+  /* Make react-simple-code-editor work */
+  word-break: break-all !important;
+}
+
+pre.log {
+  /* Make react-simple-code-editor work */
+  word-break: break-word !important;
+  padding-top: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  white-space: pre-line;
+  word-break: break-word;
+  font-size: 0.9em;
+  line-height: 1.1;
+}
+
+.navigation-menu-item div:nth-child(2) {
+  margin-bottom: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.nav-node-text {
+  flex-grow: 1;
+}
+
+.nav-folder {
+  flex-grow: 0;
+  margin-right: 0.5em;
+}
+
+.MuiTreeItem-root.selected>.MuiTreeItem-content {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.running-icon {
+  margin-left: 0.2em;
+}
+
+.navigation-tree {
+  height: 100vh;
+  flex-grow: 1;
+  max-width: 50em;
+  overflow-y: auto;
+  padding-left: 1em !important;
+}
+
+.nav-selection-pane {
+  flex-shrink: 0;
+  bottom: 0;
+  overflow: auto;
+  margin-right: 0.1em;
+}
+
+
+.namevalue-col-btn {
+  text-align: right;
+}
+
+.editor-title {
+  margin-top: 0.1em;
+  display: flex;
+  align-content: center;
+}
+
+.editor-title .MuiSvgIcon-root {
+  margin-right: 20px;
+}
+
+.editor-title .text {
+  display: inline-block;
+  position: relative;
+  top: -3px;
+}
+
+.editor {
+  padding: 0 1.5em 1.5em 1.5em;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-single-panel {
+  max-width: 60em;
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+}
+
+.editor-panel {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  margin: 0 2em 0 2em;
+}
+
+.editor-panel:first-child {
+  margin-left: 0;
+}
+
+.editor-panel:last-child {
+  margin-right: 0;
+}
+
+.editor-panel-header {
+  display: flex;
+  align-items: center;
+  height: 6em;
+  padding: 0.5em 0;
+  margin-bottom: 1em;
+}
+
+.test-result {
+  line-height: 1;
+  margin-bottom: 0.5em;
+}
+
+.test-details {
+  margin-top: 0.5em;
+}

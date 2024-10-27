@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.8.1
+
+* Move child projects to from @apicize/ to apicize/ folder for prepreation of crates.io publish and monorepo breakup
+
 # 0.8.0
 
 * Overhaul of sequential/concurrent handling for requests and groups

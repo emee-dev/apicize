@@ -4,8 +4,8 @@
   "license": "UNLICENSED",
   "workspaces": {
     "packages": [
-      "@apicize/lib-typescript",
-      "@apicize/toolkit",
+      "apicize/lib-typescript",
+      "apicize/toolkit",
       "app"
     ]
   },
