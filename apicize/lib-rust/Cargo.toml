@@ -7,7 +7,7 @@ description = "Library supporting Apicize request dispatch, testing and serializ
 license = "MIT"
 repository = "https://github.com/apicize/Apicize/tree/main/apicize/lib-rust"
 readme = "README.md"
-authors = "Jason Terando"
+authors = ["Jason Terando"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
