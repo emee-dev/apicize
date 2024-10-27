@@ -8,12 +8,12 @@ import { EditableEntityType } from '../../models/workbook/editable-entity-type';
 import { EditableWorkbookScenario } from '../../models/workbook/editable-workbook-scenario';
 import { useWorkspace } from '../../contexts/workspace.context';
 
-export const ScenarioEditor = observer((props: {sx: SxProps}) => {
+export const ScenarioEditor = observer((props: { sx: SxProps }) => {
     const workspace = useWorkspace()
     if (workspace.active?.entityType !== EditableEntityType.Scenario || workspace.helpVisible) return null
     const scenario = workspace.active as EditableWorkbookScenario
     return (
-         <Stack direction={'column'} className='editor' sx={props.sx}>
+        <Stack direction={'column'} className='editor' sx={props.sx}>
             <Box className='editor-panel-header'>
                 <EditorTitle icon={<LanguageIcon color='scenario' />} name={scenario.name.length > 0 ? scenario.name : '(Unnamed)'} />
             </Box>

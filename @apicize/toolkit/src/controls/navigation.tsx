@@ -28,14 +28,14 @@ import { EditableItem } from "../models/editable";
 import { EditableEntityType } from "../models/workbook/editable-entity-type";
 import { useFileOperations } from "../contexts/file-operations.context";
 import { useWorkspace } from "../contexts/workspace.context";
-import { useFeedback } from "../contexts/feedback.context";
+import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
+import { EditableWorkbookRequest } from "../models/workbook/editable-workbook-request";
 
 interface MenuPosition {
     id: string
     mouseX: number
     mouseY: number
 }
-
 
 export const Navigation = observer((props: { onSettings?: () => void }) => {
 
@@ -50,6 +50,41 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
     const [scenarioMenu, setScenarioMenu] = useState<MenuPosition | undefined>(undefined)
     const [certMenu, setCertMenu] = useState<MenuPosition | undefined>(undefined)
     const [proxyMenu, setProxyMenu] = useState<MenuPosition | undefined>(undefined)
+
+    window.onkeydown = ((e) => {
+        if (e.ctrlKey) {
+            switch (e.key) {
+                case 'Enter':
+                    (async () => {
+                        try {
+                            if (!(workspace.active && (workspace.active.entityType === EditableEntityType.Request || workspace.active.entityType === EditableEntityType.Group))) {
+                                return
+                            }
+                            const r = workspace.active as EditableWorkbookRequest
+                            await workspace.executeRequest(workspace.active.id, e.shiftKey ? r.runs : 1)
+                        } catch (e) {
+                            let msg1 = `${e}`
+                            feedback.toast(msg1, msg1 == 'Cancelled' ? ToastSeverity.Warning : ToastSeverity.Error)
+                        }
+                    })()
+                    break
+                case 'n':
+                    fileOps.newWorkbook()
+                    break
+                case 'o':
+                    fileOps.openWorkbook()
+                    break
+                case 's':
+                    if (e.shiftKey) {
+                        fileOps.saveWorkbookAs()
+                    } else {
+                        fileOps.saveWorkbook()
+                    }
+                    break
+            }
+        }
+    })
+
 
     enum DragPosition {
         None = 'NONE',
@@ -116,6 +151,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             id={`hdr-${props.type}`}
             onClick={e => handleSelectHeader(e, props.helpTopic)}
             onFocusCapture={e => e.stopPropagation()}
+            sx={{ margin: 0, padding: 0 }}
             label={(
                 <Box
                     component='span'
@@ -222,7 +258,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     key={props.item.id}
                     {...listeners}
                     {...attributes}
-                    sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default' }}
+                    sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default', margin: 0, padding: 0 }}
                     // Add a selected class so that we can mark expandable tree items as selected and have them show up properly
                     className={workspace.active?.id === props.item.id ? 'selected' : ''}
                     label={(
@@ -295,7 +331,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     //     if (props.onSelect) props.onSelect(props.item.id)
                     // }}
                     // onFocusCapture={e => e.stopPropagation()}
-                    sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default' }}
+                    sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default', margin: 0, padding: 0 }}
                     label={(
                         <Box
                             component='span'
@@ -744,7 +780,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDupeScenario()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small'  sx={{ color: theme.palette.scenario.light }} />
+                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: theme.palette.scenario.light }} />
                     </ListItemIcon>
                     <ListItemText>Duplicate Scenario</ListItemText>
                 </MenuItem>
@@ -778,7 +814,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDupeAuth()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small'  sx={{ color: theme.palette.authorization.light }} />
+                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: theme.palette.authorization.light }} />
                     </ListItemIcon>
                     <ListItemText>Duplicate Authorization</ListItemText>
                 </MenuItem>
@@ -812,7 +848,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDupeCert()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small'  sx={{ color: theme.palette.certificate.light }} />
+                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: theme.palette.certificate.light }} />
                     </ListItemIcon>
                     <ListItemText>Duplicate Certificate</ListItemText>
                 </MenuItem>
@@ -846,7 +882,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                 </MenuItem>
                 <MenuItem onClick={(e) => handleDupeProxy()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small'  sx={{ color: theme.palette.proxy.light }} />
+                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: theme.palette.proxy.light }} />
                     </ListItemIcon>
                     <ListItemText>Duplicate Proxy</ListItemText>
                 </MenuItem>
@@ -934,7 +970,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
 
     return (
         <Stack bgcolor='navigation.main' direction='column' useFlexGap gap='0.2em' className='nav-selection-pane'>
-            <Stack direction='row' bgcolor='toolbar.main' padding='0.5em 1.5em 0.5em 1em'>
+            <Stack direction='row' bgcolor='toolbar.main' padding='0.5em 1em 0.5em 0.5em'>
                 <Stack direction='row' useFlexGap gap='0.3em'>
                     <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()}>
                         <PostAddIcon />
@@ -1081,22 +1117,25 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                                 )
                         }
                     </NavTreeSection>
-                    <TreeItem itemId="wkbk-defaults" label={(
-                        <Box
-                            component='span'
-                            display='flex'
-                            justifyContent='space-between'
-                            alignItems='center'
-                        >
-                            <SettingsIcon className='nav-folder' />
-                            <Box className='nav-node-text' display='flex' flexGrow={1} paddingTop='8px' paddingBottom='8px' alignItems='center'>
-                                {
-                                    workspace.workspace.defaults.invalid ? (<WarningAmberIcon sx={{ color: '#FFFF00', marginRight: '0.25em' }} />) : null
-                                }
-                                Defaults &amp; Settings
+                    <TreeItem
+                        itemId="wkbk-defaults"
+                        sx={{ margin: 0, padding: 0 }}
+                        label={(
+                            <Box
+                                component='span'
+                                display='flex'
+                                justifyContent='space-between'
+                                alignItems='center'
+                            >
+                                <SettingsIcon className='nav-folder' />
+                                <Box className='nav-node-text' display='flex' flexGrow={1} paddingTop='8px' paddingBottom='8px' alignItems='center'>
+                                    {
+                                        workspace.workspace.defaults.invalid ? (<WarningAmberIcon sx={{ color: '#FFFF00', marginRight: '0.25em' }} />) : null
+                                    }
+                                    Defaults &amp; Settings
+                                </Box>
                             </Box>
-                        </Box>
-                    )} onClick={() => workspace.changeActive(EditableEntityType.Defaults, '')} />
+                        )} onClick={() => workspace.changeActive(EditableEntityType.Defaults, '')} />
                 </SimpleTreeView>
             </DndContext>
             <RequestsMenu />

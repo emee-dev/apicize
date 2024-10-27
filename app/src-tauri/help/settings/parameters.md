@@ -1,4 +1,4 @@
-# :toolbar :icon[request] Settings
+# :toolbar :icon[settings] Settings
 
 ## Parameters Pane :icon[parameters]
 
@@ -10,8 +10,11 @@ a value (including "Off") it will override these defaults.  These parameters inc
 * [**Certificate**](help:certificates):  Client certificate sent with request
 * [**Proxy**](help:proxies):  Proxy used to send request
 
+> Note:  These settings are defaults for the currently open workbook
+
 :image[settings/parameters.webp]
 
 ### See Also
 
 * [**Running Tests**](help:running-tests)
+* [**Display Settings](help:settings/display)

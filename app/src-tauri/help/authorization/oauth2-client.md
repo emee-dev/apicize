@@ -10,7 +10,7 @@ You can optionaly specify a [Certificate](help:certificates) and/or [Proxy](help
 these settings for the Authorization, they do not automatically apply to [Requests](help:requests) or [Request Groups](help:groups), you 
 must configure those separately.
 
-:image[authentication/oauth2-client.jpg]
+:image[authentication/oauth2-client.webg]
 
 ### See Also
 

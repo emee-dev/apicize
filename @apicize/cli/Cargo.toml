@@ -1,6 +1,6 @@
 [package]
 name = "apicize-run"
-version = "0.7.1"
+version = "0.8.0"
 description = "Apicize CLI test runner"
 authors = ["Apicize"]
 license = "MIT"
@@ -13,7 +13,7 @@ rust-version = "1.70"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-apicize_lib = { path = "../lib-rust", version = "^0.7.1" }
+apicize_lib = { path = "../lib-rust", version = "^0.8.0" }
 clap = { version = "4.5.19", features = ["derive"] }
 colored = "2.1.0"
 num-format = { version = "0.4.4", features = ["with-system-locale"] }

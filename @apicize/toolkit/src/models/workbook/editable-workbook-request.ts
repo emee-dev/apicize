@@ -15,7 +15,7 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
     @observable public accessor keepalive = false as boolean | undefined
     @observable public accessor headers: EditableNameValuePair[] = []
     @observable public accessor queryStringParams: EditableNameValuePair[] = []
-    @observable public accessor body = { type: WorkbookBodyType.None } as WorkbookBody
+    @observable public accessor body: WorkbookBody = { type: WorkbookBodyType.None, data: undefined }
     @observable public accessor redirect = undefined
     @observable public accessor integrity = undefined
     @observable public accessor mode = undefined
@@ -58,7 +58,7 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
             id: GenerateIdentifier(),
             ...q
         })) ?? []
-        result.body = entry.body ?? { type: WorkbookBodyType.None }
+        result.body = entry.body ?? { type: WorkbookBodyType.None, data: undefined }
         if (result.body && result.body.data) {
             switch (result.body.type) {
                 case WorkbookBodyType.JSON:
@@ -73,7 +73,8 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
             }
         } else {
             result.body = {
-                type: WorkbookBodyType.None
+                type: WorkbookBodyType.None,
+                data: undefined
             }
         }
         result.test = entry.test ?? ''

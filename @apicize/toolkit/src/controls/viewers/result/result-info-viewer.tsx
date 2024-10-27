@@ -83,7 +83,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
                                 error={test.error}
                                 logs={test.logs} />))
                         }
-                        </Box>
+                    </Box>
                     : (<></>)
             }
         </Box>
@@ -171,6 +171,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
     let title: string | null = null
 
     const result = workspace.getExecutionResult(props.requestOrGroupId, props.executionResultId)
+    const response = workspace.getExecutionResposne(props.requestOrGroupId)
 
     if (result?.type === 'group') {
         title = `Group Execution ${result.requestsWithFailedTestsCount === 0 && result.requestsWithErrors === 0 ? "Completed" : "Failed"}`
@@ -193,7 +194,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
                     aria-label="copy results to clipboard"
                     title="Copy Results to Clipboard"
                     sx={{ marginLeft: '1rem' }}
-                    onClick={_ => copyToClipboard(result)}>
+                    onClick={_ => copyToClipboard(response)}>
                     <ContentCopyIcon />
                 </IconButton>
             </Typography>

@@ -21,9 +21,11 @@ import { useFileOperations } from '../../../contexts/file-operations.context'
 import { toJS } from 'mobx'
 import { useWorkspace } from '../../../contexts/workspace.context'
 import { ToastSeverity, useFeedback } from '../../../contexts/feedback.context'
+import { useApicizeSettings } from '../../../contexts/apicize-settings.context'
 
 export const RequestBodyEditor = observer(() => {
   const workspace = useWorkspace()
+  const apicizeSettings = useApicizeSettings()
   const clipboard = useClipboard()
   const fileOps = useFileOperations()
   const feedback = useFeedback()
@@ -67,18 +69,19 @@ export const RequestBodyEditor = observer(() => {
   const [allowUpdateHeader, setAllowUpdateHeader] = React.useState<boolean>(headerDoesNotMatchType(request.body.type))
 
   const updateBodyType = (val: WorkbookBodyType | string) => {
+    debugger
     const v = toJS(val)
     const newBodyType = (v == "" ? undefined : v as unknown as WorkbookBodyType) ?? WorkbookBodyType.Text
     workspace.setRequestBodyType(newBodyType)
     setAllowUpdateHeader(headerDoesNotMatchType(newBodyType))
   }
 
-  const updateBodyAsText = (value: string | undefined) => {
-    workspace.setRequestBodyData(toJS(value) ?? '', WorkbookBodyType.Text)
+  const updateBodyAsText = (data: string | undefined) => {
+    workspace.setRequestBody({ type: WorkbookBodyType.Text, data: data ?? '' })
   }
 
   const updateBodyAsFormData = (data: EditableNameValuePair[] | undefined) => {
-    workspace.setRequestBodyData(toJS(data), WorkbookBodyType.Form)
+    workspace.setRequestBody({ type: WorkbookBodyType.Form, data: data ?? [] })
   }
 
   const updateTypeHeader = () => {
@@ -113,8 +116,8 @@ export const RequestBodyEditor = observer(() => {
 
   const pasteImageFromClipboard = async () => {
     try {
-      const img = await clipboard.getClipboardImage()
-      workspace.setRequestBodyData(img, WorkbookBodyType.Raw)
+      const data = await clipboard.getClipboardImage()
+      workspace.setRequestBody({ type: WorkbookBodyType.Raw, data })
       feedback.toast('Image pasted from clipboard', ToastSeverity.Success)
     } catch (e) {
       feedback.toast(`Unable to access clipboard image - ${e}`, ToastSeverity.Error)
@@ -125,7 +128,7 @@ export const RequestBodyEditor = observer(() => {
     try {
       const data = await fileOps.openFile()
       if (!data) return
-      workspace.setRequestBodyData(data, WorkbookBodyType.Raw)
+      workspace.setRequestBody({ type: WorkbookBodyType.Raw, data })
     } catch (e) {
       feedback.toast(`Unable to open file - ${e}`, ToastSeverity.Error)
     }
@@ -144,7 +147,7 @@ export const RequestBodyEditor = observer(() => {
 
   return (
     <Grid2 container direction='column' spacing={3} position='relative' width='100%' height='100%'>
-      <Grid2 direction='row' sx={{ justifyContent: 'space-between' }}>
+      <Grid2 direction='row' display='flex' justifyContent='space-between'>
         <FormControl>
           <InputLabel id='request-body-type-label-id'>Body Content Type</InputLabel>
           <Select
@@ -155,13 +158,14 @@ export const RequestBodyEditor = observer(() => {
             sx={{
               width: "10em"
             }}
+            size='small'
             onChange={e => updateBodyType(e.target.value)}
             aria-labelledby='request-body-type-label-id'
           >
             {bodyTypeMenuItems()}
           </Select>
         </FormControl>
-        <Button disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
+        <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
       </Grid2>
       {request.body.type == WorkbookBodyType.None
         ? <></>
@@ -196,8 +200,8 @@ export const RequestBodyEditor = observer(() => {
               <AceEditor
                 mode={mode}
                 theme='monokai'
-                fontSize='1rem'
-                lineHeight='1rem'
+                fontSize={`${apicizeSettings.fontSize}pt`}
+                lineHeight='1.1em'
                 width='100%'
                 height='100%'
                 showGutter={true}

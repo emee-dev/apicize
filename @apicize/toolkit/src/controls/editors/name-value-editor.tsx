@@ -53,7 +53,7 @@ export function NameValueEditor(props: {
             {
                 (props.values ?? []).map(value => [
                     <Grid2 container rowSpacing={2} spacing={1} size={12} columns={13}>
-                        <Grid2 size={{ md: 13, lg: 6 }}>
+                        <Grid2 size={{ md: 13, lg: 4 }}>
                             <TextField
                                 id={`${value.id}-name`}
                                 label={props.nameHeader}
@@ -64,7 +64,7 @@ export function NameValueEditor(props: {
                                 fullWidth
                             />
                         </Grid2>
-                        <Grid2 size={{ md: 12, lg: 6 }}>
+                        <Grid2 size={{ md: 12, lg: 8 }}>
                             <TextField
                                 id={`${value.id}-value`}
                                 label={props.valueHeader}
@@ -84,7 +84,7 @@ export function NameValueEditor(props: {
                 ])
             }
             <Box>
-                <Button variant="outlined" aria-label="add" startIcon={<AddIcon />} onClick={() => onAdd()}>Add {props.title}</Button>
+                <Button variant="outlined" aria-label="add" startIcon={<AddIcon />} size='small' onClick={() => onAdd()}>Add {props.title}</Button>
             </Box>
 
         </Grid2>

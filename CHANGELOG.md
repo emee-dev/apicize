@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.8.0
+
+* Overhaul of sequential/concurrent handling for requests and groups
+* UI enhancement
+
 # 0.7.1
 
 * Switch to splitter view of request/ersponse

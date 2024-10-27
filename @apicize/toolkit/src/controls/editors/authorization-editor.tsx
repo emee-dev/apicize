@@ -52,11 +52,12 @@ export const AuthorizationEditor = observer((props: {
                         error={auth.nameInvalid}
                         helperText={auth.nameInvalid ? 'Name is required' : ''}
                         onChange={e => workspace.setName(e.target.value)}
+                        size='small'
                         fullWidth
                     />
                 </Grid2>
                 <Grid2>
-                    <Stack direction={'row'} spacing={'2em'}>
+                    <Grid2 container direction={'row'} spacing={'2em'}>
                         <FormControl>
                             <InputLabel id='auth-type-label-id'>Type</InputLabel>
                             <Select
@@ -65,6 +66,7 @@ export const AuthorizationEditor = observer((props: {
                                 id='auth-type'
                                 value={auth.type}
                                 label='Type'
+                                size='small'
                                 onChange={e => workspace.setAuthorizationType(e.target.value as
                                     WorkbookAuthorizationType.Basic | WorkbookAuthorizationType.ApiKey | WorkbookAuthorizationType.OAuth2Client)}
                             >
@@ -74,7 +76,7 @@ export const AuthorizationEditor = observer((props: {
                             </Select>
                         </FormControl>
                         <PersistenceEditor onUpdatePersistence={(e) => workspace.setAuthorizationPersistence(e)} persistence={auth.persistence} />
-                    </Stack>
+                    </Grid2>
                 </Grid2>
                 <Grid2>
                     {
@@ -89,6 +91,7 @@ export const AuthorizationEditor = observer((props: {
                                         error={auth.headerInvalid}
                                         helperText={auth.headerInvalid ? 'Header is required' : ''}
                                         onChange={e => workspace.setAuthorizationHeader(e.target.value)}
+                                        size='small'
                                         fullWidth
                                     />
                                 </Grid2>
@@ -101,6 +104,7 @@ export const AuthorizationEditor = observer((props: {
                                         error={auth.valueInvalid}
                                         helperText={auth.valueInvalid ? 'Value is required' : ''}
                                         onChange={e => workspace.setAuthorizationValue(e.target.value)}
+                                        size='small'
                                         fullWidth
                                     />
                                 </Grid2>
@@ -116,6 +120,7 @@ export const AuthorizationEditor = observer((props: {
                                             error={auth.usernameInvalid}
                                             helperText={auth.usernameInvalid ? 'Username is required' : ''}
                                             onChange={e => workspace.setAuthorizationUsername(e.target.value)}
+                                            size='small'
                                             fullWidth
                                         />
                                     </Grid2>
@@ -126,6 +131,7 @@ export const AuthorizationEditor = observer((props: {
                                             aria-label='authorization password'
                                             value={auth.password}
                                             onChange={e => workspace.setAuthorizationPassword(e.target.value)}
+                                            size='small'
                                             fullWidth
                                         />
                                     </Grid2>
@@ -141,6 +147,7 @@ export const AuthorizationEditor = observer((props: {
                                                 error={auth.accessTokenUrlInvalid}
                                                 helperText={auth.accessTokenUrlInvalid ? 'Access Token URL is required' : ''}
                                                 onChange={e => workspace.setAuthorizatinoAccessTokenUrl(e.target.value)}
+                                                size='small'
                                                 fullWidth
                                             />
                                         </Grid2>
@@ -153,6 +160,7 @@ export const AuthorizationEditor = observer((props: {
                                                 error={auth.clientIdInvalid}
                                                 helperText={auth.clientIdInvalid ? 'Client ID is required' : ''}
                                                 onChange={e => workspace.setAuthorizationClientId(e.target.value)}
+                                                size='small'
                                                 fullWidth
                                             />
                                         </Grid2>
@@ -163,6 +171,7 @@ export const AuthorizationEditor = observer((props: {
                                                 aria-label='oauth client secret'
                                                 value={auth.clientSecret}
                                                 onChange={e => workspace.setAuthorizationClientSecret(e.target.value)}
+                                                size='small'
                                                 fullWidth
                                             />
                                         </Grid2>
@@ -173,10 +182,11 @@ export const AuthorizationEditor = observer((props: {
                                                 aria-label='oauth scope'
                                                 value={auth.scope}
                                                 onChange={e => workspace.setAuthorizationScope(e.target.value)}
+                                                size='small'
                                                 fullWidth
                                             />
                                         </Grid2>
-                                        <Grid2>
+                                        <Grid2 container direction='row' spacing='2em'>
                                             <FormControl>
                                                 <InputLabel id='cred-cert-label'>Certificate</InputLabel>
                                                 <Select
@@ -185,14 +195,14 @@ export const AuthorizationEditor = observer((props: {
                                                     id='cred-cert'
                                                     label='Certificate'
                                                     value={auth.selectedCertificate?.id ?? NO_SELECTION_ID}
+                                                    sx={{ minWidth: '8em' }}
                                                     onChange={(e) => workspace.setAuthorizationSelectedCertificateId(e.target.value)}
+                                                    size='small'
                                                     fullWidth
                                                 >
                                                     {itemsFromSelections(workspace.getAuthorizationCertificateList())}
                                                 </Select>
                                             </FormControl>
-                                        </Grid2>
-                                        <Grid2>
                                             <FormControl>
                                                 <InputLabel id='cred-proxy-label'>Proxy</InputLabel>
                                                 <Select
@@ -201,7 +211,9 @@ export const AuthorizationEditor = observer((props: {
                                                     id='cred-proxy'
                                                     label='Proxy'
                                                     value={auth.selectedProxy?.id ?? NO_SELECTION_ID}
+                                                    sx={{ minWidth: '8em' }}
                                                     onChange={(e) => workspace.setAuthorizationSelectedProxyId(e.target.value)}
+                                                    size='small'
                                                     fullWidth
                                                 >
                                                     {itemsFromSelections(workspace.getAuthorizationProxyList())}

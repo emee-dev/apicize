@@ -19,6 +19,8 @@ export { useFileOperations, FileOperationsContext, FileOperationsStore, SshFileT
 export { useWorkspace, WorkspaceContext, WorkspaceStore } from './contexts/workspace.context'
 export { useApicizeSettings, ApicizeSettingsContext, ApicizeSettingsStore } from './contexts/apicize-settings.context'
 
+import "./toolkit.css"
+
 declare module '@mui/material/styles' {
     interface Palette {
         navigation: Palette['primary']

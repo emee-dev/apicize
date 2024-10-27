@@ -50,16 +50,16 @@ export const RequestEditor = observer((props: {
         ? workspace.active as EditableWorkbookRequestGroup
         : null
 
-    const handlePanelChanged = (_: React.SyntheticEvent, newValue: string) => {
-        if (newValue) setPanel(newValue)
-    }
-
     if (!(request || group)) {
         return null
     }
 
-    const execution = workspace.getExecution(workspace.active.id)
-    const isExecuted = execution.results.size > 0
+    const handlePanelChanged = (_: React.SyntheticEvent, newValue: string) => {
+        if (newValue) setPanel(newValue)
+    }
+
+    const requestExecution = workspace.executions.get(workspace.active.id)
+    const isExecuted = (requestExecution?.results?.size ?? 0) > 0
 
     let usePanel = (
         (group && panel !== 'Info' && panel !== 'Parameters')
@@ -111,8 +111,8 @@ export const RequestEditor = observer((props: {
                     value={usePanel}
                     sx={{ marginRight: '24px', zIndex: 100 }}
                     aria-label="text alignment">
-                    <ToggleButton value="Info" title="Show Group Info" aria-label='show info'><DisplaySettingsIcon /></ToggleButton>
-                    <ToggleButton value="Parameters" title="Show Group Parameters" aria-label='show test'><AltRouteIcon /></ToggleButton>
+                    <ToggleButton value="Info" title="Show Group Info" aria-label='show info' size='small'><DisplaySettingsIcon /></ToggleButton>
+                    <ToggleButton value="Parameters" title="Show Group Parameters" aria-label='show test' size='small'><AltRouteIcon /></ToggleButton>
                     {
                         hasWarnings
                             ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
@@ -143,15 +143,15 @@ export const RequestEditor = observer((props: {
                         value={usePanel}
                         sx={{ marginRight: '24px', zIndex: 100 }}
                         aria-label="text alignment">
-                        <ToggleButton value="Info" title="Show Request Info" aria-label='show info'><DisplaySettingsIcon /></ToggleButton>
-                        <ToggleButton value="Query String" title="Show Request Query String" aria-label='show query string'><ViewListIcon /></ToggleButton>
-                        <ToggleButton value="Headers" title="Show Request Headers" aria-label='show headers'><ViewListOutlinedIcon /></ToggleButton>
-                        <ToggleButton value="Body" title="Show Request Body" aria-label='show body'><ArticleOutlinedIcon /></ToggleButton>
-                        <ToggleButton value="Test" title="Show Request Test" aria-label='show test'><ScienceIcon /></ToggleButton>
-                        <ToggleButton value="Parameters" title="Show Request Parameters" aria-label='show test'><AltRouteIcon /></ToggleButton>
+                        <ToggleButton value="Info" title="Show Request Info" aria-label='show info' size='small'><DisplaySettingsIcon /></ToggleButton>
+                        <ToggleButton value="Query String" title="Show Request Query String" aria-label='show query string' size='small'><ViewListIcon /></ToggleButton>
+                        <ToggleButton value="Headers" title="Show Request Headers" aria-label='show headers' size='small'><ViewListOutlinedIcon /></ToggleButton>
+                        <ToggleButton value="Body" title="Show Request Body" aria-label='show body' size='small'><ArticleOutlinedIcon /></ToggleButton>
+                        <ToggleButton value="Test" title="Show Request Test" aria-label='show test' size='small'><ScienceIcon /></ToggleButton>
+                        <ToggleButton value="Parameters" title="Show Request Parameters" aria-label='show test' size='small'><AltRouteIcon /></ToggleButton>
                         {
                             hasWarnings
-                                ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
+                                ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings' size='small'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
                                 : null
                         }
                     </ToggleButtonGroup>
@@ -178,7 +178,7 @@ export const RequestEditor = observer((props: {
             <PanelResizeHandle className="resize-handle" hitAreaMargins={{ coarse: 30, fine: 10 }} />
             {
                 <Panel id='results-viewer' order={1} defaultSize={50} minSize={20} className='editor-panel'>
-                <RunResultsToolbar className='editor-panel-header' />
+                    <RunResultsToolbar className='editor-panel-header' />
                     <ResultsViewer sx={{ flexGrow: 1 }} />
                 </Panel>
             }

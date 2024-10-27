@@ -16,7 +16,7 @@ Configure the proxy using URLs such as:
 * `https://myproxy.com`
 * `https://myproxy.com:8443`
 
-:image[proxies.jpg]
+:image[proxies.webp]
 
 ### See Also
 

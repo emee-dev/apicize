@@ -14,7 +14,6 @@ import { ResultRawPreview } from "./result/response-raw-viewer";
 import { ResultInfoViewer } from "./result/result-info-viewer";
 import { ResponseHeadersViewer } from "./result/response-headers-viewer";
 import { ResultRequestViewer } from "./result/result-request-viewer";
-import { RequestRunProgress } from "./result/requuest-run-progress";
 import { observer } from 'mobx-react-lite';
 import { EditableEntityType } from '../../models/workbook/editable-entity-type';
 import { useWorkspace } from "../../contexts/workspace.context";
@@ -31,20 +30,18 @@ export const ResultsViewer = observer((props: {
             && workspace.active.entityType !== EditableEntityType.Group)) {
         return null
     }
-    
+
     const requestExecution = workspace.executions.get(workspace.active.id)
-    if (!requestExecution) {
+    if (!(requestExecution && requestExecution.results.size > 0)) {
         return null
     }
-    
+
     const requestOrGroupId = workspace.active.id
     const selectedExecution = requestExecution.resultMenu[requestExecution.resultIndex]
-    const executionResultId = selectedExecution.executionResultId
-    
-    const executionResult = workspace.getExecutionResult(workspace.active.id,
-        selectedExecution?.executionResultId)
-    
-    if (!(executionResultId && executionResult)) {
+    const executionResultId = selectedExecution?.executionResultId
+
+    const executionResult = executionResultId ? workspace.getExecutionResult(workspace.active.id, executionResultId) : null
+    if (!executionResult) {
         return null
     }
 
@@ -61,14 +58,12 @@ export const ResultsViewer = observer((props: {
         ? executionResult as WorkbookExecutionGroup
         : undefined
 
-    const disableOtherPanels = requestExecution?.running || (
-        executionRequestResult?.response === undefined
-    )
+    const disableOtherPanels = executionRequestResult?.response === undefined
 
     const longTextInResponse = (executionRequestResult?.response?.body?.text?.length ?? 0)
         > MAX_TEXT_RENDER_LENGTH
 
-    const disableRequest = requestExecution?.running || (!executionRequestResult?.request)
+    const disableRequest = !executionRequestResult?.request
 
     let panel = requestExecution?.panel
     if (executionGroupResult && panel !== 'Info') {
@@ -99,7 +94,7 @@ export const ResultsViewer = observer((props: {
             : ((executionGroupResult.requestsWithFailedTestsCount > 0) ? 'warning' : 'success')
     }
 
-    return requestExecution && executionResult ? (
+    return requestExecution ? (
         <Stack direction={'row'} sx={props.sx}>
             <ToggleButtonGroup
                 orientation='vertical'
@@ -108,26 +103,25 @@ export const ResultsViewer = observer((props: {
                 value={requestExecution.running ? 'Info' : panel}
                 sx={{ marginRight: '24px' }}
                 aria-label="text alignment">
-                <ToggleButton value="Info" title="Show Result Info" aria-label='show info' disabled={requestExecution.running}><ScienceIcon color={infoColor ?? 'disabled'} /></ToggleButton>
-                <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' disabled={disableOtherPanels}><ViewListOutlinedIcon /></ToggleButton>
-                <ToggleButton value="Text" title="Show Response Body as Text" aria-label='show body text' disabled={disableOtherPanels}><ArticleOutlinedIcon /></ToggleButton>
-                <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={disableOtherPanels || longTextInResponse}><PreviewIcon /></ToggleButton>
-                <ToggleButton value="Request" title="Show Request" aria-label='show request' disabled={disableRequest}><SendIcon /></ToggleButton>
+                <ToggleButton value="Info" title="Show Result Info" aria-label='show info' disabled={requestExecution.running} size='small'><ScienceIcon color={infoColor ?? 'disabled'} /></ToggleButton>
+                <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' disabled={disableOtherPanels} size='small'><ViewListOutlinedIcon /></ToggleButton>
+                <ToggleButton value="Text" title="Show Response Body as Text" aria-label='show body text' disabled={disableOtherPanels} size='small'><ArticleOutlinedIcon /></ToggleButton>
+                <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={disableOtherPanels || longTextInResponse} size='small'><PreviewIcon /></ToggleButton>
+                <ToggleButton value="Request" title="Show Request" aria-label='show request' disabled={disableRequest} size='small'><SendIcon /></ToggleButton>
             </ToggleButtonGroup>
             <Box sx={{ overflow: 'hidden', flexGrow: 1, bottom: '0', position: 'relative' }}>
                 {
-                    requestExecution.running ? <RequestRunProgress /> :
-                        panel === 'Info' ? <ResultInfoViewer requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
-                            : panel === 'Headers' ? <ResponseHeadersViewer requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
-                                : panel === 'Preview' ? <ResultResponsePreview
+                    panel === 'Info' ? <ResultInfoViewer requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
+                        : panel === 'Headers' ? <ResponseHeadersViewer requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
+                            : panel === 'Preview' ? <ResultResponsePreview
+                                requestOrGroupId={requestOrGroupId} executionResultId={executionResultId}
+                            />
+                                : panel === 'Text' ? <ResultRawPreview
                                     requestOrGroupId={requestOrGroupId} executionResultId={executionResultId}
                                 />
-                                    : panel === 'Text' ? <ResultRawPreview
-                                        requestOrGroupId={requestOrGroupId} executionResultId={executionResultId}
-                                    />
-                                        : panel === 'Request' ? <ResultRequestViewer
-                                            requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
-                                            : null
+                                    : panel === 'Request' ? <ResultRequestViewer
+                                        requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
+                                        : null
                 }
             </Box>
         </Stack>)

@@ -13,7 +13,6 @@ Set the **Request Execution Mode** value to either **Sequential** or **Concurren
 Set the **Multiple Run Execution Mode** value to either **Sequential** or **Concurrent** to control how multiple runs of a group are executed.  Within each run,
 requests will be executed based upon the **Request Execution Mode** value
 
-
 For example, assume you have a Group with two requests ("Request A" and "Request B"), and that you will launch 2 runs.  Here are how Execution Mode values control execution:
 
 | Request Execution | Multiple Run Execution | Execuution Order |

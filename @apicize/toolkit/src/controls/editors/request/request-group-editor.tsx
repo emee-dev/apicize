@@ -14,13 +14,12 @@ export const RequestGroupEditor = observer((props: {
     const workspace = useWorkspace()
     const feedback = useFeedback()
 
-    if (workspace.active?.entityType !== EditableEntityType.Group) {
-        return null
-    }
 
-    workspace.nextHelpTopic = 'groups'
     const group = workspace.active as EditableWorkbookRequestGroup
-    const execution = workspace.getExecution(group.id)
+    const execution = workspace.executions.get(group.id)
+    const running = execution?.running ?? false
+    workspace.nextHelpTopic = 'groups'
+
 
     const updateRuns = (runs: number) => {
         workspace.setRequestRuns(runs)
@@ -35,6 +34,7 @@ export const RequestGroupEditor = observer((props: {
         }
     }
 
+
     return (
         <Grid2 container direction='column' spacing={3} maxWidth='60em' sx={props.sx}>
             <Grid2>
@@ -43,20 +43,22 @@ export const RequestGroupEditor = observer((props: {
                     label='Name'
                     aria-label='group name'
                     sx={{ flexGrow: 1 }}
+                    size='small'
                     fullWidth
                     // size='small'
                     value={group.name}
                     onChange={e => workspace.setName(e.target.value)}
                 />
             </Grid2>
-            <Grid2>
-                <Stack display='flex' direction='row' justifyItems='center'>
+            <Grid2 container direction='row' spacing={2}>
+                <Grid2 container direction='row' spacing={0}>
                     <TextField
                         aria-label='Nubmer of Run Attempts'
                         placeholder='Attempts'
                         label='# of Runs'
-                        disabled={execution.running}
+                        disabled={running}
                         sx={{ width: '8em', flexGrow: 0 }}
+                        size='small'
                         type='number'
                         slotProps={{
                             htmlInput: {
@@ -67,41 +69,48 @@ export const RequestGroupEditor = observer((props: {
                         value={group.runs}
                         onChange={e => updateRuns(parseInt(e.target.value))}
                     />
-                    <ToggleButton value='Run' title='Run selected request' disabled={execution.running} onClick={handleRunClick()}>
-                        <PlayCircleFilledIcon color={execution.running ? 'disabled' : 'success'} />
+                    <ToggleButton value='Run' title={`Run selected request ${group.runs} times`} disabled={running} onClick={handleRunClick()} size='small'>
+                        <PlayCircleFilledIcon color={running ? 'disabled' : 'success'} />
                     </ToggleButton>
-                    <FormControl sx={{marginLeft: '2em'}}>
-                        <InputLabel id='multirun-execution-label-id'>Multiple Run Execution Mode</InputLabel>
+                </Grid2>
+                <Grid2>
+                    <FormControl>
+                        <InputLabel id='multirun-execution-label-id'>Multi-Run Execution</InputLabel>
                         <Select
                             labelId='execution-label-id'
                             id='multi-run-execution'
                             aria-labelledby='multirun-execution-label-id'
                             value={group.multiRunExecution}
-                            sx={{ width: '14em' }}
-                            label='Multiple Run Execution Mode'
+                            disabled={group.runs < 2}
+                            sx={{ minWidth: '11em' }}
+                            label='Multi-Run Execution'
+                            size='small'
                             onChange={e => workspace.setMultiRunExecution(e.target.value as WorkbookGroupExecution)}
                         >
                             <MenuItem value={WorkbookGroupExecution.Sequential}>Sequential</MenuItem>
                             <MenuItem value={WorkbookGroupExecution.Concurrent}>Concurrent</MenuItem>
                         </Select>
                     </FormControl>
-                    <FormControl sx={{marginLeft: '2em'}}>
-                        <InputLabel id='execution-label-id'>Request Execution Mode</InputLabel>
+                </Grid2>
+                <Grid2>
+                    <FormControl>
+                        <InputLabel id='execution-label-id'>Group Execution</InputLabel>
                         <Select
                             labelId='execution-label-id'
                             id='execution'
                             aria-labelledby='execution-label-id'
                             value={group.execution}
-                            sx={{ width: '14em' }}
-                            label='Request Execution Mode'
+                            sx={{ minWidth: '11em' }}
+                            size='small'
+                            label='Group Execution'
                             onChange={e => workspace.setGroupExecution(e.target.value as WorkbookGroupExecution)}
                         >
                             <MenuItem value={WorkbookGroupExecution.Sequential}>Sequential</MenuItem>
                             <MenuItem value={WorkbookGroupExecution.Concurrent}>Concurrent</MenuItem>
                         </Select>
                     </FormControl>
-                </Stack>
+                </Grid2>
             </Grid2>
-        </Grid2 >
+        </Grid2>
     )
 })

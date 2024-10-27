@@ -32,4 +32,9 @@ http://localhost:8080/quote/{{id}}
 
 Scenario variables are maintained and saved as name/string value pairs, but in scripts, they can be updated to any value that can be serialized as JSON.  
 
-:image[scenarios.jpg]
+:image[scenarios.webp]
+
+### See Also
+
+* [**Testing**](help:testing)
+* [**Running Tests**](help:running-tests)

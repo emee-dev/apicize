@@ -13,6 +13,8 @@ To add a new Certificate, click on the Plus sign next to Certificates in the nav
 
 To delete a Certificate, select it in the navigation pane, and in its context menu, select "Delete Certificate".
 
+:image[certificates.webp]
+
 ### See Also
 
 * [**Requests**](help:requests)

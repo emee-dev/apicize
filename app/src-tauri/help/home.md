@@ -44,9 +44,18 @@ A command-line test runner for Apicize workbooks, with minimal dependencies, is 
 # Contents
 
 * [**Requests**](help:requests)
-* [**Request Groups**](help:groups)
+    * [**Groups**](help:groups)
+    * [**Information**](help:requests/info)
+    * [**Headers**](help:requests/headers)
+    * [**Query String Parameters**](help:requests/query)
+    * [**Testse**](help:requests/test)
+    * [**Tests**](help:requests/parameters)
 * [**Scenarios**](help:scenarios)
 * [**Authorizations**](help:authorizations)
 * [**Certificates**](help:certificates)
 * [**Proxies**](help:proxies)
-
+* **Settings**
+    * [**Default Parameters**](help:settings/parameters)
+    * [**Display Settings**](help:settings/display)
+* [**Testing**](help:testing)
+* [**Running Tests**](help:running-tests)

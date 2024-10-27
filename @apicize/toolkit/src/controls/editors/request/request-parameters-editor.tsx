@@ -38,6 +38,7 @@ export const RequestParametersEditor = observer(() => {
                     value={requestEntry.selectedScenario?.id ?? DEFAULT_SELECTION_ID}
                     onChange={(e) => workspace.setRequestSelectedScenarioId(e.target.value)}
                     fullWidth
+                    size='small'
                 >
                     {itemsFromSelections(lists.scenarios)}
                 </Select>
@@ -52,6 +53,7 @@ export const RequestParametersEditor = observer(() => {
                     value={requestEntry.selectedAuthorization?.id ?? DEFAULT_SELECTION_ID}
                     onChange={(e) => workspace.setRequestSelectedAuthorizationId(e.target.value)}
                     fullWidth
+                    size='small'
                 >
                     {itemsFromSelections(lists.authorizations)}
                 </Select>
@@ -66,6 +68,7 @@ export const RequestParametersEditor = observer(() => {
                     value={requestEntry.selectedCertificate?.id ?? DEFAULT_SELECTION_ID}
                     onChange={(e) => workspace.setRequestSelectedCertificateId(e.target.value)}
                     fullWidth
+                    size='small'
                 >
                     {itemsFromSelections(lists.certificates)}
                 </Select>
@@ -80,6 +83,7 @@ export const RequestParametersEditor = observer(() => {
                     value={requestEntry.selectedProxy?.id ?? DEFAULT_SELECTION_ID}
                     onChange={(e) => workspace.setRequestSelectedProxyId(e.target.value)}
                     fullWidth
+                    size='small'
                 >
                     {itemsFromSelections(lists.proxies)}
                 </Select>

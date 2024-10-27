@@ -14,7 +14,7 @@ export const RequestQueryStringEditor = observer(() => {
   workspace.nextHelpTopic = 'requests/query'
   const request = workspace.active as EditableWorkbookRequest
   return (<NameValueEditor
-    title='query string parameters'
+    title='query string parameter'
     values={request.queryStringParams}
     nameHeader='Parameter'
     valueHeader='Value'

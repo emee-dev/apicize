@@ -1,7 +1,7 @@
 import { Persistence } from "@apicize/lib-typescript";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
-export function PersistenceEditor(props: { 
+export function PersistenceEditor(props: {
     persistence: Persistence,
     onUpdatePersistence: (value: Persistence) => void
 }) {
@@ -15,6 +15,7 @@ export function PersistenceEditor(props: {
                 value={props.persistence}
                 label='Storage'
                 onChange={e => props.onUpdatePersistence(e.target.value as Persistence)}
+                size='small'
                 fullWidth
             >
                 <MenuItem value={Persistence.Workbook}>Workbook</MenuItem>

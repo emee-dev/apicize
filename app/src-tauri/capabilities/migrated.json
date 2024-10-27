@@ -13,7 +13,6 @@
     "core:resources:default",
     "core:menu:default",
     "core:tray:default",
-    "global-shortcut:allow-register",
     "core:window:allow-set-title",
     "core:window:allow-close",
     "core:window:allow-destroy",

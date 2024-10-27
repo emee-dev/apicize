@@ -1,7 +1,7 @@
 import { action, makeObservable, observable, toJS } from "mobx"
 import { DEFAULT_SELECTION_ID, NO_SELECTION, NO_SELECTION_ID } from "../models/store"
 import { WorkbookExecution, WorkbookExecutionGroup, WorkbookExecutionMenuItem, WorkbookExecutionRequest, WorkbookExecutionResult } from "../models/workbook/workbook-execution"
-import { editableWorkspaceToStoredWorkspace, newEditableWorkspace, storedWorkspaceToEditableWorkspace } from "../services/apicize-serializer"
+import { base64Decode, base64Encode, editableWorkspaceToStoredWorkspace, newEditableWorkspace, storedWorkspaceToEditableWorkspace } from "../services/apicize-serializer"
 import { EditableWorkbookRequest, EditableWorkbookRequestGroup } from "../models/workbook/editable-workbook-request"
 import { EditableWorkbookScenario } from "../models/workbook/editable-workbook-scenario"
 import { EditableWorkbookAuthorization } from "../models/workbook/editable-workbook-authorization"
@@ -15,6 +15,7 @@ import {
     ApicizeExecutionGroup,
     ApicizeExecutionItem,
     ApicizeExecutionRequest,
+    WorkbookBody,
 } from "@apicize/lib-typescript"
 import { EntitySelection } from "../models/workbook/entity-selection"
 import { EditableNameValuePair } from "../models/workbook/editable-name-value-pair"
@@ -36,9 +37,6 @@ export class WorkspaceStore {
     @observable accessor executions = new Map<string, WorkbookExecution>()
 
     @observable accessor active: EditableItem | null = null
-
-    // *** Placeholde for now... ***
-    @observable accessor activeExecutionId: string | null = null
 
     @observable accessor helpVisible = false
     @observable accessor helpTopic = ''
@@ -339,11 +337,11 @@ export class WorkspaceStore {
     @action
     copyRequest(id: string) {
         // Return the ID of the duplicated entry
-        const copyEntry = (entry: EditableWorkbookRequest | EditableWorkbookRequestGroup) => {
+        const copyEntry = (entry: EditableWorkbookRequest | EditableWorkbookRequestGroup, appendCopySuffix: boolean) => {
             if (entry.entityType === EditableEntityType.Request) {
                 const request = new EditableWorkbookRequest()
                 request.id = GenerateIdentifier()
-                request.name = `${GetTitle(entry)} - copy`
+                request.name = `${GetTitle(entry)}${appendCopySuffix ? ' - copy' : ''}`
                 request.runs = entry.runs
                 request.dirty = true
                 request.url = entry.url
@@ -352,22 +350,15 @@ export class WorkspaceStore {
                 request.timeout = entry.timeout
                 request.headers = entry.headers.map(h => ({ ...h, id: GenerateIdentifier() } as EditableNameValuePair))
                 request.queryStringParams = entry.queryStringParams.map(q => ({ ...q, id: GenerateIdentifier() } as EditableNameValuePair))
-                request.body = entry.body
-                    ? {
-                        type: entry.body.type,
-                        data: entry.body.data
-                    }
-                    : {
-                        type: WorkbookBodyType.None
-                    }
-                request.test = entry.test
+                request.body = entry.body ? structuredClone(entry.body) : { type: WorkbookBodyType.None, data: undefined },
+                    request.test = entry.test
                 this.workspace.requests.entities.set(request.id, request)
                 return request
             }
 
             const group = new EditableWorkbookRequestGroup()
             group.id = GenerateIdentifier()
-            group.name = `${GetTitle(entry)} - copy`
+            group.name = `${GetTitle(entry)}${appendCopySuffix ? ' - copy' : ''}`
             group.runs = entry.runs
             group.dirty = true
             group.execution = entry.execution
@@ -380,7 +371,7 @@ export class WorkspaceStore {
                     sourceChildIDs.forEach(childID => {
                         const childEntry = this.workspace.requests.entities.get(childID)
                         if (childEntry) {
-                            const dupedChildID = copyEntry(childEntry).id
+                            const dupedChildID = copyEntry(childEntry, false).id
                             dupedChildIDs.push(dupedChildID)
                         }
                     })
@@ -391,7 +382,7 @@ export class WorkspaceStore {
         }
 
         const source = getNestedEntity(id, this.workspace.requests)
-        const entry = copyEntry(source)
+        const entry = copyEntry(source, true)
         this.workspace.requests.entities.set(entry.id, entry)
 
         let append = true
@@ -487,52 +478,116 @@ export class WorkspaceStore {
     setRequestBodyType(value: WorkbookBodyType | undefined) {
         if (this.active?.entityType === EditableEntityType.Request) {
             const request = this.active as EditableWorkbookRequest
-            let oldBodyType = request.body?.type ?? WorkbookBodyType.None
-            let newBodyData = request.body?.data
-            let newBodyType = value ?? WorkbookBodyType.None
-
-            if (newBodyType !== oldBodyType) {
-                switch (newBodyType) {
-                    case WorkbookBodyType.Form:
-                        const formData = decodeFormData(newBodyData as string)
-                        formData.forEach(d => (d as EditableNameValuePair).id = GenerateIdentifier())
-                        newBodyData = formData
-                        break
-                    default:
-                        switch (oldBodyType) {
+            let newBody: WorkbookBody
+            debugger
+            if (request.body && request.body.data) {
+                switch (value) {
+                    case WorkbookBodyType.Raw:
+                        switch (request.body.type) {
                             case WorkbookBodyType.Form:
-                                newBodyData = encodeFormData(newBodyData as EditableNameValuePair[])
+                                newBody = {
+                                    type: WorkbookBodyType.Raw, data: base64Encode((new TextEncoder()).encode(
+                                        encodeFormData(request.body.data as EditableNameValuePair[])
+                                    ))
+                                }
+                                break
+                            case WorkbookBodyType.XML:
+                            case WorkbookBodyType.JSON:
+                            case WorkbookBodyType.Text:
+                                newBody = { type: WorkbookBodyType.Raw, data: base64Encode((new TextEncoder()).encode(request.body.data)) }
                                 break
                             case WorkbookBodyType.Raw:
-                                const data = newBodyData as number[] | undefined
-                                if (data && data.length > 0) {
-                                    newBodyData = (new TextDecoder('utf-8')).decode(Uint8Array.from(data))
-                                } else {
-                                    newBodyData = ''
+                                newBody = { type: WorkbookBodyType.Raw, data: request.body.data }
+                                break
+                            default:
+                                newBody = {
+                                    type: WorkbookBodyType.Raw, data: ''
+                                }
+                        }
+                        break
+                    case WorkbookBodyType.Form:
+                        switch (request.body.type) {
+                            case WorkbookBodyType.JSON:
+                            case WorkbookBodyType.XML:
+                            case WorkbookBodyType.Text:
+                            case WorkbookBodyType.Raw:
+                                newBody = {
+                                    type: WorkbookBodyType.Form,
+                                    data: decodeFormData(request.body.data)
+                                }
+                                break
+                            case WorkbookBodyType.Form:
+                                newBody = { type: WorkbookBodyType.Form, data: request.body.data }
+                                break
+                            default:
+                                newBody = {
+                                    type: WorkbookBodyType.Form, data: []
                                 }
                                 break
                         }
                         break
+                    case WorkbookBodyType.JSON:
+                    case WorkbookBodyType.XML:
+                    case WorkbookBodyType.Text:
+                        switch (request.body.type) {
+                            case WorkbookBodyType.JSON:
+                            case WorkbookBodyType.XML:
+                            case WorkbookBodyType.Text:
+                                newBody = { type: value, data: request.body.data }
+                                break
+                            case WorkbookBodyType.Raw:
+                                newBody = { type: value, data: (new TextDecoder()).decode(base64Decode(request.body.data)) }
+                                break
+                            default:
+                                newBody = { type: WorkbookBodyType.None, data: undefined }
+                                break
+                        }
+                        break
+                    case WorkbookBodyType.None:
+                    default:
+                        newBody = {
+                            type: WorkbookBodyType.None,
+                            data: undefined
+                        }
+
                 }
+            } else {
+                switch (value) {
+                    case WorkbookBodyType.Form:
+                        newBody = {
+                            type: WorkbookBodyType.Form,
+                            data: []
+                        }
+                        break
+                    case WorkbookBodyType.XML:
+                    case WorkbookBodyType.JSON:
+                    case WorkbookBodyType.Text:
+                        newBody = {
+                            type: value,
+                            data: ''
+                        }
+                        break
+                    case WorkbookBodyType.None:
+                    default:
+                        newBody = {
+                            type: WorkbookBodyType.None,
+                            data: undefined
+                        }
+                        break
+                }
+
             }
-            request.body = {
-                type: newBodyType,
-                data: newBodyData
-            }
+
+            request.body = newBody
             this.dirty = true
         }
     }
 
     @action
-    setRequestBodyData(value: WorkbookBodyData | undefined, type: WorkbookBodyType) {
+    setRequestBody(body: WorkbookBody) {
         if (this.active?.entityType === EditableEntityType.Request) {
             const request = this.active as EditableWorkbookRequest
-            if (request.body) {
-                request.body.type = type
-                request.body.data = value
-            } else {
-                request.body = { type: type, data: value }
-            }
+            request.body = body
             this.dirty = true
         }
     }
@@ -1254,6 +1309,10 @@ export class WorkspaceStore {
         return this.executions.get(requestOrGroupId)?.results.get(executionResultId)
     }
 
+    getExecutionResposne(requestOrGroupId: string): ApicizeExecution | undefined {
+        return this.executions.get(requestOrGroupId)?.response
+    }
+
     @action
     reportExecutionResults(execution: WorkbookExecution, executionResults: ApicizeExecution) {
         execution.running = false
@@ -1345,6 +1404,7 @@ export class WorkspaceStore {
         execution.resultIndex = (isNaN(execution.resultIndex) || execution.resultIndex >= execution.results.size)
             ? 0 : execution.resultIndex
         execution.results = results
+        execution.response = executionResults
         execution.panel = (result.type === 'request' && previousPanel && allTestsSucceeded) ? previousPanel : 'Info'
     }
 
@@ -1360,7 +1420,7 @@ export class WorkspaceStore {
         if (execution) {
             execution.running = true
         } else {
-            let execution = new WorkbookExecutionEntry(requestOrGroupId)
+            execution = new WorkbookExecutionEntry(requestOrGroupId)
             execution.running = true
             this.executions.set(requestOrGroupId, execution)
         }
@@ -1395,6 +1455,7 @@ export class WorkspaceStore {
         if (match) {
             match.running = false
         }
+
         let idx = this.executingRequestIDs.indexOf(requestOrGroupId)
         if (idx !== -1) {
             this.executingRequestIDs.splice(idx, 1)

@@ -1,3 +1,25 @@
+.resize-handle {
+  flex: 0 0 0.2rem;
+  display: flex;
+  justify-content: stretch;
+  align-items: stretch;
+  outline: none;
+  transition: background-color 0.1s linear;
+}
+
+.resize-handle:hover,
+.resize-handle[data-resize-handle-active="keyboard"],
+.resize-handle[data-resize-handle-active="pointer"] {
+  cursor: ew-resize;
+  background-color: #808080;
+}
+
+@media (pointer: coarse) {
+  .resize-handle {
+    flex: 0 0 2rem;
+  }
+}
+
 .help {
   overflow: auto;
   width: 100%;
@@ -11,12 +33,20 @@
 }
 
 .help p,
-.help ul {
-  margin-bottom: 1em;
+.help ul,
+.help-text,
+.help-text .MuiTypography-body1,
+.help-text pre,
+.help-text table {
+  margin: 0 1em 1em 1em;
+}
+
+.help img {
+  position: relative;
+  max-width: 98%;
 }
 
 .help table {
-  margin: 1em 0 1em 0;
   border-collapse: collapse;
 }
 
@@ -29,15 +59,9 @@
   padding: 0.5em;
 }
 
-
 .help-text {
   display: block;
   padding-right: 36px;
-  margin-bottom: 1em;
-}
-
-.help-text img {
-  margin: 0 0 1em 0;
 }
 
 .help-toolbar {
@@ -46,24 +70,20 @@
 }
 
 .help-toolbar button {
-  font-size: 32px;
+  font-size: 24px;
 }
 
 
-h1 .help-icon {
+.MuiTypeographi-h1 .help-icon {
   margin-right: 0.25em;
 }
 
-h2 .help-icon {
+.MuiTypeographi-h2 .help-icon {
   margin-left: 0.25em;
 }
 
 .help-icon {
   vertical-align: middle;
-}
-
-.help-text .MuiTypography-body1 {
-  margin-bottom: 1.0em;
 }
 
 textarea,
@@ -81,6 +101,7 @@ pre.log {
   white-space: pre-line;
   word-break: break-word;
   font-size: 0.9em;
+  line-height: 1.1;
 }
 
 .navigation-menu-item div:nth-child(2) {
@@ -175,7 +196,9 @@ pre.log {
 .editor-panel-header {
   display: flex;
   align-items: center;
-  height: 8em;
+  height: 6em;
+  padding: 0.5em 0;
+  margin-bottom: 1em;
 }
 
 .test-result {
@@ -185,26 +208,4 @@ pre.log {
 
 .test-details {
   margin-top: 0.5em;
-}
-
-.resize-handle {
-  flex: 0 0 0.2rem;
-  display: flex;
-  justify-content: stretch;
-  align-items: stretch;
-  outline: none;
-  transition: background-color 0.1s linear;
-}
-
-.resize-handle:hover,
-.resize-handle[data-resize-handle-active="keyboard"],
-.resize-handle[data-resize-handle-active="pointer"] {
-  cursor: ew-resize;
-  background-color: #808080;
-}
-
-@media (pointer: coarse) {
-  .resize-handle {
-    flex: 0 0 2rem;
-  }
 }

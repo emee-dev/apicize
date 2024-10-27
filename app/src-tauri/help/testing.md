@@ -19,7 +19,7 @@ describe('status', () => {
 ## Using Scenario Values
 
 When setting up your workbook, you can optionally set up one or more Scenarios, which is simply a list of key/value pairs that can be used to update values in the [request's](#request) 
-URL, headers, query string and/or body values.  Scenario values can be read *and updated* from test scripts.
+URL, headers, query string and/or body values.  Scenario values can be read *and updated* from test scripts using the **variables** value.
 
 The value from writing scenario values manifests when using grouped requests.  For example, assume you have a RESTful API with CRUD operations.  The first rquest in your group creates a record, 
 and returns the new `id` in the response.  
@@ -31,7 +31,7 @@ describe('status', () => {
     it('equals 200', () => {
         expect(response.status).to.equal(200)
         const data = JSON.parse(response.body.text)
-        scenario.id = data.lastID
+        variables.id = data.lastID
         console.log(`New record ID is ${scenario.id}`)
     })
 })

@@ -97,7 +97,7 @@ export const CertificateEditor = observer((props: {
                         label='Name'
                         aria-label='name'
                         error={certificate.nameInvalid}
-                        // size='small'
+                        size='small'
                         value={certificate.name}
                         onChange={e => workspace.setName(e.target.value)}
                         fullWidth
@@ -112,6 +112,7 @@ export const CertificateEditor = observer((props: {
                                 id='cert-type'
                                 value={certificate.type}
                                 label='Type'
+                                size='small'
                                 onChange={e => workspace.setCertificateType(e.target.value as
                                     WorkbookCertificateType.PEM | WorkbookCertificateType.PKCS8_PEM | WorkbookCertificateType.PKCS12)}
                             >
@@ -150,6 +151,7 @@ export const CertificateEditor = observer((props: {
                                         }}
                                         rows={8}
                                         value={pemToView}
+                                        size='small'
                                         fullWidth
                                     />
                                     <Stack direction={'row'} spacing={3} position='relative'>
@@ -174,6 +176,7 @@ export const CertificateEditor = observer((props: {
                                         }}
                                         rows={8}
                                         value={keyToView}
+                                        size='small'
                                         fullWidth
                                     />
                                 </Stack>
@@ -201,6 +204,7 @@ export const CertificateEditor = observer((props: {
                                             }}
                                             rows={8}
                                             value={certificate.pfx ? base64Encode(Buffer.from(certificate.pfx)) : ''}
+                                            size='small'
                                             fullWidth
                                         />
                                     </Stack>
@@ -211,6 +215,7 @@ export const CertificateEditor = observer((props: {
                                         className="password"
                                         value={certificate.password}
                                         onChange={e => workspace.setCertificatePassword(e.target.value)}
+                                        size='small'
                                         fullWidth
                                     />
                                 </Stack>
@@ -242,6 +247,7 @@ export const CertificateEditor = observer((props: {
 
                                             rows={8}
                                             value={pemToView}
+                                            size='small'
                                             fullWidth
                                         />
                                     </Stack>

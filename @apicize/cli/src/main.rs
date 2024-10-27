@@ -437,6 +437,7 @@ async fn main() {
                     Some(vec![request_id.clone()]),
                     None,
                     arc_test_started.clone(),
+                    None,
                 )
                 .await;
 

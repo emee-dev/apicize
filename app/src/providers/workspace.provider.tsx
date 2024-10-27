@@ -4,7 +4,6 @@ import { Window } from "@tauri-apps/api/window"
 import { useFeedback, useFileOperations, WorkspaceContext, WorkspaceStore } from "@apicize/toolkit";
 import { ReactNode, useEffect, useRef } from "react";
 import { reaction } from 'mobx';
-import { listen } from '@tauri-apps/api/event';
 
 /**
  * Implementation of window management via Tauri
@@ -63,25 +62,8 @@ export function WorkspaceProvider({ store, children }: { store: WorkspaceStore, 
             }
         })
 
-        const unlistenShortcuts = listen<string>('shortcut', async (e) => {
-            switch (e.payload) {
-                case 'new':
-                    await fileOps.newWorkbook()
-                    break;
-                case 'open':
-                    await fileOps.openWorkbook()
-                    break;
-                case 'save':
-                    await fileOps.saveWorkbook()
-                    break;
-                case 'saveAs':
-                    await fileOps.saveWorkbookAs()
-                    break;
-            }
-        })
         return (() => {
             unlistenClose.then(f => f())
-            unlistenShortcuts.then(f => f())
         })
     }, [fileOps, feedback, store])
 

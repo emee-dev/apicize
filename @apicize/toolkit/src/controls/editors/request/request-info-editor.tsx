@@ -17,7 +17,8 @@ export const RequestInfoEditor = observer(() => {
 
     workspace.nextHelpTopic = 'requests/info'
     const request = workspace.active as EditableWorkbookRequest
-    const execution = workspace.getExecution(request.id)
+    const execution = workspace.executions.get(request.id)
+    const running = execution?.running ?? false
 
     const methodMenuItems = () => {
         return WorkbookMethods.map(method => (
@@ -46,7 +47,7 @@ export const RequestInfoEditor = observer(() => {
                     label="Name"
                     aria-label='request name'
                     required
-                    // size="small"
+                    size="small"
                     value={request.name}
                     onChange={e => workspace.setName(e.target.value)}
                     error={request.nameInvalid}
@@ -60,7 +61,7 @@ export const RequestInfoEditor = observer(() => {
                     label="URL"
                     aria-label='request url'
                     required
-                    // size="small"
+                    size="small"
                     value={request.url}
                     onChange={e => workspace.setRequestUrl(e.target.value)}
                     error={request.urlInvalid}
@@ -68,8 +69,8 @@ export const RequestInfoEditor = observer(() => {
                     fullWidth
                 />
             </Grid2>
-            <Grid2>
-                <Stack display='flex' direction='row' justifyItems='center'>
+            <Grid2 container direction='row' spacing={2}>
+                <Grid2>
                     <FormControl>
                         <InputLabel id='request-method-label-id'>Method</InputLabel>
                         <Select
@@ -77,32 +78,37 @@ export const RequestInfoEditor = observer(() => {
                             aria-labelledby='request-method-label-id'
                             id="request-method"
                             value={request.method}
-                            label="Method"
                             onChange={e => workspace.setRequestMethod(e.target.value as WorkbookMethod)}
+                            size='small'
+                            label="Method"
                         >
                             {methodMenuItems()}
                         </Select>
                     </FormControl>
+                </Grid2>
+                <Grid2>
                     <FormControl>
                         <TextField
                             aria-label='request timeout in milliseconds'
                             placeholder='Timeout in Milliseconds'
                             label='Timeout'
-                            sx={{ marginLeft: '24px', width: '8em' }}
+                            size='small'
+                            sx={{ width: '8em' }}
                             type='number'
                             value={request.timeout}
                             onChange={e => workspace.setRequestTimeout(parseInt(e.target.value))}
                         />
                     </FormControl>
-                </Stack>
+                </Grid2>
             </Grid2>
-            <Grid2>
-                <Stack display='flex' direction='row' justifyItems='center'>
+            <Grid2 container direction='row' spacing={2}>
+                <Grid2 container direction='row' spacing={0}>
                     <TextField
                         aria-label='Nubmer of Run Attempts'
                         placeholder='Attempts'
                         label='# of Runs'
-                        disabled={execution.running}
+                        disabled={running}
+                        size='small'
                         sx={{ width: '8em', flexGrow: 0 }}
                         type='number'
                         slotProps={{
@@ -114,26 +120,29 @@ export const RequestInfoEditor = observer(() => {
                         value={request.runs}
                         onChange={e => updateRuns(parseInt(e.target.value))}
                     />
-                    <ToggleButton value='Run' title='Run selected request' disabled={execution.running} onClick={handleRunClick()} sx={{marginRight: '2em'}}>
-                        <PlayCircleFilledIcon color={execution.running ? 'disabled' : 'success'} />
+                    <ToggleButton value='Run' title={`Run selected request ${request.runs} times`} disabled={running} size='small' onClick={handleRunClick()}>
+                        <PlayCircleFilledIcon color={running ? 'disabled' : 'success'} />
                     </ToggleButton>
+                </Grid2>
+                <Grid2>
                     <FormControl>
-                    <InputLabel id='multirun-execution-label-id'>Multiple Run Execution Mode</InputLabel>
-                    <Select
-                        labelId='execution-label-id'
-                        id='multi-run-execution'
-                        aria-labelledby='multirun-execution-label-id'
-                        value={request.multiRunExecution}
-                        sx={{ width: '14em' }}
-                        label='Multiple Run Execution Mode'
-                        onChange={e => workspace.setMultiRunExecution(e.target.value as WorkbookGroupExecution)}
-                    >
-                        <MenuItem value={WorkbookGroupExecution.Sequential}>Sequential</MenuItem>
-                        <MenuItem value={WorkbookGroupExecution.Concurrent}>Concurrent</MenuItem>
-                    </Select>
-                </FormControl>
-
-                </Stack>
+                        <InputLabel id='multirun-execution-label-id'>Multi-Run Execution</InputLabel>
+                        <Select
+                            labelId='execution-label-id'
+                            id='multi-run-execution'
+                            aria-labelledby='multirun-execution-label-id'
+                            value={request.multiRunExecution}
+                            disabled={request.runs < 2}
+                            size='small'
+                            sx={{ minWidth: '11em' }}
+                            label='Multi-Run Execution'
+                            onChange={e => workspace.setMultiRunExecution(e.target.value as WorkbookGroupExecution)}
+                        >
+                            <MenuItem value={WorkbookGroupExecution.Sequential}>Sequential</MenuItem>
+                            <MenuItem value={WorkbookGroupExecution.Concurrent}>Concurrent</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Grid2>
             </Grid2>
         </Grid2>
     )

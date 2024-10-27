@@ -38,6 +38,7 @@ async fn run_request_group(
     group_child_ids: Vec<String>,
     run_number: usize,
     mut variables: Arc<HashMap<String, Value>>,
+    override_runs: Arc<Option<usize>>,
 ) -> ApicizeExecutionGroupRun {
     let mut items: Vec<ApicizeExecutionItem> = vec![];
     let number_of_children = group_child_ids.len();
@@ -52,6 +53,7 @@ async fn run_request_group(
                 tests_started.clone(),
                 &child_id,
                 variables.clone(),
+                override_runs.clone(),
             )
             .await;
 
@@ -67,6 +69,7 @@ async fn run_request_group(
             let cloned_workspace = workspace.clone();
             let cloned_tests_started = tests_started.clone();
             let cloned_variables = variables.clone();
+            let cloned_override_runs = override_runs.clone();
             child_items.spawn(async move {
                 select! {
                     _ = cloned_token.cancelled() => None,
@@ -76,6 +79,7 @@ async fn run_request_group(
                         cloned_tests_started,
                         &id,
                         cloned_variables,
+                        cloned_override_runs,
                     ) => {
                         Some(result)
                     }
@@ -123,6 +127,7 @@ async fn run_request_item(
     tests_started: Arc<Instant>,
     request_id: &String,
     variables: Arc<HashMap<String, Value>>,
+    override_runs: Arc<Option<usize>>,
 ) -> ApicizeExecutionItem {
     let entity = workspace.requests.entities.get(request_id).unwrap();
     let params = workspace.retrieve_parameters(entity, &variables);
@@ -130,6 +135,7 @@ async fn run_request_item(
 
     let executed_at = tests_started.elapsed().as_millis();
     let start_instant = Instant::now();
+    let number_of_runs = override_runs.unwrap_or(entity.get_runs());
 
     match entity {
         WorkbookRequestEntry::Info(request) => {
@@ -140,8 +146,8 @@ async fn run_request_item(
             let shared_request = Arc::new(request.clone());
             let shared_variables = Arc::new(params.variables);
 
-            if request.multi_run_execution == WorkbookExecution::Sequential || request.runs < 2 {
-                for ctr in 0..request.runs {
+            if request.multi_run_execution == WorkbookExecution::Sequential || number_of_runs < 2 {
+                for ctr in 0..number_of_runs {
                     let run = execute_request_run(
                         workspace.clone(),
                         tests_started.clone(),
@@ -156,7 +162,7 @@ async fn run_request_item(
             } else {
                 let mut child_runs: JoinSet<Option<ApicizeExecutionRequestRun>> = JoinSet::new();
 
-                for ctr in 0..request.runs {
+                for ctr in 0..number_of_runs {
                     let cloned_cancellation_token = cancellation_token.clone();
                     let cloned_workspace = workspace.clone();
                     let cloned_test_started = tests_started.clone();
@@ -226,7 +232,7 @@ async fn run_request_item(
 
             match group.multi_run_execution {
                 WorkbookExecution::Sequential => {
-                    for ctr in 0..group.runs {
+                    for ctr in 0..number_of_runs {
                         runs.push(
                             run_request_group(
                                 workspace.clone(),
@@ -236,6 +242,7 @@ async fn run_request_item(
                                 group_child_ids.clone(),
                                 ctr + 1,
                                 variables.clone(),
+                                override_runs.clone(),
                             )
                             .await,
                         )
@@ -244,13 +251,14 @@ async fn run_request_item(
                 WorkbookExecution::Concurrent => {
                     let mut executing_runs: JoinSet<Option<ApicizeExecutionGroupRun>> =
                         JoinSet::new();
-                    for ctr in 0..group.runs {
+                    for ctr in 0..number_of_runs {
                         let cloned_workspace = workspace.clone();
                         let cloned_token = cancellation_token.clone();
                         let cloned_tests_started = tests_started.clone();
                         let cloned_execution = group.execution.clone();
                         let cloned_group_child_ids = group_child_ids.clone();
                         let cloned_variables = variables.clone();
+                        let cloned_override_runs = override_runs.clone();
 
                         executing_runs.spawn(async move {
                             select! {
@@ -263,6 +271,7 @@ async fn run_request_item(
                                     cloned_group_child_ids,
                                     ctr + 1,
                                     cloned_variables,
+                                    cloned_override_runs,
                                 ) => {
                                     Some(result)
                                 }
@@ -308,6 +317,7 @@ pub async fn run(
     request_ids: Option<Vec<String>>,
     cancellation_token: Option<CancellationToken>,
     tests_started: Arc<Instant>,
+    override_runs: Option<usize>,
 ) -> Result<ApicizeExecution, String> {
     // Ensure V8 is initialized
     V8_INIT.call_once(|| {
@@ -322,12 +332,14 @@ pub async fn run(
     };
 
     let request_ids_to_execute = request_ids.unwrap_or(workspace.requests.top_level_ids.clone());
+    let shared_override_runs = Arc::new(override_runs);
 
     let mut executing_items: JoinSet<Option<ApicizeExecutionItem>> = JoinSet::new();
     for request_id in request_ids_to_execute {
         let cloned_workspace = workspace.clone();
         let cloned_tests_started = tests_started.clone();
         let cloned_token = cancellation.clone();
+        let cloned_override_runs = shared_override_runs.clone(); 
 
         executing_items.spawn(async move {
             select! {
@@ -338,6 +350,7 @@ pub async fn run(
                     cloned_tests_started,
                     &request_id,
                     Arc::new(HashMap::new()),
+                    cloned_override_runs,
                 ) => {
                     Some(result)
                 }

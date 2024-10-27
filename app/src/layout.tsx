@@ -1,6 +1,4 @@
 import InitColorSchemeScript from '@mui/system/InitColorSchemeScript'
-import './globals.css'
-
 
 export default function RootLayout({
   children,

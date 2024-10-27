@@ -1,4 +1,4 @@
-import { ApicizeExecutionGroup, ApicizeExecutionGroupRun, ApicizeExecutionItem, ApicizeExecutionRequest, ApicizeExecutionRequestRun, ApicizeHttpResponse, ApicizeRequest, ApicizeTestResult } from "@apicize/lib-typescript";
+import { ApicizeExecution, ApicizeExecutionGroup, ApicizeExecutionGroupRun, ApicizeExecutionItem, ApicizeExecutionRequest, ApicizeExecutionRequestRun, ApicizeHttpResponse, ApicizeRequest, ApicizeTestResult } from "@apicize/lib-typescript";
 import { OverridableStringUnion } from '@mui/types'
 import { SvgIconPropsColorOverrides } from "@mui/material"
 
@@ -48,6 +48,7 @@ export interface WorkbookExecution {
      resultIndex: number
      resultMenu: WorkbookExecutionMenuItem[]
      results: Map<string, WorkbookExecutionResult>
+     response?: ApicizeExecution
 }
 
 export type InfoColorType = OverridableStringUnion<

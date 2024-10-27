@@ -8,9 +8,10 @@ use tokio_util::sync::CancellationToken;
 
 use apicize_lib::{
     models::{apicize::ApicizeExecution, ApicizeSettings, Workspace},
-    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token}, test_runner::run,
+    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token},
+    test_runner::run,
 };
-use tauri::{Emitter, Manager, State};
+use tauri::State;
 
 use std::sync::{Mutex, OnceLock};
 
@@ -42,51 +43,6 @@ fn main() {
             is_release_mode,
             get_clipboard_image_base64,
         ])
-        .setup(|app| {
-            #[cfg(desktop)]
-            {
-                use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
-
-                let ctrl_n_shortcut = Shortcut::new(Some(Modifiers::CONTROL), Code::KeyN);
-                let ctrl_o_shortcut = Shortcut::new(Some(Modifiers::CONTROL), Code::KeyO);
-                let ctrl_s_shortcut = Shortcut::new(Some(Modifiers::CONTROL), Code::KeyS);
-                let ctrl_shift_s_shortcut =
-                    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyS);
-
-                let handle = app.handle().clone();
-
-                let shortcut_builder = tauri_plugin_global_shortcut::Builder::new();
-                app.handle().plugin(
-                    shortcut_builder
-                        .with_handler(move |_app, shortcut, _event| {
-                            let focused = _app
-                                .get_webview_window("main")
-                                .unwrap()
-                                .is_focused()
-                                .unwrap();
-                            if focused {
-                                if shortcut == &ctrl_n_shortcut {
-                                    handle.emit("shortcut", "new").unwrap()
-                                } else if shortcut == &ctrl_o_shortcut {
-                                    handle.emit("shortcut", "open").unwrap()
-                                } else if shortcut == &ctrl_s_shortcut {
-                                    handle.emit("shortcut", "save").unwrap()
-                                } else if shortcut == &ctrl_shift_s_shortcut {
-                                    handle.emit("shortcut", "saveAs").unwrap()
-                                }
-                            }
-                        })
-                        .build(),
-                )?;
-
-                app.global_shortcut().register(ctrl_n_shortcut)?;
-                app.global_shortcut().register(ctrl_o_shortcut)?;
-                app.global_shortcut().register(ctrl_s_shortcut)?;
-                app.global_shortcut().register(ctrl_shift_s_shortcut)?;
-            }
-
-            Ok(())
-        })
         .run(tauri::generate_context!())
         .expect("error running Apicize");
 }
@@ -135,7 +91,11 @@ fn cancellation_tokens() -> &'static Mutex<HashMap<String, CancellationToken>> {
 }
 
 #[tauri::command]
-async fn run_request(workspace: Workspace, request_id: String) -> Result<ApicizeExecution, String> {
+async fn run_request(
+    workspace: Workspace,
+    request_id: String,
+    override_runs: Option<usize>,
+) -> Result<ApicizeExecution, String> {
     let arc_workspace = Arc::new(workspace);
     let arc_test_started = Arc::new(Instant::now());
     let cancellation = CancellationToken::new();
@@ -151,6 +111,7 @@ async fn run_request(workspace: Workspace, request_id: String) -> Result<Apicize
         Some(vec![request_id.clone()]),
         Some(cancellation),
         arc_test_started,
+        override_runs,
     )
     .await;
 
@@ -196,5 +157,5 @@ fn get_clipboard_image_base64(clipboard: State<Clipboard>) -> Result<String, Str
 
 #[tauri::command]
 fn is_release_mode() -> bool {
-    ! cfg!(debug_assertions)
+    !cfg!(debug_assertions)
 }

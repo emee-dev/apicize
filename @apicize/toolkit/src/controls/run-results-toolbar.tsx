@@ -31,6 +31,7 @@ export const RunResultsToolbar = observer((props: { className?: string, sx?: SxP
                             disabled={execution.running}
                             label='Runs'
                             sx={{ minWidth: '10em' }}
+                            size='small'
                             value={execution.resultIndex.toString()}
                             onChange={e => updateSelectedResult(parseInt(e.target.value))}
                         >

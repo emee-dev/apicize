@@ -74,13 +74,13 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
           }
         }
       },
-      //   MuiTreeItem: {
-      //     styleOverrides: {
-      //       content: {
-      //         padding: '0.02em'
-      //       }
-      //     },
-      //   },
+      MuiTreeItem: {
+        styleOverrides: {
+          content: {
+            padding: '0.02em'
+          }
+        }
+      },
       //   MuiIconButton: {
       //     defaultProps: {
       //       sx: { padding: '0.05em' }

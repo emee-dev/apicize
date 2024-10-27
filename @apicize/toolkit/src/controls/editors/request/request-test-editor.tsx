@@ -9,9 +9,11 @@ import { EditableEntityType } from "../../../models/workbook/editable-entity-typ
 import { EditableWorkbookRequest } from "../../../models/workbook/editable-workbook-request";
 import { observer } from "mobx-react-lite";
 import { useWorkspace } from "../../../contexts/workspace.context";
+import { useApicizeSettings } from '../../../contexts/apicize-settings.context'
 
 export const RequestTestEditor = observer(() => {
   const workspace = useWorkspace()
+  const apicizeSettings = useApicizeSettings()
 
   if (workspace.active?.entityType !== EditableEntityType.Request) {
     return null
@@ -24,8 +26,8 @@ export const RequestTestEditor = observer(() => {
     <AceEditor
       mode='javascript'
       theme='monokai'
-      fontSize='1rem'
-      lineHeight='1rem'
+      fontSize={`${apicizeSettings.fontSize}pt`}
+      lineHeight='1.1em'
       width='100%'
       height='100%'
       name='test-editor'

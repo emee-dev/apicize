@@ -33,67 +33,68 @@ const ParametersEditor = observer(() => {
 
     const lists = workspace.getDefaultParameterLists()
 
-    return <Box className='editor-panel'>
-        <EditorTitle icon={<SettingsIcon />} name='Settings - Default Workbook Parameters' />
-        <Stack spacing={3} marginTop='3em'>
-            <FormControl>
-                <InputLabel id='scenario-label-id'>Scenarios</InputLabel>
-                <Select
-                    labelId='scenario-label'
-                    aria-labelledby='scenario-label-id'
-                    id='cred-scenario'
-                    label='Scenario'
-                    value={defaults.selectedScenario.id}
-                    onChange={(e) => workspace.setDefaultScenarioId(e.target.value)}
-                    fullWidth
-                >
-                    {itemsFromSelections(lists.scenarios)}
-                </Select>
-            </FormControl>
-            <FormControl>
-                <InputLabel id='auth-label-id'>Authorization</InputLabel>
-                <Select
-                    labelId='auth-label'
-                    aria-labelledby='auth-label-id'
-                    id='cred-auth'
-                    label='Authorization'
-                    value={defaults.selectedAuthorization.id}
-                    onChange={(e) => workspace.setDefaultAuthorizationId(e.target.value)}
-                    fullWidth
-                >
-                    {itemsFromSelections(lists.authorizations)}
-                </Select>
-            </FormControl>
-            <FormControl>
-                <InputLabel id='cert-label-id'>Certificate</InputLabel>
-                <Select
-                    labelId='cert-label'
-                    aria-labelledby='cert-label-id'
-                    id='cred-cert'
-                    label='Certificate'
-                    value={defaults.selectedCertificate.id}
-                    onChange={(e) => workspace.setDefaultCertificateId(e.target.value)}
-                    fullWidth
-                >
-                    {itemsFromSelections(lists.certificates)}
-                </Select>
-            </FormControl>
-            <FormControl>
-                <InputLabel id='proxy-label-id'>Proxy</InputLabel>
-                <Select
-                    labelId='proxy-label'
-                    aria-labelledby='proxy-label-id'
-                    id='cred-proxy'
-                    label='Proxy'
-                    value={defaults.selectedProxy.id}
-                    onChange={(e) => workspace.setDefaultProxyId(e.target.value)}
-                    fullWidth
-                >
-                    {itemsFromSelections(lists.proxies)}
-                </Select>
-            </FormControl>
-        </Stack>
-    </Box>
+    return <Stack spacing={3}>
+        <FormControl>
+            <InputLabel id='scenario-label-id'>Scenarios</InputLabel>
+            <Select
+                labelId='scenario-label'
+                aria-labelledby='scenario-label-id'
+                id='cred-scenario'
+                label='Scenario'
+                value={defaults.selectedScenario.id}
+                onChange={(e) => workspace.setDefaultScenarioId(e.target.value)}
+                size='small'
+                fullWidth
+            >
+                {itemsFromSelections(lists.scenarios)}
+            </Select>
+        </FormControl>
+        <FormControl>
+            <InputLabel id='auth-label-id'>Authorization</InputLabel>
+            <Select
+                labelId='auth-label'
+                aria-labelledby='auth-label-id'
+                id='cred-auth'
+                label='Authorization'
+                value={defaults.selectedAuthorization.id}
+                onChange={(e) => workspace.setDefaultAuthorizationId(e.target.value)}
+                size='small'
+                fullWidth
+            >
+                {itemsFromSelections(lists.authorizations)}
+            </Select>
+        </FormControl>
+        <FormControl>
+            <InputLabel id='cert-label-id'>Certificate</InputLabel>
+            <Select
+                labelId='cert-label'
+                aria-labelledby='cert-label-id'
+                id='cred-cert'
+                label='Certificate'
+                value={defaults.selectedCertificate.id}
+                onChange={(e) => workspace.setDefaultCertificateId(e.target.value)}
+                size='small'
+                fullWidth
+            >
+                {itemsFromSelections(lists.certificates)}
+            </Select>
+        </FormControl>
+        <FormControl>
+            <InputLabel id='proxy-label-id'>Proxy</InputLabel>
+            <Select
+                labelId='proxy-label'
+                aria-labelledby='proxy-label-id'
+                id='cred-proxy'
+                label='Proxy'
+                value={defaults.selectedProxy.id}
+                onChange={(e) => workspace.setDefaultProxyId(e.target.value)}
+                size='small'
+                fullWidth
+            >
+                {itemsFromSelections(lists.proxies)}
+            </Select>
+        </FormControl>
+    </Stack>
 })
 
 const DisplaySettingsEditor = observer(() => {
@@ -138,9 +139,8 @@ const DisplaySettingsEditor = observer(() => {
         checkSave(++saveCtr)
     }
 
-    return <Box className='editor-panel'>
-        <EditorTitle icon={<SettingsIcon />} name='Settings - Display' />
-        <Stack direction={'column'} spacing={2} marginTop='3em'>
+    return <Box>
+        <Stack direction={'column'} spacing={2}>
             <Stack direction={'row'} display='flex' alignItems='center' justifyContent='left'>
                 <InputLabel id='text-size-label-id' sx={{ width: '8em' }} >Text Size:</InputLabel>
                 <IconButton onClick={() => increase()} aria-label="increase font size" disabled={!canIncrease}><AddIcon /></IconButton>
@@ -152,6 +152,7 @@ const DisplaySettingsEditor = observer(() => {
                 <Select
                     value={settings.colorScheme}
                     onChange={(event) => setScheme(event.target.value as SupportedColorScheme)}
+                    size='small'
                 >
                     <MenuItem value="light">Light</MenuItem>
                     <MenuItem value="dark">Dark</MenuItem>
@@ -201,9 +202,12 @@ export const SettingsEditor = observer((props: { sx: SxProps }) => {
     }
 
     return (
-        <Stack direction='column' className='editor' sx={{ ...props.sx, display: 'flex' }}>
-            <Stack sx={{ height: '50vh', paddingBottom: '48px', flexBasis: 2 }}>
-                <Box sx={{ display: "flex", bottom: 0 }}>
+        <Box className='editor'>
+            <Box className='editor-single-panel'>
+                <Stack direction='row' className='editor-panel-header'>
+                    <EditorTitle icon={<SettingsIcon />} name={`Settings - ${usePanel}`} />
+                </Stack>
+                <Stack direction='row' flexGrow={1}>
                     <ToggleButtonGroup
                         className='button-column'
                         orientation='vertical'
@@ -212,23 +216,23 @@ export const SettingsEditor = observer((props: { sx: SxProps }) => {
                         value={usePanel}
                         sx={{ marginRight: '24px' }}
                         aria-label="text alignment">
-                        <ToggleButton value="Parameters" title="Show Default Request Parameters" aria-label='show default parameters'><AltRouteIcon /></ToggleButton>
-                        <ToggleButton value="Display" title="Show Display Setttings" aria-label='show display settings'><DisplaySettingsIcon /></ToggleButton>
+                        <ToggleButton value="Parameters" title="Show Default Request Parameters" aria-label='show default parameters' size='small'><AltRouteIcon /></ToggleButton>
+                        <ToggleButton value="Display" title="Show Display Setttings" aria-label='show display settings' size='small'><DisplaySettingsIcon /></ToggleButton>
                         ({
                             hasWarnings
                                 ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
                                 : null
                         })
                     </ToggleButtonGroup>
-                    <Box className='panels' sx={{ flexGrow: 1 }}>
+                    <Box flexGrow={1} className='panels'>
                         {usePanel === 'Parameters' ? <ParametersEditor />
                             : usePanel === 'Display' ? <DisplaySettingsEditor />
                                 : usePanel === 'Warnings' ? <EditWarningsEditor warnings={workspace.workspace.defaults?.warnings} />
                                     : null}
                     </Box>
-                </Box>
-            </Stack>
-        </Stack>
+                </Stack>
+            </Box>
+        </Box>
     )
 })
 

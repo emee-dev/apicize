@@ -51,9 +51,36 @@ export type WorkbookBodyData = string | WorkbookNameValuePair[]
 export const WorkbookBodyTypes = [WorkbookBodyType.None, WorkbookBodyType.Text, WorkbookBodyType.JSON,
     WorkbookBodyType.XML, WorkbookBodyType.Form, WorkbookBodyType.Raw]
 
-export interface WorkbookBody {
-    type?: WorkbookBodyType
-    data?: WorkbookBodyData
+export type WorkbookBody = WorkbookBodyNone | WorkbookBodyJSON | WorkbookBodyXML | WorkbookBodyText | WorkbookBodyForm | WorkbookBodyRaw
+
+export interface WorkbookBodyNone {
+    type: WorkbookBodyType.None
+    data: undefined
+}
+
+export interface WorkbookBodyJSON {
+    type: WorkbookBodyType.JSON
+    data: string
+}
+
+export interface WorkbookBodyXML {
+    type: WorkbookBodyType.XML
+    data: string
+}
+
+export interface WorkbookBodyText {
+    type: WorkbookBodyType.Text
+    data: string
+}
+
+export interface WorkbookBodyForm {
+    type: WorkbookBodyType.Form
+    data: WorkbookNameValuePair[]
+}
+
+export interface WorkbookBodyRaw {
+    type: WorkbookBodyType.Raw
+    data: string
 }
 
 export type WorkbookRequestEntry = WorkbookRequest | WorkbookRequestGroup

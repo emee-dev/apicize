@@ -10,10 +10,13 @@ import "ace-builds/src-noconflict/mode-text"
 import "ace-builds/src-noconflict/theme-monokai"
 import "ace-builds/src-noconflict/ext-language_tools"
 import { observer } from "mobx-react-lite";
+import { useApicizeSettings } from "../../contexts/apicize-settings.context";
 
 export const MAX_TEXT_RENDER_LENGTH = 64 * 1024 * 1024
 
 export const TextViewer = observer((props: { text?: string, extension?: string }) => {
+    const apicizeSettings = useApicizeSettings()
+
     const length = props.text?.length ?? 0
     if (!(props.text && length > 0)) {
         return null
@@ -34,8 +37,8 @@ export const TextViewer = observer((props: { text?: string, extension?: string }
     return <AceEditor
         mode={mode}
         theme='monokai'
-        fontSize='1rem'
-        lineHeight='1rem'
+        fontSize={`${apicizeSettings.fontSize}pt`}
+        lineHeight='1.1em'
         width='100%'
         height='100%'
         name='code-editor'

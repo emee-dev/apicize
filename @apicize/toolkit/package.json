@@ -1,7 +1,7 @@
 {
   "name": "@apicize/toolkit",
   "private": true,
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "UI toolkit for Apicize applications",
   "keywords": [],
   "license": "MIT",
@@ -9,7 +9,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "build": "tsc",
+    "build": "tsc && shx cp ./src/toolkit.css ./dist/toolkit.css",
     "watch": "tsc --watch",
     "rebuild": "rm -rf dist && rm ./tsconfig.tsbuildinfo && tsc"
   },
@@ -29,6 +29,7 @@
     "npm": "^10.2.3",
     "prismjs": "^1.29.0",
     "reflect-metadata": "^0.1.13",
+    "shx": "^0.3.4",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1",
     "typescript": "^5",
@@ -40,7 +41,7 @@
     "mobx-react-lite": "^4.0.7"
   },
   "dependencies": {
-    "@apicize/lib-typescript": "^0.7.1",
+    "@apicize/lib-typescript": "^0.8.0",
     "@dnd-kit/core": "^6.1.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
