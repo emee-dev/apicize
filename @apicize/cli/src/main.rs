@@ -1,7 +1,6 @@
-use apicize_lib::get_workbooks_directory;
-use apicize_lib::models::apicize::{ApicizeExecution, ApicizeExecutionItem};
-use apicize_lib::models::settings::ApicizeSettings;
-use apicize_lib::models::{open_data_stream, Parameters, Warnings, Workspace};
+use apicize_lib::apicize::{ApicizeExecution, ApicizeExecutionItem};
+use apicize_lib::settings::ApicizeSettings;
+use apicize_lib::{open_data_stream, Parameters, Warnings, Workspace};
 use apicize_lib::test_runner::{cleanup_v8, run};
 use clap::Parser;
 use colored::Colorize;
@@ -294,7 +293,7 @@ async fn main() {
         writeln!(
             feedback,
             "Default workbooks directory: {}",
-            get_workbooks_directory().to_string_lossy()
+            ApicizeSettings::get_workbooks_directory().to_string_lossy()
         )
         .unwrap();
     }
@@ -457,7 +456,7 @@ async fn main() {
             executions.into_values().collect();
         for execution in &execution_values {
             writeln!(feedback).unwrap();
-            failure_count += process_execution(&execution, 0, &locale, &mut feedback);
+            failure_count += process_execution(execution, 0, &locale, &mut feedback);
         }
 
         output_file.runs.insert(run_number, execution_values);

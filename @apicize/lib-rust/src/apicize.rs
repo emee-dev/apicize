@@ -382,7 +382,7 @@ impl ExecutionTotalsSource for ApicizeExecutionRequestRun {
     }
 
     fn get_variables(&self) -> &Option<HashMap<String, Value>> {
-        return &self.variables;
+        &self.variables
     }
 }
 
@@ -412,7 +412,7 @@ impl ExecutionTotalsSource for ApicizeExecutionGroupRun {
     }
 
     fn get_variables(&self) -> &Option<HashMap<String, Value>> {
-        return &self.variables;
+        &self.variables
     }
 }
 

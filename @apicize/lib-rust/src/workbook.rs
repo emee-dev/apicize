@@ -436,11 +436,11 @@ pub struct Workbook {
 
 impl Identifable for Selection {
     fn get_id(&self) -> &String {
-        return &self.id;
+        &self.id
     }
     
     fn get_name(&self) -> &String {
-        return &self.name;
+        &self.name
     }
     
     fn get_title(&self) -> String {
@@ -757,12 +757,12 @@ impl WorkbookAuthorization {
 impl Identifable for WorkbookAuthorization {
     fn get_id(&self) -> &String {
         let (id, _) = self.get_id_and_name();
-        return id;
+        id
     }
 
     fn get_name(&self) -> &String {
         let (_, name) = self.get_id_and_name();
-        return name;
+        name
     }
 
     fn get_title(&self) -> String {
@@ -809,11 +809,11 @@ impl WorkspaceParameter<WorkbookAuthorization> for WorkbookAuthorization {
 
 impl Identifable for WorkbookScenario {
     fn get_id(&self) -> &String {
-        return &self.id;
+        &self.id
     }
 
     fn get_name(&self) -> &String {
-        return &self.name;
+        &self.name
     }
 
     fn get_title(&self) -> String {
@@ -880,12 +880,12 @@ impl WorkbookCertificate {
 impl Identifable for WorkbookCertificate {
     fn get_id(&self) -> &String {
         let (id, _) = self.get_id_and_name();
-        return id;
+        id
     }
 
     fn get_name(&self) -> &String {
         let (_, name) = self.get_id_and_name();
-        return  name;
+        name
     }
 
     fn get_title(&self) -> String {
@@ -940,11 +940,11 @@ impl WorkbookProxy {
 
 impl Identifable for WorkbookProxy {
     fn get_id(&self) -> &String {
-        return &self.id;
+        &self.id
     }
 
     fn get_name(&self) -> &String {
-        return &self.name;
+        &self.name
     }
 
     fn get_title(&self) -> String {

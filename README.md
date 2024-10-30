@@ -160,7 +160,7 @@ As things begin to stabilize, I'll build unit and integraiton testing.  Currentl
 
 ### Building and Debugging
 
-From the project's main directory, run `yarn ui` to build and run the app using development configuration.  Run `yarn ui:watch` do the same thing, but with
+From the project's main directory, run `yarn start` to build and run the app using development configuration.  Run `yarn watch` do the same thing, but with
 rebuild if the either the **lib-typescript** or **toolkit** are updated.  When using watch mode, you'll have to Ctrl-C in the terminal window to completely 
 shut things down.
 

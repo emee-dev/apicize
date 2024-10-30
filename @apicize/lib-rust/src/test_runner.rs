@@ -29,6 +29,7 @@ use crate::{
 
 static V8_INIT: Once = Once::new();
 
+#[allow(clippy::too_many_arguments)]
 #[async_recursion]
 async fn run_request_group(
     workspace: Arc<Workspace>,
@@ -88,10 +89,8 @@ async fn run_request_group(
         }
 
         while let Some(child_results) = child_items.join_next().await {
-            if let Ok(child_result) = child_results {
-                if let Some(result) = child_result {
-                    items.push(result);
-                }
+            if let Ok(Some(result)) = child_results {
+                items.push(result);
             }
         }
     }
@@ -112,7 +111,7 @@ async fn run_request_group(
 
     for item in &items {
         executed_run.add_totals(item);
-        executed_run.variables = Option::clone(item.get_variables());
+        Clone::clone_from(&mut executed_run.variables, item.get_variables());
     }
     executed_run.items = items;
     return executed_run;
@@ -187,10 +186,8 @@ async fn run_request_item(
                 }
 
                 let completed_runs = child_runs.join_all().await;
-                for completed_run in completed_runs {
-                    if let Some(run) = completed_run {
-                        runs.push(run);
-                    }
+                for completed_run in completed_runs.into_iter().flatten() {
+                    runs.push(completed_run);
                 }
             }
 
@@ -339,7 +336,7 @@ pub async fn run(
         let cloned_workspace = workspace.clone();
         let cloned_tests_started = tests_started.clone();
         let cloned_token = cancellation.clone();
-        let cloned_override_runs = shared_override_runs.clone(); 
+        let cloned_override_runs = shared_override_runs.clone();
 
         executing_items.spawn(async move {
             select! {
