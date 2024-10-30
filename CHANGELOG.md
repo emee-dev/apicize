@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.8.2
+
+* Fix Run result dropdown formatting, more prep to spin off lib-rust
+
 # 0.8.1
 
 * Move child projects to from @apicize/ to apicize/ folder for prepreation of crates.io publish and monorepo breakup

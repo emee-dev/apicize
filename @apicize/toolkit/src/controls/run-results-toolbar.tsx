@@ -38,7 +38,7 @@ export const RunResultsToolbar = observer((props: { className?: string, sx?: SxP
                             {
                                 execution.resultMenu.map((run, index) =>
                                 (
-                                    <MenuItem key={`run-${index}`} sx={{ marginLeft: `${run.level * 2}em` }} value={index}>{run.title}</MenuItem>)
+                                    <MenuItem key={`run-${index}`} sx={{ paddingLeft: `${1 + run.level * 1.5}em`, paddingRight: '24px', lineHeight: '1.1' }} value={index}>{run.title}</MenuItem>)
                                 )
                             }
                         </Select>

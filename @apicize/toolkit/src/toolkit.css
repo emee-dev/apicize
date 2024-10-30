@@ -206,6 +206,10 @@ pre.log {
   margin-bottom: 0.5em;
 }
 
+.test-result pre {
+  line-height: 1.5;
+}
+
 .test-details {
   margin-top: 0.5em;
 }

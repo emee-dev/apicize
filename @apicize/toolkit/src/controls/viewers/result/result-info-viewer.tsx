@@ -198,8 +198,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
                     <ContentCopyIcon />
                 </IconButton>
             </Typography>
-
-            <RenderResult result={result} level={-1} sx={{ overflow: 'auto', bottom: 0, position: 'relative' }} />
+            <RenderResult result={result} level={-1} sx={{ overflow: 'auto', bottom: 0, paddingRight: '24px', position: 'relative' }} />
         </Stack >
     )
 })

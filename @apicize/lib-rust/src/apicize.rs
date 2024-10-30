@@ -59,7 +59,7 @@ pub struct ApicizeBody {
 
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-/// An appicize execution
+/// An Apicize execution of orne or more requests/groups
 pub struct ApicizeExecution {
     /// Duration of execution (milliseconds)
     pub duration: u128,
@@ -81,7 +81,7 @@ pub struct ApicizeExecution {
 
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", tag = "type")]
-/// Request or group that was executed
+/// Execution reuslts for a group or request
 pub enum ApicizeExecutionItem {
     /// Request group that is executed
     Group(Box<ApicizeExecutionGroup>),
@@ -91,7 +91,7 @@ pub enum ApicizeExecutionItem {
 
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-/// Request to test
+/// Request execution results for all runs
 pub struct ApicizeExecutionRequest {
     /// Request ID
     pub id: String,
@@ -121,7 +121,7 @@ pub struct ApicizeExecutionRequest {
 
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-/// Information about an application execution run
+/// Request execution results for a specific run
 pub struct ApicizeExecutionRequestRun {
     /// Run number (index)
     pub run_number: usize,
@@ -183,7 +183,7 @@ pub struct ApicizeTestResponse {
     pub variables: HashMap<String, Value>,
 }
 
-/// Information about an executed Apicize test
+/// Test execution results
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ApicizeTestResult {
@@ -199,7 +199,7 @@ pub struct ApicizeTestResult {
 
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-/// Group to test
+/// Group execution results for all runs
 pub struct ApicizeExecutionGroup {
     /// Request group ID
     pub id: String,
@@ -227,7 +227,7 @@ pub struct ApicizeExecutionGroup {
 
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-/// Group to test
+/// Group execution results for a specific run
 pub struct ApicizeExecutionGroupRun {
     /// Run number (index)
     pub run_number: usize,
@@ -267,4 +267,175 @@ pub struct ApicizeExecutionTotals {
     pub passed_test_count: usize,
     /// Number of failed tests, if request and tests are succesfully run
     pub failed_test_count: usize,
+}
+
+impl ExecutionTotalsSource for ApicizeExecutionItem {
+    /// Retrieve totals for an execution item
+    fn get_totals(&self) -> ApicizeExecutionTotals {
+        match self {
+            ApicizeExecutionItem::Group(group) => ApicizeExecutionTotals {
+                success: group.success,
+                requests_with_passed_tests_count: group.requests_with_passed_tests_count,
+                requests_with_failed_tests_count: group.requests_with_failed_tests_count,
+                requests_with_errors: group.requests_with_errors,
+                passed_test_count: group.passed_test_count,
+                failed_test_count: group.failed_test_count,
+            },
+            ApicizeExecutionItem::Request(request) => ApicizeExecutionTotals {
+                success: request.success,
+                requests_with_passed_tests_count: if request.passed_test_count > 0 { 1 } else { 0 },
+                requests_with_failed_tests_count: if request.failed_test_count > 0 { 1 } else { 0 },
+                requests_with_errors: if request.success { 0 } else { 1 },
+                passed_test_count: request.passed_test_count,
+                failed_test_count: request.failed_test_count,
+            },
+        }
+    }
+
+    /// Retrieve variables for item execution
+    fn get_variables(&self) -> &Option<HashMap<String, Value>> {
+        match self {
+            ApicizeExecutionItem::Group(group) => {
+                if let Some(last_run) = group.runs.last() {
+                    if let Some(last_item) = last_run.items.last() {
+                        last_item.get_variables()
+                    } else {
+                        &None
+                    }
+                } else {
+                    &None
+                }
+            }
+            ApicizeExecutionItem::Request(request) => {
+                if let Some(last_run) = request.runs.last() {
+                    &last_run.variables
+                } else {
+                    &None
+                }
+            }
+        }
+    }
+}
+
+impl ExecutionTotals for ApicizeExecutionItem {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+
+        match self {
+            ApicizeExecutionItem::Group(group) => {
+                group.requests_with_passed_tests_count +=
+                    other_totals.requests_with_passed_tests_count;
+                group.requests_with_failed_tests_count +=
+                    other_totals.requests_with_failed_tests_count;
+                group.requests_with_errors += other_totals.requests_with_errors;
+                group.passed_test_count += other_totals.passed_test_count;
+                group.failed_test_count += other_totals.failed_test_count;
+            }
+            ApicizeExecutionItem::Request(request) => {
+                request.requests_with_passed_tests_count +=
+                    other_totals.requests_with_passed_tests_count;
+                request.requests_with_failed_tests_count +=
+                    other_totals.requests_with_failed_tests_count;
+                request.requests_with_errors += other_totals.requests_with_errors;
+                request.passed_test_count += other_totals.passed_test_count;
+                request.failed_test_count += other_totals.failed_test_count;
+            }
+        }
+    }
+}
+
+impl ExecutionTotals for ApicizeExecutionGroup {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+
+        self.requests_with_passed_tests_count += other_totals.requests_with_passed_tests_count;
+        self.requests_with_failed_tests_count += other_totals.requests_with_failed_tests_count;
+        self.requests_with_errors += other_totals.requests_with_errors;
+        self.passed_test_count += other_totals.passed_test_count;
+        self.failed_test_count += other_totals.failed_test_count;
+    }
+}
+
+impl ExecutionTotals for ApicizeExecutionRequest {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+        self.success = self.success && other_totals.success;
+        self.requests_with_passed_tests_count += other_totals.requests_with_passed_tests_count;
+        self.requests_with_failed_tests_count += other_totals.requests_with_failed_tests_count;
+        self.requests_with_errors += other_totals.requests_with_errors;
+        self.passed_test_count += other_totals.passed_test_count;
+        self.failed_test_count += other_totals.failed_test_count;
+    }
+}
+
+impl ExecutionTotalsSource for ApicizeExecutionRequestRun {
+    /// Retrieve totals for an execution run
+    fn get_totals(&self) -> ApicizeExecutionTotals {
+        ApicizeExecutionTotals {
+            success: self.success,
+            requests_with_passed_tests_count: self.requests_with_passed_tests_count,
+            requests_with_failed_tests_count: self.requests_with_failed_tests_count,
+            requests_with_errors: self.requests_with_errors,
+            passed_test_count: self.passed_test_count,
+            failed_test_count: self.failed_test_count,
+        }
+    }
+
+    fn get_variables(&self) -> &Option<HashMap<String, Value>> {
+        return &self.variables;
+    }
+}
+
+impl ExecutionTotals for ApicizeExecutionRequestRun {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+        self.success = self.success && other_totals.success;
+        self.requests_with_passed_tests_count += other_totals.requests_with_passed_tests_count;
+        self.requests_with_failed_tests_count += other_totals.requests_with_failed_tests_count;
+        self.requests_with_errors += other_totals.requests_with_errors;
+        self.passed_test_count += other_totals.passed_test_count;
+        self.failed_test_count += other_totals.failed_test_count;
+    }
+}
+
+impl ExecutionTotalsSource for ApicizeExecutionGroupRun {
+    /// Retrieve totals for an execution run
+    fn get_totals(&self) -> ApicizeExecutionTotals {
+        ApicizeExecutionTotals {
+            success: self.success,
+            requests_with_passed_tests_count: self.requests_with_passed_tests_count,
+            requests_with_failed_tests_count: self.requests_with_failed_tests_count,
+            requests_with_errors: self.requests_with_errors,
+            passed_test_count: self.passed_test_count,
+            failed_test_count: self.failed_test_count,
+        }
+    }
+
+    fn get_variables(&self) -> &Option<HashMap<String, Value>> {
+        return &self.variables;
+    }
+}
+
+impl ExecutionTotals for ApicizeExecutionGroupRun {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+        self.success = self.success && other_totals.success;
+        self.requests_with_passed_tests_count += other_totals.requests_with_passed_tests_count;
+        self.requests_with_failed_tests_count += other_totals.requests_with_failed_tests_count;
+        self.requests_with_errors += other_totals.requests_with_errors;
+        self.passed_test_count += other_totals.passed_test_count;
+        self.failed_test_count += other_totals.failed_test_count;
+    }
+}
+
+impl ExecutionTotals for ApicizeExecution {
+    fn add_totals(&mut self, other: &dyn ExecutionTotalsSource) {
+        let other_totals = other.get_totals();
+        self.success = self.success && other_totals.success;
+        self.requests_with_passed_tests_count += other_totals.requests_with_passed_tests_count;
+        self.requests_with_failed_tests_count += other_totals.requests_with_failed_tests_count;
+        self.requests_with_errors += other_totals.requests_with_errors;
+        self.passed_test_count += other_totals.passed_test_count;
+        self.failed_test_count += other_totals.failed_test_count;
+    }
 }

@@ -1,444 +1,115 @@
-#![warn(missing_docs)]
-//! Apicize test routine persistence and execution.
+//! Workspace models submodule
 //!
-//! This library supports the opening, saving and dispatching Apicize functional web tests
+//! This submodule defines modules used to manage workspaces
 
-#[macro_use]
-extern crate lazy_static;
-
-pub mod models;
-pub mod oauth2_client_tokens;
-pub mod test_runner;
-
-use core::panic;
-use dirs::{config_dir, document_dir, home_dir};
-use reqwest::{ClientBuilder, Error, Identity, Proxy};
+use super::{open_data_file, workbook::*, Identifable, Parameters, SelectableOptions, SerializationFailure, SerializationSaveSuccess};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashSet;
-use std::fs::create_dir_all;
-use std::path::{Path, PathBuf};
-use std::{collections::HashMap, path, vec};
-
-use models::*;
+use std::{collections::{HashMap, HashSet}, path::{Path, PathBuf}};
 
 const NO_SELECTION_ID: &str = "\tNONE\t";
 
-/// State of a selected option
-pub enum SelectedOption<T> {
-    /// Use default parent selection (if available)
-    UseDefault,
-    /// Do not send a value for this selection
-    Off,
-    /// Use this value
-    Some(T),
+
+
+/// Trait representing parameter entity with a unique identifier
+pub trait WorkspaceParameter<T> {
+    /// Get persistence
+    fn get_persistence(&self) -> Option<Persistence>;
+
+    /// Set persistence
+    fn set_persistence(&mut self, persistence_to_set: Persistence);
+
+    /// Set persistence
+    fn clear_persistence(&mut self);
 }
 
-/// Return default workbooks directory
-pub fn get_workbooks_directory() -> path::PathBuf {
-    if let Some(directory) = document_dir() {
-        directory.join("apicize")
-    } else if let Some(directory) = home_dir() {
-        directory.join("apicize")
-    } else {
-        panic!("Operating system did not provide document or home directory")
-    }
+/// Entity that has warnings that should be shown to user upon access
+pub trait Warnings {
+    /// Retrieve warnings
+    fn get_warnings(&self) -> &Option<Vec<String>>;
+
+    /// Set warnings
+    fn add_warning(&mut self, warning: String);
 }
 
-struct ParameterResult<'a> {
-    variables: HashMap<String, Value>,
-    authorization: Option<&'a WorkbookAuthorization>,
-    certificate: Option<&'a WorkbookCertificate>,
-    proxy: Option<&'a WorkbookProxy>,
-    auth_certificate: Option<&'a WorkbookCertificate>,
-    auth_proxy: Option<&'a WorkbookProxy>,
+/// Generic for indexed, ordered entities, optionally with children
+#[derive(Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct IndexedRequests {
+    /// Top level entity IDs
+    pub top_level_ids: Vec<String>,
+
+    /// Map of parent to child entity IDs
+    pub child_ids: Option<HashMap<String, Vec<String>>>,
+
+    /// Entities indexed by ID
+    pub entities: HashMap<String, WorkbookRequestEntry>,
 }
 
-impl Workbook {
-    /// Save workbook
-    pub fn save_workbook(
-        file_name: PathBuf,
-        requests: Vec<WorkbookRequestEntry>,
-        scenarios: Vec<WorkbookScenario>,
-        authorizations: Vec<WorkbookAuthorization>,
-        certificates: Vec<WorkbookCertificate>,
-        proxies: Vec<WorkbookProxy>,
-        defaults: Option<WorkbookDefaults>,
-    ) -> Result<SerializationSaveSuccess, SerializationFailure> {
-        let save_scenarios = if scenarios.is_empty() {
-            None
-        } else {
-            Some(scenarios.clone())
-        };
-        let save_authorizations = if authorizations.is_empty() {
-            None
-        } else {
-            Some(authorizations.clone())
-        };
-        let save_certiificates = if certificates.is_empty() {
-            None
-        } else {
-            Some(certificates.clone())
-        };
-        let save_proxies = if proxies.is_empty() {
-            None
-        } else {
-            Some(proxies.clone())
-        };
+/// Generic for indexed, ordered entities
+#[derive(Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct IndexedEntities<T> {
+    /// Top level entity IDs
+    pub top_level_ids: Vec<String>,
 
-        let workbook = Workbook {
-            version: 1.0,
-            requests,
-            scenarios: save_scenarios,
-            authorizations: save_authorizations,
-            certificates: save_certiificates,
-            proxies: save_proxies,
-            defaults,
-        };
+    /// Entities indexed by ID
+    pub entities: HashMap<String, T>,
+}
 
-        save_data_file(&file_name, &workbook)
+/// Implemented IndexEntry methods
+impl<T: Identifable> IndexedEntities<T> {
+    /// Find a match based upon ID or name
+    pub fn find_match(&self, selection: &Selection) -> bool {
+        self.entities.contains_key(&selection.id)
+            || self
+                .entities
+                .values()
+                .any(|e| e.get_name().to_lowercase() == selection.name.to_lowercase())
     }
 }
 
-impl Parameters {
-    /// Return the file name for globals
-    pub fn get_globals_filename() -> path::PathBuf {
-        if let Some(directory) = config_dir() {
-            directory.join("apicize").join("globals.json")
-        } else {
-            panic!("Operating system did not provide configuration directory")
-        }
-    }
-
-    // Return the file name for private workbook options
-    fn get_private_options_filename(workbook_path: &Path) -> path::PathBuf {
-        let mut private_path = PathBuf::from(workbook_path);
-        private_path.set_extension("apicize-priv");
-        private_path
-    }
-
-    /// Return global parameters information
-    pub fn open_global_parameters(
-        global_parameters_filename: Option<PathBuf>,
-    ) -> Result<SerializationOpenSuccess<Parameters>, SerializationFailure> {
-        Self::open(if let Some(filename) = global_parameters_filename {
-            filename.clone()
-        } else {
-            Self::get_globals_filename()
-        })
-    }
-
-    /// Return workbook private parameter information
-    pub fn open_workbook_private_parameters(
-        workbook_path: &Path,
-    ) -> Result<SerializationOpenSuccess<Parameters>, SerializationFailure> {
-        Self::open(Self::get_private_options_filename(workbook_path))
-    }
-
-    /// Save global parameters information
-    pub fn save_global_parameters(
-        scenarios: &[WorkbookScenario],
-        authorizations: &[WorkbookAuthorization],
-        certificates: &[WorkbookCertificate],
-        proxies: &[WorkbookProxy],
-    ) -> Result<SerializationSaveSuccess, SerializationFailure> {
-        Self::save(
-            Self::get_globals_filename(),
-            scenarios,
-            authorizations,
-            certificates,
-            proxies,
-        )
-    }
-
-    /// Save workbook parameters information
-    pub fn save_workbook_private_parameters(
-        workbook_path: &Path,
-        scenarios: &[WorkbookScenario],
-        authorizations: &[WorkbookAuthorization],
-        certificates: &[WorkbookCertificate],
-        proxies: &[WorkbookProxy],
-    ) -> Result<SerializationSaveSuccess, SerializationFailure> {
-        Self::save(
-            Self::get_private_options_filename(workbook_path),
-            scenarios,
-            authorizations,
-            certificates,
-            proxies,
-        )
-    }
-
-    /// Return parameters information or default if parameters file does not exist
-    fn open(
-        credential_file_name: PathBuf,
-    ) -> Result<SerializationOpenSuccess<Parameters>, SerializationFailure> {
-        if Path::new(&credential_file_name).is_file() {
-            open_data_file::<Parameters>(&credential_file_name)
-        } else {
-            Ok(SerializationOpenSuccess {
-                file_name: String::from(credential_file_name.to_string_lossy()),
-                data: Parameters {
-                    version: 1.0,
-                    scenarios: None,
-                    authorizations: None,
-                    certificates: None,
-                    proxies: None,
-                },
-            })
-        }
-    }
-
-    /// Save credential information
-    fn save(
-        file_name_to_save: PathBuf,
-        scenarios: &[WorkbookScenario],
-        authorizations: &[WorkbookAuthorization],
-        certificates: &[WorkbookCertificate],
-        proxies: &[WorkbookProxy],
-    ) -> Result<SerializationSaveSuccess, SerializationFailure> {
-        let mut any = false;
-        let save_scenarios = if scenarios.is_empty() {
-            None
-        } else {
-            any = true;
-            Some(
-                scenarios
-                    .iter()
-                    .map(|e| {
-                        let mut cloned = e.clone();
-                        cloned.clear_persistence();
-                        cloned
-                    })
-                    .collect(),
-            )
-        };
-        let save_authorizations = if authorizations.is_empty() {
-            None
-        } else {
-            any = true;
-            Some(
-                authorizations
-                    .iter()
-                    .map(|e| {
-                        let mut cloned = e.clone();
-                        cloned.clear_persistence();
-                        cloned
-                    })
-                    .collect(),
-            )
-        };
-        let save_certiificates = if certificates.is_empty() {
-            None
-        } else {
-            any = true;
-            Some(
-                certificates
-                    .iter()
-                    .map(|e| {
-                        let mut cloned = e.clone();
-                        cloned.clear_persistence();
-                        cloned
-                    })
-                    .collect(),
-            )
-        };
-        let save_proxies = if proxies.is_empty() {
-            None
-        } else {
-            any = true;
-            Some(
-                proxies
-                    .iter()
-                    .map(|e| {
-                        let mut cloned = e.clone();
-                        cloned.clear_persistence();
-                        cloned
-                    })
-                    .collect(),
-            )
-        };
-
-        if any {
-            let globals = Parameters {
-                version: 1.0,
-                scenarios: save_scenarios,
-                authorizations: save_authorizations,
-                certificates: save_certiificates,
-                proxies: save_proxies,
-            };
-            save_data_file(&file_name_to_save, &globals)
-        } else {
-            delete_data_file(&file_name_to_save)
-        }
-    }
+/// Parameters applicable to a request
+pub struct RequestParameters<'a> {
+    /// Variables (inherited from scenario) for the request
+    pub variables: HashMap<String, Value>,
+    /// Applicable authorization (if any) for the request
+    pub authorization: Option<&'a WorkbookAuthorization>,
+    /// Applicable certificate (if any) for the request
+    pub certificate: Option<&'a WorkbookCertificate>,
+    /// Applicable proxy (if any) for the request
+    pub proxy: Option<&'a WorkbookProxy>,
+    /// Applicable certificate (if any) for the request's authorization
+    pub auth_certificate: Option<&'a WorkbookCertificate>,
+    /// Applicable proxy (if any) for the request's authorization
+    pub auth_proxy: Option<&'a WorkbookProxy>,
 }
 
-impl ApicizeSettings {
-    fn get_settings_directory() -> path::PathBuf {
-        if let Some(directory) = config_dir() {
-            directory.join("apicize")
-        } else {
-            panic!("Operating system did not provide configuration directory")
-        }
-    }
+/// Data type for entities used by Apicize during testing and editing.  This will be
+/// the combination of workbook, workbook credential and global settings values
+#[derive(Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Workspace {
+    /// Requests for the workspace
+    pub requests: IndexedRequests,
 
-    /// Return the file name for settings
-    fn get_settings_filename() -> path::PathBuf {
-        Self::get_settings_directory().join("settings.json")
-    }
+    /// Scenarios for the workspace
+    pub scenarios: IndexedEntities<WorkbookScenario>,
 
-    /// Open Apicize common environment from the specified name in the default path
-    pub fn open() -> Result<SerializationOpenSuccess<ApicizeSettings>, SerializationFailure> {
-        let file_name = &Self::get_settings_filename();
-        if Path::new(&file_name).is_file() {
-            open_data_file::<ApicizeSettings>(&Self::get_settings_filename())
-        } else {
-            // Return default settings if no existing settings file exists
-            let settings = ApicizeSettings {
-                last_workbook_file_name: None,
-                workbook_directory: Some(String::from(get_workbooks_directory().to_string_lossy())),
-                font_size: 12,
-                color_scheme: ColorScheme::Dark,
-                editor_panels: String::from(""),
-            };
-            Ok(SerializationOpenSuccess {
-                file_name: String::from(""),
-                data: settings,
-            })
-        }
-    }
+    /// Authorizations for the workspace
+    pub authorizations: IndexedEntities<WorkbookAuthorization>,
 
-    /// Save Apicize common environment to the specified name in the default path
-    pub fn save(&self) -> Result<SerializationSaveSuccess, SerializationFailure> {
-        let dir = Self::get_settings_directory();
-        if !Path::new(&dir).is_dir() {
-            if let Err(err) = create_dir_all(&dir) {
-                panic!("Unable to create {} - {}", &dir.to_string_lossy(), err);
-            }
-        }
-        save_data_file(&Self::get_settings_filename(), self)
-    }
-}
+    /// Certificates for the workspace
+    pub certificates: IndexedEntities<WorkbookCertificate>,
 
-impl Identifable for WorkbookScenario {
-    fn get_id_and_name(&self) -> (&String, &String) {
-        (&self.id, &self.name)
-    }
-}
+    /// Proxies for the workspace
+    pub proxies: IndexedEntities<WorkbookProxy>,
 
-impl WorkspaceParameter<WorkbookScenario> for WorkbookScenario {
-    fn get_persistence(&self) -> Option<Persistence> {
-        self.persistence
-    }
+    /// Default values for requests and groups
+    pub defaults: Option<WorkbookDefaults>,
 
-    fn set_persistence(&mut self, persistence_to_set: Persistence) {
-        self.persistence = Some(persistence_to_set);
-    }
-
-    fn clear_persistence(&mut self) {
-        self.persistence = None
-    }
-}
-
-impl Identifable for WorkbookAuthorization {
-    fn get_id_and_name(&self) -> (&String, &String) {
-        match self {
-            WorkbookAuthorization::Basic { id, name, .. } => (id, name),
-            WorkbookAuthorization::OAuth2Client { id, name, .. } => (id, name),
-            WorkbookAuthorization::ApiKey { id, name, .. } => (id, name),
-        }
-    }
-}
-
-impl WorkspaceParameter<WorkbookAuthorization> for WorkbookAuthorization {
-    fn get_persistence(&self) -> Option<Persistence> {
-        match self {
-            WorkbookAuthorization::Basic { persistence, .. } => *persistence,
-            WorkbookAuthorization::OAuth2Client { persistence, .. } => *persistence,
-            WorkbookAuthorization::ApiKey { persistence, .. } => *persistence,
-        }
-    }
-
-    fn set_persistence(&mut self, persistence_to_set: Persistence) {
-        match self {
-            WorkbookAuthorization::Basic { persistence, .. } => {
-                *persistence = Some(persistence_to_set)
-            }
-            WorkbookAuthorization::OAuth2Client { persistence, .. } => {
-                *persistence = Some(persistence_to_set)
-            }
-            WorkbookAuthorization::ApiKey { persistence, .. } => {
-                *persistence = Some(persistence_to_set)
-            }
-        }
-    }
-
-    fn clear_persistence(&mut self) {
-        match self {
-            WorkbookAuthorization::Basic { persistence, .. } => *persistence = None,
-            WorkbookAuthorization::OAuth2Client { persistence, .. } => *persistence = None,
-            WorkbookAuthorization::ApiKey { persistence, .. } => *persistence = None,
-        }
-    }
-}
-
-impl Identifable for WorkbookCertificate {
-    fn get_id_and_name(&self) -> (&String, &String) {
-        match self {
-            WorkbookCertificate::PKCS8PEM { id, name, .. } => (id, name),
-            WorkbookCertificate::PEM { id, name, .. } => (id, name),
-            WorkbookCertificate::PKCS12 { id, name, .. } => (id, name),
-        }
-    }
-}
-
-impl WorkspaceParameter<WorkbookCertificate> for WorkbookCertificate {
-    fn get_persistence(&self) -> Option<Persistence> {
-        match self {
-            WorkbookCertificate::PKCS8PEM { persistence, .. } => *persistence,
-            WorkbookCertificate::PEM { persistence, .. } => *persistence,
-            WorkbookCertificate::PKCS12 { persistence, .. } => *persistence,
-        }
-    }
-
-    fn set_persistence(&mut self, persistence_to_set: Persistence) {
-        match self {
-            WorkbookCertificate::PKCS8PEM { persistence, .. } => {
-                *persistence = Some(persistence_to_set)
-            }
-            WorkbookCertificate::PEM { persistence, .. } => *persistence = Some(persistence_to_set),
-            WorkbookCertificate::PKCS12 { persistence, .. } => {
-                *persistence = Some(persistence_to_set)
-            }
-        }
-    }
-
-    fn clear_persistence(&mut self) {
-        match self {
-            WorkbookCertificate::PKCS8PEM { persistence, .. } => *persistence = None,
-            WorkbookCertificate::PEM { persistence, .. } => *persistence = None,
-            WorkbookCertificate::PKCS12 { persistence, .. } => *persistence = None,
-        }
-    }
-}
-
-impl Identifable for WorkbookProxy {
-    fn get_id_and_name(&self) -> (&String, &String) {
-        (&self.id, &self.name)
-    }
-}
-
-impl WorkspaceParameter<WorkbookProxy> for WorkbookProxy {
-    fn get_persistence(&self) -> Option<Persistence> {
-        self.persistence
-    }
-
-    fn set_persistence(&mut self, persistence_to_set: Persistence) {
-        self.persistence = Some(persistence_to_set);
-    }
-
-    fn clear_persistence(&mut self) {
-        self.persistence = None;
-    }
+    /// Warnings regarding workspace
+    pub warnings: Option<Vec<String>>,
 }
 
 impl Workspace {
@@ -452,7 +123,7 @@ impl Workspace {
             if !ok {
                 self.add_warning(format!(
                     "Default selected scenario {} not found, defaulting to Off",
-                    get_title(selection),
+                    selection.get_title(),
                 ));
                 self.set_selected_scenario(Some(Selection {
                     id: String::from(NO_SELECTION_ID),
@@ -466,7 +137,7 @@ impl Workspace {
             if !ok {
                 self.add_warning(format!(
                     "Default authorization scenario {} not found, defaulting to Off",
-                    get_title(selection),
+                    selection.get_title(),
                 ));
                 self.set_selected_authorization(Some(Selection {
                     id: String::from(NO_SELECTION_ID),
@@ -480,7 +151,7 @@ impl Workspace {
             if !ok {
                 self.add_warning(format!(
                     "Default selected certificate {} not found, defaulting to Off",
-                    get_title(selection),
+                    selection.get_title(),
                 ));
                 self.set_selected_certificate(Some(Selection {
                     id: String::from(NO_SELECTION_ID),
@@ -494,7 +165,7 @@ impl Workspace {
             if !ok {
                 self.add_warning(format!(
                     "Default selected proxy {} not found, defaulting to Off",
-                    get_title(selection),
+                    selection.get_title(),
                 ));
                 self.set_selected_proxy(Some(Selection {
                     id: String::from(NO_SELECTION_ID),
@@ -512,7 +183,7 @@ impl Workspace {
     ) {
         if let Some(existing) = entities {
             for e in existing {
-                let (id, _) = e.get_id_and_name();
+                let id = e.get_id();
                 let mut cloned = e.clone();
                 if !index.top_level_ids.contains(id) {
                     index.top_level_ids.push(id.to_string());
@@ -619,24 +290,24 @@ impl Workspace {
     pub fn find_matching_selection<'a, T: WorkspaceParameter<T> + Identifable>(
         selection: &Option<Selection>,
         list: &'a IndexedEntities<T>,
-    ) -> SelectedOption<&'a T> {
+    ) -> WorkbookSelectedOption<&'a T> {
         match selection {
             Some(s) => {
                 if s.id == NO_SELECTION_ID {
-                    SelectedOption::Off
+                    WorkbookSelectedOption::Off
                 } else if let Some(found) = list.entities.get(&s.id) {
-                    SelectedOption::Some(found)
+                    WorkbookSelectedOption::Some(found)
                 } else {
                     match list.entities.values().find(|v| {
-                        let (_, name) = v.get_id_and_name();
+                        let name = v.get_name();
                         name.eq_ignore_ascii_case(&s.name)
                     }) {
-                        Some(found_by_name) => SelectedOption::Some(found_by_name),
-                        None => SelectedOption::UseDefault,
+                        Some(found_by_name) => WorkbookSelectedOption::Some(found_by_name),
+                        None => WorkbookSelectedOption::UseDefault,
                     }
                 }
             }
-            None => SelectedOption::UseDefault,
+            None => WorkbookSelectedOption::UseDefault,
         }
     }
 
@@ -644,7 +315,7 @@ impl Workspace {
     pub fn find_scenario(
         &self,
         selection: &Option<Selection>,
-    ) -> SelectedOption<&WorkbookScenario> {
+    ) -> WorkbookSelectedOption<&WorkbookScenario> {
         Workspace::find_matching_selection(selection, &self.scenarios)
     }
 
@@ -957,11 +628,12 @@ impl Workspace {
         Ok(successes)
     }
 
-    fn retrieve_parameters(
+    /// Retrieve the parameters for the specified request, merging in the specified variables to scenario (if specified)
+    pub fn retrieve_parameters(
         &self,
         request: &WorkbookRequestEntry,
         variables: &HashMap<String, Value>,
-    ) -> ParameterResult {
+    ) -> RequestParameters {
         let mut done = false;
 
         let mut current = request;
@@ -988,12 +660,12 @@ impl Workspace {
                     current.get_selected_scenario(),
                     &self.scenarios,
                 ) {
-                    SelectedOption::UseDefault => {}
-                    SelectedOption::Off => {
+                    WorkbookSelectedOption::UseDefault => {}
+                    WorkbookSelectedOption::Off => {
                         scenario = None;
                         allow_scenario = false;
                     }
-                    SelectedOption::Some(s) => {
+                    WorkbookSelectedOption::Some(s) => {
                         scenario = Some(s);
                     }
                 }
@@ -1003,12 +675,12 @@ impl Workspace {
                     current.get_selected_authorization(),
                     &self.authorizations,
                 ) {
-                    SelectedOption::UseDefault => {}
-                    SelectedOption::Off => {
+                    WorkbookSelectedOption::UseDefault => {}
+                    WorkbookSelectedOption::Off => {
                         authorization = None;
                         allow_authorization = false;
                     }
-                    SelectedOption::Some(s) => {
+                    WorkbookSelectedOption::Some(s) => {
                         authorization = Some(s);
                     }
                 }
@@ -1018,24 +690,24 @@ impl Workspace {
                     current.get_selected_certificate(),
                     &self.certificates,
                 ) {
-                    SelectedOption::UseDefault => {}
-                    SelectedOption::Off => {
+                    WorkbookSelectedOption::UseDefault => {}
+                    WorkbookSelectedOption::Off => {
                         certificate = None;
                         allow_certificate = false;
                     }
-                    SelectedOption::Some(s) => {
+                    WorkbookSelectedOption::Some(s) => {
                         certificate = Some(s);
                     }
                 }
             }
             if allow_proxy && proxy.is_none() {
                 match Self::find_matching_selection(current.get_selected_proxy(), &self.proxies) {
-                    SelectedOption::UseDefault => {}
-                    SelectedOption::Off => {
+                    WorkbookSelectedOption::UseDefault => {}
+                    WorkbookSelectedOption::Off => {
                         proxy = None;
                         allow_proxy = false;
                     }
-                    SelectedOption::Some(s) => {
+                    WorkbookSelectedOption::Some(s) => {
                         proxy = Some(s);
                     }
                 }
@@ -1082,14 +754,14 @@ impl Workspace {
         // Load from workbook defaults if required
         if let Some(defaults) = &self.defaults {
             if scenario.is_none() && allow_scenario {
-                if let SelectedOption::Some(v) =
+                if let WorkbookSelectedOption::Some(v) =
                     Self::find_matching_selection(&defaults.selected_scenario, &self.scenarios)
                 {
                     scenario = Some(v);
                 }
             }
             if authorization.is_none() && allow_authorization {
-                if let SelectedOption::Some(v) = Self::find_matching_selection(
+                if let WorkbookSelectedOption::Some(v) = Self::find_matching_selection(
                     &defaults.selected_authorization,
                     &self.authorizations,
                 ) {
@@ -1097,7 +769,7 @@ impl Workspace {
                 }
             }
             if certificate.is_none() && allow_certificate {
-                if let SelectedOption::Some(v) = Self::find_matching_selection(
+                if let WorkbookSelectedOption::Some(v) = Self::find_matching_selection(
                     &defaults.selected_certificate,
                     &self.certificates,
                 ) {
@@ -1105,7 +777,7 @@ impl Workspace {
                 }
             }
             if proxy.is_none() && allow_proxy {
-                if let SelectedOption::Some(v) =
+                if let WorkbookSelectedOption::Some(v) =
                     Self::find_matching_selection(&defaults.selected_proxy, &self.proxies)
                 {
                     proxy = Some(v);
@@ -1137,222 +809,13 @@ impl Workspace {
             }
         };
 
-        ParameterResult {
+        RequestParameters {
             variables: result_variables,
             authorization,
             certificate,
             proxy,
             auth_certificate,
             auth_proxy,
-        }
-    }
-}
-
-
-impl WorkbookRequestEntry {
-    /// Utility function to perform string substitution based upon search/replace values in "subs"
-    pub fn clone_and_sub(text: &str, subs: &HashMap<String, String>) -> String {
-        if subs.is_empty() {
-            text.to_string()
-        } else {
-            let mut clone = text.to_string();
-            for (find, value) in subs.iter() {
-                clone = str::replace(&clone, find, value)
-            }
-            clone
-        }
-    }
-
-    /// Retrieve request entry ID
-    pub fn get_id(&self) -> &String {
-        match self {
-            WorkbookRequestEntry::Info(info) => &info.id,
-            WorkbookRequestEntry::Group(group) => &group.id,
-        }
-    }
-
-    /// Retrieve request entry name
-    pub fn get_name(&self) -> &String {
-        match self {
-            WorkbookRequestEntry::Info(info) => &info.name,
-            WorkbookRequestEntry::Group(group) => &group.name,
-        }
-    }
-
-    /// Retrieve request entry number of runs
-    pub fn get_runs(&self) -> usize {
-        match self {
-            WorkbookRequestEntry::Info(info) => info.runs,
-            WorkbookRequestEntry::Group(group) => group.runs,
-        }
-    }
-
-    fn validate_parameters(
-        &mut self,
-        scenarios: &IndexedEntities<WorkbookScenario>,
-        authorizations: &IndexedEntities<WorkbookAuthorization>,
-        certificates: &IndexedEntities<WorkbookCertificate>,
-        proxies: &IndexedEntities<WorkbookProxy>,
-    ) {
-        if let Some(selection) = self.get_selected_scenario() {
-            let ok = scenarios.find_match(selection);
-            if !ok {
-                self.add_warning(format!(
-                    "Request {} scenario {} not found, defaulting to Parent",
-                    get_title(self),
-                    get_title(selection),
-                ));
-                self.set_selected_scenario(None);
-            }
-        }
-
-        if let Some(selection) = self.get_selected_authorization() {
-            let ok = authorizations.find_match(selection);
-            if !ok {
-                self.add_warning(format!(
-                    "Request {} authorization {} not found, defaulting to Parent",
-                    get_title(self),
-                    get_title(selection)
-                ));
-                self.set_selected_authorization(None);
-            }
-        }
-
-        if let Some(selection) = self.get_selected_certificate() {
-            let ok = certificates.find_match(selection);
-            if !ok {
-                self.add_warning(format!(
-                    "Request {} certificate {} not found, defaulting to Parent",
-                    get_title(self),
-                    get_title(selection)
-                ));
-                self.set_selected_certificate(None);
-            }
-        }
-
-        if let Some(selection) = self.get_selected_proxy() {
-            let ok = proxies.find_match(selection);
-            if !ok {
-                self.add_warning(format!(
-                    "Request {} selected proxy {} not found, defaulting to Parent",
-                    get_title(self),
-                    get_title(selection)
-                ));
-                self.set_selected_proxy(None);
-            }
-        }
-    }
-}
-
-impl Identifable for WorkbookRequestEntry {
-    fn get_id_and_name(&self) -> (&String, &String) {
-        (self.get_id(), self.get_name())
-    }
-}
-
-impl WorkbookCertificate {
-    /// Append certificate to builder
-    pub fn append_to_builder(
-        &self,
-        builder: ClientBuilder,
-    ) -> Result<ClientBuilder, ExecutionError> {
-        let identity_result = match self {
-            WorkbookCertificate::PKCS12 { pfx, password, .. } => Identity::from_pkcs12_der(
-                pfx,
-                password.clone().unwrap_or(String::from("")).as_str(),
-            ),
-            WorkbookCertificate::PKCS8PEM { pem, key, .. } => Identity::from_pkcs8_pem(pem, key),
-            WorkbookCertificate::PEM { pem, .. } => Identity::from_pem(pem),
-        };
-
-        match identity_result {
-            Ok(identity) => {
-                // request_certificate = Some(cert.clone());
-                Ok(
-                    builder
-                        .identity(identity)
-                        // .connection_verbose(true)
-                        .use_native_tls(), // .tls_info(true)
-                )
-            }
-            Err(err) => Err(ExecutionError::Reqwest(err)),
-        }
-    }
-}
-
-impl WorkbookProxy {
-    /// Append proxy to builder
-    pub fn append_to_builder(&self, builder: ClientBuilder) -> Result<ClientBuilder, Error> {
-        match Proxy::all(&self.url) {
-            Ok(proxy) => Ok(builder.proxy(proxy)),
-            Err(err) => Err(err),
-        }
-    }
-}
-
-fn get_title(entity: &dyn Identifable) -> String {
-    let (id, name) = entity.get_id_and_name();
-    if name.is_empty() {
-        format!("{} (Unnamed)", id)
-    } else {
-        name.to_string()
-    }
-}
-
-impl SelectableOptions for WorkbookRequestEntry {
-    fn get_selected_scenario(&self) -> &Option<Selection> {
-        match self {
-            WorkbookRequestEntry::Info(info) => &info.selected_scenario,
-            WorkbookRequestEntry::Group(group) => &group.selected_scenario,
-        }
-    }
-
-    fn get_selected_authorization(&self) -> &Option<Selection> {
-        match self {
-            WorkbookRequestEntry::Info(info) => &info.selected_authorization,
-            WorkbookRequestEntry::Group(group) => &group.selected_authorization,
-        }
-    }
-
-    fn get_selected_certificate(&self) -> &Option<Selection> {
-        match self {
-            WorkbookRequestEntry::Info(info) => &info.selected_certificate,
-            WorkbookRequestEntry::Group(group) => &group.selected_certificate,
-        }
-    }
-
-    fn get_selected_proxy(&self) -> &Option<Selection> {
-        match self {
-            WorkbookRequestEntry::Info(info) => &info.selected_proxy,
-            WorkbookRequestEntry::Group(group) => &group.selected_proxy,
-        }
-    }
-
-    fn set_selected_scenario(&mut self, value: Option<Selection>) {
-        match self {
-            WorkbookRequestEntry::Info(info) => info.selected_scenario = value,
-            WorkbookRequestEntry::Group(group) => group.selected_scenario = value,
-        }
-    }
-
-    fn set_selected_authorization(&mut self, value: Option<Selection>) {
-        match self {
-            WorkbookRequestEntry::Info(info) => info.selected_authorization = value,
-            WorkbookRequestEntry::Group(group) => group.selected_authorization = value,
-        }
-    }
-
-    fn set_selected_certificate(&mut self, value: Option<Selection>) {
-        match self {
-            WorkbookRequestEntry::Info(info) => info.selected_certificate = value,
-            WorkbookRequestEntry::Group(group) => group.selected_certificate = value,
-        }
-    }
-
-    fn set_selected_proxy(&mut self, value: Option<Selection>) {
-        match self {
-            WorkbookRequestEntry::Info(info) => info.selected_proxy = value,
-            WorkbookRequestEntry::Group(group) => group.selected_proxy = value,
         }
     }
 }
@@ -1443,127 +906,16 @@ impl SelectableOptions for Workspace {
     }
 }
 
-// #[cfg(test)]
-// mod lib_tests {
 
-//     use super::models::{WorkbookRequest, WorkbookRequestMethod};
-//     use crate::{ExecutionError, WorkbookRequestEntry};
+impl Warnings for Workspace {
+    fn get_warnings(&self) -> &Option<Vec<String>> {
+        &self.warnings
+    }
 
-//     #[tokio::test]
-//     async fn test_dispatch_success() -> Result<(), ExecutionError> {
-//         let mut server = mockito::Server::new();
-
-//         // Use one of these addresses to configure your client
-//         let url = server.url();
-
-//         // Create a mock
-//         let mock = server
-//             .mock("GET", "/")
-//             .with_status(200)
-//             .with_header("content-type", "text/plain")
-//             .with_header("x-api-key", "1234")
-//             .with_body("ok")
-//             .create();
-
-//         let request = WorkbookRequest {
-//             id: String::from(""),
-//             name: String::from("test"),
-//             url,
-//             method: Some(WorkbookRequestMethod::Get),
-//             timeout: None,
-//             keep_alive: None,
-//             runs: 1,
-//             headers: None,
-//             query_string_params: None,
-//             body: None,
-//             test: None,
-//             selected_scenario: None,
-//             selected_authorization: None,
-//             selected_certificate: None,
-//             selected_proxy: None,
-//         };
-
-//         let result = WorkbookRequestEntry::dispatch(&request, &None, &None, &None).await;
-//         mock.assert();
-
-//         match result {
-//             Ok((_, response)) => {
-//                 assert_eq!(response.status, 200);
-//                 assert_eq!(response.body.unwrap().text.unwrap(), String::from("ok"));
-//                 Ok(())
-//             }
-//             Err(err) => Err(err),
-//         }
-//     }
-
-//     // #[test]
-//     // fn test_perform_test_success() {
-//     //     let request = WorkbookRequest {
-//     //         id: String::from(""),
-//     //         name: String::from("Test #1"),
-//     //         url: String::from("https://foo"),
-//     //         method: Some(WorkbookRequestMethod::Get),
-//     //         timeout: None,
-//     //         body: None,
-//     //         headers: None,
-//     //         query_string_params: None,
-//     //         keep_alive: None,
-//     //         test: Some(String::from("describe(\"Status\", () => it(\"equals 200\", () => expect(response.status).to.equal(200)))"))
-//     //     };
-//     //     let response = ApicizeResponse {
-//     //         status: 200,
-//     //         status_text: String::from("Ok"),
-//     //         headers: None,
-//     //         body: None,
-//     //         auth_token_cached: None,
-//     //     };
-
-//     //     let result = request.execute(&response).unwrap();
-
-//     //     assert_eq!(
-//     //         result,
-//     //         vec!(ApicizeTestResult {
-//     //             test_name: vec![String::from("Status"), String::from("equals 200")],
-//     //             success: true,
-//     //             error: None,
-//     //             logs: None
-//     //         })
-//     //     );
-//     // }
-
-//     // #[test]
-//     // fn test_perform_test_fail() {
-//     //     let request = WorkbookRequest {
-//     //         id: String::from(""),
-//     //         name: String::from("Test #1"),
-//     //         url: String::from("https://foo"),
-//     //         method: Some(WorkbookRequestMethod::Get),
-//     //         timeout: None,
-//     //         body: None,
-//     //         headers: None,
-//     //         query_string_params: None,
-//     //         keep_alive: None,
-//     //         test: Some(String::from("describe(\"Status\", () => it(\"equals 200\", () => expect(response.status).to.equal(200)))"))
-//     //     };
-
-//     //     let response = ApicizeResponse {
-//     //         status: 404,
-//     //         status_text: String::from("Not Found"),
-//     //         headers: None,
-//     //         body: None,
-//     //         auth_token_cached: None,
-//     //     };
-
-//     //     let result = request.execute(&response).unwrap();
-
-//     //     assert_eq!(
-//     //         result,
-//     //         vec!(ApicizeTestResult {
-//     //             test_name: vec![String::from("Status"), String::from("equals 200")],
-//     //             success: false,
-//     //             error: Some(String::from("expected 404 to equal 200")),
-//     //             logs: None
-//     //         })
-//     //     );
-//     // }
-// }
+    fn add_warning(&mut self, warning: String) {
+        match &mut self.warnings {
+            Some(warnings) => warnings.push(warning),
+            None => self.warnings = Some(vec![warning])
+        }
+    }
+}

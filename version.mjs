@@ -35,11 +35,11 @@ try {
     let version = process.argv[2]
     console.log(`Set version to ${version} `)
 
-    replaceVersionNumber('apicize/cli/Cargo.toml', version, '\nversion = "__VERSION__"\n', '\napicize_lib = { path = "../lib-rust", version = "^__VERSION__" }\n')
-    replaceVersionNumber('apicize/lib-rust/Cargo.toml', version, '\nversion = "__VERSION__"\n')
-    replaceVersionNumber('apicize/lib-typescript/package.json', version, '"version": "__VERSION__",\n')
-    replaceVersionNumber('apicize/toolkit/package.json', version, '"version": "__VERSION__",\n', '"@apicize/lib-typescript": "^__VERSION__",\n')
-    replaceVersionNumber('app/src-tauri/Cargo.toml', version, '\nversion = "__VERSION__"\n', '\napicize_lib = { version = "__VERSION__", path = "../../apicize/lib-rust" }\n')
+    replaceVersionNumber('@apicize/cli/Cargo.toml', version, '\nversion = "__VERSION__"\n', '\napicize-lib = { path = "../lib-rust", version = "^__VERSION__" }\n')
+    replaceVersionNumber('@apicize/lib-rust/Cargo.toml', version, '\nversion = "__VERSION__"\n')
+    replaceVersionNumber('@apicize/lib-typescript/package.json', version, '"version": "__VERSION__",\n')
+    replaceVersionNumber('@apicize/toolkit/package.json', version, '"version": "__VERSION__",\n', '"@apicize/lib-typescript": "^__VERSION__",\n')
+    replaceVersionNumber('app/src-tauri/Cargo.toml', version, '\nversion = "__VERSION__"\n', '\napicize-lib = { version = "__VERSION__", path = "../../@apicize/lib-rust" }\n')
     replaceVersionNumber('app/src-tauri/tauri.conf.json', version, '"version": "__VERSION__",\n')
     replaceVersionNumber('app/package.json', version, '"version": "__VERSION__",\n', '"@apicize/toolkit": "^__VERSION__",\n')
 

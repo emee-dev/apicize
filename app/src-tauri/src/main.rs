@@ -7,7 +7,7 @@ use tokio_util::sync::CancellationToken;
 // use tauri_plugin_log::{Target, TargetKind};
 
 use apicize_lib::{
-    models::{apicize::ApicizeExecution, ApicizeSettings, Workspace},
+    apicize::ApicizeExecution, ApicizeSettings, Workspace,
     oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token},
     test_runner::run,
 };
