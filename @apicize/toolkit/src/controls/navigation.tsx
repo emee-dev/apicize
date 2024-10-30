@@ -284,7 +284,9 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                             <Box className='nav-node-text'>
                                 {GetTitle(props.item)}
                             </Box>
-                            {isRunning ? <PlayArrowIcon className='running-icon' color="success" /> : null}
+                            <Box display='inline-flex' width='2em' paddingLeft='0.3em' justifyItems='center' justifyContent='left'>
+                                {isRunning ? <PlayArrowIcon color="success" /> : null}
+                            </Box>
                             <IconButton
                                 sx={{
                                     visibility: props.item.id === workspace.active?.id ? 'normal' : 'hidden'
@@ -354,7 +356,9 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                                 }
                                 {GetTitle(props.item)}
                             </Box>
-                            {isRunning ? <PlayArrowIcon className='running-icon' /> : null}
+                            <Box display='inline-flex' width='2em' paddingLeft='0.3em' justifyItems='center' justifyContent='left'>
+                                {isRunning ? <PlayArrowIcon color="success" /> : null}
+                            </Box>
                             <IconButton
                                 sx={{
                                     visibility: props.item.id === workspace.active?.id ? 'normal' : 'hidden'

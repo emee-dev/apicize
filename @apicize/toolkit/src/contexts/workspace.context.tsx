@@ -350,8 +350,10 @@ export class WorkspaceStore {
                 request.timeout = entry.timeout
                 request.headers = entry.headers.map(h => ({ ...h, id: GenerateIdentifier() } as EditableNameValuePair))
                 request.queryStringParams = entry.queryStringParams.map(q => ({ ...q, id: GenerateIdentifier() } as EditableNameValuePair))
-                request.body = entry.body ? structuredClone(entry.body) : { type: WorkbookBodyType.None, data: undefined },
-                    request.test = entry.test
+                request.body = entry.body
+                    ? structuredClone(toJS(entry.body))
+                    : { type: WorkbookBodyType.None, data: undefined }
+                request.test = entry.test
                 this.workspace.requests.entities.set(request.id, request)
                 return request
             }
@@ -382,15 +384,15 @@ export class WorkspaceStore {
         }
 
         const source = getNestedEntity(id, this.workspace.requests)
-        const entry = copyEntry(source, true)
-        this.workspace.requests.entities.set(entry.id, entry)
+        const copiedEntry = copyEntry(source, true)
+        this.workspace.requests.entities.set(copiedEntry.id, copiedEntry)
 
         let append = true
         if (this.workspace.requests.childIds) {
             for (const childIDs of this.workspace.requests.childIds.values()) {
                 let idxChild = childIDs.indexOf(id)
                 if (idxChild !== -1) {
-                    childIDs.splice(idxChild + 1, 0, entry.id)
+                    childIDs.splice(idxChild + 1, 0, copiedEntry.id)
                     append = false
                     break
                 }
@@ -400,17 +402,17 @@ export class WorkspaceStore {
         if (append) {
             const idx = this.workspace.requests.topLevelIds.indexOf(id)
             if (idx !== -1) {
-                this.workspace.requests.topLevelIds.splice(idx + 1, 0, entry.id)
+                this.workspace.requests.topLevelIds.splice(idx + 1, 0, copiedEntry.id)
                 append = false
             }
         }
 
         if (append) {
-            this.workspace.requests.topLevelIds.push(entry.id)
+            this.workspace.requests.topLevelIds.push(copiedEntry.id)
         }
 
         this.dirty = true
-        this.changeActive(EditableEntityType.Request, entry.id)
+        this.changeActive(EditableEntityType.Request, copiedEntry.id)
     }
 
     @action
@@ -479,7 +481,6 @@ export class WorkspaceStore {
         if (this.active?.entityType === EditableEntityType.Request) {
             const request = this.active as EditableWorkbookRequest
             let newBody: WorkbookBody
-            debugger
             if (request.body && request.body.data) {
                 switch (value) {
                     case WorkbookBodyType.Raw:
@@ -588,6 +589,15 @@ export class WorkspaceStore {
         if (this.active?.entityType === EditableEntityType.Request) {
             const request = this.active as EditableWorkbookRequest
             request.body = body
+            this.dirty = true
+        }
+    }
+
+    @action
+    setRequestBodyData(value: string | EditableNameValuePair[]) {
+        if (this.active?.entityType === EditableEntityType.Request) {
+            const request = this.active as EditableWorkbookRequest
+            request.body.data = value
             this.dirty = true
         }
     }

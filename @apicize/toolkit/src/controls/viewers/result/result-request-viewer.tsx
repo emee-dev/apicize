@@ -23,7 +23,6 @@ export const ResultRequestViewer = observer((props: {
     const request = result.request
     if (! request) return null
 
-
     const text = beautify.js_beautify(JSON.stringify(request), {})
     return (
         <Stack sx={{ bottom: 0, overflow: 'hidden', position: 'relative', height: '100%', display: 'flex' }}>

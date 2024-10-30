@@ -12,6 +12,7 @@ import "ace-builds/src-noconflict/mode-json"
 import "ace-builds/src-noconflict/mode-xml"
 import "ace-builds/src-noconflict/theme-monokai"
 import "ace-builds/src-noconflict/ext-language_tools"
+import { beautify } from "ace-builds/src-noconflict/ext-beautify"
 import { WorkbookBodyType, WorkbookBodyTypes } from '@apicize/lib-typescript'
 import { EditableEntityType } from '../../../models/workbook/editable-entity-type'
 import { EditableWorkbookRequest } from '../../../models/workbook/editable-workbook-request'
@@ -29,6 +30,8 @@ export const RequestBodyEditor = observer(() => {
   const clipboard = useClipboard()
   const fileOps = useFileOperations()
   const feedback = useFeedback()
+
+  const editorRef = React.createRef<AceEditor>()
 
   if (workspace.active?.entityType !== EditableEntityType.Request) {
     return null
@@ -67,21 +70,29 @@ export const RequestBodyEditor = observer(() => {
   }
 
   const [allowUpdateHeader, setAllowUpdateHeader] = React.useState<boolean>(headerDoesNotMatchType(request.body.type))
+  const [allowBeautify, setAllowBeautify] = React.useState<boolean>(request.body.type === WorkbookBodyType.JSON || request.body.type === WorkbookBodyType.XML)
 
   const updateBodyType = (val: WorkbookBodyType | string) => {
-    debugger
     const v = toJS(val)
     const newBodyType = (v == "" ? undefined : v as unknown as WorkbookBodyType) ?? WorkbookBodyType.Text
     workspace.setRequestBodyType(newBodyType)
     setAllowUpdateHeader(headerDoesNotMatchType(newBodyType))
+    setAllowBeautify(newBodyType === WorkbookBodyType.JSON || newBodyType === WorkbookBodyType.XML)
+  }
+
+  function performBeautify() {
+    const session = editorRef.current?.editor.getSession()
+    if (session !== undefined) {
+      beautify(session);
+    }
   }
 
   const updateBodyAsText = (data: string | undefined) => {
-    workspace.setRequestBody({ type: WorkbookBodyType.Text, data: data ?? '' })
+    workspace.setRequestBodyData(data ?? '')
   }
 
   const updateBodyAsFormData = (data: EditableNameValuePair[] | undefined) => {
-    workspace.setRequestBody({ type: WorkbookBodyType.Form, data: data ?? [] })
+    workspace.setRequestBodyData(data ?? [])
   }
 
   const updateTypeHeader = () => {
@@ -165,7 +176,10 @@ export const RequestBodyEditor = observer(() => {
             {bodyTypeMenuItems()}
           </Select>
         </FormControl>
-        <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
+        <Grid2 container direction='row'>
+          <Button variant='outlined' size='small' disabled={!allowBeautify} onClick={performBeautify}>Beautify</Button>
+          <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
+        </Grid2>
       </Grid2>
       {request.body.type == WorkbookBodyType.None
         ? <></>
@@ -198,7 +212,9 @@ export const RequestBodyEditor = observer(() => {
             :
             <Grid2 flexGrow={1}>
               <AceEditor
+                ref={editorRef}
                 mode={mode}
+                name='request-body-editor'
                 theme='monokai'
                 fontSize={`${apicizeSettings.fontSize}pt`}
                 lineHeight='1.1em'
@@ -216,7 +232,6 @@ export const RequestBodyEditor = observer(() => {
                   showLineNumbers: true,
                 }}
                 onChange={updateBodyAsText}
-                name='request body editor'
                 value={request.body.data as string}
               />
             </Grid2>

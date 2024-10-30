@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.8.3
+
+* Fix request cloning when body has data
+* Add request body beautification for JSON/XML
+
 # 0.8.2
 
 * Fix Run result dropdown formatting, more prep to spin off lib-rust
