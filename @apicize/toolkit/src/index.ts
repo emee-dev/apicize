@@ -42,6 +42,8 @@ declare module '@mui/material/styles' {
         authorization?: PaletteOptions['primary']
         certificate?: PaletteOptions['primary']
         proxy?: PaletteOptions['primary']
+        private?: PaletteOptions['primary']
+        global?: PaletteOptions['primary']
     }
 }
 
@@ -53,6 +55,8 @@ declare module '@mui/material/IconButton' {
         authorization: true
         certificate: true
         proxy: true
+        private: true
+        global: true
     }
 }
 
@@ -63,6 +67,8 @@ declare module '@mui/material/SvgIcon' {
         scenario: true
         authorization: true
         certificate: true
-        proxy: true
+        proxy: true,
+        private: true
+        global: true
     }
 }

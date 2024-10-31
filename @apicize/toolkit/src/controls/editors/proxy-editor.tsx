@@ -33,7 +33,7 @@ export const ProxyEditor = observer((props: {
                     />
                 </Grid2>
                 <Grid2>
-                    <PersistenceEditor onUpdatePersistence={workspace.setProxyPersistence} persistence={proxy.persistence} />
+                    <PersistenceEditor onUpdatePersistence={(e) => workspace.setProxyPersistence(e)} persistence={proxy.persistence} />
                 </Grid2>
                 <Grid2>
                     <TextField

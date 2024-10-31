@@ -1,5 +1,7 @@
 import { Persistence } from "@apicize/lib-typescript";
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { Box, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import SdCardAlertIcon from '@mui/icons-material/SdCardAlert';
+import FolderSharedIcon from '@mui/icons-material/FolderShared';
 
 export function PersistenceEditor(props: {
     persistence: Persistence,
@@ -19,8 +21,23 @@ export function PersistenceEditor(props: {
                 fullWidth
             >
                 <MenuItem value={Persistence.Workbook}>Workbook</MenuItem>
-                <MenuItem value={Persistence.Private}>Workbook (Private)</MenuItem>
-                <MenuItem value={Persistence.Global}>Local Global</MenuItem>
+                <MenuItem value={Persistence.Private}>
+                    <Box display='flex' justifyItems='center'>
+                        Workbook (Private)
+                        <Box display='inline-flex' width='2em' paddingLeft='0.5em' justifyItems='center' justifyContent='left'>
+                            <SdCardAlertIcon color="private" />
+                        </Box>
+                    </Box>
+                </MenuItem>
+                <MenuItem value={Persistence.Global}>
+
+                    <Box display='flex' justifyItems='center'>
+                        Local Global
+                        <Box display='inline-flex' width='2em' paddingLeft='0.5em' justifyItems='center' justifyContent='left'>
+                            <FolderSharedIcon color="global" />
+                        </Box>
+                    </Box>
+                </MenuItem>
             </Select>
         </FormControl>
     )

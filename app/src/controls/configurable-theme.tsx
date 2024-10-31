@@ -61,6 +61,18 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
         },
         name: 'request'
       }),
+      private: palette.palette.augmentColor({
+        color: {
+          main: '#c3195d'
+        },
+        name: 'request'
+      }),
+      global: palette.palette.augmentColor({
+        color: {
+          main: '#38598b'
+        },
+        name: 'request'
+      }),
     },
     typography: {
       fontSize: settings.fontSize,

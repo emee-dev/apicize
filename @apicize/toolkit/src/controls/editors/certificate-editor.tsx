@@ -121,7 +121,7 @@ export const CertificateEditor = observer((props: {
                                 <MenuItem value={WorkbookCertificateType.PEM}>PEM</MenuItem>
                             </Select>
                         </FormControl>
-                        <PersistenceEditor onUpdatePersistence={workspace.setCertificatePersistence} persistence={certificate.persistence} />
+                        <PersistenceEditor onUpdatePersistence={(e) => workspace.setCertificatePersistence(e)} persistence={certificate.persistence} />
                     </Stack>
                 </Grid2>
                 {

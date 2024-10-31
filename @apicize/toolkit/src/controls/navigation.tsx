@@ -14,6 +14,8 @@ import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import SecurityIcon from '@mui/icons-material/Security';
 import SettingsIcon from '@mui/icons-material/Settings';
+import SdCardAlertIcon from '@mui/icons-material/SdCardAlert';
+import FolderSharedIcon from '@mui/icons-material/FolderShared';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import LanguageIcon from '@mui/icons-material/Language'
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
@@ -22,7 +24,7 @@ import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, use
 import AddIcon from '@mui/icons-material/Add'
 import React, { ReactNode, SyntheticEvent, useState } from 'react'
 import { DndContext, DragEndEvent, useDraggable, useDroppable, useSensors, useSensor, PointerSensor, DragCancelEvent, DragMoveEvent } from '@dnd-kit/core'
-import { GetTitle } from '@apicize/lib-typescript';
+import { GetTitle, Persistence } from '@apicize/lib-typescript';
 import { CSS, useCombinedRefs } from '@dnd-kit/utilities';
 import { EditableItem } from "../models/editable";
 import { EditableEntityType } from "../models/workbook/editable-entity-type";
@@ -30,11 +32,22 @@ import { useFileOperations } from "../contexts/file-operations.context";
 import { useWorkspace } from "../contexts/workspace.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 import { EditableWorkbookRequest } from "../models/workbook/editable-workbook-request";
+import { EditableWorkbookScenario } from "../models/workbook/editable-workbook-scenario";
+import { EditableWorkbookAuthorization } from "../models/workbook/editable-workbook-authorization";
+import { EditableWorkbookCertificate } from "../models/workbook/editable-workbook-certificate";
+import { EditableWorkbookProxy } from "../models/workbook/editable-workbook-proxy";
 
 interface MenuPosition {
     id: string
     mouseX: number
     mouseY: number
+}
+
+enum StateIcon {
+    None,
+    Running,
+    Private,
+    Shared
 }
 
 export const Navigation = observer((props: { onSettings?: () => void }) => {
@@ -222,6 +235,19 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             } as DraggableData
         })
 
+        const iconFromStateIcon = (state: StateIcon) => {
+            switch (state) {
+                case StateIcon.Running:
+                    return <PlayArrowIcon color="success" />
+                case StateIcon.Private:
+                    return <SdCardAlertIcon color="private" />
+                case StateIcon.Shared:
+                    return <FolderSharedIcon color="global" />
+                default:
+                    return null
+            }
+        }
+
         const dragStyle = {
             transform: CSS.Translate.toString(transform)
         }
@@ -237,17 +263,48 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
 
         // Requests can be hierarchical
         let children: EditableItem[] | undefined
-        let isRunning: boolean
+        let stateIcon: StateIcon = StateIcon.None
+
         if (props.item.entityType === EditableEntityType.Group) {
             const childIds = workspace.workspace.requests.childIds?.get(props.item.id)
             children = childIds?.map(id =>
                 workspace.workspace.requests.entities.get(id)
             )?.filter(e => e !== undefined)
-            isRunning = workspace.executingRequestIDs.indexOf(props.item.id) !== -1
+            if (workspace.executingRequestIDs.indexOf(props.item.id) !== -1) {
+                stateIcon = StateIcon.Running
+            }
         } else if (props.item.entityType === EditableEntityType.Request) {
-            isRunning = workspace.executingRequestIDs.indexOf(props.item.id) !== -1
-        } else {
-            isRunning = false
+            if (workspace.executingRequestIDs.indexOf(props.item.id) !== -1) {
+                stateIcon = StateIcon.Running
+            }
+        } else if (props.item.entityType === EditableEntityType.Scenario) {
+            const scenario = props.item as EditableWorkbookScenario
+            if (scenario.persistence === Persistence.Private) {
+                stateIcon = StateIcon.Private
+            } else if (scenario.persistence === Persistence.Global) {
+                stateIcon = StateIcon.Shared
+            }
+        } else if (props.item.entityType === EditableEntityType.Authorization) {
+            const auth = props.item as EditableWorkbookAuthorization
+            if (auth.persistence === Persistence.Private) {
+                stateIcon = StateIcon.Private
+            } else if (auth.persistence === Persistence.Global) {
+                stateIcon = StateIcon.Shared
+            }
+        } else if (props.item.entityType === EditableEntityType.Certificate) {
+            const cert = props.item as EditableWorkbookCertificate
+            if (cert.persistence === Persistence.Private) {
+                stateIcon = StateIcon.Private
+            } else if (cert.persistence === Persistence.Global) {
+                stateIcon = StateIcon.Shared
+            }
+        } else if (props.item.entityType === EditableEntityType.Proxy) {
+            const proxy = props.item as EditableWorkbookProxy
+            if (proxy.persistence === Persistence.Private) {
+                stateIcon = StateIcon.Private
+            } else if (proxy.persistence === Persistence.Global) {
+                stateIcon = StateIcon.Shared
+            }
         }
 
         return children
@@ -281,11 +338,15 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                             }}
                         >
                             <FolderIcon className='nav-folder' color='folder' />
-                            <Box className='nav-node-text'>
-                                {GetTitle(props.item)}
-                            </Box>
-                            <Box display='inline-flex' width='2em' paddingLeft='0.3em' justifyItems='center' justifyContent='left'>
-                                {isRunning ? <PlayArrowIcon color="success" /> : null}
+                            <Box
+                                className='nav-node-text'
+                                justifyContent='left'
+                                justifyItems='center'
+                                display='flex'
+                            >                                {GetTitle(props.item)}
+                                <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
+                                    {iconFromStateIcon(stateIcon)}
+                                </Box>
                             </Box>
                             <IconButton
                                 sx={{
@@ -349,15 +410,17 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                             }
                             <Box
                                 className='nav-node-text'
-                                sx={{ display: 'flex', alignItems: 'center' }}
+                                justifyContent='left'
+                                justifyItems='center'
+                                display='flex'
                             >
                                 {
                                     props.item.invalid ? (<WarningAmberIcon color='warning' sx={{ marginRight: '0.25em' }} />) : null
                                 }
                                 {GetTitle(props.item)}
-                            </Box>
-                            <Box display='inline-flex' width='2em' paddingLeft='0.3em' justifyItems='center' justifyContent='left'>
-                                {isRunning ? <PlayArrowIcon color="success" /> : null}
+                                <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
+                                    {iconFromStateIcon(stateIcon)}
+                                </Box>
                             </Box>
                             <IconButton
                                 sx={{

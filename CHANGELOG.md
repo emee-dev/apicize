@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.8.4
+
+* Add private/local global icons for parameter storage
+
 # 0.8.3
 
 * Fix request cloning when body has data

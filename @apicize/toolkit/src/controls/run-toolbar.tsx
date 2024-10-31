@@ -42,7 +42,7 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
         if (workspace.active?.id) {
             try {
                 await workspace.cancelRequest(workspace.active?.id)
-                feedback.toast('Request cancelled', ToastSeverity.Success)
+                feedback.toast('Request cancelled', ToastSeverity.Info)
             } catch (e) {
                 feedback.toast(`Unable to cancel request - ${e}`, ToastSeverity.Error)
             }
