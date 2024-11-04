@@ -7,23 +7,6 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug Rust CLI",
-      "program": "${workspaceFolder}/@apicize/cli/target/debug/apicize-run",
-      "preLaunchTask": "rust: build cli",
-      "args": [
-        "/home/jason/Documents/apicize/test.apicize"
-      ],
-      "env": {
-        "RUST_BACKTRACE": "full"
-      },
-      "cwd": "${workspaceFolder}/@apicize/cli",
-      "stopOnEntry": false,
-      "internalConsoleOptions": "openOnSessionStart",
-      "terminal": "console"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
       "name": "Debug Tauri App (Development)",
       "cargo": {
         "args": [

@@ -16,14 +16,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-      - name: check lib-rust
-        working-directory: ./@apicize/lib-rust
-        run: cargo clippy
       - name: check cli
         working-directory: ./@apicize/cli
         run: cargo clippy
       - name: check app
-        working-directory: ./app/src-tauri
+        working-directory: ./@apicize/src-tauri
         run: cargo clippy
   
   publish-tauri:
@@ -82,64 +79,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: apicize-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'Apicize __VERSION__'
-          releaseBody: 'See the assets to download this version and install.  Assets beginning with "Apicize_" are the GUI app, assets beginning wtih "Apicize-run_" are the CLI runner.'
+          tagName: apicize-app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
+          releaseName: 'Apicize App __VERSION__'
+          releaseBody: 'See the assets to download this version and install.  Unfortunately, Windows and MacOS distributions are not signed at this time.'
           # releaseDraft: true
           prerelease: false
           args: --verbose
           projectPath: ./app
 
-  publish-cli-deb:
-    name: Release apicize-run as .deb
-    runs-on: Ubuntu-22.04
-    needs: 'publish-tauri'
-    steps:
-      - name: checkout project
-        uses: actions/checkout@v4
-      - name: install rust and cargo-db
-        run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          cargo install cargo-deb
-      - name: build .deb package
-        run: cargo deb
-        working-directory: ./@apicize/cli
-      - name: add .deb package to release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          name: 'Apicize ${{needs.publish-tauri.outputs.appVersion}}'
-          tag_name: 'apicize-v${{needs.publish-tauri.outputs.appVersion}}'
-          files: ./@apicize/cli/target/debian/Apicize-run_${{needs.publish-tauri.outputs.appVersion}}_amd64.deb
-
-  publish-cli-rpm:
-    name: Release apicize-run as .rpm
-    runs-on: Ubuntu-22.04
-    needs: 'publish-tauri'
-    steps:
-      - name: checkout project
-        uses: actions/checkout@v4
-      - name: install rust and cargo-generate-rpm
-        run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          cargo install cargo-generate-rpm
-      - name: build application
-        run: RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --target x86_64-unknown-linux-gnu
-        working-directory: ./@apicize/cli
-      - name: build .rpm package
-        run: cargo generate-rpm --payload-compress=gzip
-        working-directory: ./@apicize/cli
-      # - name: remove stubbed release number from .rpm file name
-      #   run: mv ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}-999.x86_64.rpm ./target/generate-rpm/apicize-run-${{needs.publish-tauri.outputs.appVersion}}.x86_64.rpm
-      #   working-directory: ./@apicize/cli
-      - name: add .rpm package to release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          name: 'Apicize ${{needs.publish-tauri.outputs.appVersion}}'
-          tag_name: 'apicize-v${{needs.publish-tauri.outputs.appVersion}}'
-          files: ./@apicize/cli/./target/generate-rpm/Apicize-run-${{needs.publish-tauri.outputs.appVersion}}-1.x86_64.rpm

@@ -4,8 +4,7 @@
         "*.apicize-priv": "json",
     },
     "rust-analyzer.linkedProjects": [
-        "${workspaceFolder}/app/src-tauri/Cargo.toml",
-        "${workspaceFolder}/@apicize/lib-rust/Cargo.toml"
+        "${workspaceFolder}/@apicize/src-tauri/Cargo.toml",
     ],
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
