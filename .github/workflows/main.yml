@@ -14,6 +14,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Install rust
         run: curl https://sh.rustup.rs -sSf | sh -s -- -y
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - name: Lint app
         working-directory: ./app/src-tauri
         run: cargo clippy
