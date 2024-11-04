@@ -54,7 +54,7 @@ jobs:
           node-version: lts/*
           cache: 'yarn'
       - name: Enable Corepack
-        run: Corepack enable      
+        run: corepack enable      
       - name: Install Rust
         run: curl https://sh.rustup.rs -sSf | sh -s -- -y
       - name: Install Dependencies
