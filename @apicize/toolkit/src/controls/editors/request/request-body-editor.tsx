@@ -10,8 +10,10 @@ import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import AceEditor from "react-ace"
 import "ace-builds/src-noconflict/mode-json"
 import "ace-builds/src-noconflict/mode-xml"
-import "ace-builds/src-noconflict/theme-monokai"
+import "ace-builds/src-noconflict/theme-gruvbox"
+import "ace-builds/src-noconflict/theme-chrome"
 import "ace-builds/src-noconflict/ext-language_tools"
+import "ace-builds/src-noconflict/ext-searchbox"
 import { beautify } from "ace-builds/src-noconflict/ext-beautify"
 import { WorkbookBodyType, WorkbookBodyTypes } from '@apicize/lib-typescript'
 import { EditableEntityType } from '../../../models/workbook/editable-entity-type'
@@ -176,7 +178,7 @@ export const RequestBodyEditor = observer(() => {
             {bodyTypeMenuItems()}
           </Select>
         </FormControl>
-        <Grid2 container direction='row'>
+        <Grid2 container direction='row' spacing={2}>
           <Button variant='outlined' size='small' disabled={!allowBeautify} onClick={performBeautify}>Beautify</Button>
           <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
         </Grid2>
@@ -215,7 +217,7 @@ export const RequestBodyEditor = observer(() => {
                 ref={editorRef}
                 mode={mode}
                 name='request-body-editor'
-                theme='monokai'
+                theme={apicizeSettings.colorScheme === 'dark' ? 'gruvbox' : 'chrome'}
                 fontSize={`${apicizeSettings.fontSize}pt`}
                 lineHeight='1.1em'
                 width='100%'

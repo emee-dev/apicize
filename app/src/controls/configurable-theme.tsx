@@ -63,7 +63,7 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
       }),
       private: palette.palette.augmentColor({
         color: {
-          main: '#c3195d'
+          main: '#f76b8a'
         },
         name: 'request'
       }),

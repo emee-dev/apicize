@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.8.5
+
+* Moved CLI to its own project
+
 # 0.8.4
 
 * Add private/local global icons for parameter storage

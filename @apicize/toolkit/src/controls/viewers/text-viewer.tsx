@@ -7,8 +7,11 @@ import "ace-builds/src-noconflict/mode-xml"
 import "ace-builds/src-noconflict/mode-html"
 import "ace-builds/src-noconflict/mode-css"
 import "ace-builds/src-noconflict/mode-text"
-import "ace-builds/src-noconflict/theme-monokai"
+import "ace-builds/src-noconflict/theme-gruvbox"
+import "ace-builds/src-noconflict/theme-chrome"
 import "ace-builds/src-noconflict/ext-language_tools"
+import "ace-builds/src-noconflict/ext-searchbox"
+
 import { observer } from "mobx-react-lite";
 import { useApicizeSettings } from "../../contexts/apicize-settings.context";
 
@@ -36,7 +39,7 @@ export const TextViewer = observer((props: { text?: string, extension?: string }
 
     return <AceEditor
         mode={mode}
-        theme='monokai'
+        theme={apicizeSettings.colorScheme === 'dark' ? 'gruvbox' : 'chrome'}
         fontSize={`${apicizeSettings.fontSize}pt`}
         lineHeight='1.1em'
         width='100%'

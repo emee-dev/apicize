@@ -7,9 +7,7 @@ use tokio_util::sync::CancellationToken;
 // use tauri_plugin_log::{Target, TargetKind};
 
 use apicize_lib::{
-    apicize::ApicizeExecution, ApicizeSettings, Workspace,
-    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token},
-    test_runner::run,
+    apicize::ApicizeExecution, oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token}, ApicizeSettings, Workspace, test_runner
 };
 use tauri::State;
 
@@ -94,10 +92,9 @@ fn cancellation_tokens() -> &'static Mutex<HashMap<String, CancellationToken>> {
 async fn run_request(
     workspace: Workspace,
     request_id: String,
-    override_runs: Option<usize>,
 ) -> Result<ApicizeExecution, String> {
-    let arc_workspace = Arc::new(workspace);
     let arc_test_started = Arc::new(Instant::now());
+    let shared_workspace = Arc::new(workspace);
     let cancellation = CancellationToken::new();
     {
         cancellation_tokens()
@@ -106,12 +103,11 @@ async fn run_request(
             .insert(request_id.clone(), cancellation.clone());
     }
 
-    let response = run(
-        arc_workspace.clone(),
+    let response = test_runner::run(
+        shared_workspace,
         Some(vec![request_id.clone()]),
         Some(cancellation),
         arc_test_started,
-        override_runs,
     )
     .await;
 
@@ -133,7 +129,7 @@ async fn cancel_request(request_id: String) {
 
 #[tauri::command]
 async fn clear_cached_authorization(authorization_id: String) -> bool {
-    clear_oauth2_token(authorization_id).await
+    clear_oauth2_token(authorization_id.as_str()).await
 }
 
 #[tauri::command]
