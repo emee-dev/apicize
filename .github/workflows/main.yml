@@ -12,11 +12,9 @@ jobs:
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
-      - name: install rust and dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-      - name: Check app
+      - name: Install rust
+        run: curl https://sh.rustup.rs -sSf | sh -s -- -y
+      - name: Lint app
         working-directory: ./app/src-tauri
         run: cargo clippy
   
@@ -44,34 +42,31 @@ jobs:
       releaseUploadUrl: ${{ steps.deploy-tauri.outputs.releaseUploadUrl }}
     
     steps:
-      - name: checkout project
+      - name: Checkout project
         uses: actions/checkout@v4
-      - name: enable Corepack
-        run: corepack enable      
-      - name: setup node
+      - name: Enable Corepack
+        run: Corepack enable      
+      - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: 'yarn'
-      - name: install rust
+      - name: Install Rust
         run: curl https://sh.rustup.rs -sSf | sh -s -- -y
-      - name: install rust and dependencies
+      - name: Install Dependencies
         if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
         # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
-
-      - name: install frontend dependencies
+      - name: Install frontend dependencies
         run: yarn install # change this to npm, pnpm or bun depending on which one you use.
-
-      - name: build dependencies
+      - name: Build dependencies
         run: yarn build-deps
         working-directory: ./
-
       - id: deploy-tauri
-        name: deploy tauri
+        name: Deploy Tauri
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -83,4 +78,3 @@ jobs:
           prerelease: false
           args: --verbose
           projectPath: ./app
-
