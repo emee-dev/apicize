@@ -48,13 +48,13 @@ jobs:
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
-      - name: Enable Corepack
-        run: Corepack enable      
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: 'yarn'
+      - name: Enable Corepack
+        run: Corepack enable      
       - name: Install Rust
         run: curl https://sh.rustup.rs -sSf | sh -s -- -y
       - name: Install Dependencies
