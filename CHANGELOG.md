@@ -3,6 +3,8 @@
 # 0.8.5
 
 * Moved CLI to its own project
+* Hide results while running request/group
+* Wordwrap formatted results
 
 # 0.8.4
 

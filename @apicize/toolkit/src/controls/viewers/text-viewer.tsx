@@ -49,6 +49,7 @@ export const TextViewer = observer((props: { text?: string, extension?: string }
         showPrintMargin={false}
         tabSize={3}
         editorProps={{ readOnly: true }}
+        wrapEnabled={true}
         setOptions={{
             readOnly: true,
             useWorker: false,

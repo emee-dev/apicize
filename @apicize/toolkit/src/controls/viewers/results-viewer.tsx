@@ -41,7 +41,7 @@ export const ResultsViewer = observer((props: {
     const executionResultId = selectedExecution?.executionResultId
 
     const executionResult = executionResultId ? workspace.getExecutionResult(workspace.active.id, executionResultId) : null
-    if (!executionResult) {
+    if (!executionResult || requestExecution.running) {
         return null
     }
 
@@ -82,9 +82,7 @@ export const ResultsViewer = observer((props: {
         | 'warning',
         SvgIconPropsColorOverrides
     > | undefined = undefined
-    if (requestExecution?.running) {
-        infoColor = 'disabled'
-    } else if (executionRequestResult) {
+    if (executionRequestResult) {
         infoColor = executionRequestResult.request
             ? ((executionRequestResult.failedTestCount ?? 0) > 0 ? 'warning' : 'success')
             : 'error'
@@ -100,14 +98,14 @@ export const ResultsViewer = observer((props: {
                 orientation='vertical'
                 exclusive
                 onChange={handlePanelChanged}
-                value={requestExecution.running ? 'Info' : panel}
+                value={panel}
                 sx={{ marginRight: '24px' }}
                 aria-label="text alignment">
-                <ToggleButton value="Info" title="Show Result Info" aria-label='show info' disabled={requestExecution.running} size='small'><ScienceIcon color={infoColor ?? 'disabled'} /></ToggleButton>
-                <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' disabled={disableOtherPanels} size='small'><ViewListOutlinedIcon /></ToggleButton>
-                <ToggleButton value="Text" title="Show Response Body as Text" aria-label='show body text' disabled={disableOtherPanels} size='small'><ArticleOutlinedIcon /></ToggleButton>
-                <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={disableOtherPanels || longTextInResponse} size='small'><PreviewIcon /></ToggleButton>
-                <ToggleButton value="Request" title="Show Request" aria-label='show request' disabled={disableRequest} size='small'><SendIcon /></ToggleButton>
+                <ToggleButton value="Info" title="Show Result Info" aria-label='show info' size='small'><ScienceIcon color={infoColor ?? 'disabled'} /></ToggleButton>
+                <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' size='small'><ViewListOutlinedIcon /></ToggleButton>
+                <ToggleButton value="Text" title="Show Response Body as Text" aria-label='show body text' size='small'><ArticleOutlinedIcon /></ToggleButton>
+                <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={longTextInResponse} size='small'><PreviewIcon /></ToggleButton>
+                <ToggleButton value="Request" title="Show Request" aria-label='show request' size='small'><SendIcon /></ToggleButton>
             </ToggleButtonGroup>
             <Box sx={{ overflow: 'hidden', flexGrow: 1, bottom: '0', position: 'relative' }}>
                 {

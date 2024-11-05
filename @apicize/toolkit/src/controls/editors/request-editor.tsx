@@ -59,7 +59,7 @@ export const RequestEditor = observer((props: {
     }
 
     const requestExecution = workspace.executions.get(workspace.active.id)
-    const isExecuted = (requestExecution?.results?.size ?? 0) > 0
+    const isExecutedOrExecuting = requestExecution?.running || (requestExecution?.results?.size ?? 0) > 0
 
     let usePanel = (
         (group && panel !== 'Info' && panel !== 'Parameters')
@@ -129,7 +129,7 @@ export const RequestEditor = observer((props: {
             </Stack>
         </>
         : request
-            ? <Box className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
+            ? <Box className={isExecutedOrExecuting ? 'editor-panel' : 'editor-single-panel'}>
                 <Stack direction='row' className='editor-panel-header'>
                     <EditorTitle icon={<SendIcon color='request' />} name={(request.name.length > 0) ? `${request.name} - ${panel}` : `(Unnamed) - ${panel}`} />
                     <RunToolbar sx={{ marginLeft: '3em' }} />
@@ -170,9 +170,9 @@ export const RequestEditor = observer((props: {
             </Box>
             : null
 
-    return isExecuted
+    return isExecutedOrExecuting
         ? <PanelGroup autoSaveId="apicize-request" direction="horizontal" className='editor' storage={sizeStorage}>
-            <Panel id='request-editor' order={0} defaultSize={50} minSize={20} className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
+            <Panel id='request-editor' order={0} defaultSize={50} minSize={20} className={isExecutedOrExecuting ? 'editor-panel' : 'editor-single-panel'}>
                 {requestPanel}
             </Panel>
             <PanelResizeHandle className="resize-handle" hitAreaMargins={{ coarse: 30, fine: 10 }} />
