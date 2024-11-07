@@ -63,8 +63,6 @@ export const ResultsViewer = observer((props: {
     const longTextInResponse = (executionRequestResult?.response?.body?.text?.length ?? 0)
         > MAX_TEXT_RENDER_LENGTH
 
-    const disableRequest = !executionRequestResult?.request
-
     let panel = requestExecution?.panel
     if (executionGroupResult && panel !== 'Info') {
         panel = 'Info'
@@ -102,10 +100,10 @@ export const ResultsViewer = observer((props: {
                 sx={{ marginRight: '24px' }}
                 aria-label="text alignment">
                 <ToggleButton value="Info" title="Show Result Info" aria-label='show info' size='small'><ScienceIcon color={infoColor ?? 'disabled'} /></ToggleButton>
-                <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' size='small'><ViewListOutlinedIcon /></ToggleButton>
-                <ToggleButton value="Text" title="Show Response Body as Text" aria-label='show body text' size='small'><ArticleOutlinedIcon /></ToggleButton>
-                <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={longTextInResponse} size='small'><PreviewIcon /></ToggleButton>
-                <ToggleButton value="Request" title="Show Request" aria-label='show request' size='small'><SendIcon /></ToggleButton>
+                <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' size='small' disabled={disableOtherPanels}><ViewListOutlinedIcon /></ToggleButton>
+                <ToggleButton value="Text" title="Show Response Body as Text" aria-label='show body text' size='small' disabled={disableOtherPanels}><ArticleOutlinedIcon /></ToggleButton>
+                <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={disableOtherPanels || longTextInResponse} size='small'><PreviewIcon /></ToggleButton>
+                <ToggleButton value="Request" title="Show Request" aria-label='show request' size='small' disabled={disableOtherPanels}><SendIcon /></ToggleButton>
             </ToggleButtonGroup>
             <Box sx={{ overflow: 'hidden', flexGrow: 1, bottom: '0', position: 'relative' }}>
                 {

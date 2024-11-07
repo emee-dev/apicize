@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.9.0
+
+* Updated aplicize_lib to 0.11.1
+
 # 0.8.5
 
 * Moved CLI to its own project

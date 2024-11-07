@@ -8,9 +8,12 @@ import { WorkbookExecutionGroup, WorkbookExecutionRequest, WorkbookExecutionResu
 import { observer } from "mobx-react-lite";
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
-import { Label } from "@mui/icons-material";
+import { ApicizeError } from "@apicize/lib-typescript";
 
-
+const ApicizeErrorToString = (error?: ApicizeError): string => {
+    const sub = (err?: ApicizeError) => err ? `, ${err.description}${ApicizeErrorToString(err.source)}` : '';
+    return error ? `[${error.type}] ${error.description}${sub(error.source)}` : ''
+}
 
 export const ResultInfoViewer = observer((props: { requestOrGroupId: string, executionResultId: string }) => {
 
@@ -58,9 +61,9 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
                 ? <Typography variant="h3" sx={{ marginTop: '1em' }} component='div'>{props.result.name}<Typography fontSize='1em' display='inline' marginLeft='0.8em' color={color}>({subtitle})</Typography></Typography>
                 : null}
 
-            {((props.result.error?.length ?? 0) == 0)
-                ? (<></>)
-                : (<TestInfo isError={true} text={`${props.result.error}`} />)}
+            {(props.result.error)
+                ? (<TestInfo isError={true} text={`${ApicizeErrorToString(props.result.error)}`} />)
+                : (<></>)}
             {props.result.response
                 ? (<TestInfo text={`Status: ${props.result.response.status} ${props.result.response.statusText}`} />)
                 : (<></>)}
@@ -165,8 +168,6 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
             </Stack>
         </Stack>
     )
-
-
 
     let title: string | null = null
 

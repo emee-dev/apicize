@@ -19,6 +19,13 @@ export interface ApicizeExecution {
 
 export type ApicizeExecutionItem = ApicizeExecutionGroup | ApicizeExecutionRequest
 
+export interface ApicizeError {
+    type: string
+    description: string
+    url?: string
+    source?: ApicizeError
+}
+
 export interface ApicizeExecutionRequest {
     type: 'request'
     id: string
@@ -39,10 +46,10 @@ export interface ApicizeExecutionRequestRun {
     runNumber: number
     executedAt: number
     duration: number
-    request ?: ApicizeRequest
-    response ?: ApicizeHttpResponse
+    request?: ApicizeRequest
+    response?: ApicizeHttpResponse
     success: boolean
-    error?: string
+    error?: ApicizeError
     tests?: ApicizeTestResult[]
     variables?: Map<string, string | number | boolean>
     requestsWithPassedTestsCount: number
@@ -57,7 +64,7 @@ export interface ApicizeHttpResponse {
     statusText: string
     headers?: Map<string, string>
     body?: ApicizeBody,
- 
+
     authTokenCached?: boolean
 }
 
