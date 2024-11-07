@@ -66,8 +66,8 @@ jobs:
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
       - name: Install frontend dependencies
         run: yarn install # change this to npm, pnpm or bun depending on which one you use.
-      - name: Build dependencies
-        run: yarn build-deps
+      - name: Perform a build
+        run: yarn build:release
         working-directory: ./
       - id: deploy-tauri
         name: Deploy Tauri
