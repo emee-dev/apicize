@@ -25,7 +25,7 @@ export const RequestTestEditor = observer(() => {
   return (
     <AceEditor
       mode='javascript'
-      theme='monokai'
+      theme={apicizeSettings.colorScheme === 'dark' ? 'gruvbox' : 'chrome'}
       fontSize={`${apicizeSettings.fontSize}pt`}
       lineHeight='1.1em'
       width='100%'

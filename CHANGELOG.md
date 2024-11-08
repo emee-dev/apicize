@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.9.1
+
+* Updated aplicize_lib to 0.11.3, which will hopefully fix the Windows build issue
+* Honor theme settings in request test editor
+
 # 0.9.0
 
 * Updated aplicize_lib to 0.11.1
