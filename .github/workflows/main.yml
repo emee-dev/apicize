@@ -71,7 +71,7 @@ jobs:
         shell: bash
         env:
           # replace Azure credentials before running
-          WINDOWS_SIGN_COMMAND: "trusted-signing-cli -e https://weu.codesigning.azure.net/ -a ${{ vars.AZURE_CODE_SIGNING_NAME }} -c ${{ vars.AZURE_CERT_PROFILE_NAME }} -e ${{ vars.AZURE_ENDPOINT }} %1"
+          WINDOWS_SIGN_COMMAND: "trusted-signing-cli -a ${{ vars.AZURE_CODE_SIGNING_NAME }} -c ${{ vars.AZURE_CERT_PROFILE_NAME }} -e ${{ vars.AZURE_ENDPOINT }} %1"
         run: |
           echo "WINDOWS_SIGN_COMMAND set to ${WINDOWS_SIGN_COMMAND}"
           cd "$GITHUB_WORKSPACE"
@@ -103,5 +103,5 @@ jobs:
           releaseBody: 'See the assets to download this version and install.  Unfortunately, Windows and MacOS distributions are not signed at this time.'
           # releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
+          args: --verbose
           projectPath: ./app
