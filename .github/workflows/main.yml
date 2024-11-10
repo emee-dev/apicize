@@ -31,14 +31,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest' # for Arm based macs (M1 and above).
-            args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest' # for Intel based macs.
-            args: '--target x86_64-apple-darwin'
+          - platform: 'macos-arm-latest' # for Arm based macs (M1 and above).
+            args: '--target aarch64-apple-darwin --cpu arm'
+          - platform: 'macos-intel-latest' # for Intel based macs.
+            args: '--target x86_64-apple-darwin --cpu intel'
           - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
             args: ''
           - platform: 'windows-latest'
-            args: ''
+            args: '--verbose'
   
     runs-on: ${{ matrix.platform }}
     outputs:
@@ -66,13 +66,14 @@ jobs:
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
       - name: Install frontend dependencies
         run: yarn install # change this to npm, pnpm or bun depending on which one you use.
-      - name: Install Windows trusted signing
+      - name: Install Windows Trusted Signing
         if: matrix.platform == 'windows-latest'
         shell: bash
         env:
           # replace Azure credentials before running
           WINDOWS_SIGN_COMMAND: "trusted-signing-cli -e https://weu.codesigning.azure.net/ -a ${{ secrets.AZURE_CODE_SIGNING_NAME }} -c ${{ secrets.AZURE_CERT_PROFILE_NAME }} %1"
         run: |
+          echo "WINDOWS_SIGN_COMMAND set to ${WINDOWS_SIGN_COMMAND}"
           cd "$GITHUB_WORKSPACE"
           cat './app/src-tauri/tauri.conf.json' | jq '.bundle .windows += {"signCommand": env.WINDOWS_SIGN_COMMAND}' > './app/src-tauri/temp.json' && mv './app/src-tauri/temp.json' './app/src-tauri/tauri.conf.json'
           cargo install trusted-signing-cli
@@ -102,5 +103,5 @@ jobs:
           releaseBody: 'See the assets to download this version and install.  Unfortunately, Windows and MacOS distributions are not signed at this time.'
           # releaseDraft: true
           prerelease: false
-          args: --verbose
+          args: ${{ matrix.args }}
           projectPath: ./app
