@@ -74,7 +74,7 @@ jobs:
           WINDOWS_SIGN_COMMAND: "trusted-signing-cli -e https://weu.codesigning.azure.net/ -a ${{ secrets.AZURE_CODE_SIGNING_NAME }} -c ${{ secrets.AZURE_CERT_PROFILE_NAME }} %1"
         run: |
           cd "$GITHUB_WORKSPACE"
-          cat './app/src/tauri.conf.json' | jq '.bundle .windows += {"signCommand": env.WINDOWS_SIGN_COMMAND}' > './app/src/temp.json' && mv './app/src/temp.json' './app/src/tauri.conf.json'
+          cat './app/src-tauri/tauri.conf.json' | jq '.bundle .windows += {"signCommand": env.WINDOWS_SIGN_COMMAND}' > './app/src-tauri/temp.json' && mv './app/src-tauri/temp.json' './app/src-tauri/tauri.conf.json'
           cargo install trusted-signing-cli
         # env:
         #   WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
