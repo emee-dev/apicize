@@ -71,7 +71,7 @@ jobs:
         shell: bash
         env:
           # replace Azure credentials before running
-          WINDOWS_SIGN_COMMAND: "trusted-signing-cli -e https://weu.codesigning.azure.net/ -a ${{ secrets.AZURE_CODE_SIGNING_NAME }} -c ${{ secrets.AZURE_CERT_PROFILE_NAME }} %1"
+          WINDOWS_SIGN_COMMAND: "trusted-signing-cli -e https://weu.codesigning.azure.net/ -a ${{ vars.AZURE_CODE_SIGNING_NAME }} -c ${{ vars.AZURE_CERT_PROFILE_NAME }} %1"
         run: |
           echo "WINDOWS_SIGN_COMMAND set to ${WINDOWS_SIGN_COMMAND}"
           cd "$GITHUB_WORKSPACE"
@@ -94,7 +94,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AZURE_TENANT_ID: ${{ matrix.platform == 'windows-latest' && secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_ID: ${{ matrix.platform == 'windows-latest' && secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_ID: ${{ matrix.platform == 'windows-latest' && vars.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ matrix.platform == 'windows-latest' && secrets.AZURE_CLIENT_SECRET }}
         with:
           updaterJsonPreferNsis: true
