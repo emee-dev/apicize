@@ -68,13 +68,12 @@ jobs:
         run: yarn install # change this to npm, pnpm or bun depending on which one you use.
       - name: Install Windows Trusted Signing
         if: matrix.platform == 'windows-latest'
-        shell: bash
         env:
           # replace Azure credentials before running
           # WINDOWS_SIGN_COMMAND: "trusted-signing-cli -a ${{ vars.AZURE_CODE_SIGNING_NAME }} -c ${{ vars.AZURE_CERT_PROFILE_NAME }} -e ${{ vars.AZURE_ENDPOINT }} %1"
           WINDOWS_SIGN_COMMAND: "signtool sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib /tmp/mtsc/bin/x64/Azure.CodeSigning.Dlib.dll /dmdf /tmp/mtsc/metadata.json %1"
         run: |
-          sudo apt-get install -y wget jq 
+          sudo apt-get install -y wget jq unzip
 
           TMP=/tmp/mtsc
           METADATA="$TMP/metadata.json"
@@ -82,7 +81,7 @@ jobs:
           if [ -f $TMP/bin/x64/Azure.CodeSigning.Dlib.dll ]; then
             echo "Microsoft.Trusted.Signing.Client already exists in $TMP, skipping download"
           else
-            mkdir -p "$TMP"
+            mkdir -p $TMP
             MTSC=$TMP/mtsc.nuget
             echo "Download Microsoft.Trusted.Signing.Client to $MTSC"
             wget -q -O $MTSC https://www.nuget.org/api/v2/package/Microsoft.Trusted.Signing.Client/
