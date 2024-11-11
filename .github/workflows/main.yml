@@ -66,39 +66,51 @@ jobs:
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
       - name: Install frontend dependencies
         run: yarn install # change this to npm, pnpm or bun depending on which one you use.
-      - name: Install Windows Trusted Signing
+      - name: Add Windows Trusted Signing
+        shell: pwsh
         if: matrix.platform == 'windows-latest'
         env:
-          # replace Azure credentials before running
-          # WINDOWS_SIGN_COMMAND: "trusted-signing-cli -a ${{ vars.AZURE_CODE_SIGNING_NAME }} -c ${{ vars.AZURE_CERT_PROFILE_NAME }} -e ${{ vars.AZURE_ENDPOINT }} %1"
-          WINDOWS_SIGN_COMMAND: "signtool sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib /tmp/mtsc/bin/x64/Azure.CodeSigning.Dlib.dll /dmdf /tmp/mtsc/metadata.json %1"
+          AZURE_TENANT_ID: ${{ secrets.AWS_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_ENDPOINT: ${{ vars.AZURE_ENDPOINT }}
+          AZURE_CERT_PROFILE_NAME: ${{ vars.AZURE_CERT_PROFILE_NAME }}
+          AZURE_CODE_SIGNING_NAME: ${{ vars.AZURE_CODE_SIGNING_NAME }}
+          TAURI_CONFIG_JSON: "app/src-tauri/tauri.config.json"
         run: |
-          sudo apt-get install -y wget jq unzip
+          $tempFolderPath = Join-Path $Env:Temp "mtsc"
+          $mtscName = Join-Path $tempFolderPath "mtsc.nuget.zip"
+          $dlibName = Join-Path $tempFolderPath "bin" | Join-Path -ChildPath "x64" | Join-Path -ChildPath "Azure.CodeSigning.Dlib.dll" 
+          $dmdName = Join-Path $tempFolderPath "metadata.json"
 
-          TMP=/tmp/mtsc
-          METADATA="$TMP/metadata.json"
-          
-          # if [[ -f $TMP/bin/x64/Azure.CodeSigning.Dlib.dll ]];
-          # then
-          #   echo "Microsoft.Trusted.Signing.Client already exists in $TMP, skipping download"
-          # else
-            mkdir -p $TMP
-            MTSC=$TMP/mtsc.nuget
-            echo "Download Microsoft.Trusted.Signing.Client to $MTSC"
-            wget -q -O $MTSC https://www.nuget.org/api/v2/package/Microsoft.Trusted.Signing.Client/
-            echo "Extract Microsoft.Trusted.Signing.Client to $TMP"
-            unzip -q -d $TMP $MTSC
-          # fi
+          if (-not(Test-Path -path $tempFolderPath)) {
+              New-Item -Type Directory -Path $tempFolderPath | Out-Null
+              
+              Write-Host "Download Microsoft.Trusted.Signing.Client to $mtscName"
+              $global:ProgressPreference = "SilentlyContinue"
+              Invoke-WebRequest "https://www.nuget.org/api/v2/package/Microsoft.Trusted.Signing.Client/" -OutFile $mtscName
+              Write-Host "Extracting $mtscName"
+              Expand-Archive $mtscName -Force -DestinationPath $tempFolderPath
+              $global:ProgressPreference = 'Continue'
+          }
 
-          echo "Creating signing metadata at $METADATA"
-          echo '{"Endpoint":"https://wcus.codesigning.azure.net/","CodeSigningAccountName":"Apicize","CertificateProfileName":"Apicize"}' > $METADATA
+          Write-Host "Saving Autheticode digest to $dmdName"
+          $metadata = [PSCustomObject]@{
+              Endpoint               = $env:AZURE_ENDPOINT
+              CodeSigningAccountName = $env:AZURE_CODE_SIGNING_NAME
+              CertificateProfileName = $env:AZURE_CERT_PROFILE_NAME
+          }
+          $metadataAsJson = ConvertTo-Json -Depth 100 $metadata
+          Set-Content -Path $dmdName -value $metadataAsJson
 
-          echo "Login to Azure"
-          az login --service-principal -t ${{ secrets.AZURE_TENANT_ID }} -u ${{ vars.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }}
+          Write-Host "Updating Windows signCommand in $env.TAURI_CONFIG_JSON"
+          $tauriConfig = ConvertFrom-Json(Get-Content $env.TAURI_CONFIG_JSON -Raw)
+          $tauriConfig.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name signCommand -Value "signtool sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
+          $tauriConfigAsJson = ConvertTo-Json -Depth 100 $tauriConfig
+          Set-Content -Path $env.TAURI_CONFIG_JSON -value $tauriConfigAsJson
 
-          echo "Updating tauri.conf.json, set Windows bundle to ${WINDOWS_SIGN_COMMAND}"
-          cd "$GITHUB_WORKSPACE"
-          cat './app/src-tauri/tauri.conf.json' | jq '.bundle .windows += {"signCommand": env.WINDOWS_SIGN_COMMAND}' > './app/src-tauri/temp.json' && mv './app/src-tauri/temp.json' './app/src-tauri/tauri.conf.json'
+          Write-Host "Login to Azure"
+          az login --service-principal --output none -t $env:AZURE_TENANT_ID -u $env:AZURE_CLIENT_ID -p $env:AZURE_CLIENT_SECRET
         # env:
         #   WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
         # run: |
