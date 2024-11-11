@@ -75,7 +75,7 @@ jobs:
           WINDOWS_SIGN_COMMAND: "signtool sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib /tmp/mtsc/bin/x64/Azure.CodeSigning.Dlib.dll /dmdf /tmp/mtsc/metadata.json %1"
         run: |
           TMP=/tmp/mtsc
-          METADATA="$TMP/metadata.json" \
+          METADATA="$TMP/metadata.json"
 
           if [ ! -d "$TMP" ]; then \
           mkdir -p "$TMP" \
