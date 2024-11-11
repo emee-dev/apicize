@@ -78,7 +78,8 @@ jobs:
           TMP=/tmp/mtsc
           METADATA="$TMP/metadata.json"
           
-          if [ -f $TMP/bin/x64/Azure.CodeSigning.Dlib.dll ]; then
+          if [[ -f $TMP/bin/x64/Azure.CodeSigning.Dlib.dll ]];
+          then
             echo "Microsoft.Trusted.Signing.Client already exists in $TMP, skipping download"
           else
             mkdir -p $TMP
