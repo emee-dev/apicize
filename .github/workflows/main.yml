@@ -86,7 +86,7 @@ jobs:
 
           if (-not(Test-Path -path $tauriConfJson)) {
             Throw "Unable to locate Tauri configuration at $taurConfJson"
-
+          }
 
           if (-not(Test-Path -path $tempFolderPath)) {
               New-Item -Type Directory -Path $tempFolderPath | Out-Null
