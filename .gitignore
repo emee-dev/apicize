@@ -13,3 +13,4 @@ tsconfig.tsbuildinfo
 !.yarn/sdks
 !.yarn/versions
 .vscode
+.test-sign
