@@ -77,17 +77,19 @@ jobs:
           TMP=/tmp/mtsc
           METADATA="$TMP/metadata.json"
 
-          if [ ! -d "$TMP" ]; then \
-          mkdir -p "$TMP" \
-          MTSC="$TMP/mtsc.nuget" \
-          echo "Download Microsoft.Trusted.Signing.Client to $MTSC" \
-          wget -q -O "$MTSC" https://www.nuget.org/api/v2/package/Microsoft.Trusted.Signing.Client/ \
-          echo "Extract Microsoft.Trusted.Signing.Client to $TMP" \
-          unzip -q -d "$TMP" "$MTSC" \
+          if [ -d "$TMP" ]; then
+            mkdir -p "$TMP"
+            MTSC="$TMP/mtsc.nuget"
+            echo "Download Microsoft.Trusted.Signing.Client to $MTSC"
+            wget -q -O "$MTSC" https://www.nuget.org/api/v2/package/Microsoft.Trusted.Signing.Client/
+            echo "Extract Microsoft.Trusted.Signing.Client to $TMP"
+            unzip -q -d "$TMP" "$MTSC"
+          else
+            echo "Microsoft.Trusted.Signing.Client already exists in $MTSC, skipping download"
           fi
 
           echo "Creating signing metadata at $METADATA"
-          echo '{"Endpoint":"https://wcus.codesigning.azure.net/","CodeSigningAccountName":"Apicize","CertificateProfileName":"Apicize"}' > "$METADATA";
+          echo '{"Endpoint":"https://wcus.codesigning.azure.net/","CodeSigningAccountName":"Apicize","CertificateProfileName":"Apicize"}' > "$METADATA"
 
           echo "Login to Azure"
           az login --service-principal -t ${{ secrets.AZURE_TENANT_ID }} -u ${{ vars.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }}
