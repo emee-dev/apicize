@@ -78,17 +78,17 @@ jobs:
           TMP=/tmp/mtsc
           METADATA="$TMP/metadata.json"
           
-          if [[ -f $TMP/bin/x64/Azure.CodeSigning.Dlib.dll ]];
-          then
-            echo "Microsoft.Trusted.Signing.Client already exists in $TMP, skipping download"
-          else
+          # if [[ -f $TMP/bin/x64/Azure.CodeSigning.Dlib.dll ]];
+          # then
+          #   echo "Microsoft.Trusted.Signing.Client already exists in $TMP, skipping download"
+          # else
             mkdir -p $TMP
             MTSC=$TMP/mtsc.nuget
             echo "Download Microsoft.Trusted.Signing.Client to $MTSC"
             wget -q -O $MTSC https://www.nuget.org/api/v2/package/Microsoft.Trusted.Signing.Client/
             echo "Extract Microsoft.Trusted.Signing.Client to $TMP"
             unzip -q -d $TMP $MTSC
-          fi
+          # fi
 
           echo "Creating signing metadata at $METADATA"
           echo '{"Endpoint":"https://wcus.codesigning.azure.net/","CodeSigningAccountName":"Apicize","CertificateProfileName":"Apicize"}' > $METADATA
