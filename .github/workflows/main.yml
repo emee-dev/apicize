@@ -70,7 +70,7 @@ jobs:
         shell: pwsh
         if: matrix.platform == 'windows-latest'
         env:
-          AZURE_TENANT_ID: ${{ secrets.AWS_TENANT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_ENDPOINT: ${{ vars.AZURE_ENDPOINT }}
