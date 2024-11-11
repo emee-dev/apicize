@@ -131,14 +131,18 @@ jobs:
               CertificateProfileName = $env:AZURE_CERT_PROFILE_NAME
           }
           $metadataAsJson = ConvertTo-Json -Depth 100 $metadata
-          Set-Content -Path $dmdName -value $metadataAsJson
+          Set-Content -Path $dmdName -Value $metadataAsJson
 
-          $signCommand = """$signToolPath"" sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
+          $batchName = Join-Path $tempFolderPath "signtool.bat"
+          Set-Content -Path $batchName -Value """$signToolPath"" sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
+
+          # $signCommand = """$signToolPath"" sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
+          $signCommand = "$batchName  %1"
           Write-Host "Updating Windows signCommand in $tauriConfJson to $signCommand"
           $tauriConfigData = ConvertFrom-Json(Get-Content $tauriConfJson -Raw)
           $tauriConfigData.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name signCommand -Value $signCommand
           $tauriConfigDataAsJson = ConvertTo-Json -Depth 100 $tauriConfigData
-          Set-Content -Path $tauriConfJson -value $tauriConfigDataAsJson
+          Set-Content -Path $tauriConfJson -Value $tauriConfigDataAsJson
 
           Write-Host "Login to Azure"
           az login --service-principal --output none -t $env:AZURE_TENANT_ID -u $env:AZURE_CLIENT_ID -p $env:AZURE_CLIENT_SECRET
