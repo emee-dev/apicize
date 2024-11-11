@@ -78,15 +78,15 @@ jobs:
           AZURE_CODE_SIGNING_NAME: ${{ vars.AZURE_CODE_SIGNING_NAME }}
           TAURI_CONF_JSON: "./app/src-tauri/tauri.conf.json"
         run: |
-          $tempFolderPath = Join-Path $Env:Temp "mtsc"
+          $tempFolderPath = Join-Path $env:Temp "mtsc"
           $mtscName = Join-Path $tempFolderPath "mtsc.nuget.zip"
           $dlibName = Join-Path $tempFolderPath "bin" | Join-Path -ChildPath "x64" | Join-Path -ChildPath "Azure.CodeSigning.Dlib.dll" 
           $dmdName = Join-Path $tempFolderPath "metadata.json"
-          $tauriConfJson = $env.TAURI_CONF_JSON ?? "./src-tauri/tauri.conf.json"
+          $tauriConfJson = $env:TAURI_CONF_JSON ?? "./src-tauri/tauri.conf.json"
 
           if (-not(Test-Path -path $tauriConfJson)) {
             Throw "Unable to locate Tauri configuration at $taurConfJson"
-          }
+
 
           if (-not(Test-Path -path $tempFolderPath)) {
               New-Item -Type Directory -Path $tempFolderPath | Out-Null
