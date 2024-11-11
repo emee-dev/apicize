@@ -133,7 +133,7 @@ jobs:
           $metadataAsJson = ConvertTo-Json -Depth 100 $metadata
           Set-Content -Path $dmdName -value $metadataAsJson
 
-          $signCommand = "$signToolPath sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
+          $signCommand = """$signToolPath"" sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
           Write-Host "Updating Windows signCommand in $tauriConfJson to $signCommand"
           $tauriConfigData = ConvertFrom-Json(Get-Content $tauriConfJson -Raw)
           $tauriConfigData.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name signCommand -Value $signCommand
