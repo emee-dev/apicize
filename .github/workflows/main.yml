@@ -88,9 +88,28 @@ jobs:
             Throw "Unable to locate Tauri configuration at $taurConfJson"
           }
 
-          if ((Get-Command "signtool.exe" -ErrorAction SilentlyContinue) -eq $null) { 
-            Throw "Unable to locate signtool.exe"
+          $signTool = Get-Command "signtool.exe" -ErrorAction SilentlyContinue
+          if ($signTool) {
+            $signToolPath = $signTool.Source
+          } else {
+            $matches = Get-ChildItem  
+            $signToolPath = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\signtool.exe"
+            if (-not(Test-Path -path $signToolpath)) {
+              Write-Host "Searching for signtool.exe"              
+              $matches = Get-Childitem –Path ""C:\Program Files (x86)" -Include signtool.exe -File -Recurse -ErrorAction SilentlyContinue
+              if (matches.Length -gt 0) {
+                $signToolPath = matches[0].FullName
+              } else {
+                $matches = Get-Childitem –Path ""C:\Program Files" -Include signtool.exe -File -Recurse -ErrorAction SilentlyContinue
+                if (matches.Length -gt 0) {
+                  $signToolPath = matches[0].FullName
+                } else {
+                  Throw "Unable to locate signtool.exe"
+                }
+              }
+            }
           }
+          Write-Host "signtool.exe located at $signToolPath"
 
           if (-not(Test-Path -path $tempFolderPath)) {
               New-Item -Type Directory -Path $tempFolderPath | Out-Null
@@ -111,7 +130,7 @@ jobs:
           $metadataAsJson = ConvertTo-Json -Depth 100 $metadata
           Set-Content -Path $dmdName -value $metadataAsJson
 
-          $signCommand = "signtool.exe sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
+          $signCommand = "$signToolPath sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
           Write-Host "Updating Windows signCommand in $tauriConfJson to $signCommand"
           $tauriConfigData = ConvertFrom-Json(Get-Content $tauriConfJson -Raw)
           $tauriConfigData.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name signCommand -Value $signCommand
@@ -119,7 +138,6 @@ jobs:
           Set-Content -Path $tauriConfJson -value $tauriConfigDataAsJson
 
           Write-Host "Login to Azure"
-          Write-Host "Executing az login --service-principal --output none -t $env:AZURE_TENANT_ID -u $env:AZURE_CLIENT_ID -p $env:AZURE_CLIENT_SECRET"
           az login --service-principal --output none -t $env:AZURE_TENANT_ID -u $env:AZURE_CLIENT_ID -p $env:AZURE_CLIENT_SECRET
         # env:
         #   WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
