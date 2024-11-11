@@ -76,13 +76,13 @@ jobs:
           AZURE_ENDPOINT: ${{ vars.AZURE_ENDPOINT }}
           AZURE_CERT_PROFILE_NAME: ${{ vars.AZURE_CERT_PROFILE_NAME }}
           AZURE_CODE_SIGNING_NAME: ${{ vars.AZURE_CODE_SIGNING_NAME }}
-          TAURI_CONFIG_JSON: "app/src-tauri/tauri.config.json"
+          TAURI_CONFIG_JSON: "./app/src-tauri/tauri.conf.json"
         run: |
           $tempFolderPath = Join-Path $Env:Temp "mtsc"
           $mtscName = Join-Path $tempFolderPath "mtsc.nuget.zip"
           $dlibName = Join-Path $tempFolderPath "bin" | Join-Path -ChildPath "x64" | Join-Path -ChildPath "Azure.CodeSigning.Dlib.dll" 
           $dmdName = Join-Path $tempFolderPath "metadata.json"
-
+          $tauriConfigJson = $env.TAURI_CONFIG_JSON ?? "./src-tauri/tauri.conf.json"
           if (-not(Test-Path -path $tempFolderPath)) {
               New-Item -Type Directory -Path $tempFolderPath | Out-Null
               
