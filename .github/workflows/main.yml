@@ -76,16 +76,20 @@ jobs:
           AZURE_ENDPOINT: ${{ vars.AZURE_ENDPOINT }}
           AZURE_CERT_PROFILE_NAME: ${{ vars.AZURE_CERT_PROFILE_NAME }}
           AZURE_CODE_SIGNING_NAME: ${{ vars.AZURE_CODE_SIGNING_NAME }}
-          TAURI_CONFIG_JSON: "./app/src-tauri/tauri.conf.json"
+          TAURI_CONF_JSON: "./app/src-tauri/tauri.conf.json"
         run: |
           $tempFolderPath = Join-Path $Env:Temp "mtsc"
           $mtscName = Join-Path $tempFolderPath "mtsc.nuget.zip"
           $dlibName = Join-Path $tempFolderPath "bin" | Join-Path -ChildPath "x64" | Join-Path -ChildPath "Azure.CodeSigning.Dlib.dll" 
           $dmdName = Join-Path $tempFolderPath "metadata.json"
-          $tauriConfigJson = $env.TAURI_CONFIG_JSON ?? "./src-tauri/tauri.conf.json"
+          $tauriConfJson = $env.TAURI_CONF_JSON ?? "./src-tauri/tauri.conf.json"
+
+          if (-not(Test-Path -path $tauriConfJson)) {
+            Throw "Unable to locate Tauri configuration at $taurConfJson"
+          }
+
           if (-not(Test-Path -path $tempFolderPath)) {
               New-Item -Type Directory -Path $tempFolderPath | Out-Null
-              
               Write-Host "Download Microsoft.Trusted.Signing.Client to $mtscName"
               $global:ProgressPreference = "SilentlyContinue"
               Invoke-WebRequest "https://www.nuget.org/api/v2/package/Microsoft.Trusted.Signing.Client/" -OutFile $mtscName
@@ -103,11 +107,11 @@ jobs:
           $metadataAsJson = ConvertTo-Json -Depth 100 $metadata
           Set-Content -Path $dmdName -value $metadataAsJson
 
-          Write-Host "Updating Windows signCommand in $env.TAURI_CONFIG_JSON"
-          $tauriConfig = ConvertFrom-Json(Get-Content $env.TAURI_CONFIG_JSON -Raw)
-          $tauriConfig.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name signCommand -Value "signtool sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
-          $tauriConfigAsJson = ConvertTo-Json -Depth 100 $tauriConfig
-          Set-Content -Path $env.TAURI_CONFIG_JSON -value $tauriConfigAsJson
+          Write-Host "Updating Windows signCommand in $tauriConfJson"
+          $tauriConfigData = ConvertFrom-Json(Get-Content $tauriConfJson -Raw)
+          $tauriConfigData.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name signCommand -Value "signtool sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
+          $tauriConfigDataAsJson = ConvertTo-Json -Depth 100 $tauriConfigData
+          Set-Content -Path $tauriConfJson -value $tauriConfigDataAsJson
 
           Write-Host "Login to Azure"
           az login --service-principal --output none -t $env:AZURE_TENANT_ID -u $env:AZURE_CLIENT_ID -p $env:AZURE_CLIENT_SECRET
