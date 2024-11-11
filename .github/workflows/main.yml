@@ -71,14 +71,30 @@ jobs:
         shell: bash
         env:
           # replace Azure credentials before running
-          WINDOWS_SIGN_COMMAND: "trusted-signing-cli -a ${{ vars.AZURE_CODE_SIGNING_NAME }} -c ${{ vars.AZURE_CERT_PROFILE_NAME }} -e ${{ vars.AZURE_ENDPOINT }} %1"
+          # WINDOWS_SIGN_COMMAND: "trusted-signing-cli -a ${{ vars.AZURE_CODE_SIGNING_NAME }} -c ${{ vars.AZURE_CERT_PROFILE_NAME }} -e ${{ vars.AZURE_ENDPOINT }} %1"
+          WINDOWS_SIGN_COMMAND "signtool sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib "/tmp/mtsc/bin/x64/Azure.CodeSigning.Dlib.dll" /dmdf /tmp/mtsc/metadata.json %1"
         run: |
-          echo "Test Azure login"
+          TMP=/tmp/mtsc
+          METADATA="$TMP/metadata.json" \
+
+          if [ ! -d "$TMP" ]; then \
+          mkdir -p "$TMP" \
+          MTSC="$TMP/mtsc.nuget" \
+          echo "Download Microsoft.Trusted.Signing.Client to $MTSC" \
+          wget -q -O "$MTSC" https://www.nuget.org/api/v2/package/Microsoft.Trusted.Signing.Client/ \
+          echo "Extract Microsoft.Trusted.Signing.Client to $TMP" \
+          unzip -q -d "$TMP" "$MTSC" \
+          fi
+
+          echo "Creating signing metadata at $METADATA"
+          echo '{"Endpoint":"https://wcus.codesigning.azure.net/","CodeSigningAccountName":"Apicize","CertificateProfileName":"Apicize"}' > "$METADATA";
+
+          echo "Login to Azure"
           az login --service-principal -t ${{ secrets.AZURE_TENANT_ID }} -u ${{ vars.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }}
-          echo "WINDOWS_SIGN_COMMAND set to ${WINDOWS_SIGN_COMMAND}"
+
+          echo "Updating tauri.conf.json, set Windows bundle to ${WINDOWS_SIGN_COMMAND}"
           cd "$GITHUB_WORKSPACE"
           cat './app/src-tauri/tauri.conf.json' | jq '.bundle .windows += {"signCommand": env.WINDOWS_SIGN_COMMAND}' > './app/src-tauri/temp.json' && mv './app/src-tauri/temp.json' './app/src-tauri/tauri.conf.json'
-          cargo install trusted-signing-cli
         # env:
         #   WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
         # run: |
