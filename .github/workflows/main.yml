@@ -74,7 +74,7 @@ jobs:
           WINDOWS_SIGN_COMMAND: "trusted-signing-cli -a ${{ vars.AZURE_CODE_SIGNING_NAME }} -c ${{ vars.AZURE_CERT_PROFILE_NAME }} -e ${{ vars.AZURE_ENDPOINT }} %1"
         run: |
           echo "Test Azure login"
-          az login --service-principal -t ${{ secrets.AZURE_TENANT_ID }} -u ${{ AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }}
+          az login --service-principal -t ${{ secrets.AZURE_TENANT_ID }} -u ${{ vars.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }}
           echo "WINDOWS_SIGN_COMMAND set to ${WINDOWS_SIGN_COMMAND}"
           cd "$GITHUB_WORKSPACE"
           cat './app/src-tauri/tauri.conf.json' | jq '.bundle .windows += {"signCommand": env.WINDOWS_SIGN_COMMAND}' > './app/src-tauri/temp.json' && mv './app/src-tauri/temp.json' './app/src-tauri/tauri.conf.json'
