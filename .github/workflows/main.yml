@@ -161,7 +161,6 @@ jobs:
         name: Deploy Tauri
         uses: tauri-apps/tauri-action@v0
         env:
-          PATH: ${{ enf}}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AZURE_TENANT_ID: ${{ matrix.platform == 'windows-latest' && secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ matrix.platform == 'windows-latest' && vars.AZURE_CLIENT_ID }}
