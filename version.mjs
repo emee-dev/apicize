@@ -2,6 +2,7 @@
 
 import { spawnSync } from 'child_process'
 import { readFileSync, writeFileSync } from 'fs'
+import { join } from 'path'
 
 
 const replaceVersionNumber = (fileName, version, ...replacements) => {
@@ -35,10 +36,10 @@ try {
     let version = process.argv[2]
     console.log(`Set version to ${version} `)
 
-    replaceVersionNumber('@apicize/lib-typescript/package.json', version, '"version": "__VERSION__",\n')
-    replaceVersionNumber('@apicize/toolkit/package.json', version, '"version": "__VERSION__",\n', '"@apicize/lib-typescript": "^__VERSION__",\n')
-    replaceVersionNumber('app/src-tauri/tauri.conf.json', version, '"version": "__VERSION__",\n')
-    replaceVersionNumber('app/package.json', version, '"version": "__VERSION__",\n', '"@apicize/toolkit": "^__VERSION__",\n')
+    replaceVersionNumber(join('@apicize', 'lib-typescript', 'package.json'), version, '"version": "__VERSION__"')
+    replaceVersionNumber(join('@apicize', 'toolkit', 'package.json'), version, '"version": "__VERSION__",', '"@apicize/lib-typescript": "^__VERSION__",')
+    replaceVersionNumber(join('app', 'src-tauri', 'tauri.conf.json'), version, '"version": "__VERSION__",')
+    replaceVersionNumber(join('app', 'package.json'), version, '"version": "__VERSION__",', '"@apicize/toolkit": "^__VERSION__",')
 
     console.log('Running yarn')
     spawnSync('yarn')

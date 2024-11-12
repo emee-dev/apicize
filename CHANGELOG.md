@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.9.2
+
+* Sign Windows distributable using Azure Trusted Signing
+
 # 0.9.1
 
 * Updated aplicize_lib to 0.11.3, which will hopefully fix the Windows build issue
