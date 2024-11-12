@@ -50,7 +50,7 @@ jobs:
       releaseUploadUrl: ${{ steps.deploy-tauri.outputs.releaseUploadUrl }}
     
     steps:
-      - name: Checkout project
+      - name: Checkout Project
         uses: actions/checkout@v4
       - name: Setup NodeJS
         uses: actions/setup-node@v4
@@ -70,8 +70,6 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
         # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
-      - name: Install Frontend dependencies
-        run: yarn install # change this to npm, pnpm or bun depending on which one you use.
       - name: Add Windows Trusted Signing
         shell: pwsh
         if: matrix.platform == 'windows-latest'
@@ -161,9 +159,11 @@ jobs:
         #   certutil -decode certificate/tempCert.txt certificate/certificate.pfx
         #   Remove-Item -path certificate -include tempCert.txt
         #   Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My
-      # - name: Perform a build
-      #   run: yarn build:release
-      #   working-directory: ./
+      - name: Install and Build Front-End Dependencies
+        run: |
+          yarn install # change this to npm, pnpm or bun depending on which one you use.
+          yarn run build-deps
+        working-directory: ./
       - id: deploy-tauri
         name: Build and Deploy Tauri
         uses: tauri-apps/tauri-action@v0.5.15
