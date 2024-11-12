@@ -62,7 +62,7 @@ jobs:
       - name: Install Rust and add target
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
-          rustup target add ${{ matrix.platform.target }}
+          rustup target add ${{ matrix.platform.rust_target }}
       - name: Install Dependencies
         if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
         run: |
