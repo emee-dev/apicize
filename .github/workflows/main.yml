@@ -31,12 +31,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - platform: 'macos-latest' # for Arm based macs (M1 and above).
-          #   args: '--target aarch64-apple-darwin'
-          # - platform: 'macos-latest' # for Intel based macs.
-          #   args: '--target x86_64-apple-darwin'
-          # - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
-          #   args: ''
+          - platform: 'macos-latest' # for Arm based macs (M1 and above).
+            args: '--target aarch64-apple-darwin'
+          - platform: 'macos-latest' # for Intel based macs.
+            args: '--target x86_64-apple-darwin'
+          - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
+            args: ''
           - platform: 'windows-latest'
             args: '--verbose'
   
@@ -95,11 +95,12 @@ jobs:
             if (Test-Path -path "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\signtool.exe") {
               $signToolpath = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64"
             } else {
-              Write-Host "Searching for signtool.exe"              
+              Write-Host "Searching for signtool.exe in C:\Program Files (x86)"
               $signtoolMatches = Get-Childitem –Path "C:\Program Files (x86)" -Include signtool.exe -File -Recurse -ErrorAction SilentlyContinue
               if ($signtoolMatches.Length -gt 0) {
                 $signToolPath = Split-path $signtoolMatches[0].FullName
               } else {
+                Write-Host "Searching for signtool.exe in C:\Program Files"
                 $signtoolMatches = Get-Childitem –Path "C:\Program Files" -Include signtool.exe -File -Recurse -ErrorAction SilentlyContinue
                 if ($signtoolMatches.Length -gt 0) {
                   $signToolPath = Split-path $signtoolMatches[0].FullName
@@ -162,9 +163,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AZURE_TENANT_ID: ${{ matrix.platform == 'windows-latest' && secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_ID: ${{ matrix.platform == 'windows-latest' && vars.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ matrix.platform == 'windows-latest' && secrets.AZURE_CLIENT_SECRET }}
         with:
           updaterJsonPreferNsis: true
           tagName: apicize-app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
