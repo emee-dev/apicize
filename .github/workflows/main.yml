@@ -38,7 +38,7 @@ jobs:
           - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
             args: ''
           - platform: 'windows-latest'
-            args: '--verbose'
+            args: ''
   
     runs-on: ${{ matrix.platform }}
     outputs:
@@ -167,8 +167,8 @@ jobs:
           updaterJsonPreferNsis: true
           tagName: apicize-app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
           releaseName: 'Apicize App __VERSION__'
-          releaseBody: 'See the assets to download this version and install.  Unfortunately, Windows and MacOS distributions are not signed at this time.'
+          releaseBody: 'See the assets to download this version and install.  Unfortunately, MacOS distributions are not yet signed at this time.'
           # releaseDraft: true
           prerelease: false
-          args: --verbose
+          args: ${{ matrix.args }}
           projectPath: ./app
