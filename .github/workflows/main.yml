@@ -55,10 +55,10 @@ jobs:
           cache: 'yarn'
       - name: Enable Corepack
         run: corepack enable      
-      - name: Install Rust
-        run: curl https://sh.rustup.rs -sSf | sh -s -- -y
-      - name: Rustup add target
-        run: rustup target add ${{ matrix.platform.rust_target }}
+      - name: Install Rust and add target
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          rustup target add ${{ matrix.platform.rust_target }}
       - name: Install Dependencies
         if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
         run: |
