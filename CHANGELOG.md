@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.9.3
+
+* Fix MacOS GitHub pipeline
+* Minor doc updates
+
 # 0.9.2
 
 * Sign Windows distributable using Azure Trusted Signing
