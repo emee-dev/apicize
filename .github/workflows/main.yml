@@ -90,26 +90,27 @@ jobs:
 
           $signTool = Get-Command "signtool.exe" -ErrorAction SilentlyContinue
           if ($signTool) {
-            $signToolPath = $signTool.Source
+            $signToolPath = Split-Path $signTool
           } else {
-            $signtoolMatches = Get-ChildItem  
-            $signToolPath = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\signtool.exe"
-            if (-not(Test-Path -path $signToolpath)) {
+            if (Test-Path -path "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\signtool.exe") {
+              $signToolpath = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64"
+            } else {
               Write-Host "Searching for signtool.exe"              
               $signtoolMatches = Get-Childitem –Path "C:\Program Files (x86)" -Include signtool.exe -File -Recurse -ErrorAction SilentlyContinue
               if ($signtoolMatches.Length -gt 0) {
-                $signToolPath = $signtoolMatches[0].FullName
+                $signToolPath = Split-path $signtoolMatches[0].FullName
               } else {
                 $signtoolMatches = Get-Childitem –Path "C:\Program Files" -Include signtool.exe -File -Recurse -ErrorAction SilentlyContinue
                 if ($signtoolMatches.Length -gt 0) {
-                  $signToolPath = $signtoolMatches[0].FullName
+                  $signToolPath = Split-path $signtoolMatches[0].FullName
                 }
               }
             }
           }
 
           if ($signToolPath) {
-            Write-Host "signtool.exe located at $signToolPath"
+            Write-Host "Appending location of signtool.exe to PATH: $signToolPath"
+            Add-Content $env:GITHUB_PATH $signToolPath
           } else {
             Throw "Unable to locate signtool.exe"
           }
@@ -136,8 +137,7 @@ jobs:
           $batchName = Join-Path $tempFolderPath "signtool.bat"
           Set-Content -Path $batchName -Value """$signToolPath"" sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
 
-          # $signCommand = """$signToolPath"" sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
-          $signCommand = "$batchName  %1"
+          $signCommand = "signtool sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlibName /dmdf $dmdName %1"
           Write-Host "Updating Windows signCommand in $tauriConfJson to $signCommand"
           $tauriConfigData = ConvertFrom-Json(Get-Content $tauriConfJson -Raw)
           $tauriConfigData.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name signCommand -Value $signCommand
@@ -161,6 +161,7 @@ jobs:
         name: Deploy Tauri
         uses: tauri-apps/tauri-action@v0
         env:
+          PATH: ${{ enf}}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AZURE_TENANT_ID: ${{ matrix.platform == 'windows-latest' && secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ matrix.platform == 'windows-latest' && vars.AZURE_CLIENT_ID }}
