@@ -2,7 +2,8 @@
 
 ## Overview
 
-Apicize is a testing platform that facilitates webservice testing both via GUI and CLI.  It utilizes Rust and V8 to execute the testing, and Tauri, React and Redux for the UI.
+Apicize is a testing platform that facilitates webservice testing both via GUI and CLI.  It utilizes Rust and V8 for file I/O and
+to execute  HTTP requests and tests.  Tauri, React, MobX and MUI are used for the UI.
 
 ### Contents
 
@@ -21,11 +22,9 @@ GUI installations are available for:
 * Redhat based distributions (.rpm)
 * Debian / Ubuntu based distributions (.deb)
 * Windows (64 bit .msi)
-* MacOS (.dmg)
+* MacOS (.dmg / .tar.gz)
 
-Note that the Windows and MacOS installers are not yet signed.  If this project ends up getting any traction, I may spend the money on code-signing certificates.
-
-CLI installations are currently available for Debian distributions.
+CLI installations are currently available for Debian and RedHat distributions [here](https://github.com/apicize/cli/releases/latest).
 
 You can build for other operating systems (see [below](#development)).
 
@@ -147,16 +146,15 @@ If you want to run the CLI, navigate to the `@apicize/@cli` directory and execut
 These are the components in this monorepo that comprise Apicize:
 
 * [**app**](./@apicize/app/README.md): Tauri user application to interactively edit and execute tests
-* [**@apicize/cli**](./@apicize/cli/README.md): Rust CLI application to execute tests
-* [**@apicize/lib-rust**](./@apicize/lib-rust/README.md): Rust crate for executing tests
-* [**@apicize/lib-typescript**](./@apicize/lib-typescript/README.md): TypeScript definitions for Apicize test workbook data structures
-* [**@apicize/toolkit**](./@apicize/toolkit/README.md):  React/redux UI component toolkit for view and editing Apicize workbooks
+* [**@apicize/lib-typescript**](./@apicize/lib-typescript/README.md): TypeScript definitions for Apicize test workbook/workspace data structures
+* [**@apicize/toolkit**](./@apicize/toolkit/README.md):  React/MobX UI component toolkit for view and editing Apicize workbooks
 
-Ideally, you could reuse these components to build things like a Visual Studio Code extension, a hosted solution to execute Apicize tests, etc. 
+Ideally, you could reuse lib-typescript and toolkit to build things like a Visual Studio Code extension, a hosted solution to execute Apicize tests, etc. 
 
-There are no unit or integration tests yet.  This is primarly because this project has been built and rebuilt at least four times (a couple of times in Electron, then Tauri v1 and most recently, Tauri v2).  
+Supporting Rust projects include:
 
-As things begin to stabilize, I'll build unit and integraiton testing.  Currently, the project is a monorepo but with decent integration testing, there is no reason why each of these components can't be its own repo, triggering upstream builds upon update, etc.  Assuming this project gets that far...
+* [**lib-rust**](https://github.com/apicize/lib-rust): Rust crate for executing tests
+* [**Apicize CLI**](https://github.com/apicize/cli): Rust CLI application to execute tests
 
 ### Building and Debugging
 
@@ -164,7 +162,7 @@ From the project's main directory, run `yarn start` to build and run the app usi
 rebuild if the either the **lib-typescript** or **toolkit** are updated.  When using watch mode, you'll have to Ctrl-C in the terminal window to completely 
 shut things down.
 
-VSCode debugging launch configurations are included.  For some reason, two copies of the app will be launched, have not been able to figure out why yet...
+VSCode debugging launch configurations are included.
 
 ## License and Attributions
 

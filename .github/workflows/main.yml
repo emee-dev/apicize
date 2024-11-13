@@ -183,7 +183,7 @@ jobs:
           updaterJsonPreferNsis: true
           tagName: apicize-app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
           releaseName: 'Apicize App __VERSION__'
-          releaseBody: 'See the assets to download this version and install.  Unfortunately, MacOS distributions are not yet signed at this time.'
+          releaseBody: 'See the assets to download this version and install (*.msi = Windows, *.deb = Debian/Ubuntu, *.rpm = RedHat/Fedora, *.dmg/*.tar.gz = MacOS).'
           # releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
