@@ -36,12 +36,14 @@ export const ResultsViewer = observer((props: {
         return null
     }
 
+    const isRunning = requestExecution.running
+
     const requestOrGroupId = workspace.active.id
     const selectedExecution = requestExecution.resultMenu[requestExecution.resultIndex]
     const executionResultId = selectedExecution?.executionResultId
 
     const executionResult = executionResultId ? workspace.getExecutionResult(workspace.active.id, executionResultId) : null
-    if (!executionResult || requestExecution.running) {
+    if (!executionResult) {
         return null
     }
 
@@ -95,6 +97,7 @@ export const ResultsViewer = observer((props: {
             <ToggleButtonGroup
                 orientation='vertical'
                 exclusive
+                disabled={isRunning}
                 onChange={handlePanelChanged}
                 value={panel}
                 sx={{ marginRight: '24px' }}
@@ -106,19 +109,22 @@ export const ResultsViewer = observer((props: {
                 <ToggleButton value="Request" title="Show Request" aria-label='show request' size='small' disabled={disableOtherPanels}><SendIcon /></ToggleButton>
             </ToggleButtonGroup>
             <Box sx={{ overflow: 'hidden', flexGrow: 1, bottom: '0', position: 'relative' }}>
-                {
-                    panel === 'Info' ? <ResultInfoViewer requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
-                        : panel === 'Headers' ? <ResponseHeadersViewer requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
-                            : panel === 'Preview' ? <ResultResponsePreview
-                                requestOrGroupId={requestOrGroupId} executionResultId={executionResultId}
-                            />
-                                : panel === 'Text' ? <ResultRawPreview
+                <Box position='relative' width='100%' height='100%'>
+                    <Box position='absolute' display={isRunning ? 'block' : 'none'} top={0} left={0} width='100%' height='100%' zIndex={9999} sx={{backgroundColor: '#00000080'}} />
+                    {
+                        panel === 'Info' ? <ResultInfoViewer requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
+                            : panel === 'Headers' ? <ResponseHeadersViewer requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
+                                : panel === 'Preview' ? <ResultResponsePreview
                                     requestOrGroupId={requestOrGroupId} executionResultId={executionResultId}
                                 />
-                                    : panel === 'Request' ? <ResultRequestViewer
-                                        requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
-                                        : null
-                }
+                                    : panel === 'Text' ? <ResultRawPreview
+                                        requestOrGroupId={requestOrGroupId} executionResultId={executionResultId}
+                                    />
+                                        : panel === 'Request' ? <ResultRequestViewer
+                                            requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
+                                            : null
+                    }
+                </Box>
             </Box>
         </Stack>)
         : null

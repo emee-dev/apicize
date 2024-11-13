@@ -20,33 +20,31 @@ export const RunResultsToolbar = observer((props: { className?: string, sx?: SxP
     }
 
     return (
-        execution.running
-            ? <Typography variant="h2" component="div">In Progress...</Typography>
-            : <Stack direction='row' className={props.className} sx={props.sx}>
-                {
-                    request && execution.results.size > 1
-                        ? <FormControl sx={{ marginRight: '1em' }}>
-                            <InputLabel id='run-id'>Runs</InputLabel>
-                            <Select
-                                labelId='run-id'
-                                id='run'
-                                disabled={execution.running}
-                                label='Runs'
-                                sx={{ minWidth: '10em' }}
-                                size='small'
-                                value={execution.resultIndex.toString()}
-                                onChange={e => updateSelectedResult(parseInt(e.target.value))}
-                            >
-                                {
-                                    execution.resultMenu.map((run, index) =>
-                                    (
-                                        <MenuItem key={`run-${index}`} sx={{ paddingLeft: `${1 + run.level * 1.5}em`, paddingRight: '24px', lineHeight: '1.1' }} value={index}>{run.title}</MenuItem>)
-                                    )
-                                }
-                            </Select>
-                        </FormControl>
-                        : null
-                }
-            </Stack >
+        <Stack direction='row' className={props.className} sx={props.sx}>
+            {
+                request && execution.results.size > 1
+                    ? <FormControl sx={{ marginRight: '1em' }}>
+                        <InputLabel id='run-id'>Runs</InputLabel>
+                        <Select
+                            labelId='run-id'
+                            id='run'
+                            disabled={execution.running}
+                            label='Runs'
+                            sx={{ minWidth: '10em' }}
+                            size='small'
+                            value={execution.resultIndex.toString()}
+                            onChange={e => updateSelectedResult(parseInt(e.target.value))}
+                        >
+                            {
+                                execution.resultMenu.map((run, index) =>
+                                (
+                                    <MenuItem key={`run-${index}`} sx={{ paddingLeft: `${1 + run.level * 1.5}em`, paddingRight: '24px', lineHeight: '1.1' }} value={index}>{run.title}</MenuItem>)
+                                )
+                            }
+                        </Select>
+                    </FormControl>
+                    : null
+            }
+        </Stack >
     )
 })

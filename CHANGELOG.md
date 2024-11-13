@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.9.4
+
+* UI Tweak: Disable result information on run
+
 # 0.9.3
 
 * Fix MacOS GitHub pipeline

@@ -1,4 +1,4 @@
-import { ToggleButton, TextField, Button } from "@mui/material";
+import { ToggleButton, Button, Box } from "@mui/material";
 import { Stack, SxProps } from "@mui/system";
 import { observer } from "mobx-react-lite";
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined'
@@ -50,7 +50,7 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
     }
 
     return (
-        <Stack direction={'row'} flexGrow={0} sx={props.sx}>
+        <Stack direction={'row'} flexGrow={0} justifyItems='center' sx={props.sx}>
             <ToggleButton value='Run' title='Run selected request once' sx={{ marginRight: '1em' }} size='small' disabled={running} onClick={handleRunClick()}>
                 <PlayCircleOutlined color={running ? 'disabled' : 'success'} />
             </ToggleButton>

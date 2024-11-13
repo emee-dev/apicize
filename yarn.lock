@@ -15,7 +15,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apicize/lib-typescript@npm:^0.9.3, @apicize/lib-typescript@workspace:@apicize/lib-typescript":
+"@apicize/lib-typescript@npm:^0.9.4, @apicize/lib-typescript@workspace:@apicize/lib-typescript":
   version: 0.0.0-use.local
   resolution: "@apicize/lib-typescript@workspace:@apicize/lib-typescript"
   dependencies:
@@ -23,11 +23,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@apicize/toolkit@npm:^0.9.3, @apicize/toolkit@workspace:@apicize/toolkit":
+"@apicize/toolkit@npm:^0.9.4, @apicize/toolkit@workspace:@apicize/toolkit":
   version: 0.0.0-use.local
   resolution: "@apicize/toolkit@workspace:@apicize/toolkit"
   dependencies:
-    "@apicize/lib-typescript": "npm:^0.9.3"
+    "@apicize/lib-typescript": "npm:^0.9.4"
     "@dnd-kit/core": "npm:^6.1.0"
     "@emotion/react": "npm:^11.11.1"
     "@emotion/styled": "npm:^11.11.0"
@@ -2655,7 +2655,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:app"
   dependencies:
-    "@apicize/toolkit": "npm:^0.9.3"
+    "@apicize/toolkit": "npm:^0.9.4"
     "@dnd-kit/core": "npm:^6.1.0"
     "@mui/material": "npm:^6.1.1"
     "@mui/system": "npm:^6.1.1"

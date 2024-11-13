@@ -4,6 +4,7 @@ import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings'
 import FolderIcon from '@mui/icons-material/Folder';
 import ViewListIcon from '@mui/icons-material/ViewList'
 import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
 import AltRouteIcon from '@mui/icons-material/AltRoute'
 import { RequestInfoEditor } from './request/request-info-editor'
@@ -59,7 +60,8 @@ export const RequestEditor = observer((props: {
     }
 
     const requestExecution = workspace.executions.get(workspace.active.id)
-    const isExecutedOrExecuting = requestExecution?.running || (requestExecution?.results?.size ?? 0) > 0
+    const isExecuted = (requestExecution?.results?.size ?? 0) > 0
+    const isRunning = requestExecution?.running
 
     let usePanel = (
         (group && panel !== 'Info' && panel !== 'Parameters')
@@ -99,7 +101,10 @@ export const RequestEditor = observer((props: {
     const requestPanel = group ?
         <>
             <Stack direction='row' className='editor-panel-header'>
-                <EditorTitle icon={<FolderIcon color='folder' />} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'} />
+                <Stack direction='row'>
+                    <EditorTitle icon={<FolderIcon color='folder' />} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'} />
+                    <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
+                    </Stack>
                 <RunToolbar sx={{ marginLeft: '3em' }} />
             </Stack>
             <Stack direction='row' flexGrow={1}>
@@ -129,9 +134,12 @@ export const RequestEditor = observer((props: {
             </Stack>
         </>
         : request
-            ? <Box className={isExecutedOrExecuting ? 'editor-panel' : 'editor-single-panel'}>
+            ? <Box className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
                 <Stack direction='row' className='editor-panel-header'>
-                    <EditorTitle icon={<SendIcon color='request' />} name={(request.name.length > 0) ? `${request.name} - ${panel}` : `(Unnamed) - ${panel}`} />
+                    <Stack direction='row'>
+                        <EditorTitle icon={<SendIcon color='request' />} name={(request.name.length > 0) ? `${request.name} - ${panel}` : `(Unnamed) - ${panel}`} />
+                        <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
+                    </Stack>
                     <RunToolbar sx={{ marginLeft: '3em' }} />
                 </Stack>
                 <Stack direction='row' flexGrow={1}>
@@ -170,9 +178,9 @@ export const RequestEditor = observer((props: {
             </Box>
             : null
 
-    return isExecutedOrExecuting
+    return isExecuted
         ? <PanelGroup autoSaveId="apicize-request" direction="horizontal" className='editor' storage={sizeStorage}>
-            <Panel id='request-editor' order={0} defaultSize={50} minSize={20} className={isExecutedOrExecuting ? 'editor-panel' : 'editor-single-panel'}>
+            <Panel id='request-editor' order={0} defaultSize={50} minSize={20} className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
                 {requestPanel}
             </Panel>
             <PanelResizeHandle className="resize-handle" hitAreaMargins={{ coarse: 30, fine: 10 }} />
