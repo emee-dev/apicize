@@ -165,7 +165,7 @@ jobs:
           APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
         run: |
           echo "Copying Apple private key to .private-key"
-          cat "$env:APPLE_API_PRIVATE_KEY" > .private_key
+          echo "$env:APPLE_API_PRIVATE_KEY" > .private_key
       - name: Install and Build Front-End Dependencies
         run: |
           yarn install # change this to npm, pnpm or bun depending on which one you use.

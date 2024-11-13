@@ -20,7 +20,7 @@
     ]
   },
   "build": {
-    "beforeBuildCommand": "yarn build",
+    "beforeBuildCommand": "yarn && yarn build",
     "beforeDevCommand": "yarn dev",
     "devUrl": "http://localhost:1420",
     "frontendDist": "../dist"
