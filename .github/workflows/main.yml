@@ -159,16 +159,26 @@ jobs:
         #   certutil -decode certificate/tempCert.txt certificate/certificate.pfx
         #   Remove-Item -path certificate -include tempCert.txt
         #   Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My
+      - name: Store Apple Certificate
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+        run: |
+          echo "Copying Apple private key to .private-key"
+          cat "$env:APPLE_API_PRIVATE_KEY" > .private_key
       - name: Install and Build Front-End Dependencies
         run: |
           yarn install # change this to npm, pnpm or bun depending on which one you use.
           yarn run build-deps
-        working-directory: ./
       - id: deploy-tauri
         name: Build and Deploy Tauri
         uses: tauri-apps/tauri-action@v0.5.15
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_API_KEY_PATH: ".private-key"
         with:
           updaterJsonPreferNsis: true
           tagName: apicize-app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
