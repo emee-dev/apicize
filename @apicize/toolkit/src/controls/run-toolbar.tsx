@@ -51,7 +51,7 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
 
     return (
         <Stack direction={'row'} flexGrow={0} justifyItems='center' sx={props.sx}>
-            <ToggleButton value='Run' title='Run selected request once' sx={{ marginRight: '1em' }} size='small' disabled={running} onClick={handleRunClick()}>
+            <ToggleButton value='Run' title='Run selected request once' sx={{ marginRight: '1em' }} size='small' disabled={running} onClick={handleRunClick(1)}>
                 <PlayCircleOutlined color={running ? 'disabled' : 'success'} />
             </ToggleButton>
             {

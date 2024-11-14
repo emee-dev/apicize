@@ -1410,10 +1410,11 @@ export class WorkspaceStore {
 
         const result = executionResults.items[0]
         addResult(result, 0)
+        debugger
         execution.resultMenu = menu
+        execution.results = results
         execution.resultIndex = (isNaN(execution.resultIndex) || execution.resultIndex >= execution.results.size)
             ? 0 : execution.resultIndex
-        execution.results = results
         execution.response = executionResults
         execution.panel = (result.type === 'request' && previousPanel && allTestsSucceeded) ? previousPanel : 'Info'
     }

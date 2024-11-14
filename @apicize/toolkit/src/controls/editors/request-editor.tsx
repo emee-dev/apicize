@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ToggleButtonGroup, ToggleButton, Box, Stack, SxProps, Typography, Grid2 } from '@mui/material'
+import { ToggleButtonGroup, ToggleButton, Box, Stack, SxProps, Typography, Grid2, useColorScheme } from '@mui/material'
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings'
 import FolderIcon from '@mui/icons-material/Folder';
 import ViewListIcon from '@mui/icons-material/ViewList'
@@ -99,12 +99,12 @@ export const RequestEditor = observer((props: {
     }
 
     const requestPanel = group ?
-        <>
+        <Box marginBottom='1.5em'>
             <Stack direction='row' className='editor-panel-header'>
                 <Stack direction='row'>
                     <EditorTitle icon={<FolderIcon color='folder' />} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'} />
                     <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
-                    </Stack>
+                </Stack>
                 <RunToolbar sx={{ marginLeft: '3em' }} />
             </Stack>
             <Stack direction='row' flexGrow={1}>
@@ -132,7 +132,7 @@ export const RequestEditor = observer((props: {
                     </Box>
                 </Box>
             </Stack>
-        </>
+        </Box>
         : request
             ? <Box className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
                 <Stack direction='row' className='editor-panel-header'>
@@ -183,11 +183,11 @@ export const RequestEditor = observer((props: {
             <Panel id='request-editor' order={0} defaultSize={50} minSize={20} className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
                 {requestPanel}
             </Panel>
-            <PanelResizeHandle className="resize-handle" hitAreaMargins={{ coarse: 30, fine: 10 }} />
+            <PanelResizeHandle className={'resize-handle'} hitAreaMargins={{ coarse: 30, fine: 10 }} />
             {
                 <Panel id='results-viewer' order={1} defaultSize={50} minSize={20} className='editor-panel'>
                     <RunResultsToolbar className='editor-panel-header' />
-                    <ResultsViewer sx={{ flexGrow: 1 }} />
+                    <ResultsViewer sx={{ flexGrow: 1, marginBottom: '1.5em' }} />
                 </Panel>
             }
         </PanelGroup>

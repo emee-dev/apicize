@@ -1,17 +1,45 @@
-.resize-handle {
-  flex: 0 0 0.2rem;
+.dark .resize-handle {
+  flex: 0 0 2rem;
   display: flex;
   justify-content: stretch;
   align-items: stretch;
   outline: none;
-  transition: background-color 0.1s linear;
+  background: linear-gradient(#222, #222) no-repeat center/4px 100%;
+  /* transition: background-color 0.1s linear; */
 }
 
-.resize-handle:hover,
-.resize-handle[data-resize-handle-active="keyboard"],
-.resize-handle[data-resize-handle-active="pointer"] {
+.dark .resize-handle:hover,
+.dark .resize-handle[data-resize-handle-active="keyboard"],
+.dark .resize-handle[data-resize-handle-active="pointer"] {
   cursor: ew-resize;
-  background-color: #808080;
+  background: linear-gradient(#BBB, #BBB) no-repeat center/4px 100%;
+}
+
+body .light {
+  color: rgba(0, 0, 0, .9)
+}
+
+.light .MuiFormLabel-root,
+.light .MuiInputLabel-root,
+.MuiInputLabel-formControl {
+  color: rgba(0, 0, 0, .9)
+}
+
+.light .resize-handle {
+  flex: 0 0 2rem;
+  display: flex;
+  justify-content: stretch;
+  align-items: stretch;
+  outline: none;
+  background: linear-gradient(#EEE, #EEE) no-repeat center/4px 100%;
+  /* transition: background-color 0.1s linear; */
+}
+
+.light .resize-handle:hover,
+.light .resize-handle[data-resize-handle-active="keyboard"],
+.light .resize-handle[data-resize-handle-active="pointer"] {
+  cursor: ew-resize;
+  background: linear-gradient(#111, #111) no-repeat center/4px 100%;
 }
 
 @media (pointer: coarse) {
@@ -138,7 +166,6 @@ pre.log {
   margin-right: 0.1em;
 }
 
-
 .namevalue-col-btn {
   text-align: right;
 }
@@ -160,7 +187,7 @@ pre.log {
 }
 
 .editor {
-  padding: 0 1.5em 1.5em 1.5em;
+  padding: 0 1.5em;
   width: 100vw;
   height: 100vh;
   display: flex;

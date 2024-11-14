@@ -16,8 +16,8 @@ import { ApicizeSettingsProvider } from './providers/apicize-settings.provider';
 import { ConfigurableTheme } from './controls/configurable-theme';
 
 const store = new WorkspaceStore({
-  onExecuteRequest: async (workspace, requestId, overrideRuns) => core.invoke<ApicizeExecution>
-      ('run_request', { workspace, requestId, overrideRuns }),
+  onExecuteRequest: async (workspace, requestId, overrideNumberOfRuns) => core.invoke<ApicizeExecution>
+      ('run_request', { workspace, requestId, overrideNumberOfRuns }),
   onCancelRequest: (requestId) => core.invoke(
     'cancel_request', { requestId }),
   onClearToken: (authorizationId) => core.invoke(

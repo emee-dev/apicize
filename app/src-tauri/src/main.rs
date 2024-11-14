@@ -92,6 +92,7 @@ fn cancellation_tokens() -> &'static Mutex<HashMap<String, CancellationToken>> {
 async fn run_request(
     workspace: Workspace,
     request_id: String,
+    override_number_of_runs: Option<usize>
 ) -> Result<ApicizeExecution, String> {
     let arc_test_started = Arc::new(Instant::now());
     let shared_workspace = Arc::new(workspace);
@@ -108,6 +109,7 @@ async fn run_request(
         Some(vec![request_id.clone()]),
         Some(cancellation),
         arc_test_started,
+        override_number_of_runs
     )
     .await;
 

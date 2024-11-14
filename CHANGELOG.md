@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.9.5
+
+* Updated to apicize_lib to 0.12.0
+* Some refinement of request screen splitter
+
 # 0.9.4
 
 * UI Tweak: Disable result information on run
