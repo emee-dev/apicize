@@ -6,6 +6,9 @@ import { exists, readFile, readTextFile, copyFile, mkdir } from "@tauri-apps/plu
 import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useApicizeSettings, useFeedback, WorkspaceStore } from "@apicize/toolkit";
 import { GetTitle, StoredGlobalSettings, Workspace } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
+import { toJS } from "mobx";
+
+declare var loadedSettings: StoredGlobalSettings | undefined
 
 /**
  * Implementation of file opeartions via Tauri
@@ -18,35 +21,19 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
     const settings = useApicizeSettings()
 
     const _forceClose = useRef(false)
-    const _defaultRequested = useRef(false)
     const _sshPath = useRef('')
     const _bodyDataPath = useRef('')
-
-    /**
-     * Loads or initializes global Apicize settings
-     * @returns active settings
-     */
-    const loadSettings = async () => {
-        let storedSettings: StoredGlobalSettings
-        try {
-            storedSettings = await core.invoke<StoredGlobalSettings>('open_settings')
-        } catch (e) {
-            // If unable to load settings, try and put into place some sensible defaults
-            storedSettings = {
-                workbookDirectory: await path.join(await path.documentDir(), 'apicize'),
-                fontSize: 12,
-                colorScheme: 'dark',
-                editorPanels: '',
-            }
-            feedback.toast(`Unable to access settings: ${e}`, ToastSeverity.Error)
+    const _loadedSettings = useRef<StoredGlobalSettings>(typeof loadedSettings === undefined || (!loadedSettings)
+        ? {
+            lastWorkbookFileName: '',
+            workbookDirectory: '',
+            fontSize: 12,
+            colorScheme: 'dark',
+            editorPanels: '',
+            recentWorkbookFileNames: undefined
         }
-
-        settings.lastWorkbookFileName = storedSettings.lastWorkbookFileName
-        settings.workbookDirectory = storedSettings.workbookDirectory
-        settings.fontSize = storedSettings.fontSize
-        settings.colorScheme = storedSettings.colorScheme
-        settings.editorPanels = storedSettings.editorPanels
-    }
+        : loadedSettings
+    )
 
     /**
      * Updates specified settings and saves
@@ -60,6 +47,9 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 fontSize: settings.fontSize,
                 colorScheme: settings.colorScheme,
                 editorPanels: settings.editorPanels,
+                recentWorkbookFileNames: settings.recentWorkbookFileNames.length > 0
+                    ? settings.recentWorkbookFileNames
+                    : undefined
             }
             await core.invoke<StoredGlobalSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {
@@ -153,7 +143,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      * @param doUpdateSettings 
      * @returns 
      */
-    const openWorkspace = async (fileName?: string, doUpdateSettings?: boolean) => {
+    const openWorkspace = async (fileName?: string) => {
         if (workspaceStore.dirty) {
             if (! await feedback.confirm({
                 title: 'Open Workbook',
@@ -166,8 +156,11 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             }
         }
 
-        if ((fileName?.length ?? 0) === 0) {
-            fileName = (await dialog.open({
+        let openFileName = fileName ?? null
+
+        if ((openFileName?.length ?? 0) === 0) {
+            feedback.setModal(true)
+            openFileName = await dialog.open({
                 multiple: false,
                 title: 'Open Apicize Workbook',
                 defaultPath: settings.workbookDirectory,
@@ -176,21 +169,23 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                     name: 'Apicize Files',
                     extensions: [EXT]
                 }]
-            })) as any
+            })
+            feedback.setModal(false)
         }
 
-        if (!fileName) return
+        if (!openFileName) return
 
         try {
-            const data: Workspace = await core.invoke('open_workspace', { path: fileName })
-            const displayName = await getDisplayName(fileName)
-            workspaceStore.loadWorkspace(data, fileName, displayName)
-            settings.lastWorkbookFileName = fileName
+            const data: Workspace = await core.invoke('open_workspace', { path: openFileName })
+            const displayName = await getDisplayName(openFileName)
+            workspaceStore.loadWorkspace(data, openFileName, displayName)
+            settings.lastWorkbookFileName = openFileName
+            settings.addRecentWorkbookFileName(openFileName)
             if (settings.dirty) {
                 await saveSettings()
             }
             _forceClose.current = false
-            feedback.toast(`Opened ${fileName}`, ToastSeverity.Success)
+            feedback.toast(`Opened ${openFileName}`, ToastSeverity.Success)
         } catch (e) {
             feedback.toast(`${e}`, ToastSeverity.Error)
         }
@@ -237,11 +232,13 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             const workspaceToSave = workspaceStore.getWorkspace()
             await core.invoke('save_workspace', { workspace: workspaceToSave, path: workspaceStore.workbookFullName })
             feedback.toast(`Saved ${workspaceStore.workbookFullName}`, ToastSeverity.Success)
+            const displayName = await getDisplayName(workspaceStore.workbookFullName)
             workspaceStore.updateSavedLocation(
                 workspaceStore.workbookFullName,
-                await getDisplayName(workspaceStore.workbookFullName)
+                displayName
             )
             settings.lastWorkbookFileName = workspaceStore.workbookFullName
+            settings.addRecentWorkbookFileName(workspaceStore.workbookFullName)
             if (settings.dirty) {
                 await saveSettings()
             }
@@ -284,6 +281,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 }
             }
 
+            feedback.setModal(true)
             let fileName = await dialog.save({
                 title: 'Save Apicize Workbook',
                 defaultPath: ((workspaceStore.workbookFullName?.length ?? 0) > 0)
@@ -293,6 +291,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                     extensions: [EXT]
                 }]
             })
+            feedback.setModal(false)
 
             if ((typeof fileName !== 'string') || ((fileName?.length ?? 0) === 0)) {
                 return
@@ -306,11 +305,13 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             await core.invoke('save_workspace', { workspace: workspaceToSave, path: fileName })
 
             feedback.toast(`Saved ${fileName}`, ToastSeverity.Success)
+            const displayName = await getDisplayName(fileName)
             workspaceStore.updateSavedLocation(
                 fileName,
-                await getDisplayName(fileName)
+                displayName
             )
             settings.lastWorkbookFileName = fileName
+            settings.addRecentWorkbookFileName(fileName)
             if (settings.dirty) {
                 await saveSettings()
             }
@@ -353,7 +354,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 throw new Error(`Invalid SSH file type: ${fileType}`)
         }
 
-        const fileName = (await dialog.open({
+        feedback.setModal(true)
+        const fileName = await dialog.open({
             multiple: false,
             title,
             defaultPath,
@@ -365,7 +367,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 name: 'All Files',
                 extensions: ['*']
             }]
-        })) as any
+        })
+        feedback.setModal(false)
 
         if (!fileName) return null
 
@@ -385,7 +388,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      * @returns base64 encoded string or null if no result
      */
     const openFile = async () => {
-        const fileName = (await dialog.open({
+        feedback.setModal(true)
+        const fileName = await dialog.open({
             multiple: false,
             title: 'Open File',
             defaultPath: await getBodyDataPath(),
@@ -394,7 +398,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 name: 'All Files',
                 extensions: ['*']
             }]
-        })) as any
+        })
+        feedback.setModal(false)
 
         if (!fileName) return null
 
@@ -446,27 +451,31 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
 
     // Load if we have not 
     (async () => {
-        await loadSettings()
-        if (!_defaultRequested.current) {
-            try {
-                _defaultRequested.current = true
-                if (settings.lastWorkbookFileName && (settings.lastWorkbookFileName?.length ?? 0) > 0) {
-                    if (await exists(settings.lastWorkbookFileName)) {
-                        await openWorkspace(settings.lastWorkbookFileName, false)
-                    }
-                } else {
-                    if (! await exists(settings.workbookDirectory)) {
-                        await mkdir(settings.workbookDirectory)
-                        const demoFileSource = await join(await resourceDir(), 'help', `demo.apicize`)
-                        const demoFileDest = await join(settings.workbookDirectory, `demo.apicize`)
-                        await copyFile(demoFileSource, demoFileDest)
-                        await openWorkspace(demoFileDest, true)
-                    }
-                }
-            } catch (e) {
-                feedback.toast(`${e}`, ToastSeverity.Error)
+        if (_loadedSettings.current.lastWorkbookFileName?.length === 0) {
+            // This is really here only as hack during development, because settings gets loaded when the app
+            // is started, but not when the window is reloaded (will address this at some point)
+            _loadedSettings.current = {
+                workbookDirectory: await path.join(await path.documentDir(), 'apicize'),
+                fontSize: 12,
+                colorScheme: 'dark',
+                editorPanels: '',
             }
         }
+
+        settings.lastWorkbookFileName = _loadedSettings.current.lastWorkbookFileName
+        settings.workbookDirectory = _loadedSettings.current.workbookDirectory
+        settings.fontSize = _loadedSettings.current.fontSize
+        settings.colorScheme = _loadedSettings.current.colorScheme
+        settings.editorPanels = _loadedSettings.current.editorPanels
+        settings.recentWorkbookFileNames = _loadedSettings.current.recentWorkbookFileNames
+            ? _loadedSettings.current.recentWorkbookFileNames
+            : []
+
+        if (settings.lastWorkbookFileName) {
+            await openWorkspace(settings.lastWorkbookFileName)
+        }
+
+        loadedSettings = undefined
     })()
 
     const fileOpsStore = new FileOperationsStore({

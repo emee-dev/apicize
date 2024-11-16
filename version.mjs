@@ -38,6 +38,7 @@ try {
 
     replaceVersionNumber(join('@apicize', 'lib-typescript', 'package.json'), version, '"version": "__VERSION__"')
     replaceVersionNumber(join('@apicize', 'toolkit', 'package.json'), version, '"version": "__VERSION__",', '"@apicize/lib-typescript": "^__VERSION__",')
+    replaceVersionNumber(join('app', 'src-tauri', 'Cargo.toml'), version, 'version = "__VERSION__"')
     replaceVersionNumber(join('app', 'src-tauri', 'tauri.conf.json'), version, '"version": "__VERSION__",')
     replaceVersionNumber(join('app', 'package.json'), version, '"version": "__VERSION__",', '"@apicize/toolkit": "^__VERSION__",')
 

@@ -10,6 +10,7 @@ export class ApicizeSettingsStore {
     private _colorScheme: SupportedColorScheme = 'dark'
     private _showSettings = false
     private _editorPanels = ''
+    private _recentWorkbookFileNames: string[] = []
 
     constructor() {
         makeAutoObservable(this)
@@ -41,6 +42,28 @@ export class ApicizeSettingsStore {
     public set lastWorkbookFileName(newLastWorkbookFileName: string | undefined) {
         if (this._lastWorkbookFileName != newLastWorkbookFileName) {
             this._lastWorkbookFileName = newLastWorkbookFileName
+            this._dirty = true
+        }
+    }
+
+    public get recentWorkbookFileNames(): string[] {
+        return this._recentWorkbookFileNames
+    }
+
+    public set recentWorkbookFileNames(newRecentWorkbookFileNames: string[]) {
+        if (this._recentWorkbookFileNames.join(';') != newRecentWorkbookFileNames.join(';')) {
+            this._recentWorkbookFileNames = newRecentWorkbookFileNames
+            this._dirty = true
+        }
+    }
+
+    public addRecentWorkbookFileName(fileName: string) {
+        const i = this._recentWorkbookFileNames.indexOf(fileName)
+        if (i !== 0) {
+            if (i !== -1) {
+                this._recentWorkbookFileNames.splice(i, 1)
+            }
+            this._recentWorkbookFileNames = [fileName, ...this._recentWorkbookFileNames.slice(0, 10)]
             this._dirty = true
         }
     }

@@ -27,7 +27,7 @@ export const RequestParametersEditor = observer(() => {
     const lists = workspace.getRequestParameterLists()
 
     return (
-        <Stack spacing={3}>
+        <Stack spacing={3} maxWidth='60em'>
             <FormControl>
                 <InputLabel id='scenario-label-id'>Scenario</InputLabel>
                 <Select

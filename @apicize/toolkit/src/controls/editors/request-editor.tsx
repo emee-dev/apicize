@@ -186,8 +186,18 @@ export const RequestEditor = observer((props: {
             <PanelResizeHandle className={'resize-handle'} hitAreaMargins={{ coarse: 30, fine: 10 }} />
             {
                 <Panel id='results-viewer' order={1} defaultSize={50} minSize={20} className='editor-panel'>
-                    <RunResultsToolbar className='editor-panel-header' />
-                    <ResultsViewer sx={{ flexGrow: 1, marginBottom: '1.5em' }} />
+                    <Box position='relative' display='flex' flexGrow={1} flexDirection='column'>
+                        <Box top={0}
+                            left={0}
+                            width='100%'
+                            height='100%'
+                            position='absolute'
+                            display={isRunning ? 'block' : 'none'}
+                            className="MuiBackdrop-root MuiModal-backdrop"
+                            sx={{ zIndex: 99999, opacity: 1, transition: "opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms", backgroundColor: "#00000080" }} />
+                        <RunResultsToolbar className='editor-panel-header' />
+                        <ResultsViewer sx={{ flexGrow: 1, marginBottom: '1.5em' }} />
+                    </Box>
                 </Panel>
             }
         </PanelGroup>

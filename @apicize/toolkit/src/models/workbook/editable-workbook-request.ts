@@ -100,6 +100,7 @@ export class EditableWorkbookRequest extends Editable<WorkbookRequest> {
             keepalive: this.keepalive,
             mode: this.mode,
             runs: this.runs,
+            timeout: this.timeout,
             multiRunExecution: this.multiRunExecution,
             selectedScenario: this.selectedScenario,
             selectedAuthorization: this.selectedAuthorization,
@@ -184,6 +185,7 @@ export class EditableWorkbookRequestGroup extends Editable<WorkbookRequestGroup>
     @observable public accessor execution = WorkbookGroupExecution.Sequential
 
     @observable accessor runs = 0
+    @observable accessor timeout = 0
     @observable public accessor multiRunExecution = WorkbookGroupExecution.Sequential
 
     @observable accessor selectedScenario: Selection | undefined = undefined

@@ -1,4 +1,5 @@
 import { observer } from "mobx-react-lite"
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FolderIcon from '@mui/icons-material/Folder'
 import FileOpenIcon from '@mui/icons-material/FileOpen'
@@ -20,7 +21,7 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import LanguageIcon from '@mui/icons-material/Language'
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
 import { TreeItem } from '@mui/x-tree-view/TreeItem'
-import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, useTheme } from '@mui/material'
+import { alpha, Box, Button, Divider, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Stack, styled, useTheme } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import React, { ReactNode, SyntheticEvent, useState } from 'react'
 import { DndContext, DragEndEvent, useDraggable, useDroppable, useSensors, useSensor, PointerSensor, DragCancelEvent, DragMoveEvent } from '@dnd-kit/core'
@@ -36,6 +37,7 @@ import { EditableWorkbookScenario } from "../models/workbook/editable-workbook-s
 import { EditableWorkbookAuthorization } from "../models/workbook/editable-workbook-authorization";
 import { EditableWorkbookCertificate } from "../models/workbook/editable-workbook-certificate";
 import { EditableWorkbookProxy } from "../models/workbook/editable-workbook-proxy";
+import { useApicizeSettings } from "../contexts/apicize-settings.context";
 
 interface MenuPosition {
     id: string
@@ -50,12 +52,56 @@ enum StateIcon {
     Shared
 }
 
+const StyledMenu = styled((props: MenuProps) => (
+    <Menu
+        elevation={0}
+        anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+        }}
+        transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+        }}
+        {...props}
+    />
+))(({ theme }) => ({
+    '& .MuiPaper-root': {
+        borderRadius: 6,
+        marginTop: theme.spacing(1),
+        minWidth: 180,
+        color: 'rgb(55, 65, 81)',
+        boxShadow:
+            'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+        '& .MuiMenu-list': {
+            padding: '4px 0',
+        },
+        '& .MuiMenuItem-root': {
+            '& .MuiSvgIcon-root': {
+                fontSize: 18,
+                color: theme.palette.text.secondary,
+                marginRight: theme.spacing(1.5),
+            },
+            '&:active': {
+                backgroundColor: alpha(
+                    theme.palette.primary.main,
+                    theme.palette.action.selectedOpacity
+                ),
+            },
+        },
+        ...theme.applyStyles('dark', {
+            color: theme.palette.grey[300],
+        }),
+    },
+}));
+
 export const Navigation = observer((props: { onSettings?: () => void }) => {
 
     const theme = useTheme()
     const workspace = useWorkspace()
     const fileOps = useFileOperations()
     const feedback = useFeedback()
+    const settings = useApicizeSettings()
 
     const [requestsMenu, setRequestsMenu] = useState<MenuPosition | undefined>(undefined)
     const [reqMenu, setReqMenu] = useState<MenuPosition | undefined>(undefined)
@@ -63,6 +109,21 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
     const [scenarioMenu, setScenarioMenu] = useState<MenuPosition | undefined>(undefined)
     const [certMenu, setCertMenu] = useState<MenuPosition | undefined>(undefined)
     const [proxyMenu, setProxyMenu] = useState<MenuPosition | undefined>(undefined)
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+    const fileMenuOpen = Boolean(anchorEl);
+    const handleFileMenuClick = () => {
+        const target = document.getElementById('file-menu-button')
+        setAnchorEl(target);
+        document.getElementById('nav-file-0')?.focus()
+    };
+    const handleFileOpen = (fileName: string) => {
+        setAnchorEl(null);
+        fileOps.openWorkbook(fileName)
+    }
+    const handleFileMenuClose = () => {
+        setAnchorEl(null);
+    };
 
     window.onkeydown = ((e) => {
         if (e.ctrlKey) {
@@ -84,8 +145,16 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                 case 'n':
                     fileOps.newWorkbook()
                     break
+                // case 'O':
+                //     TODO - need to work on making recent file drop down keyboard-friendly
+                //     handleFileMenuClick()
+                //     break
                 case 'o':
-                    fileOps.openWorkbook()
+                    if (e.shiftKey) {
+                        handleFileMenuClick()
+                    } else {
+                        fileOps.openWorkbook()
+                    }
                     break
                 case 's':
                     if (e.shiftKey) {
@@ -1045,6 +1114,39 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook(undefined, true)}>
                         <FileOpenIcon />
                     </IconButton>
+                    {
+                        settings.recentWorkbookFileNames.length > 1
+                            ? <IconButton
+                                id='file-menu-button'
+                                title='Open Recent Workbook'
+                                sx={{ padding: 0, minWidth: '1em', width: '1em', marginLeft: '-0.3em' }}
+                                onClick={handleFileMenuClick}
+                            ><KeyboardArrowDownIcon />
+                            </IconButton>
+                            : null
+                    }
+                    {
+                        settings.recentWorkbookFileNames.length > 1
+                            ? <StyledMenu
+                                id="file-menu"
+                                autoFocus
+                                MenuListProps={{
+                                    'aria-labelledby': 'file-menu-button',
+                                }}
+                                anchorEl={anchorEl}
+                                open={fileMenuOpen}
+                                onClose={handleFileMenuClose}
+                            >
+                                {
+                                    settings.recentWorkbookFileNames.map((f, idx) => (
+                                        <MenuItem autoFocus={idx == 0} key={`nav-file-${idx}`} onClick={() => handleFileOpen(f)} disableRipple>
+                                            {`${idx + 1}) ${f}`}
+                                        </MenuItem>
+                                    ))
+                                }
+                            </StyledMenu>
+                            : null
+                    }
                     <IconButton aria-label='save' title='Save Workbook (Ctrl + S)' disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()}>
                         <SaveIcon />
                     </IconButton>

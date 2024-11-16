@@ -12,6 +12,8 @@ export class FeedbackStore {
     @observable accessor confirmOpen = false
     @observable accessor confirmOptions: ConfirmationOptions = {}
 
+    @observable accessor modalInProgress = false
+
     constructor() {
         makeObservable(this)
     }
@@ -40,9 +42,15 @@ export class FeedbackStore {
         })
     }
 
-    @action closeConfirm(ok: boolean) {
+    @action
+    closeConfirm(ok: boolean) {
         this.confirmOpen = false
         this.confirmResolve(ok)
+    }
+
+    @action
+    setModal(onOff: boolean) {
+        this.modalInProgress = onOff
     }
 
 }
@@ -51,7 +59,7 @@ export const FeedbackContext = createContext<FeedbackStore | null>(null)
 
 export function useFeedback() {
     const context = useContext(FeedbackContext);
-    if (! context) {
+    if (!context) {
         throw new Error('useFeedback must be used within a FeedbackContext.Provider');
     }
     return context;

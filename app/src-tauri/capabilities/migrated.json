@@ -3,7 +3,8 @@
   "description": "permissions that were migrated from v1",
   "context": "local",
   "windows": [
-    "main"
+    "main",
+    "main1"
   ],
   "permissions": [
     "core:path:default",
@@ -31,7 +32,20 @@
     "fs:allow-home-meta-recursive",
     {
       "identifier": "fs:scope",
-      "allow": [{ "path": "$HOME" }, { "path": "$HOME/**" },{ "path": "$HOME/.ssh" }, { "path": "$HOME/.ssh/**" }]
+      "allow": [
+        {
+          "path": "$HOME"
+        },
+        {
+          "path": "$HOME/**"
+        },
+        {
+          "path": "$HOME/.ssh"
+        },
+        {
+          "path": "$HOME/.ssh/**"
+        }
+      ]
     },
     "fs:allow-home-write",
     "fs:allow-home-write-recursive",

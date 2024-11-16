@@ -1,20 +1,88 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{collections::HashMap, path::PathBuf, sync::Arc, time::Instant};
+use apicize_lib::{
+    apicize::ApicizeExecution,
+    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token},
+    test_runner, ApicizeSettings, ColorScheme, Workspace,
+};
+use std::{
+    collections::HashMap,
+    env, fs,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Instant,
+};
+use tauri::{Manager, State};
 use tauri_plugin_clipboard::Clipboard;
 use tokio_util::sync::CancellationToken;
-// use tauri_plugin_log::{Target, TargetKind};
-
-use apicize_lib::{
-    apicize::ApicizeExecution, oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token}, ApicizeSettings, Workspace, test_runner
-};
-use tauri::State;
 
 use std::sync::{Mutex, OnceLock};
 
+// static COUNTER: AtomicU32 = AtomicU32::new(1);
+
 fn main() {
     tauri::Builder::default()
+        .setup(|app| {
+            let main_window = app.get_webview_window("main").unwrap();
+            let mut settings = if let Ok(loaded_settings) = ApicizeSettings::open() {
+                loaded_settings.data
+            } else {
+                // If unable to load settings, try and put into place some sensible defaults
+                ApicizeSettings {
+                    workbook_directory: Some(String::from(
+                        app.path()
+                            .document_dir()
+                            .unwrap()
+                            .join("apicize")
+                            .to_string_lossy(),
+                    )),
+                    font_size: 12,
+                    color_scheme: ColorScheme::Dark,
+                    editor_panels: String::from(""),
+                    last_workbook_file_name: None,
+                    recent_workbook_file_names: None,
+                }
+            };
+
+            let args: Vec<String> = env::args().collect();
+            if args.len() > 1 {
+                if let Some(file_argument) = args.get(1) {
+                    if let Ok(true) = fs::exists(file_argument) {
+                        settings.last_workbook_file_name = Some(file_argument.to_owned());
+                    }
+                }
+            }
+
+            if settings.last_workbook_file_name.is_none() {
+                if let Some(last_file) = &settings.last_workbook_file_name {
+                    if let Ok(true) = fs::exists(last_file) {
+                        settings.last_workbook_file_name = Some(last_file.to_owned());
+                    }
+                } else if let Some(workbook_directory) = &settings.workbook_directory {
+                    if let Ok(false) = fs::exists(workbook_directory) {
+                        if let Ok(()) = fs::create_dir(workbook_directory) {
+                            let destination = Path::new(workbook_directory).join("demo.apicize");
+                            if let Ok(resources) = &app.path().resource_dir() {
+                                let source = resources.join("help").join("demo.apicize");
+                                if fs::copy(&source, &destination).is_ok() {
+                                    settings.last_workbook_file_name =
+                                        Some(String::from(destination.to_string_lossy()));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            main_window
+                .eval(&format!(
+                    "let loadedSettings={};",
+                    serde_json::to_string(&settings).unwrap()
+                ))
+                .unwrap();
+            Ok(())
+        })
         .plugin(tauri_plugin_clipboard::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
@@ -28,6 +96,32 @@ fn main() {
         //         .build(),
         // )
         // .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            // let ctr = &COUNTER.fetch_add(1, Ordering::Relaxed);
+            // let window_name = format!("main-{}", ctr);
+
+            // let mut config = app.config().app.windows.get(0).unwrap().clone();
+            // config.label = window_name;
+            // tauri::WebviewWindowBuilder::from_config(app, &config)
+            //     .unwrap()
+            //     .build()
+            //     .unwrap()
+            //     .set_focus()
+            //     .unwrap();
+
+            // let webview_url = tauri::WebviewUrl::App("index.html".into());
+            // tauri::WebviewWindowBuilder::new(app, "main1", webview_url.clone())
+            //     .title(window_name)
+            //     .build()
+            //     .unwrap()
+            //     .set_focus()
+            //     .unwrap();
+
+            app.get_webview_window("main")
+                .expect("no main window")
+                .set_focus()
+                .unwrap()
+        }))
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             open_workspace,
@@ -92,7 +186,7 @@ fn cancellation_tokens() -> &'static Mutex<HashMap<String, CancellationToken>> {
 async fn run_request(
     workspace: Workspace,
     request_id: String,
-    override_number_of_runs: Option<usize>
+    override_number_of_runs: Option<usize>,
 ) -> Result<ApicizeExecution, String> {
     let arc_test_started = Arc::new(Instant::now());
     let shared_workspace = Arc::new(workspace);
@@ -109,7 +203,7 @@ async fn run_request(
         Some(vec![request_id.clone()]),
         Some(cancellation),
         arc_test_started,
-        override_number_of_runs
+        override_number_of_runs,
     )
     .await;
 

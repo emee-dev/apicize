@@ -1,5 +1,12 @@
 # Change Log
 
+# 0.10.0
+
+* Added modal block when opening file dialog
+* Added recent workbook list
+* Fixed request timeout
+* Moved settings load to app setup (begin work on multiwindow)
+
 # 0.9.5
 
 * Updated to apicize_lib to 0.12.0
