@@ -68,6 +68,15 @@ export class ApicizeSettingsStore {
         }
     }
 
+    public removeRecentWorkbookFileName(fileName: string) {
+        const i = this._recentWorkbookFileNames.indexOf(fileName)
+        if (i !== 0) {
+            if (i !== -1) {
+                this._recentWorkbookFileNames.splice(i, 1)
+            }
+        }
+    }
+
     public get fontSize(): number {
         return this._fontSize
     }

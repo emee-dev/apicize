@@ -140,7 +140,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
                 <Box sx={{ marginTop: 0, marginBottom: 0, paddingTop: 0, color: '#80000' }}>
                     {
                         props.isError === true
-                            ? (<Box color='#FF0000' sx={{ ":first-letter": { textTransform: 'capitalize' }, whiteSpace: 'pre-wrap' }}>{props.text}</Box>)
+                            ? (<Box color='#f44336' sx={{ ":first-letter": { textTransform: 'capitalize' }, whiteSpace: 'pre-wrap' }}>{props.text}</Box>)
                             : (<>{props.text}</>)
                     }
                 </Box>

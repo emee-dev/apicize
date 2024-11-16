@@ -181,13 +181,15 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             workspaceStore.loadWorkspace(data, openFileName, displayName)
             settings.lastWorkbookFileName = openFileName
             settings.addRecentWorkbookFileName(openFileName)
-            if (settings.dirty) {
-                await saveSettings()
-            }
             _forceClose.current = false
             feedback.toast(`Opened ${openFileName}`, ToastSeverity.Success)
         } catch (e) {
+            settings.removeRecentWorkbookFileName(openFileName)
             feedback.toast(`${e}`, ToastSeverity.Error)
+        } finally {
+            if (settings.dirty) {
+                await saveSettings()
+            }
         }
     }
 

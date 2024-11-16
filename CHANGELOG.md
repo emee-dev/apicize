@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.10.1
+
+* Make failed request error text an easier-to-read red in dark mode
+* Remove failed workspace files from recent workbook list
+
 # 0.10.0
 
 * Added modal block when opening file dialog
