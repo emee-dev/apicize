@@ -59,7 +59,7 @@
       "exceptionDomain": "",
       "frameworks": [],
       "providerShortName": null,
-      "signingIdentity": "Apicize"
+      "signingIdentity": null
     },
     "resources": [
       "./help"
