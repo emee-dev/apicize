@@ -158,7 +158,11 @@ jobs:
         #   Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
         #   certutil -decode certificate/tempCert.txt certificate/certificate.pfx
         #   Remove-Item -path certificate -include tempCert.txt
-        #   Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My
+        #   Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My  
+      - name: Install and Build Front-End Dependencies
+        run: |
+          yarn install # change this to npm, pnpm or bun depending on which one you use.
+          yarn run build-deps        
       - name: Store Apple Certificate
         if: matrix.platform == 'macos-latest'
         env:
@@ -166,10 +170,7 @@ jobs:
         run: |
           echo "Copying Apple private key to /tmp/.private-key"
           echo "$env:APPLE_API_PRIVATE_KEY" > /tmp/.private-key
-      - name: Install and Build Front-End Dependencies
-        run: |
-          yarn install # change this to npm, pnpm or bun depending on which one you use.
-          yarn run build-deps
+          cat /tmp/.private-key
       - id: deploy-tauri
         name: Build and Deploy Tauri
         uses: tauri-apps/tauri-action@v0
