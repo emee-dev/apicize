@@ -169,7 +169,7 @@ jobs:
           APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
         run: |
           echo "Copying Apple private key to /tmp/.private-key"
-          echo "${{ secrets:APPLE_API_PRIVATE_KEY }}" > /tmp/.private-key
+          printenv APPLE_API_PRIVATE_KEY > /tmp/.private-key
           cat /tmp/.private-key
       - id: deploy-tauri
         name: Build and Deploy Tauri
