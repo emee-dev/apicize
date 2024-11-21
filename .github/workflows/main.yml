@@ -37,12 +37,12 @@ jobs:
           - platform: 'macos-latest' # for Intel based macs.
             args: '--target x86_64-apple-darwin'
             rust_target: x86_64-apple-darwin            
-          - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
-            args: ''
-            rust_target: x86_64-unknown-linux-gnu            
-          - platform: 'windows-latest'
-            args: ''
-            rust_target: x86_64-pc-windows-msvc
+          # - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
+          #   args: ''
+          #   rust_target: x86_64-unknown-linux-gnu            
+          # - platform: 'windows-latest'
+          #   args: ''
+          #   rust_target: x86_64-pc-windows-msvc
   
     runs-on: ${{ matrix.platform }}
     outputs:
@@ -164,8 +164,8 @@ jobs:
         env:
           APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
         run: |
-          echo "Copying Apple private key to .private-key"
-          echo "$env:APPLE_API_PRIVATE_KEY" > .private_key
+          echo "Copying Apple private key to /tmp/.private-key"
+          echo "$env:APPLE_API_PRIVATE_KEY" > /tmp/.private_key
       - name: Install and Build Front-End Dependencies
         run: |
           yarn install # change this to npm, pnpm or bun depending on which one you use.
@@ -180,7 +180,7 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_PATH: ".private-key"
+          APPLE_API_KEY_PATH: /tmp/.private-key
         with:
           updaterJsonPreferNsis: true
           tagName: apicize-app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
