@@ -176,9 +176,9 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+          zzz_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          zzz_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          zzz_APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
           zzz_APPLE_API_ISSUER: ${{ vars.APPLE_API_ISSUER }}
           zzz_APPLE_API_KEY: ${{ vars.APPLE_API_KEY }}
           zzz_APPLE_API_KEY_PATH: /tmp/.private-key
