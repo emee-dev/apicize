@@ -172,7 +172,7 @@ jobs:
           yarn run build-deps
       - id: deploy-tauri
         name: Build and Deploy Tauri
-        uses: tauri-apps/tauri-action@v0.5.15
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
