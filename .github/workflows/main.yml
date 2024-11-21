@@ -28,7 +28,7 @@ jobs:
       contents: write
     needs: 'lint'
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - platform: 'macos-latest' # for Arm based macs (M1 and above).
@@ -37,12 +37,12 @@ jobs:
           - platform: 'macos-latest' # for Intel based macs.
             args: '--target x86_64-apple-darwin'
             rust_target: x86_64-apple-darwin            
-          # - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
-          #   args: ''
-          #   rust_target: x86_64-unknown-linux-gnu            
-          # - platform: 'windows-latest'
-          #   args: ''
-          #   rust_target: x86_64-pc-windows-msvc
+          - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
+            args: ''
+            rust_target: x86_64-unknown-linux-gnu            
+          - platform: 'windows-latest'
+            args: ''
+            rust_target: x86_64-pc-windows-msvc
   
     runs-on: ${{ matrix.platform }}
     outputs:
@@ -170,21 +170,16 @@ jobs:
         run: |
           yarn install # change this to npm, pnpm or bun depending on which one you use.
           yarn run build-deps
-      - name: Install code signing cetificate
-        uses: apple-actions/import-codesign-certs@v3
-        with: 
-          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
-          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      - name: List code-signing certificates
-        run: security find-identity -v -p codesigning
       - id: deploy-tauri
         name: Build and Deploy Tauri
         uses: tauri-apps/tauri-action@v0.5.15
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_API_KEY_PATH: ".private-key"
         with:
           updaterJsonPreferNsis: true
