@@ -164,7 +164,7 @@ jobs:
           yarn install # change this to npm, pnpm or bun depending on which one you use.
           yarn run build-deps        
       - name: Store Apple Certificate
-        if: matrix.platform == 'macos-latest'
+        if: matrix.platform == 'macos-latest' || matrix.platform == 'macos-13'
         env:
           APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
         run: |
