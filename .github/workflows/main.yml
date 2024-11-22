@@ -34,7 +34,7 @@ jobs:
           - platform: 'macos-latest' # for Arm based macs (M1 and above).
             args: '--target aarch64-apple-darwin'
             rust_target: aarch64-apple-darwin            
-          - platform: 'macos-latest' # for Intel based macs.
+          - platform: 'macos-13' # for Intel based macs.
             args: '--target x86_64-apple-darwin'
             rust_target: x86_64-apple-darwin            
           # - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
@@ -176,12 +176,12 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          zzz_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          zzz_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          zzz_APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
-          zzz_APPLE_API_ISSUER: ${{ vars.APPLE_API_ISSUER }}
-          zzz_APPLE_API_KEY: ${{ vars.APPLE_API_KEY }}
-          zzz_APPLE_API_KEY_PATH: /tmp/.private-key
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_ISSUER: ${{ vars.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ vars.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: /tmp/.private-key
         with:
           updaterJsonPreferNsis: true
           tagName: apicize-app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
