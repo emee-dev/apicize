@@ -15,3 +15,5 @@ tsconfig.tsbuildinfo
 .vscode
 .test-sign
 TODO.md
+macos-sign.sh
+.macos
