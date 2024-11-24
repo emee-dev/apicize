@@ -55,7 +55,7 @@
     "shortDescription": "Apicize is an HTTP testing tool",
     "longDescription": "This package installs the Apicize GUI for creating and executing HTTP calls.  There is a separate CLI runner for tests, see www.apcicze.com",
     "macOS": {
-      "entitlements": null,
+      "entitlements": "./entitlements.plist",
       "exceptionDomain": "",
       "frameworks": [],
       "providerShortName": null,
