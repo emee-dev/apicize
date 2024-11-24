@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/@tauri-apps/cli/config.schema.json",
-  "identifier": "apicize.app",
+  "identifier": "apicize",
   "productName": "Apicize",
   "version": "0.10.1",
   "app": {
