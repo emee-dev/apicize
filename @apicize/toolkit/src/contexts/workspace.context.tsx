@@ -1324,8 +1324,15 @@ export class WorkspaceStore {
         const execution = this.executions.get(requestOrGroupId)?.results.get(executionResultId)
         const executedRequest =
             (execution?.type === 'request') ? execution : undefined
+        let originalVariables
+        let request
         if (executedRequest?.request) {
-            executedRequest.request.variables = undefined
+            request = toJS(executedRequest.request)
+            originalVariables = request.variables ? { ...request.variables } : undefined
+            request.variables = undefined
+        } else {
+            request = undefined
+            originalVariables = undefined
         }
         return execution
             ? {
@@ -1336,12 +1343,17 @@ export class WorkspaceStore {
                     ? {
                         request: executedRequest.request,
                         response: executedRequest.response,
-                        variables: executedRequest.variables
+                        variables: originalVariables
                     }
                     : undefined,
                 success: execution.success,
-                error: executedRequest?.error,
-                tests: executedRequest?.tests,
+                error: executedRequest?.error ?? undefined,
+                tests: executedRequest?.tests?.map(t => ({
+                    testName: t.testName,
+                    success: t.success,
+                    error: t.error ?? undefined,
+                    logs: t.logs ?? undefined
+                })),
                 outputVariables: executedRequest?.variables,
                 requestsWithPassedTestsCount: execution.requestsWithPassedTestsCount,
                 requestsWithFailedTestsCount: execution.requestsWithFailedTestsCount,

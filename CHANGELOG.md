@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.11.1
+
+* Refine details view
+
 # 0.11.0
 
 * Update lib_rust to fix issue with opening workbooks showing false warnings with any selection set to None
