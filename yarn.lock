@@ -15,7 +15,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apicize/lib-typescript@npm:^0.10.1, @apicize/lib-typescript@workspace:@apicize/lib-typescript":
+"@apicize/lib-typescript@npm:^0.11.0, @apicize/lib-typescript@workspace:@apicize/lib-typescript":
   version: 0.0.0-use.local
   resolution: "@apicize/lib-typescript@workspace:@apicize/lib-typescript"
   dependencies:
@@ -23,11 +23,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@apicize/toolkit@npm:^0.10.1, @apicize/toolkit@workspace:@apicize/toolkit":
+"@apicize/toolkit@npm:^0.11.0, @apicize/toolkit@workspace:@apicize/toolkit":
   version: 0.0.0-use.local
   resolution: "@apicize/toolkit@workspace:@apicize/toolkit"
   dependencies:
-    "@apicize/lib-typescript": "npm:^0.10.1"
+    "@apicize/lib-typescript": "npm:^0.11.0"
     "@dnd-kit/core": "npm:^6.1.0"
     "@emotion/react": "npm:^11.11.1"
     "@emotion/styled": "npm:^11.11.0"
@@ -2655,7 +2655,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:app"
   dependencies:
-    "@apicize/toolkit": "npm:^0.10.1"
+    "@apicize/toolkit": "npm:^0.11.0"
     "@dnd-kit/core": "npm:^6.1.0"
     "@mui/material": "npm:^6.1.1"
     "@mui/system": "npm:^6.1.1"
@@ -2676,6 +2676,7 @@ __metadata:
     remark-directive: "npm:^3.0.0"
     tauri-plugin-clipboard-api: "https://github.com/jasonterando/tauri-plugin-clipboard.git#head=v2-yarn-friendly"
     typeface-open-sans: "npm:^1.1.13"
+    typeface-roboto-mono: "npm:^1.1.13"
     typescript: "npm:^5"
     valibot: "npm:^0.36.0"
     vite: "npm:^5.4.1"
@@ -9659,6 +9660,13 @@ __metadata:
   version: 1.1.13
   resolution: "typeface-open-sans@npm:1.1.13"
   checksum: 10c0/ea8d91c4d6f9f19f5b5d7aa0907b59de4e699a77891ed700feb239bac06ff571d43b778c8cd626e2f5967b16ced7e736499d04f04336d9d1fde67d16ee25cab6
+  languageName: node
+  linkType: hard
+
+"typeface-roboto-mono@npm:^1.1.13":
+  version: 1.1.13
+  resolution: "typeface-roboto-mono@npm:1.1.13"
+  checksum: 10c0/5caa3ba0ef28c41bde334bc78525dfb041cb376d19ab64223f8227da85bf2a4afb12a2e4d5559eafb7df58990958d56f6e6cc9453952cd97241e0eaefb016195
   languageName: node
   linkType: hard
 

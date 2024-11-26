@@ -14,7 +14,7 @@ import "ace-builds/src-noconflict/theme-gruvbox"
 import "ace-builds/src-noconflict/theme-chrome"
 import "ace-builds/src-noconflict/ext-language_tools"
 import "ace-builds/src-noconflict/ext-searchbox"
-import { beautify } from "ace-builds/src-noconflict/ext-beautify"
+import beautify from "js-beautify";
 import { WorkbookBodyType, WorkbookBodyTypes } from '@apicize/lib-typescript'
 import { EditableEntityType } from '../../../models/workbook/editable-entity-type'
 import { EditableWorkbookRequest } from '../../../models/workbook/editable-workbook-request'
@@ -72,21 +72,32 @@ export const RequestBodyEditor = observer(() => {
   }
 
   const [allowUpdateHeader, setAllowUpdateHeader] = React.useState<boolean>(headerDoesNotMatchType(request.body.type))
-  const [allowBeautify, setAllowBeautify] = React.useState<boolean>(request.body.type === WorkbookBodyType.JSON || request.body.type === WorkbookBodyType.XML)
+  const [beautifyBodyType, setBeautifyBodyType] = React.useState((request.body.type === WorkbookBodyType.JSON || request.body.type === WorkbookBodyType.XML)
+    ? request.body.type : WorkbookBodyType.None)
 
   const updateBodyType = (val: WorkbookBodyType | string) => {
     const v = toJS(val)
     const newBodyType = (v == "" ? undefined : v as unknown as WorkbookBodyType) ?? WorkbookBodyType.Text
     workspace.setRequestBodyType(newBodyType)
     setAllowUpdateHeader(headerDoesNotMatchType(newBodyType))
-    setAllowBeautify(newBodyType === WorkbookBodyType.JSON || newBodyType === WorkbookBodyType.XML)
+    setBeautifyBodyType((newBodyType === WorkbookBodyType.JSON || newBodyType === WorkbookBodyType.XML) ? newBodyType : WorkbookBodyType.None)
   }
 
   function performBeautify() {
-    const session = editorRef.current?.editor.getSession()
-    if (session !== undefined) {
-      beautify(session);
+    if (!editorRef.current) return
+    let text = editorRef.current.editor.session.getValue()
+    switch (beautifyBodyType) {
+      case WorkbookBodyType.JSON:
+        text = beautify.js_beautify(text, {})
+        break
+      case WorkbookBodyType.XML:
+        text = beautify.html_beautify(text, {})
+        break
+      default:
+        return
     }
+
+    editorRef.current.editor.session.setValue(text)
   }
 
   const updateBodyAsText = (data: string | undefined) => {
@@ -179,7 +190,7 @@ export const RequestBodyEditor = observer(() => {
           </Select>
         </FormControl>
         <Grid2 container direction='row' spacing={2}>
-          <Button variant='outlined' size='small' disabled={!allowBeautify} onClick={performBeautify}>Beautify</Button>
+          <Button variant='outlined' size='small' disabled={beautifyBodyType === WorkbookBodyType.None} onClick={performBeautify}>Beautify</Button>
           <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
         </Grid2>
       </Grid2>

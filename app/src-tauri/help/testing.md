@@ -6,6 +6,9 @@ Your tests have access to the following variables:
 * **[response](#response)**:  Information about the received response
 * **variables**:  Variables that are defined in your workbook's active [scenario](help:scenarios)
 
+You can see what values are available to your test script by executing a request and select "Details" (the final tab in the Results pane).  
+The section **executionContext** shows the request, response and variables available values.
+
 Generally speaking, you should structure your tests to **describe** something and what **it** should do.  By default, Apicize will create this test for each new request:
 
 ```js

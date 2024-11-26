@@ -13,7 +13,7 @@ import { ResultResponsePreview } from "./result/response-preview-viewer";
 import { ResultRawPreview } from "./result/response-raw-viewer";
 import { ResultInfoViewer } from "./result/result-info-viewer";
 import { ResponseHeadersViewer } from "./result/response-headers-viewer";
-import { ResultRequestViewer } from "./result/result-request-viewer";
+import { ResultDetailsViewer } from "./result/result-details-viewer";
 import { observer } from 'mobx-react-lite';
 import { EditableEntityType } from '../../models/workbook/editable-entity-type';
 import { useWorkspace } from "../../contexts/workspace.context";
@@ -103,7 +103,7 @@ export const ResultsViewer = observer((props: {
                 <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' size='small' disabled={disableOtherPanels}><ViewListOutlinedIcon /></ToggleButton>
                 <ToggleButton value="Text" title="Show Response Body as Text" aria-label='show body text' size='small' disabled={disableOtherPanels}><ArticleOutlinedIcon /></ToggleButton>
                 <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={disableOtherPanels || longTextInResponse} size='small'><PreviewIcon /></ToggleButton>
-                <ToggleButton value="Request" title="Show Request" aria-label='show request' size='small' disabled={disableOtherPanels}><SendIcon /></ToggleButton>
+                <ToggleButton value="Details" title="Show Details" aria-label='show details' size='small' disabled={disableOtherPanels}><SendIcon /></ToggleButton>
             </ToggleButtonGroup>
             <Box sx={{ overflow: 'hidden', flexGrow: 1, bottom: '0', position: 'relative' }}>
                 <Box position='relative' width='100%' height='100%'>
@@ -116,7 +116,7 @@ export const ResultsViewer = observer((props: {
                                     : panel === 'Text' ? <ResultRawPreview
                                         requestOrGroupId={requestOrGroupId} executionResultId={executionResultId}
                                     />
-                                        : panel === 'Request' ? <ResultRequestViewer
+                                        : panel === 'Details' ? <ResultDetailsViewer
                                             requestOrGroupId={requestOrGroupId} executionResultId={executionResultId} />
                                             : null
                     }

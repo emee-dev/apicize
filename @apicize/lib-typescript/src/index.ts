@@ -5,7 +5,7 @@ export {
 export {
     ApicizeRequest, ApicizeBody, ApicizeExecution, ApicizeExecutionItem,
     ApicizeExecutionRequest, ApicizeExecutionRequestRun, ApicizeExecutionGroup, ApicizeExecutionGroupRun,
-    ApicizeTestResult, ApicizeHttpResponse, ApicizeError
+    ApicizeTestResult, ApicizeHttpResponse, ApicizeError, ApicizeExecutionDetails
 } from './models/lib/apicize-execution'
 export { WorkbookAuthorization, WorkbookAuthorizationType, WorkbookBaseAuthorization, WorkbookBasicAuthorization, WorkbookApiKeyAuthorization, WorkbookOAuth2ClientAuthorization } from './models/workbook/workbook-authorization'
 export { WorkbookCertificate, WorkbookCertificateType, WorkbookBaseCertificate, WorkbookPkcs8PemCertificate, WorkbookPkcs12Certificate, WorkbookPemCertificate } from './models/workbook/workbook-certificate'

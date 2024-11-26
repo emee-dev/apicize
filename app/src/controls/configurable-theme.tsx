@@ -1,7 +1,12 @@
 import { useApicizeSettings } from "@apicize/toolkit"
 import { createTheme, ThemeProvider } from "@mui/material/styles"
+import { TypographyOptions } from "@mui/material/styles/createTypography";
 import { observer } from "mobx-react-lite"
 import { ReactNode } from "react"
+
+interface ExtendedTypographyOptions extends TypographyOptions {
+  code: React.CSSProperties;
+}
 
 export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
   const settings = useApicizeSettings()
@@ -76,8 +81,11 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
     },
     typography: {
       fontSize: settings.fontSize,
-      fontFamily: "'Open Sans','sans'"
-    },
+      fontFamily: "'Open Sans','sans'",
+      code: {
+        fontFamily: "'Roboto Mono','monospace'"
+      }
+    } as ExtendedTypographyOptions,
     components: {
       MuiOutlinedInput: {
         styleOverrides: {
@@ -133,7 +141,7 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
             fontWeight: 'normal',
             marginTop: '1.5em',
             marginBottom: '1.0em',
-          }
+          },
         }
       }
     },

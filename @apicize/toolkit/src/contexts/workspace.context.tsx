@@ -16,6 +16,7 @@ import {
     ApicizeExecutionItem,
     ApicizeExecutionRequest,
     WorkbookBody,
+    ApicizeExecutionDetails,
 } from "@apicize/lib-typescript"
 import { EntitySelection } from "../models/workbook/entity-selection"
 import { EditableNameValuePair } from "../models/workbook/editable-name-value-pair"
@@ -1319,6 +1320,39 @@ export class WorkspaceStore {
         return this.executions.get(requestOrGroupId)?.results.get(executionResultId)
     }
 
+    getExecutionResultDetails(requestOrGroupId: string, executionResultId: string): ApicizeExecutionDetails | undefined {
+        const execution = this.executions.get(requestOrGroupId)?.results.get(executionResultId)
+        const executedRequest =
+            (execution?.type === 'request') ? execution : undefined
+        if (executedRequest?.request) {
+            executedRequest.request.variables = undefined
+        }
+        return execution
+            ? {
+                runNumber: execution.runNumber,
+                executedAt: execution.executedAt,
+                duration: execution.duration,
+                testingContext: executedRequest
+                    ? {
+                        request: executedRequest.request,
+                        response: executedRequest.response,
+                        variables: executedRequest.variables
+                    }
+                    : undefined,
+                success: execution.success,
+                error: executedRequest?.error,
+                tests: executedRequest?.tests,
+                outputVariables: executedRequest?.variables,
+                requestsWithPassedTestsCount: execution.requestsWithPassedTestsCount,
+                requestsWithFailedTestsCount: execution.requestsWithFailedTestsCount,
+                requestsWithErrors: execution.requestsWithErrors,
+                passedTestCount: execution.passedTestCount,
+                failedTestCount: execution.failedTestCount
+            }
+            : undefined
+
+    }
+
     getExecutionResposne(requestOrGroupId: string): ApicizeExecution | undefined {
         return this.executions.get(requestOrGroupId)?.response
     }
@@ -1410,7 +1444,6 @@ export class WorkspaceStore {
 
         const result = executionResults.items[0]
         addResult(result, 0)
-        debugger
         execution.resultMenu = menu
         execution.results = results
         execution.resultIndex = (isNaN(execution.resultIndex) || execution.resultIndex >= execution.results.size)

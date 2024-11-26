@@ -1,5 +1,12 @@
 # Change Log
 
+# 0.11.0
+
+* Update lib_rust to fix issue with opening workbooks showing false warnings with any selection set to None
+* Fix JSON and XML "beautification" in body editor
+* Repurpose "Request" results tab to show details, including the execution context available for testing (request, response and variables)
+* Set monospace fonts to Roboto Mono
+
 # 0.10.1
 
 * Make failed request error text an easier-to-read red in dark mode

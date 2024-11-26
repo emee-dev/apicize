@@ -52,6 +52,7 @@ export interface ApicizeExecutionRequestRun {
     error?: ApicizeError
     tests?: ApicizeTestResult[]
     variables?: Map<string, string | number | boolean>
+    inputVariables?: Map<string, string | number | boolean>
     requestsWithPassedTestsCount: number
     requestsWithFailedTestsCount: number
     requestsWithErrors: number
@@ -97,6 +98,29 @@ export interface ApicizeExecutionGroupRun {
     items: ApicizeExecutionItem[]
     variables?: Map<string, string | number | boolean>
     success: boolean
+    requestsWithPassedTestsCount: number
+    requestsWithFailedTestsCount: number
+    requestsWithErrors: number
+    passedTestCount: number
+    failedTestCount: number
+}
+
+/**
+ * Formatted execution details, separating what can be accessed within the testing context
+ */
+export interface ApicizeExecutionDetails {
+    runNumber: number
+    executedAt: number
+    duration: number
+    testingContext?: {
+        request?: ApicizeRequest
+        response?: ApicizeHttpResponse
+        variables?: Map<string, string | number | boolean>
+    }
+    success: boolean
+    error?: ApicizeError
+    tests?: ApicizeTestResult[]
+    outputVariables?: Map<string, string | number | boolean>
     requestsWithPassedTestsCount: number
     requestsWithFailedTestsCount: number
     requestsWithErrors: number

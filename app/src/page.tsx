@@ -7,6 +7,7 @@ import { Stack, CssBaseline } from '@mui/material'
 import { } from '@apicize/toolkit'
 import React, { } from 'react'
 import "typeface-open-sans"
+import "typeface-roboto-mono"
 import { ClipboardProvider } from './providers/clipboard.provider';
 import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
