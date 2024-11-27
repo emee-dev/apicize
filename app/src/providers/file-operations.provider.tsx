@@ -132,7 +132,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             }
         }
 
-        workspaceStore.newWorkspace()
+        const data: Workspace = await core.invoke('new_workspace')
+        workspaceStore.newWorkspace(data)
         _forceClose.current = false
         feedback.toast('Created New Workbook', ToastSeverity.Success)
     }

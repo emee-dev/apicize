@@ -126,12 +126,12 @@ export class WorkspaceStore {
     }
 
     @action
-    newWorkspace() {
+    newWorkspace(newWorkspace: Workspace) {
         this.workbookFullName = ''
         this.workbookDisplayName = ''
         this.dirty = false
         this.warnOnWorkspaceCreds = true
-        this.workspace = newEditableWorkspace()
+        this.workspace = storedWorkspaceToEditableWorkspace(newWorkspace)
         this.expandedItems = ['hdr-r', 'hdr-s', 'hdr-a', 'hdr-c', 'hdr-p']
         this.executions.clear()
         this.invalidItems.clear()

@@ -124,6 +124,7 @@ fn main() {
         }))
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
+            new_workspace,
             open_workspace,
             save_workspace,
             open_settings,
@@ -137,6 +138,17 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("error running Apicize");
+}
+
+#[tauri::command]
+async fn new_workspace() -> Result<Workspace, String> {
+    match Workspace::new(None) {
+        Ok(workspace) => {
+            clear_all_oauth2_tokens().await;
+            Ok(workspace)
+        }
+        Err(err) => Err(format!("{}", err.error)),
+    }
 }
 
 #[tauri::command]

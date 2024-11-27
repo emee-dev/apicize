@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.11.2
+
+* Fix globals clearing on new workspace open
+
 # 0.11.1
 
 * Refine details view
