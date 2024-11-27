@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.11.3
+
+* Improve OAuth2 diagnostic info
+
 # 0.11.2
 
 * Fix globals clearing on new workspace open

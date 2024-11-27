@@ -47,7 +47,7 @@ export interface ApicizeExecutionRequestRun {
     executedAt: number
     duration: number
     request?: ApicizeRequest
-    response?: ApicizeHttpResponse
+    response?: ApicizeResponse
     success: boolean
     error?: ApicizeError
     tests?: ApicizeTestResult[]
@@ -60,13 +60,20 @@ export interface ApicizeExecutionRequestRun {
     failedTestCount: number
 }
 
-export interface ApicizeHttpResponse {
+export interface TokenResult {
+    token: string
+    cached: boolean
+    url?: string
+    certificate?: string
+    proxy?: string
+}
+
+export interface ApicizeResponse {
     status: number
     statusText: string
     headers?: Map<string, string>
     body?: ApicizeBody,
-
-    authTokenCached?: boolean
+    oauth2Token?: TokenResult
 }
 
 export interface ApicizeTestResult {
@@ -114,7 +121,7 @@ export interface ApicizeExecutionDetails {
     duration: number
     testingContext?: {
         request?: ApicizeRequest
-        response?: ApicizeHttpResponse
+        response?: ApicizeResponse
         variables?: Map<string, string | number | boolean>
     }
     success: boolean
