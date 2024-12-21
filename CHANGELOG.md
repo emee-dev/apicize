@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.11.4
+
+* Copy selections when copying request/groups
+
 # 0.11.3
 
 * Improve OAuth2 diagnostic info

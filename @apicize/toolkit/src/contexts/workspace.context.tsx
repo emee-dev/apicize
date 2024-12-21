@@ -17,6 +17,7 @@ import {
     ApicizeExecutionRequest,
     WorkbookBody,
     ApicizeExecutionDetails,
+    Selection,
 } from "@apicize/lib-typescript"
 import { EntitySelection } from "../models/workbook/entity-selection"
 import { EditableNameValuePair } from "../models/workbook/editable-name-value-pair"
@@ -337,6 +338,11 @@ export class WorkspaceStore {
 
     @action
     copyRequest(id: string) {
+        const copySeletion = (selection?: Selection) => {
+            return selection
+                ? { id: selection.id, name: selection.name } as Selection
+                : undefined
+        }
         // Return the ID of the duplicated entry
         const copyEntry = (entry: EditableWorkbookRequest | EditableWorkbookRequestGroup, appendCopySuffix: boolean) => {
             if (entry.entityType === EditableEntityType.Request) {
@@ -355,6 +361,10 @@ export class WorkspaceStore {
                     ? structuredClone(toJS(entry.body))
                     : { type: WorkbookBodyType.None, data: undefined }
                 request.test = entry.test
+                request.selectedScenario = copySeletion(entry.selectedScenario)
+                request.selectedAuthorization = copySeletion(entry.selectedAuthorization)
+                request.selectedCertificate = copySeletion(entry.selectedCertificate)
+                request.selectedProxy = copySeletion(entry.selectedProxy)
                 this.workspace.requests.entities.set(request.id, request)
                 return request
             }
@@ -365,6 +375,11 @@ export class WorkspaceStore {
             group.runs = entry.runs
             group.dirty = true
             group.execution = entry.execution
+            group.selectedScenario = copySeletion(entry.selectedScenario)
+            group.selectedAuthorization = copySeletion(entry.selectedAuthorization)
+            group.selectedCertificate = copySeletion(entry.selectedCertificate)
+            group.selectedProxy = copySeletion(entry.selectedProxy)
+
             this.workspace.requests.entities.set(group.id, group)
 
             if (this.workspace.requests.childIds) {
@@ -1324,26 +1339,32 @@ export class WorkspaceStore {
         const execution = this.executions.get(requestOrGroupId)?.results.get(executionResultId)
         const executedRequest =
             (execution?.type === 'request') ? execution : undefined
-        let originalVariables
+        let variables
         let request
         if (executedRequest?.request) {
             request = toJS(executedRequest.request)
-            originalVariables = request.variables ? { ...request.variables } : undefined
+            variables = request.variables ? { ...request.variables } : undefined
             request.variables = undefined
         } else {
             request = undefined
-            originalVariables = undefined
+            variables = undefined
+        }
+        const response = executedRequest?.response
+        if (response?.oauth2Token) {
+            if (!response?.oauth2Token.url) { response.oauth2Token.url = undefined }
+            if (!response?.oauth2Token.certificate) { response.oauth2Token.certificate = undefined }
+            if (!response?.oauth2Token.proxy) { response.oauth2Token.proxy = undefined }
         }
         return execution
             ? {
                 runNumber: execution.runNumber,
                 executedAt: execution.executedAt,
                 duration: execution.duration,
-                testingContext: executedRequest
+                testingContext: request
                     ? {
-                        request: executedRequest.request,
-                        response: executedRequest.response,
-                        variables: originalVariables
+                        request,
+                        response,
+                        variables
                     }
                     : undefined,
                 success: execution.success,
