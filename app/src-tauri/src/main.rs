@@ -272,7 +272,7 @@ fn get_clipboard_image_base64(clipboard: State<Clipboard>) -> Result<String, Str
 }
 
 #[tauri::command]
-fn set_pkce_port(state: State<'_, AppState>, port: u16) -> () {
+fn set_pkce_port(state: State<'_, AppState>, port: u16) {
     let mut pkce = state.pkce.lock().unwrap();
     pkce.activate_listener(port);
 }

@@ -87,7 +87,7 @@ impl OAuth2PkceService {
             }
         }
 
-        self.port = Some(port).into();
+        self.port = Some(port);
         let stop_handle = self.stop.take();
         let server = self.server.take();
 
@@ -105,7 +105,7 @@ impl OAuth2PkceService {
         let cloned_stop_handle = stop_handle.clone();
 
         self.server = Some(std::thread::spawn(move || {
-            init_pkce_server(app_handle, port.clone(), cloned_stop_handle)
+            init_pkce_server(app_handle, port, cloned_stop_handle)
         }));
         self.stop = Some(stop_handle);
     }
@@ -116,7 +116,7 @@ impl OAuth2PkceService {
         auth: OAuth2PkceInfo,
         port: u16,
     ) -> Result<OAuth2PkceRequest, String> {
-        let scopes: Option<Vec<&str>> = if auth.scope.len() == 0 {
+        let scopes: Option<Vec<&str>> = if auth.scope.is_empty() {
             None
         } else {
             Some(auth.scope.split(',').collect())
@@ -253,7 +253,7 @@ async fn init_pkce_server(
                     format!("Server started at http://127.0.0.1:{}", port).to_string(),
                 )
                 .unwrap();
-            println!("Started PKCE listener at {}:{}", "127.0.0.1", port);
+            println!("Started PKCE listener at 127.0.0.1:{}", port);
             let running_server = server.run();
             stop_handle.register(running_server.handle());
             running_server.await
