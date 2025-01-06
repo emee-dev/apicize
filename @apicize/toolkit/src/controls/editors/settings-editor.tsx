@@ -1,12 +1,10 @@
-import { Stack, SxProps, FormControl, InputLabel, MenuItem, Select, Box, ToggleButton, ToggleButtonGroup, IconButton, SupportedColorScheme, Alert, Button } from '@mui/material'
+import { Stack, SxProps, FormControl, InputLabel, MenuItem, Select, Box, ToggleButton, ToggleButtonGroup, IconButton, SupportedColorScheme, Alert, Button, TextField } from '@mui/material'
 import { observer } from 'mobx-react-lite';
 import { useWorkspace } from '../../contexts/workspace.context';
 import { useFileOperations } from '../../contexts/file-operations.context';
 import { useFeedback, ToastSeverity } from '../../contexts/feedback.context';
 import { EntitySelection } from '../../models/workbook/entity-selection';
 import { EditorTitle } from '../editor-title';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import AltRouteIcon from '@mui/icons-material/AltRoute'
 import SettingsIcon from '@mui/icons-material/Settings';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -97,7 +95,7 @@ const ParametersEditor = observer(() => {
     </Stack>
 })
 
-const DisplaySettingsEditor = observer(() => {
+const ApplicationSettingsEditor = observer(() => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
     const settings = useApicizeSettings()
@@ -122,41 +120,45 @@ const DisplaySettingsEditor = observer(() => {
         }, 2000)
     }
 
-    const increase = () => {
-        if (settings.fontSize < 48) settings.fontSize = settings.fontSize + 1
-        setCanIncrease(settings.fontSize < 48)
-        checkSave(++saveCtr)
-    }
-
-    const decrease = () => {
-        if (settings.fontSize > 6) settings.fontSize = settings.fontSize - 1
-        setCanDecrease(settings.fontSize > 6)
+    const setFontSize = (size: number) => {
+        settings.setFontSize(size)
         checkSave(++saveCtr)
     }
 
     const setScheme = (scheme: SupportedColorScheme) => {
-        settings.colorScheme = scheme
+        settings.setColorScheme(scheme)
+        checkSave(++saveCtr)
+    }
+
+    const setPkceListenerPort = (port: number) => {
+        settings.setPkceListenerPort(port)
         checkSave(++saveCtr)
     }
 
     return <Box>
         <Stack direction={'column'} spacing={2}>
-            <Stack direction={'row'} display='flex' alignItems='center' justifyContent='left'>
-                <InputLabel id='text-size-label-id' sx={{ width: '8em' }} >Text Size:</InputLabel>
-                <IconButton onClick={() => increase()} aria-label="increase font size" disabled={!canIncrease}><AddIcon /></IconButton>
-                <IconButton onClick={() => decrease()} aria-label="decrease font size" disabled={!canDecrease}><RemoveIcon /></IconButton>
-                <Box marginLeft='2em'>{settings.fontSize}</Box>
+            <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                <InputLabel id='text-size-label-id' sx={{ width: '12em' }} >Text Size:</InputLabel>
+                <TextField type='number' slotProps={{ htmlInput: { min: 6, max: 120 } }}
+                    value={settings.fontSize}
+                    onChange={(e) => setFontSize(parseInt(e.target.value))} />
             </Stack>
             <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
-                <InputLabel id='color-mode-label-id' sx={{ width: '8em' }}>Color Mode:</InputLabel>
+                <InputLabel id='color-mode-label-id' sx={{ width: '12em' }}>Color Mode:</InputLabel>
                 <Select
                     value={settings.colorScheme}
-                    onChange={(event) => setScheme(event.target.value as SupportedColorScheme)}
+                    onChange={(e) => setScheme(e.target.value as SupportedColorScheme)}
                     size='small'
                 >
                     <MenuItem value="light">Light</MenuItem>
                     <MenuItem value="dark">Dark</MenuItem>
                 </Select>
+            </Stack>
+            <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                <InputLabel id='pkce-port-label-id' sx={{ width: '12em' }}>PKCE Listener Port:</InputLabel>
+                <TextField type='number' slotProps={{ htmlInput: { min: 1, max: 65535 } }}
+                    value={settings.pkceListenerPort}
+                    onChange={(e) => setPkceListenerPort(parseInt(e.target.value))} />
             </Stack>
             <Box paddingTop='2em'>
                 <Button variant="outlined" aria-label="defaults" startIcon={<RestartAltIcon />} onClick={() => settings.resetToDefaults()}>Reset to Defaults</Button>
@@ -217,7 +219,7 @@ export const SettingsEditor = observer((props: { sx: SxProps }) => {
                         sx={{ marginRight: '24px' }}
                         aria-label="text alignment">
                         <ToggleButton value="Parameters" title="Show Default Request Parameters" aria-label='show default parameters' size='small'><AltRouteIcon /></ToggleButton>
-                        <ToggleButton value="Display" title="Show Display Setttings" aria-label='show display settings' size='small'><DisplaySettingsIcon /></ToggleButton>
+                        <ToggleButton value="Application" title="Show Application Setttings" aria-label='show application settings' size='small'><DisplaySettingsIcon /></ToggleButton>
                         ({
                             hasWarnings
                                 ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
@@ -226,7 +228,7 @@ export const SettingsEditor = observer((props: { sx: SxProps }) => {
                     </ToggleButtonGroup>
                     <Box flexGrow={1} className='panels'>
                         {usePanel === 'Parameters' ? <ParametersEditor />
-                            : usePanel === 'Display' ? <DisplaySettingsEditor />
+                            : usePanel === 'Application' ? <ApplicationSettingsEditor />
                                 : usePanel === 'Warnings' ? <EditWarningsEditor warnings={workspace.workspace.defaults?.warnings} />
                                     : null}
                     </Box>

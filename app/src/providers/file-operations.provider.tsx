@@ -2,13 +2,10 @@ import { ReactNode, useEffect, useRef } from "react";
 import * as core from '@tauri-apps/api/core'
 import * as dialog from '@tauri-apps/plugin-dialog'
 import * as path from '@tauri-apps/api/path'
-import { exists, readFile, readTextFile, copyFile, mkdir } from "@tauri-apps/plugin-fs"
+import { exists, readFile, readTextFile } from "@tauri-apps/plugin-fs"
 import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useApicizeSettings, useFeedback, WorkspaceStore } from "@apicize/toolkit";
 import { GetTitle, StoredGlobalSettings, Workspace } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
-import { toJS } from "mobx";
-
-declare var loadedSettings: StoredGlobalSettings | undefined
 
 /**
  * Implementation of file opeartions via Tauri
@@ -23,17 +20,6 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
     const _forceClose = useRef(false)
     const _sshPath = useRef('')
     const _bodyDataPath = useRef('')
-    const _loadedSettings = useRef<StoredGlobalSettings>(typeof loadedSettings === undefined || (!loadedSettings)
-        ? {
-            lastWorkbookFileName: '',
-            workbookDirectory: '',
-            fontSize: 12,
-            colorScheme: 'dark',
-            editorPanels: '',
-            recentWorkbookFileNames: undefined
-        }
-        : loadedSettings
-    )
 
     /**
      * Updates specified settings and saves
@@ -49,7 +35,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 editorPanels: settings.editorPanels,
                 recentWorkbookFileNames: settings.recentWorkbookFileNames.length > 0
                     ? settings.recentWorkbookFileNames
-                    : undefined
+                    : undefined,
+                pkceListenerPort: settings.pkceListenerPort,
             }
             await core.invoke<StoredGlobalSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {
@@ -452,34 +439,14 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         }
     }
 
-    // Load if we have not 
-    (async () => {
-        if (_loadedSettings.current.lastWorkbookFileName?.length === 0) {
-            // This is really here only as hack during development, because settings gets loaded when the app
-            // is started, but not when the window is reloaded (will address this at some point)
-            _loadedSettings.current = {
-                workbookDirectory: await path.join(await path.documentDir(), 'apicize'),
-                fontSize: 12,
-                colorScheme: 'dark',
-                editorPanels: '',
+    // Open last workspace on load
+    useEffect(() => {
+        (async () => {
+            if (settings.lastWorkbookFileName) {
+                await openWorkspace(settings.lastWorkbookFileName)
             }
-        }
-
-        settings.lastWorkbookFileName = _loadedSettings.current.lastWorkbookFileName
-        settings.workbookDirectory = _loadedSettings.current.workbookDirectory
-        settings.fontSize = _loadedSettings.current.fontSize
-        settings.colorScheme = _loadedSettings.current.colorScheme
-        settings.editorPanels = _loadedSettings.current.editorPanels
-        settings.recentWorkbookFileNames = _loadedSettings.current.recentWorkbookFileNames
-            ? _loadedSettings.current.recentWorkbookFileNames
-            : []
-
-        if (settings.lastWorkbookFileName) {
-            await openWorkspace(settings.lastWorkbookFileName)
-        }
-
-        loadedSettings = undefined
-    })()
+        })()
+    })
 
     const fileOpsStore = new FileOperationsStore({
         onNewWorkbook: newWorkspace,
@@ -489,7 +456,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         onOpenSshFile: openSsshFile,
         onOpenFile: openFile,
         onRetrieveHelpTopic: retrieveHelpTopic,
-        onSaveSettings: saveSettings
+        onSaveSettings: saveSettings,
     })
 
     return (

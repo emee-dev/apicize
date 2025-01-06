@@ -1,7 +1,7 @@
 import * as app from '@tauri-apps/api/app'
 import * as core from '@tauri-apps/api/core'
 import { Window } from "@tauri-apps/api/window"
-import { ToastSeverity, useFeedback, useFileOperations, WorkspaceContext, WorkspaceStore } from "@apicize/toolkit";
+import { useFeedback, useFileOperations, WorkspaceContext, WorkspaceStore } from "@apicize/toolkit";
 import { ReactNode, useEffect, useRef } from "react";
 import { reaction } from 'mobx';
 

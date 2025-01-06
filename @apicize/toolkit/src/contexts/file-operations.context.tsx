@@ -1,4 +1,4 @@
-import { StoredGlobalSettings } from "@apicize/lib-typescript";
+import { WorkbookOAuth2PkceAuthorization } from "@apicize/lib-typescript";
 import { createContext, useContext } from "react";
 
 export class FileOperationsStore {

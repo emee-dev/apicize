@@ -1,6 +1,6 @@
 # :toolbar :icon[authorization] Authorizations
 
-## OAuth2 Client Flow Authentication
+## OAuth2 Client Flow Authorization
 
 When authorizing using OAuth2 Client Flow, a call is made othe specified Access Token URL with the Client ID and Secret to receive a token.
 Optionally, you can specify a Scope.  When associating a OAuth2 Client Authorization parameter, Apicize will automatically retrieve the token,
@@ -10,7 +10,7 @@ You can optionaly specify a [Certificate](help:certificates) and/or [Proxy](help
 these settings for the Authorization, they do not automatically apply to [Requests](help:requests) or [Request Groups](help:groups), you 
 must configure those separately.
 
-:image[authentication/oauth2-client.webg]
+:image[authorization/oauth2-client.webp]
 
 ### See Also
 

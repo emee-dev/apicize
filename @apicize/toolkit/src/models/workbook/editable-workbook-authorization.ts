@@ -1,6 +1,7 @@
 import {
     Persistence, WorkbookApiKeyAuthorization, WorkbookAuthorization, WorkbookAuthorizationType,
-    WorkbookBasicAuthorization, WorkbookOAuth2ClientAuthorization, Selection
+    WorkbookBasicAuthorization, WorkbookOAuth2ClientAuthorization, Selection,
+    WorkbookOAuth2PkceAuthorization
 } from "@apicize/lib-typescript"
 import { Editable } from "../editable"
 import { computed, makeObservable, observable } from "mobx"
@@ -19,11 +20,16 @@ export class EditableWorkbookAuthorization extends Editable<WorkbookAuthorizatio
     @observable accessor password: string = ''
     // OAuth2 Client
     @observable accessor accessTokenUrl = ''
+    @observable accessor authorizeUrl = ''
     @observable accessor clientId = ''
     @observable accessor clientSecret = ''
     @observable accessor scope = ''
     @observable accessor selectedCertificate: Selection | undefined = undefined
     @observable accessor selectedProxy: Selection | undefined = undefined
+    // PKCE values (must be set in the client)
+    @observable accessor accessToken: string | undefined = undefined
+    @observable accessor refreshToken: string | undefined = undefined
+    @observable accessor expiration: number | undefined = undefined
 
     static fromWorkbook(entry: WorkbookAuthorization): EditableWorkbookAuthorization {
         let result = new EditableWorkbookAuthorization()
@@ -48,6 +54,12 @@ export class EditableWorkbookAuthorization extends Editable<WorkbookAuthorizatio
                 result.scope = entry.scope
                 result.selectedCertificate = entry.selectedCertificate ?? NO_SELECTION
                 result.selectedProxy = entry.selectedProxy ?? NO_SELECTION
+                break
+            case WorkbookAuthorizationType.OAuth2Pkce:
+                result.authorizeUrl = entry.authorizeUrl
+                result.accessTokenUrl = entry.accessTokenUrl
+                result.clientId = entry.clientId
+                result.scope = entry.scope
                 break
             default:
                 throw new Error('Invalid authorization type')
@@ -84,6 +96,18 @@ export class EditableWorkbookAuthorization extends Editable<WorkbookAuthorizatio
                     selectedProxy: this.selectedProxy ?? NO_SELECTION
                 } as WorkbookOAuth2ClientAuthorization
                 break
+            case WorkbookAuthorizationType.OAuth2Pkce:
+                result = {
+                    type: WorkbookAuthorizationType.OAuth2Pkce,
+                    authorizeUrl: this.authorizeUrl,
+                    accessTokenUrl: this.accessTokenUrl,
+                    clientId: this.clientId,
+                    scope: this.scope,
+                    token: this.accessToken,
+                    refreshToken: this.refreshToken,
+                    expiration: this.expiration,
+                } as WorkbookOAuth2PkceAuthorization
+                break
             default:
                 throw new Error('Invalid authorization type')
         }
@@ -114,6 +138,10 @@ export class EditableWorkbookAuthorization extends Editable<WorkbookAuthorizatio
         return ! /^(\{\{.+\}\}|https?:\/\/)(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?$/.test(this.accessTokenUrl)
     }
 
+    @computed get authorizationUrlInvalid() {
+        return ! /^(\{\{.+\}\}|https?:\/\/)(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?$/.test(this.authorizeUrl)
+    }
+
     @computed get clientIdInvalid() {
         return ((this.clientId?.length ?? 0) === 0)
     }
@@ -128,6 +156,11 @@ export class EditableWorkbookAuthorization extends Editable<WorkbookAuthorizatio
                     || this.usernameInvalid
             case WorkbookAuthorizationType.OAuth2Client:
                 return this.nameInvalid
+                    || this.accessTokenUrlInvalid
+                    || this.clientIdInvalid
+            case WorkbookAuthorizationType.OAuth2Pkce:
+                return this.nameInvalid
+                    || this.authorizationUrlInvalid
                     || this.accessTokenUrlInvalid
                     || this.clientIdInvalid
             default:

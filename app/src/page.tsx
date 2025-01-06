@@ -1,7 +1,7 @@
 'use client'
 
 import * as core from '@tauri-apps/api/core'
-import { ApicizeSettingsStore, AuthorizationEditor, CertificateEditor, HelpPanel, Navigation, ProxyEditor, RequestEditor, ScenarioEditor, SettingsEditor, WorkspaceStore } from '@apicize/toolkit'
+import { ApicizeSettings, AuthorizationEditor, CertificateEditor, HelpPanel, Navigation, ProxyEditor, RequestEditor, ScenarioEditor, SettingsEditor, WorkspaceStore } from '@apicize/toolkit'
 import type { } from '@mui/x-tree-view/themeAugmentation';
 import { Stack, CssBaseline } from '@mui/material'
 import { } from '@apicize/toolkit'
@@ -12,20 +12,30 @@ import { ClipboardProvider } from './providers/clipboard.provider';
 import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
 import { WorkspaceProvider } from './providers/workspace.provider';
-import { ApicizeExecution } from '@apicize/lib-typescript';
+import { ApicizeExecution, StoredGlobalSettings, WorkbookOAuth2PkceAuthorization } from '@apicize/lib-typescript';
 import { ApicizeSettingsProvider } from './providers/apicize-settings.provider';
 import { ConfigurableTheme } from './controls/configurable-theme';
+import { PkceProvider } from './providers/pkce.provider';
+import { emit } from '@tauri-apps/api/event';
 
-const store = new WorkspaceStore({
+const workspaceStore = new WorkspaceStore({
   onExecuteRequest: async (workspace, requestId, overrideNumberOfRuns) => core.invoke<ApicizeExecution>
-      ('run_request', { workspace, requestId, overrideNumberOfRuns }),
+    ('run_request', { workspace, requestId, overrideNumberOfRuns }),
   onCancelRequest: (requestId) => core.invoke(
     'cancel_request', { requestId }),
   onClearToken: (authorizationId) => core.invoke(
-    'clear_cached_authorization', { authorizationId })
+    'clear_cached_authorization', { authorizationId }),
+  onInitializePkce: (data: { authorizationId: string }) =>
+    emit('oauth2-pkce-init', data),
+  onClosePkce: (data: { authorizationId: string }) =>
+    emit('oauth2-pkce-close', data),
+  onRefreshToken: (data: { authorizationId: string }) =>
+    emit('oauth2-refresh-token', data),
 })
 
-const settings = new ApicizeSettingsStore()
+// This is defined externally via Tauri main or other boostrap application
+declare var loadedSettings: StoredGlobalSettings
+const settings = new ApicizeSettings(loadedSettings)
 
 export default function Home() {
 
@@ -34,32 +44,34 @@ export default function Home() {
       <ConfigurableTheme>
         <CssBaseline />
         <FeedbackProvider>
-          <FileOperationsProvider store={store}>
-            <WorkspaceProvider store={store}>
-              <ClipboardProvider>
-                <Stack direction='row' sx={{ width: '100%', height: '100vh', display: 'flex', padding: '0' }}>
-                  <Navigation onSettings={() => settings.showSettings = true} />
-                  <>
-                    <HelpPanel />
-                    <RequestEditor />
-                    <ScenarioEditor
-                      sx={{ display: 'block', flexGrow: 1 }}
-                    />
-                    <AuthorizationEditor
-                      sx={{ display: 'block', flexGrow: 1 }}
-                    />
-                    <CertificateEditor
-                      sx={{ display: 'block', flexGrow: 1 }}
-                    />
-                    <ProxyEditor
-                      sx={{ display: 'block', flexGrow: 1 }}
-                    />
-                    <SettingsEditor
-                      sx={{ display: 'block', flexGrow: 1 }}
-                    />
-                  </>
-                </Stack>
-              </ClipboardProvider>
+          <FileOperationsProvider store={workspaceStore}>
+            <WorkspaceProvider store={workspaceStore}>
+              <PkceProvider store={workspaceStore}>
+                <ClipboardProvider>
+                  <Stack direction='row' sx={{ width: '100%', height: '100vh', display: 'flex', padding: '0' }}>
+                    <Navigation onSettings={() => settings.showSettings = true} />
+                    <>
+                      <HelpPanel />
+                      <RequestEditor />
+                      <ScenarioEditor
+                        sx={{ display: 'block', flexGrow: 1 }}
+                      />
+                      <AuthorizationEditor
+                        sx={{ display: 'block', flexGrow: 1 }}
+                      />
+                      <CertificateEditor
+                        sx={{ display: 'block', flexGrow: 1 }}
+                      />
+                      <ProxyEditor
+                        sx={{ display: 'block', flexGrow: 1 }}
+                      />
+                      <SettingsEditor
+                        sx={{ display: 'block', flexGrow: 1 }}
+                      />
+                    </>
+                  </Stack>
+                </ClipboardProvider>
+              </PkceProvider>
             </WorkspaceProvider>
           </FileOperationsProvider>
         </FeedbackProvider>

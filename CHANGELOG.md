@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.12.0
+
+* Added PKCE Authorization
+
 # 0.11.4
 
 * Copy selections when copying request/groups

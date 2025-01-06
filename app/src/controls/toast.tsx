@@ -6,7 +6,6 @@ import { observer } from 'mobx-react-lite';
 
 export const Toast = observer(() => {
     const store = useFeedback()
-
     const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(
         props,
         ref,

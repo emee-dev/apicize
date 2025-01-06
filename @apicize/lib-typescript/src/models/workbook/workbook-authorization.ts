@@ -6,13 +6,14 @@ import { Selection } from "../selection"
 /**
  * Specifies the type of authorization used for a request
  */
-export enum WorkbookAuthorizationType { None = 'none', Basic = 'Basic', OAuth2Client = 'OAuth2Client', ApiKey = 'ApiKey'};
+export enum WorkbookAuthorizationType { None = 'none', Basic = 'Basic', OAuth2Client = 'OAuth2Client', OAuth2Pkce = 'OAuth2Pkce', ApiKey = 'ApiKey' };
 
 /**
  * Specifies how to persist sensitive information
  */
 
-export type WorkbookAuthorization = WorkbookBasicAuthorization | WorkbookOAuth2ClientAuthorization | WorkbookApiKeyAuthorization
+export type WorkbookAuthorization = WorkbookBasicAuthorization | WorkbookOAuth2ClientAuthorization
+    | WorkbookOAuth2PkceAuthorization | WorkbookApiKeyAuthorization
 
 export interface WorkbookBaseAuthorization extends Identifiable, Named, Persisted {
     type: WorkbookAuthorizationType
@@ -28,7 +29,7 @@ export interface WorkbookBasicAuthorization extends WorkbookBaseAuthorization {
 }
 
 /**
- * Information required for basic authentication
+ * Information required for OAuth2 client flow authentication
  */
 export interface WorkbookOAuth2ClientAuthorization extends WorkbookBaseAuthorization {
     type: WorkbookAuthorizationType.OAuth2Client
@@ -38,6 +39,22 @@ export interface WorkbookOAuth2ClientAuthorization extends WorkbookBaseAuthoriza
     scope: string
     selectedCertificate?: Selection
     selectedProxy?: Selection
+    // sendCredentialsInBody: boolean
+}
+
+/**
+ * Information required for OAuth2 PKCE flow authentication
+ */
+export interface WorkbookOAuth2PkceAuthorization extends WorkbookBaseAuthorization {
+    type: WorkbookAuthorizationType.OAuth2Pkce
+    authorizeUrl: string
+    accessTokenUrl: string
+    refreshTokenurl?: string
+    clientId: string
+    scope: string
+    token?: string
+    refreshToken?: string
+    expiration?: number
     // sendCredentialsInBody: boolean
 }
 

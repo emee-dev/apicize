@@ -57,10 +57,15 @@ export class WorkspaceStore {
 
     @observable accessor expandedItems = ['hdr-r', 'hdr-s', 'hdr-a', 'hdr-c', 'hdr-p']
 
+    pendingPkceRequests = new Map<string, Map<string, number>>()
+
     constructor(private readonly callbacks: {
         onExecuteRequest: (workspace: Workspace, requestId: string, runs?: number) => Promise<ApicizeExecution>,
         onCancelRequest: (requestId: string) => Promise<void>,
         onClearToken: (authorizationId: string) => Promise<void>,
+        onInitializePkce: (data: { authorizationId: string }) => Promise<void>,
+        onClosePkce: (data: { authorizationId: string }) => Promise<void>,
+        onRefreshToken: (data: { authorizationId: string }) => Promise<void>,
     }) {
         makeObservable(this)
     }
@@ -115,6 +120,7 @@ export class WorkspaceStore {
             const lastTopic = this.helpHistory.pop()
             if (lastTopic) {
                 this.helpTopic = lastTopic
+                this.helpHistory.push(lastTopic)
                 this.helpVisible = true
             }
         }
@@ -137,6 +143,7 @@ export class WorkspaceStore {
         this.executions.clear()
         this.invalidItems.clear()
         this.active = null
+        this.pendingPkceRequests.clear()
     }
 
     @action
@@ -172,6 +179,7 @@ export class WorkspaceStore {
         this.warnOnWorkspaceCreds = true
         this.executions.clear()
         this.invalidItems.clear()
+        this.pendingPkceRequests.clear()
     }
 
     @action
@@ -705,6 +713,27 @@ export class WorkspaceStore {
         }
     }
 
+    getRequestActiveAuthorization(request: EditableWorkbookRequest | EditableWorkbookRequestGroup) {
+        let r: EditableWorkbookRequest | EditableWorkbookRequestGroup | null | undefined = request
+        while (r) {
+            const authId = r.selectedAuthorization?.id ?? null
+            switch (authId) {
+                case DEFAULT_SELECTION_ID:
+                case null:
+                    // get parent
+                    break
+                case NO_SELECTION_ID:
+                    return undefined
+                default:
+                    return this.workspace.authorizations.entities.get(authId)
+            }
+            r = findParentEntity(r.id, this.workspace.requests)
+        }
+        return this.workspace.defaults.selectedAuthorization.id
+            ? this.workspace.authorizations.entities.get(this.workspace.defaults.selectedAuthorization?.id)
+            : undefined
+    }
+
     getRequestParameterLists() {
         let activeScenarioId = DEFAULT_SELECTION_ID
         let activeAuthorizationId = DEFAULT_SELECTION_ID
@@ -975,12 +1004,14 @@ export class WorkspaceStore {
         authorization.id = GenerateIdentifier()
         authorization.name = `${GetTitle(source)} - Copy`
         authorization.type = source.type
+        authorization.persistence = source.persistence
         authorization.dirty = true
         authorization.header = source.header
         authorization.value = source.value
         authorization.username = source.username
         authorization.password = source.password
         authorization.accessTokenUrl = source.accessTokenUrl
+        authorization.authorizeUrl = source.authorizeUrl
         authorization.clientId = source.clientId
         authorization.clientSecret = source.clientSecret
         authorization.scope = source.scope
@@ -1011,7 +1042,8 @@ export class WorkspaceStore {
     }
 
     @action
-    setAuthorizationType(value: WorkbookAuthorizationType.ApiKey | WorkbookAuthorizationType.Basic | WorkbookAuthorizationType.OAuth2Client) {
+    setAuthorizationType(value: WorkbookAuthorizationType.ApiKey | WorkbookAuthorizationType.Basic
+        | WorkbookAuthorizationType.OAuth2Client | WorkbookAuthorizationType.OAuth2Pkce) {
         if (this.active?.entityType === EditableEntityType.Authorization) {
             const auth = this.active as EditableWorkbookAuthorization
             auth.type = value
@@ -1038,13 +1070,23 @@ export class WorkspaceStore {
     }
 
     @action
-    setAuthorizatinoAccessTokenUrl(value: string) {
+    setAccessTokenUrl(value: string) {
         if (this.active?.entityType === EditableEntityType.Authorization) {
             const auth = this.active as EditableWorkbookAuthorization
             auth.accessTokenUrl = value
             this.dirty = true
         }
     }
+
+    @action
+    setAuthorizationUrl(value: string) {
+        if (this.active?.entityType === EditableEntityType.Authorization) {
+            const auth = this.active as EditableWorkbookAuthorization
+            auth.authorizeUrl = value
+            this.dirty = true
+        }
+    }
+
     @action
     setAuthorizationClientId(value: string) {
         if (this.active?.entityType === EditableEntityType.Authorization) {
@@ -1504,6 +1546,27 @@ export class WorkspaceStore {
 
         if (!(execution && requestOrGroup)) throw new Error(`Invalid ID ${requestOrGroupId}`)
 
+        // Check if PKCE and initialize PKCE flow, queuing request upon completion
+        const auth = this.getRequestActiveAuthorization(requestOrGroup)
+        if (auth?.type === WorkbookAuthorizationType.OAuth2Pkce) {
+            if (auth.accessToken === undefined) {
+                this.addPendingPkceRequest(auth.id, requestOrGroupId, runs)
+                this.callbacks.onInitializePkce({
+                    authorizationId: auth.id
+                })
+                return
+            } else if (auth.expiration) {
+                const nowInSec = Date.now() / 1000
+                if (auth.expiration - nowInSec < 3) {
+                    this.addPendingPkceRequest(auth.id, requestOrGroupId, runs)
+                    this.callbacks.onRefreshToken({
+                        authorizationId: auth.id
+                    })
+                    return
+                }
+            }
+        }
+
         let idx = this.executingRequestIDs.indexOf(execution.requestOrGroupId)
         if (idx === -1) {
             this.executingRequestIDs.push(requestOrGroupId)
@@ -1542,9 +1605,19 @@ export class WorkspaceStore {
 
     @action
     async clearTokens() {
+        // Clear any PKCE tokens
+        for (const auth of this.workspace.authorizations.entities.values()) {
+            if (auth.type === WorkbookAuthorizationType.OAuth2Pkce) {
+                auth.accessToken = undefined
+                auth.refreshToken = undefined
+                auth.expiration = undefined
+            }
+        }
+        // Clear tokens cached in the Rust library
         await Promise.all(
             this.workspace.authorizations.topLevelIds.map(this.callbacks.onClearToken)
         )
+
     }
 
     @action
@@ -1606,6 +1679,76 @@ export class WorkspaceStore {
             this.dirty = true
         }
     }
+
+    @action
+    initializePkce(authorizationId: string) {
+        this.callbacks.onInitializePkce({
+            authorizationId
+        })
+    }
+
+    /**
+     * Update the PKCE authorization and execute any pending requests
+     * @param authorizationId 
+     * @param accessToken 
+     * @param refreshToken 
+     * @param expiration 
+     */
+    @action
+    updatePkceAuthorization(authorizationId: string, accessToken: string, refreshToken: string | undefined, expiration: number | undefined) {
+        const auth = this.getAuthorization(authorizationId)
+        if (!auth) {
+            throw new Error('Invalid authorization ID')
+        }
+        const pendingRequests = [...(this.pendingPkceRequests.get(authorizationId)?.entries() ?? [])]
+        this.pendingPkceRequests.delete(authorizationId)
+
+        this.callbacks.onClosePkce({ authorizationId })
+
+        auth.accessToken = accessToken
+        auth.refreshToken = refreshToken
+        auth.expiration = expiration
+
+        // Execute pending requests
+        for (const [requestOrGroupId, runs] of pendingRequests) {
+            this.executeRequest(requestOrGroupId, runs)
+        }
+    }
+
+    /**
+     * Track any requests that should be executed when a PKCE authorization is completed
+     * @param authorizationId 
+     * @param requestOrGroupId 
+     * @param runs 
+     */
+    private addPendingPkceRequest(authorizationId: string, requestOrGroupId: string, runs?: number) {
+        const pendingForAuth = this.pendingPkceRequests.get(authorizationId)
+        if (pendingForAuth) {
+            pendingForAuth.set(requestOrGroupId, runs ?? 1)
+        } else {
+            this.pendingPkceRequests.set(authorizationId,
+                new Map([[requestOrGroupId, runs ?? 1]]))
+        }
+
+    }
+
+    /**
+     * Cancel any pending requests
+     * @param authorizationId 
+     */
+    @action
+    cancelPendingPkceAuthorization(authorizationId: string) {
+        const pending = this.pendingPkceRequests.get(authorizationId)
+        if (pending) {
+            for (const requestOrGroupId of pending.keys()) {
+                const match = this.executions.get(requestOrGroupId)
+                if (match) {
+                    this.cancelRequest(requestOrGroupId)
+                }
+            }
+        }
+        this.pendingPkceRequests.set(authorizationId, new Map())
+    }
 }
 
 class WorkbookExecutionEntry implements WorkbookExecution {
@@ -1628,12 +1771,6 @@ export function useWorkspace() {
         throw new Error('useWorkspace must be used within a WorkspaceContext.Provider');
     }
     return context;
-}
-
-export enum SshFileType {
-    PEM = 'PEM',
-    Key = 'Key',
-    PFX = 'PFX',
 }
 
 const encodeFormData = (data: EditableNameValuePair[]) =>

@@ -7,7 +7,7 @@ export {
     ApicizeExecutionRequest, ApicizeExecutionRequestRun, ApicizeExecutionGroup, ApicizeExecutionGroupRun,
     ApicizeTestResult, ApicizeResponse as ApicizeHttpResponse, ApicizeError, ApicizeExecutionDetails
 } from './models/lib/apicize-execution'
-export { WorkbookAuthorization, WorkbookAuthorizationType, WorkbookBaseAuthorization, WorkbookBasicAuthorization, WorkbookApiKeyAuthorization, WorkbookOAuth2ClientAuthorization } from './models/workbook/workbook-authorization'
+export { WorkbookAuthorization, WorkbookAuthorizationType, WorkbookBaseAuthorization, WorkbookBasicAuthorization, WorkbookApiKeyAuthorization, WorkbookOAuth2ClientAuthorization, WorkbookOAuth2PkceAuthorization } from './models/workbook/workbook-authorization'
 export { WorkbookCertificate, WorkbookCertificateType, WorkbookBaseCertificate, WorkbookPkcs8PemCertificate, WorkbookPkcs12Certificate, WorkbookPemCertificate } from './models/workbook/workbook-certificate'
 export { WorkbookProxy } from './models/workbook/workbook-proxy'
 export { WorkbookScenario } from './models/workbook/workbook-scenario'

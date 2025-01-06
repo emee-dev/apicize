@@ -1,11 +1,14 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+pub mod pkce;
+
 use apicize_lib::{
     apicize::ApicizeExecution,
-    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token},
+    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token, PkceTokenResult},
     test_runner, ApicizeSettings, ColorScheme, Workspace,
 };
+use pkce::{OAuth2PkceInfo, OAuth2PkceRequest, OAuth2PkceService};
 use std::{
     collections::HashMap,
     env, fs,
@@ -19,7 +22,9 @@ use tokio_util::sync::CancellationToken;
 
 use std::sync::{Mutex, OnceLock};
 
-// static COUNTER: AtomicU32 = AtomicU32::new(1);
+struct AppState {
+    pkce: Mutex<OAuth2PkceService>,
+}
 
 fn main() {
     tauri::Builder::default()
@@ -42,6 +47,7 @@ fn main() {
                     editor_panels: String::from(""),
                     last_workbook_file_name: None,
                     recent_workbook_file_names: None,
+                    pkce_listener_port: 8080,
                 }
             };
 
@@ -81,6 +87,12 @@ fn main() {
                     serde_json::to_string(&settings).unwrap()
                 ))
                 .unwrap();
+
+            // Set up PKCE service
+            app.manage(AppState {
+                pkce: Mutex::new(OAuth2PkceService::new(app.handle().clone())),
+            });
+
             Ok(())
         })
         .plugin(tauri_plugin_clipboard::init())
@@ -135,6 +147,11 @@ fn main() {
             // get_environment_variables,
             is_release_mode,
             get_clipboard_image_base64,
+            set_pkce_port,
+            generate_authorization_info,
+            // launch_pkce_window,
+            retrieve_access_token,
+            refresh_token,
         ])
         .run(tauri::generate_context!())
         .expect("error running Apicize");
@@ -252,6 +269,53 @@ fn get_clipboard_image_base64(clipboard: State<Clipboard>) -> Result<String, Str
         }
         Err(msg) => Err(msg),
     }
+}
+
+#[tauri::command]
+fn set_pkce_port(state: State<'_, AppState>, port: u16) -> () {
+    let mut pkce = state.pkce.lock().unwrap();
+    pkce.activate_listener(port);
+}
+
+#[tauri::command]
+fn generate_authorization_info(
+    state: State<'_, AppState>,
+    auth: OAuth2PkceInfo,
+    port: u16,
+) -> Result<OAuth2PkceRequest, String> {
+    let pkce = state.pkce.lock().unwrap();
+    pkce.generate_authorization_info(auth, port)
+}
+
+// #[tauri::command]
+// fn launch_pkce_window(
+//     state: State<'_, AppState>,
+//     auth: OAuth2PkceInfo,
+//     port: u16,
+// ) -> Result<OAuth2PkceRequest, String> {
+//     let mut pkce = state.pkce.lock().unwrap();
+//     pkce.launch_pkce_window(auth, port)
+// }
+
+#[tauri::command]
+async fn retrieve_access_token(
+    token_url: &str,
+    redirect_url: &str,
+    code: &str,
+    client_id: &str,
+    verifier: &str,
+) -> Result<PkceTokenResult, String> {
+    OAuth2PkceService::retrieve_access_token(token_url, redirect_url, code, client_id, verifier)
+        .await
+}
+
+#[tauri::command]
+async fn refresh_token(
+    token_url: &str,
+    refresh_token: &str,
+    client_id: &str,
+) -> Result<PkceTokenResult, String> {
+    OAuth2PkceService::refresh_token(token_url, refresh_token, client_id).await
 }
 
 // #[tauri::command]

@@ -1,6 +1,6 @@
 # :toolbar :icon[certificate] Certificates
 
-Apicize supports the following types of client certificates for authentication:
+Apicize supports the following types of client certificates for authorization:
 
 * PKCS #8: With either separate or embedded certificate key
 * PKCS #12:  PFX with password

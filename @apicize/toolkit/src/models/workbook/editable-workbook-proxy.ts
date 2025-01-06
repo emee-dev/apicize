@@ -1,6 +1,6 @@
 import { Persistence, WorkbookProxy } from "@apicize/lib-typescript"
 import { Editable } from "../editable"
-import { computed, makeObservable, observable } from "mobx"
+import { computed, observable } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
 
 export class EditableWorkbookProxy extends Editable<WorkbookProxy> {

@@ -10,4 +10,5 @@ export interface StoredGlobalSettings {
     colorScheme: 'dark' | 'light'
     editorPanels: string
     recentWorkbookFileNames?: string[]
+    pkceListenerPort: number | undefined
 }

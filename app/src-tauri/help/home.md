@@ -9,7 +9,7 @@ In Apicize, information is divided into [Requests](help:requests), [Request Grou
 
 * [**Scenarios**](help:scenarios): Optional variable information that can be injected into a Request during testing
 * [**Authorizations**](help:authorizations):  Optional authorization information used to authenticate to an API
-* [**Certificates**](help:certificates):  Optional client certificates used for authentication
+* [**Certificates**](help:certificates):  Optional client certificates used for authorization
 * [**Proxies**](help:proxies): Optional proxies to use when making API calls
 
 ## What differentiates Apicize?
