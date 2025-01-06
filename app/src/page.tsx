@@ -40,7 +40,7 @@ const settings = new ApicizeSettings(loadedSettings)
 export default function Home() {
 
   return (
-    <ApicizeSettingsProvider store={settings}>
+    <ApicizeSettingsProvider settings={settings}>
       <ConfigurableTheme>
         <CssBaseline />
         <FeedbackProvider>

@@ -1,14 +1,14 @@
 import { ReactNode } from "react";
-import { ApicizeSettingsContext, ApicizeSettingsStore } from "@apicize/toolkit";
+import { ApicizeSettings, ApicizeSettingsContext } from "@apicize/toolkit";
 
 export function ApicizeSettingsProvider({
-    store, children
+    settings, children
 }: {
-    store: ApicizeSettingsStore
+    settings: ApicizeSettings
     children?: ReactNode
 }) {
     return (
-        <ApicizeSettingsContext.Provider value={store}>
+        <ApicizeSettingsContext.Provider value={settings}>
             {children}
         </ApicizeSettingsContext.Provider>
     )
