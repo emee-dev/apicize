@@ -1,6 +1,3 @@
-import { StoredGlobalSettings } from '@apicize/lib-typescript';
-import { SupportedColorScheme } from '@mui/material';
-import { makeAutoObservable } from 'mobx';
 import { createContext, useContext } from 'react'
 import { ApicizeSettings } from '../models/settings';
 

@@ -4,7 +4,7 @@ import * as dialog from '@tauri-apps/plugin-dialog'
 import * as path from '@tauri-apps/api/path'
 import { exists, readFile, readTextFile } from "@tauri-apps/plugin-fs"
 import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useApicizeSettings, useFeedback, WorkspaceStore } from "@apicize/toolkit";
-import { GetTitle, StoredGlobalSettings, Workspace } from "@apicize/lib-typescript";
+import { GetTitle, ApplicationSettings, Workspace, Persistence } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
 
 /**
@@ -27,7 +27,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      */
     const saveSettings = async () => {
         try {
-            const settingsToSave: StoredGlobalSettings = {
+            const settingsToSave: ApplicationSettings = {
                 workbookDirectory: settings.workbookDirectory,
                 lastWorkbookFileName: settings.lastWorkbookFileName,
                 fontSize: settings.fontSize,
@@ -38,7 +38,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                     : undefined,
                 pkceListenerPort: settings.pkceListenerPort,
             }
-            await core.invoke<StoredGlobalSettings>('save_settings', { settings: settingsToSave })
+            await core.invoke<ApplicationSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {
             feedback.toast(`Unable to save settings: ${e}`, ToastSeverity.Error)
         }
@@ -204,7 +204,10 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             }
 
             if (workspaceStore.warnOnWorkspaceCreds) {
-                const creds = workspaceStore.listWorkspaceCredentials()
+                const creds = [
+                    ...workspaceStore.authorizations.getChildren(Persistence.Workbook),
+                    ...workspaceStore.certificates.getChildren(Persistence.Workbook)
+                ];
                 if (creds.length > 0) {
                     if (! await feedback.confirm({
                         title: 'Save Workbook',
@@ -256,7 +259,10 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             }
 
             if (workspaceStore.warnOnWorkspaceCreds) {
-                const creds = workspaceStore.listWorkspaceCredentials()
+                const creds = [
+                    ...workspaceStore.authorizations.getChildren(Persistence.Workbook),
+                    ...workspaceStore.certificates.getChildren(Persistence.Workbook)
+                ];
                 if (creds.length > 0) {
                     if (! await feedback.confirm({
                         title: 'Save Workbook',
@@ -324,14 +330,14 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         switch (fileType) {
             case SshFileType.PEM:
                 defaultPath = await getSshPath()
-                title = 'Open Public Key (.pem)'
-                extensions = ['pem']
+                title = 'SSL Certificate'
+                extensions = ['cer', 'crt', 'pem']
                 extensionName = 'Privacy Enhanced Mail Format (.pem)'
                 break
             case SshFileType.Key:
                 defaultPath = await getSshPath()
-                title = 'Open Private Key (.key)'
-                extensions = ['key']
+                title = 'Open Private Key'
+                extensions = ['key', 'pem']
                 extensionName = 'Private Key Files (*.key)'
                 break
             case SshFileType.PFX:
@@ -455,8 +461,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         onSaveWorkbookAs: saveWorkbookAs,
         onOpenSshFile: openSsshFile,
         onOpenFile: openFile,
-        onRetrieveHelpTopic: retrieveHelpTopic,
         onSaveSettings: saveSettings,
+        onRetrieveHelpTopic: retrieveHelpTopic
     })
 
     return (

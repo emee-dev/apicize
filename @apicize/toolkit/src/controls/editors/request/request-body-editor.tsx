@@ -2,7 +2,7 @@ import * as React from 'react'
 import Box from '@mui/material/Box'
 import { Button, FormControl, Grid2, IconButton, InputLabel, MenuItem, Select, Stack } from '@mui/material'
 import { GenerateIdentifier } from '../../../services/random-identifier-generator'
-import { EditableNameValuePair } from '../../../models/workbook/editable-name-value-pair'
+import { EditableNameValuePair } from '../../../models/workspace/editable-name-value-pair'
 import { NameValueEditor } from '../name-value-editor'
 import FileOpenIcon from '@mui/icons-material/FileOpen'
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
@@ -15,9 +15,9 @@ import "ace-builds/src-noconflict/theme-chrome"
 import "ace-builds/src-noconflict/ext-language_tools"
 import "ace-builds/src-noconflict/ext-searchbox"
 import beautify from "js-beautify";
-import { WorkbookBodyType, WorkbookBodyTypes } from '@apicize/lib-typescript'
-import { EditableEntityType } from '../../../models/workbook/editable-entity-type'
-import { EditableWorkbookRequest } from '../../../models/workbook/editable-workbook-request'
+import { BodyType, BodyTypes } from '@apicize/lib-typescript'
+import { EditableEntityType } from '../../../models/workspace/editable-entity-type'
+import { EditableRequest } from '../../../models/workspace/editable-request'
 import { observer } from 'mobx-react-lite'
 import { useClipboard } from '../../../contexts/clipboard.context'
 import { useFileOperations } from '../../../contexts/file-operations.context'
@@ -40,9 +40,9 @@ export const RequestBodyEditor = observer(() => {
   }
 
   workspace.nextHelpTopic = 'requests/body'
-  const request = workspace.active as EditableWorkbookRequest
+  const request = workspace.active as EditableRequest
 
-  const headerDoesNotMatchType = (bodyType: WorkbookBodyType | undefined | null) => {
+  const headerDoesNotMatchType = (bodyType: BodyType | undefined | null) => {
     let needsContextHeaderUpdate = true
     let mimeType = getBodyTypeMimeType(bodyType)
     const contentTypeHeader = request.headers?.find(h => h.name === 'Content-Type')
@@ -54,17 +54,17 @@ export const RequestBodyEditor = observer(() => {
     return needsContextHeaderUpdate
   }
 
-  const getBodyTypeMimeType = (bodyType: WorkbookBodyType | undefined | null) => {
+  const getBodyTypeMimeType = (bodyType: BodyType | undefined | null) => {
     switch (bodyType) {
-      case WorkbookBodyType.None:
+      case BodyType.None:
         return ''
-      case WorkbookBodyType.JSON:
+      case BodyType.JSON:
         return 'application/json'
-      case WorkbookBodyType.XML:
+      case BodyType.XML:
         return 'application/xml'
-      case WorkbookBodyType.Text:
+      case BodyType.Text:
         return 'text/plain'
-      case WorkbookBodyType.Form:
+      case BodyType.Form:
         return 'application/x-www-form-urlencoded'
       default:
         return 'application/octet-stream'
@@ -72,25 +72,25 @@ export const RequestBodyEditor = observer(() => {
   }
 
   const [allowUpdateHeader, setAllowUpdateHeader] = React.useState<boolean>(headerDoesNotMatchType(request.body.type))
-  const [beautifyBodyType, setBeautifyBodyType] = React.useState((request.body.type === WorkbookBodyType.JSON || request.body.type === WorkbookBodyType.XML)
-    ? request.body.type : WorkbookBodyType.None)
+  const [beautifyBodyType, setBeautifyBodyType] = React.useState((request.body.type === BodyType.JSON || request.body.type === BodyType.XML)
+    ? request.body.type : BodyType.None)
 
-  const updateBodyType = (val: WorkbookBodyType | string) => {
+  const updateBodyType = (val: BodyType | string) => {
     const v = toJS(val)
-    const newBodyType = (v == "" ? undefined : v as unknown as WorkbookBodyType) ?? WorkbookBodyType.Text
+    const newBodyType = (v == "" ? undefined : v as unknown as BodyType) ?? BodyType.Text
     workspace.setRequestBodyType(newBodyType)
     setAllowUpdateHeader(headerDoesNotMatchType(newBodyType))
-    setBeautifyBodyType((newBodyType === WorkbookBodyType.JSON || newBodyType === WorkbookBodyType.XML) ? newBodyType : WorkbookBodyType.None)
+    setBeautifyBodyType((newBodyType === BodyType.JSON || newBodyType === BodyType.XML) ? newBodyType : BodyType.None)
   }
 
   function performBeautify() {
     if (!editorRef.current) return
     let text = editorRef.current.editor.session.getValue()
     switch (beautifyBodyType) {
-      case WorkbookBodyType.JSON:
+      case BodyType.JSON:
         text = beautify.js_beautify(text, {})
         break
-      case WorkbookBodyType.XML:
+      case BodyType.XML:
         text = beautify.html_beautify(text, {})
         break
       default:
@@ -133,7 +133,7 @@ export const RequestBodyEditor = observer(() => {
   }
 
   const bodyTypeMenuItems = () => {
-    return WorkbookBodyTypes.map(bodyType => (
+    return BodyTypes.map(bodyType => (
       <MenuItem key={bodyType} value={bodyType}>{bodyType}</MenuItem>
     ))
   }
@@ -141,7 +141,7 @@ export const RequestBodyEditor = observer(() => {
   const pasteImageFromClipboard = async () => {
     try {
       const data = await clipboard.getClipboardImage()
-      workspace.setRequestBody({ type: WorkbookBodyType.Raw, data })
+      workspace.setRequestBody({ type: BodyType.Raw, data })
       feedback.toast('Image pasted from clipboard', ToastSeverity.Success)
     } catch (e) {
       feedback.toast(`Unable to access clipboard image - ${e}`, ToastSeverity.Error)
@@ -152,7 +152,7 @@ export const RequestBodyEditor = observer(() => {
     try {
       const data = await fileOps.openFile()
       if (!data) return
-      workspace.setRequestBody({ type: WorkbookBodyType.Raw, data })
+      workspace.setRequestBody({ type: BodyType.Raw, data })
     } catch (e) {
       feedback.toast(`Unable to open file - ${e}`, ToastSeverity.Error)
     }
@@ -161,10 +161,10 @@ export const RequestBodyEditor = observer(() => {
   let mode
 
   switch (request.body.type) {
-    case WorkbookBodyType.JSON:
+    case BodyType.JSON:
       mode = 'json'
       break
-    case WorkbookBodyType.XML:
+    case BodyType.XML:
       mode = 'xml'
       break
   }
@@ -190,20 +190,20 @@ export const RequestBodyEditor = observer(() => {
           </Select>
         </FormControl>
         <Grid2 container direction='row' spacing={2}>
-          <Button variant='outlined' size='small' disabled={beautifyBodyType === WorkbookBodyType.None} onClick={performBeautify}>Beautify</Button>
+          <Button variant='outlined' size='small' disabled={beautifyBodyType === BodyType.None} onClick={performBeautify}>Beautify</Button>
           <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
         </Grid2>
       </Grid2>
-      {request.body.type == WorkbookBodyType.None
+      {request.body.type == BodyType.None
         ? <></>
-        : request.body.type == WorkbookBodyType.Form
+        : request.body.type == BodyType.Form
           ? <NameValueEditor
             title='body form data'
             values={request.body.data as EditableNameValuePair[]}
             nameHeader='Name'
             valueHeader='Value'
             onUpdate={updateBodyAsFormData} />
-          : request.body.type == WorkbookBodyType.Raw
+          : request.body.type == BodyType.Raw
             ? <Stack
               direction='row'
               sx={{

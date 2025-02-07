@@ -1,4 +1,3 @@
-import { WorkbookOAuth2PkceAuthorization } from "@apicize/lib-typescript";
 import { createContext, useContext } from "react";
 
 export class FileOperationsStore {
@@ -10,7 +9,7 @@ export class FileOperationsStore {
         onOpenSshFile: (fileType: SshFileType) => Promise<string | null>,
         onOpenFile: () => Promise<string | null>,
         onSaveSettings: () => Promise<void>,
-        onRetrieveHelpTopic: (topic: string) => Promise<string>,
+        onRetrieveHelpTopic: (showTopic: string) => Promise<string>,
     }) {
     }
 
@@ -58,15 +57,20 @@ export class FileOperationsStore {
         return this.callbacks.onOpenFile()
     }
 
-    retrieveHelpTopic(topic: string) {
-        return this.callbacks.onRetrieveHelpTopic(topic)
-    }
-
     /**
      * Save workspace's workbook after prompting for file name
      */
     saveSettings() {
         return this.callbacks.onSaveSettings()
+    }
+
+    /**
+     * Retrieve the specified help topic text
+     * @param showTopic 
+     * @returns 
+     */
+    retrieveHelpTopic(showTopic: string): Promise<string> {
+        return this.callbacks.onRetrieveHelpTopic(showTopic)
     }
 }
 

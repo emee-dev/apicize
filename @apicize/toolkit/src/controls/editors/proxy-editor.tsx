@@ -1,18 +1,18 @@
 import { Stack, TextField, SxProps, Grid2, Box } from '@mui/material'
 import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import { EditorTitle } from '../editor-title';
-import { PersistenceEditor } from './persistence-editor';
 import { observer } from 'mobx-react-lite';
-import { EditableEntityType } from '../../models/workbook/editable-entity-type';
-import { EditableWorkbookProxy } from '../../models/workbook/editable-workbook-proxy';
+import { EditableEntityType } from '../../models/workspace/editable-entity-type';
+import { EditableProxy } from '../../models/workspace/editable-proxy';
 import { useWorkspace } from '../../contexts/workspace.context';
 
 export const ProxyEditor = observer((props: {
     sx: SxProps
 }) => {
     const workspace = useWorkspace()
-    if (workspace.active?.entityType !== EditableEntityType.Proxy || workspace.helpVisible) return null
-    const proxy = workspace.active as EditableWorkbookProxy
+    if (workspace.active?.entityType !== EditableEntityType.Proxy) return null
+    workspace.nextHelpTopic = 'proxies'
+    const proxy = workspace.active as EditableProxy
     return (
         <Stack direction={'column'} className='editor' sx={props.sx}>
             <Box className='editor-panel-header'>
@@ -31,9 +31,6 @@ export const ProxyEditor = observer((props: {
                         helperText={proxy.nameInvalid ? 'Proxy name is required' : ''}
                         fullWidth
                     />
-                </Grid2>
-                <Grid2>
-                    <PersistenceEditor onUpdatePersistence={(e) => workspace.setProxyPersistence(e)} persistence={proxy.persistence} />
                 </Grid2>
                 <Grid2>
                     <TextField

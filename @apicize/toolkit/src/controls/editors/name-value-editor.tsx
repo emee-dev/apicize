@@ -1,4 +1,4 @@
-import { EditableNameValuePair } from "../../models/workbook/editable-name-value-pair";
+import { EditableNameValuePair } from "../../models/workspace/editable-name-value-pair";
 import { Box } from "@mui/system";
 import { Button, Grid2, IconButton, Stack, TextField } from "@mui/material";
 import { toJS } from "mobx";

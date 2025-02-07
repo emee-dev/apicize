@@ -1,4 +1,4 @@
-# :toolbar Authoring Apicize Tests
+# Authoring Apicize Tests :toolbar
 
 Your tests have access to the following variables:
 

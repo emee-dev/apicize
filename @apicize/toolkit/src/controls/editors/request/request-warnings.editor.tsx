@@ -1,5 +1,5 @@
-import { EditableEntityType } from "../../../models/workbook/editable-entity-type";
-import { EditableWorkbookRequest, EditableWorkbookRequestGroup } from "../../../models/workbook/editable-workbook-request";
+import { EditableEntityType } from "../../../models/workspace/editable-entity-type";
+import { EditableRequest, EditableRequestGroup } from "../../../models/workspace/editable-request";
 import { observer } from "mobx-react-lite";
 import { useWorkspace } from "../../../contexts/workspace.context";
 import { Alert, Box } from "@mui/material";
@@ -13,8 +13,8 @@ export const RequestWarningsEditor = observer(() => {
   }
 
   workspace.nextHelpTopic = 'requests/parameters'
-  const request = workspace.active as EditableWorkbookRequest
-  const group = workspace.active as EditableWorkbookRequestGroup
+  const request = workspace.active as EditableRequest
+  const group = workspace.active as EditableRequestGroup
   const warnings = request
     ? request.warnings
     : group

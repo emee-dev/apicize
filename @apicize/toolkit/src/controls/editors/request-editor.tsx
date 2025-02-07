@@ -1,7 +1,7 @@
 import * as React from 'react'
-import { ToggleButtonGroup, ToggleButton, Box, Stack, SxProps, Typography, Grid2, useColorScheme } from '@mui/material'
+import { ToggleButtonGroup, ToggleButton, Box, Stack, SxProps, Typography, Grid2, useColorScheme, SvgIcon } from '@mui/material'
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings'
-import FolderIcon from '@mui/icons-material/Folder';
+import FolderIcon from '../../icons/folder-icon'
 import ViewListIcon from '@mui/icons-material/ViewList'
 import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -9,7 +9,6 @@ import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
 import AltRouteIcon from '@mui/icons-material/AltRoute'
 import { RequestInfoEditor } from './request/request-info-editor'
 import { RequestHeadersEditor } from './request/request-headers-editor'
-import SendIcon from '@mui/icons-material/Send';
 import ScienceIcon from '@mui/icons-material/Science';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { RequestQueryStringEditor } from './request/request-query-string-editor'
@@ -20,8 +19,8 @@ import { RequestGroupEditor } from './request/request-group-editor';
 import { EditorTitle } from '../editor-title';
 import { RequestParametersEditor } from './request/request-parameters-editor';
 import { observer } from 'mobx-react-lite';
-import { EditableEntityType } from '../../models/workbook/editable-entity-type';
-import { EditableWorkbookRequest, EditableWorkbookRequestGroup } from '../../models/workbook/editable-workbook-request';
+import { EditableEntityType } from '../../models/workspace/editable-entity-type';
+import { EditableRequest, EditableRequestGroup } from '../../models/workspace/editable-request';
 import { RunToolbar } from '../run-toolbar';
 import { useWorkspace } from '../../contexts/workspace.context';
 import { RequestWarningsEditor } from './request/request-warnings.editor';
@@ -29,6 +28,7 @@ import { RunResultsToolbar } from '../run-results-toolbar';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { useApicizeSettings } from '../../contexts/apicize-settings.context';
 import { useFileOperations } from '../../contexts/file-operations.context';
+import RequestIcon from '../../icons/request-icon';
 
 export const RequestEditor = observer((props: {
     sx?: SxProps
@@ -43,17 +43,19 @@ export const RequestEditor = observer((props: {
         return null
     }
 
-    const request = (workspace.active.entityType === EditableEntityType.Request && !workspace.helpVisible)
-        ? workspace.active as EditableWorkbookRequest
+    const request = (workspace.active.entityType === EditableEntityType.Request)
+        ? workspace.active as EditableRequest
         : null
 
-    const group = (workspace.active.entityType === EditableEntityType.Group && !workspace.helpVisible)
-        ? workspace.active as EditableWorkbookRequestGroup
+    const group = (workspace.active.entityType === EditableEntityType.Group)
+        ? workspace.active as EditableRequestGroup
         : null
 
     if (!(request || group)) {
         return null
     }
+
+    workspace.nextHelpTopic = request ? 'workspace/groups' : 'workspace/requests'
 
     const handlePanelChanged = (_: React.SyntheticEvent, newValue: string) => {
         if (newValue) setPanel(newValue)
@@ -102,7 +104,7 @@ export const RequestEditor = observer((props: {
         <Box marginBottom='1.5em'>
             <Stack direction='row' className='editor-panel-header'>
                 <Stack direction='row'>
-                    <EditorTitle icon={<FolderIcon color='folder' />} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'} />
+                    <EditorTitle icon={<SvgIcon color='folder'><FolderIcon /></SvgIcon>} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'} />
                     <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                 </Stack>
                 <RunToolbar sx={{ marginLeft: '3em' }} />
@@ -137,7 +139,7 @@ export const RequestEditor = observer((props: {
             ? <Box className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
                 <Stack direction='row' className='editor-panel-header'>
                     <Stack direction='row'>
-                        <EditorTitle icon={<SendIcon color='request' />} name={(request.name.length > 0) ? `${request.name} - ${panel}` : `(Unnamed) - ${panel}`} />
+                        <EditorTitle icon={<SvgIcon color='request'><RequestIcon /></SvgIcon>} name={(request.name.length > 0) ? `${request.name} - ${panel}` : `(Unnamed) - ${panel}`} />
                         <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                     </Stack>
                     <RunToolbar sx={{ marginLeft: '3em' }} />
@@ -155,7 +157,7 @@ export const RequestEditor = observer((props: {
                         <ToggleButton value="Query String" title="Show Request Query String" aria-label='show query string' size='small'><ViewListIcon /></ToggleButton>
                         <ToggleButton value="Headers" title="Show Request Headers" aria-label='show headers' size='small'><ViewListOutlinedIcon /></ToggleButton>
                         <ToggleButton value="Body" title="Show Request Body" aria-label='show body' size='small'><ArticleOutlinedIcon /></ToggleButton>
-                        <ToggleButton value="Test" title="Show Request Test" aria-label='show test' size='small'><ScienceIcon /></ToggleButton>
+                        <ToggleButton value="Test" title="Show Request Tests" aria-label='show test' size='small'><ScienceIcon /></ToggleButton>
                         <ToggleButton value="Parameters" title="Show Request Parameters" aria-label='show test' size='small'><AltRouteIcon /></ToggleButton>
                         {
                             hasWarnings

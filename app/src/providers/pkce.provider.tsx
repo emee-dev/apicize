@@ -4,7 +4,7 @@ import { PkceContext, ToastSeverity, useApicizeSettings, useFeedback, useWorkspa
 import { listen } from "@tauri-apps/api/event";
 import { Window } from "@tauri-apps/api/window"
 import { Webview } from "@tauri-apps/api/webview"
-import { EditableWorkbookAuthorization } from "@apicize/toolkit/dist/models/workbook/editable-workbook-authorization";
+import { EditableAuthorization } from "@apicize/toolkit";
 import { observer } from "mobx-react-lite";
 import { autorun } from "mobx";
 
@@ -69,7 +69,7 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
      */
     const launchPkceWindow = async (params: OAuthPkceInitParams) => {
         try {
-            const auth = workspace.getAuthorization(params.authorizationId)?.toWorkbook()
+            const auth = workspace.authorizations.get(params.authorizationId)?.toWorkspace()
             if (!auth) {
                 throw new Error('Invalid authorization ID')
             }
@@ -132,12 +132,12 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
     const processOAuth2PkceAuthResponse = (response: OAuthPkceAuthParams) => {
         let authorizationId: string | null = null
         try {
-            let matchAuth: EditableWorkbookAuthorization | undefined = undefined
+            let matchAuth: EditableAuthorization | undefined = undefined
             let matchEntry: OAuthPkceRequest | undefined = undefined
             for (const [id, entry] of wip.current) {
                 if (entry.csrfToken === response.state) {
                     authorizationId = id
-                    matchAuth = workspace.getAuthorization(id)
+                    matchAuth = workspace.authorizations.get(id)
                     matchEntry = entry
                     break
                 }
@@ -174,7 +174,7 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
      */
     const refreshToken = async (params: OAuthPkceInitParams) => {
         try {
-            const auth = workspace.getAuthorization(params.authorizationId)
+            const auth = workspace.authorizations.get(params.authorizationId)
             if (!auth) {
                 throw new Error(`Invalid authorization ID ${params.authorizationId}`)
             }

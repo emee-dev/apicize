@@ -1,16 +1,16 @@
 import { Alert, Button, Grid2, TextField } from "@mui/material"
 import { observer } from "mobx-react-lite"
 import { useWorkspace } from "../../../contexts/workspace.context"
-import { EditableWorkbookAuthorization } from "../../../models/workbook/editable-workbook-authorization"
-import { EditableEntityType } from "../../../models/workbook/editable-entity-type"
+import { EditableAuthorization } from "../../../models/workspace/editable-authorization"
+import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
 import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
 
 export const AuthorizationOAuth2PkceEditor = observer(() => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
 
-    if (workspace.active?.entityType !== EditableEntityType.Authorization || workspace.helpVisible) return null
-    const auth = workspace.active as EditableWorkbookAuthorization
+    if (workspace.active?.entityType !== EditableEntityType.Authorization) return null
+    const auth = workspace.active as EditableAuthorization
 
     const clearTokens = async () => {
         try {

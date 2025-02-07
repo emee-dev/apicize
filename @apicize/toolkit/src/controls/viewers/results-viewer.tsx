@@ -1,6 +1,5 @@
-import { Box, Stack, SvgIconPropsColorOverrides, SxProps, Theme, ToggleButton, ToggleButtonGroup } from "@mui/material"
+import { Box, Stack, SvgIcon, SvgIconPropsColorOverrides, SxProps, Theme, ToggleButton, ToggleButtonGroup } from "@mui/material"
 import ScienceIcon from '@mui/icons-material/ScienceOutlined'
-import SendIcon from '@mui/icons-material/Send';
 import { OverridableStringUnion } from '@mui/types';
 import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined'
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
@@ -15,10 +14,11 @@ import { ResultInfoViewer } from "./result/result-info-viewer";
 import { ResponseHeadersViewer } from "./result/response-headers-viewer";
 import { ResultDetailsViewer } from "./result/result-details-viewer";
 import { observer } from 'mobx-react-lite';
-import { EditableEntityType } from '../../models/workbook/editable-entity-type';
+import { EditableEntityType } from '../../models/workspace/editable-entity-type';
 import { useWorkspace } from "../../contexts/workspace.context";
-import { WorkbookExecutionGroup, WorkbookExecutionRequest } from "../../models/workbook/workbook-execution";
+import { ExecutionGroup, ExecutionRequest } from "../../models/workspace/execution";
 import { MAX_TEXT_RENDER_LENGTH } from "./text-viewer";
+import RequestIcon from "../../icons/request-icon";
 
 export const ResultsViewer = observer((props: {
     sx?: SxProps<Theme>
@@ -52,10 +52,10 @@ export const ResultsViewer = observer((props: {
     }
 
     const executionRequestResult = executionResult?.type === 'request'
-        ? executionResult as WorkbookExecutionRequest
+        ? executionResult as ExecutionRequest
         : undefined
     const executionGroupResult = executionResult?.type === 'group'
-        ? executionResult as WorkbookExecutionGroup
+        ? executionResult as ExecutionGroup
         : undefined
 
     const disableOtherPanels = (!executionRequestResult?.response)
@@ -77,7 +77,9 @@ export const ResultsViewer = observer((props: {
         | 'error'
         | 'info'
         | 'success'
-        | 'warning',
+        | 'warning'
+        | 'private'
+        | 'vault',
         SvgIconPropsColorOverrides
     > | undefined = undefined
     if (executionRequestResult) {
@@ -103,7 +105,7 @@ export const ResultsViewer = observer((props: {
                 <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' size='small' disabled={disableOtherPanels}><ViewListOutlinedIcon /></ToggleButton>
                 <ToggleButton value="Text" title="Show Response Body as Text" aria-label='show body text' size='small' disabled={disableOtherPanels}><ArticleOutlinedIcon /></ToggleButton>
                 <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={disableOtherPanels || longTextInResponse} size='small'><PreviewIcon /></ToggleButton>
-                <ToggleButton value="Details" title="Show Details" aria-label='show details' size='small' disabled={disableOtherPanels}><SendIcon /></ToggleButton>
+                <ToggleButton value="Details" title="Show Details" aria-label='show details' size='small' disabled={disableOtherPanels}><SvgIcon><RequestIcon /></SvgIcon></ToggleButton>
             </ToggleButtonGroup>
             <Box sx={{ overflow: 'hidden', flexGrow: 1, bottom: '0', position: 'relative' }}>
                 <Box position='relative' width='100%' height='100%'>

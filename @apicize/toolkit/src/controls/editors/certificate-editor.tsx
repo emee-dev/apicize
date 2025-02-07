@@ -1,18 +1,17 @@
-import { Stack, TextField, Grid2, FormControl, InputLabel, MenuItem, Select, IconButton, Typography, SxProps, Box } from '@mui/material'
-import SecurityIcon from '@mui/icons-material/Security';
+import { Stack, TextField, Grid2, FormControl, InputLabel, MenuItem, Select, IconButton, Typography, SxProps, Box, SvgIcon } from '@mui/material'
 import FileOpenIcon from '@mui/icons-material/FileOpen';
 import { EditorTitle } from '../editor-title';
-import { WorkbookCertificateType } from '@apicize/lib-typescript';
-import { PersistenceEditor } from './persistence-editor';
+import { CertificateType } from '@apicize/lib-typescript';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import { base64Decode, base64Encode } from '../../services/apicize-serializer';
-import { EditableWorkbookCertificate } from '../../models/workbook/editable-workbook-certificate';
+import { EditableCertificate } from '../../models/workspace/editable-certificate';
 import { observer } from 'mobx-react-lite';
-import { EditableEntityType } from '../../models/workbook/editable-entity-type';
+import { EditableEntityType } from '../../models/workspace/editable-entity-type';
 import { useClipboard } from '../../contexts/clipboard.context';
 import { SshFileType, useFileOperations } from '../../contexts/file-operations.context';
 import { useWorkspace } from '../../contexts/workspace.context';
 import { ToastSeverity, useFeedback } from '../../contexts/feedback.context';
+import CertificateIcon from '../../icons/certificate-icon';
 
 export const CertificateEditor = observer((props: {
     sx: SxProps,
@@ -22,8 +21,9 @@ export const CertificateEditor = observer((props: {
     const fileOps = useFileOperations()
     const feedback = useFeedback()
 
-    if (workspace.active?.entityType !== EditableEntityType.Certificate || workspace.helpVisible) return null
-    const certificate = workspace.active as EditableWorkbookCertificate
+    if (workspace.active?.entityType !== EditableEntityType.Certificate) return null
+    const certificate = workspace.active as EditableCertificate
+    workspace.nextHelpTopic = 'workspace/certificates'
 
     let pemToView: string = ''
     if (certificate.pem && (certificate.pem.length > 0)) {
@@ -88,7 +88,7 @@ export const CertificateEditor = observer((props: {
     return (
         <Stack direction={'column'} className='editor' sx={props.sx}>
             <Box className='editor-panel-header'>
-                <EditorTitle icon={<SecurityIcon color='certificate' />} name={certificate.name?.length ?? 0 > 0 ? certificate.name : '(Unnamed)'} />
+                <EditorTitle icon={<SvgIcon color='certificate'><CertificateIcon /></SvgIcon>} name={certificate.name?.length ?? 0 > 0 ? certificate.name : '(Unnamed)'} />
             </Box>
             <Grid2 container direction={'column'} spacing={3} className='editor-single-panel'>
                 <Grid2>
@@ -114,18 +114,17 @@ export const CertificateEditor = observer((props: {
                                 label='Type'
                                 size='small'
                                 onChange={e => workspace.setCertificateType(e.target.value as
-                                    WorkbookCertificateType.PEM | WorkbookCertificateType.PKCS8_PEM | WorkbookCertificateType.PKCS12)}
+                                    CertificateType.PEM | CertificateType.PKCS8_PEM | CertificateType.PKCS12)}
                             >
-                                <MenuItem value={WorkbookCertificateType.PKCS8_PEM}>PKCS 8 (PEM)</MenuItem>
-                                <MenuItem value={WorkbookCertificateType.PKCS12}>PKCS 12 (PFX)</MenuItem>
-                                <MenuItem value={WorkbookCertificateType.PEM}>PEM</MenuItem>
+                                <MenuItem value={CertificateType.PKCS8_PEM}>PKCS 8 (PEM)</MenuItem>
+                                <MenuItem value={CertificateType.PKCS12}>PKCS 12 (PFX)</MenuItem>
+                                <MenuItem value={CertificateType.PEM}>PEM</MenuItem>
                             </Select>
                         </FormControl>
-                        <PersistenceEditor onUpdatePersistence={(e) => workspace.setCertificatePersistence(e)} persistence={certificate.persistence} />
                     </Stack>
                 </Grid2>
                 {
-                    certificate.type === WorkbookCertificateType.PKCS8_PEM
+                    certificate.type === CertificateType.PKCS8_PEM
                         ? (
                             <Grid2>
                                 <Stack direction={'column'} spacing={3}>
@@ -182,7 +181,7 @@ export const CertificateEditor = observer((props: {
                                 </Stack>
                             </Grid2>
                         )
-                        : certificate.type === WorkbookCertificateType.PKCS12 ? (
+                        : certificate.type === CertificateType.PKCS12 ? (
                             <Grid2>
                                 <Stack direction={'column'} spacing={3}>
                                     <Stack direction={'row'} spacing={3} position='relative'>
@@ -203,7 +202,7 @@ export const CertificateEditor = observer((props: {
                                                 }
                                             }}
                                             rows={8}
-                                            value={certificate.pfx ? base64Encode(Buffer.from(certificate.pfx)) : ''}
+                                            value={certificate.pfx ? base64Encode(new Uint8Array(Buffer.from(certificate.pfx))) : ''}
                                             size='small'
                                             fullWidth
                                         />

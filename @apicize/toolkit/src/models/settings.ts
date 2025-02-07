@@ -1,10 +1,16 @@
-import { StoredGlobalSettings } from '@apicize/lib-typescript';
+import { ApplicationSettings } from '@apicize/lib-typescript';
 import { SupportedColorScheme } from '@mui/material';
 import { action, observable } from 'mobx';
+import { EditableItem, EditableState } from './editable';
+import { EditableEntityType } from './workspace/editable-entity-type';
 
-export class ApicizeSettings {
+export class ApicizeSettings implements EditableItem {
     @observable accessor dirty = false
-    @observable accessor showSettings = false
+
+    public readonly id = 'Settings'
+    public readonly name = 'Settings'
+    public readonly state = EditableState.None;
+    public readonly entityType = EditableEntityType.Settings;
 
     @observable accessor workbookDirectory: string = ''
     @observable accessor lastWorkbookFileName: string | undefined
@@ -14,7 +20,7 @@ export class ApicizeSettings {
     @observable accessor recentWorkbookFileNames: string[] = []
     @observable accessor pkceListenerPort = 8080
 
-    constructor(settings: StoredGlobalSettings) {
+    constructor(settings: ApplicationSettings) {
         this.workbookDirectory = settings.workbookDirectory
         this.lastWorkbookFileName = settings.lastWorkbookFileName
         this.fontSize = settings.fontSize
@@ -27,11 +33,6 @@ export class ApicizeSettings {
     @action
     public setDirty(value: boolean) {
         this.dirty = value
-    }
-
-    @action
-    public setShowSettings(onOff: boolean) {
-        this.showSettings = onOff
     }
 
     @action

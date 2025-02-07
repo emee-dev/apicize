@@ -51,7 +51,8 @@ body .light {
 .help {
   overflow: auto;
   width: 100%;
-  padding: 1em;
+  height: 100vh;
+  padding: 1em 4em;
   background-color: #03021f;
   color: #fff;
 }
@@ -60,13 +61,23 @@ body .light {
   background-color: #1d1d24;
 }
 
-.help p,
-.help ul,
-.help-text,
-.help-text .MuiTypography-body1,
-.help-text pre,
-.help-text table {
-  margin: 0 1em 1em 1em;
+.help .MuiTypography-body1,
+.help pre,
+.help table {
+  margin: 0 0 0.5rem 0;
+  padding: 0;
+}
+
+.help .MuiTypography-h2,
+.help .MuiTypography-h3 {
+  margin: 0.5rem 0 1.0rem 0;
+  padding: 0;
+}
+
+.help blockquote {
+  background-color: #206020;
+  padding: 1em;
+  margin-left: 0;
 }
 
 .help img {
@@ -87,27 +98,21 @@ body .light {
   padding: 0.5em;
 }
 
-.help-text {
-  display: block;
-  padding-right: 36px;
-}
-
 .help-toolbar {
   display: inline-block;
-  margin-right: 1em;
+  margin-right: 1rem;
 }
 
 .help-toolbar button {
   font-size: 24px;
 }
 
-
-.MuiTypeographi-h1 .help-icon {
-  margin-right: 0.25em;
+.MuiTypeography-h1 .help-icon {
+  margin-right: 0.25rem;
 }
 
-.MuiTypeographi-h2 .help-icon {
-  margin-left: 0.25em;
+.MuiTypeography-h2 .help-icon {
+  margin-left: 0.25rem;
 }
 
 .help-icon {
@@ -140,13 +145,32 @@ pre.log {
   vertical-align: middle;
 }
 
+.MuiTreeItem-iconContainer {
+  padding: .7em;
+}
+
+.nav-item {
+  padding: 0.35em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .nav-node-text {
   flex-grow: 1;
 }
 
-.nav-folder {
+.nav-icon-box {
   flex-grow: 0;
-  margin-right: 0.5em;
+  display: flex;
+  justify-items: center;
+  width: 2em;
+  height: '100%';
+}
+
+.nav-icon-box .MuiSvgIcon-root {
+  display: flex;
+  height: 100%
 }
 
 .MuiTreeItem-root.selected>.MuiTreeItem-content {

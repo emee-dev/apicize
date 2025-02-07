@@ -1,4 +1,4 @@
-# :toolbar :icon[authorization] Authorizations
+# :icon[authorization] Authorizations :toolbar
 
 ## Basic Authorization
 

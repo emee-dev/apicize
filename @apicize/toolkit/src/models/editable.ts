@@ -1,11 +1,11 @@
 import { Identifiable } from "@apicize/lib-typescript"
 import { observable } from "mobx"
-import { EditableEntityType } from "./workbook/editable-entity-type"
+import { EditableEntityType } from "./workspace/editable-entity-type"
 
 export interface EditableItem extends Identifiable {
     readonly name: string
     readonly dirty: boolean
-    readonly invalid: boolean
+    readonly state: EditableState
 
     readonly entityType: EditableEntityType
 }
@@ -17,9 +17,15 @@ export abstract class Editable<T> implements EditableItem {
     @observable accessor id: string = ''
     @observable accessor name: string = ''
     @observable accessor dirty: boolean = false
-    abstract accessor invalid: boolean
+    abstract accessor state: EditableState
 
     public abstract readonly entityType: EditableEntityType
 
-    abstract toWorkbook(): T
+    abstract toWorkspace(): T
+}
+
+export enum EditableState {
+    None,
+    Running,
+    Warning
 }

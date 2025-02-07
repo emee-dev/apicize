@@ -4,7 +4,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import BlockIcon from '@mui/icons-material/Block';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import beautify from "js-beautify";
-import { WorkbookExecutionGroup, WorkbookExecutionRequest, WorkbookExecutionResult } from "../../../models/workbook/workbook-execution";
+import { ExecutionGroup, ExecutionRequest, ExecutionResult } from "../../../models/workspace/execution";
 import { observer } from "mobx-react-lite";
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
@@ -34,7 +34,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
         return `${m.toLocaleString().padStart(2, '0')}:${s.toString().padStart(2, '0')}${(0.1).toLocaleString()[1]}${value.toString().padEnd(3, '0')}`
     }
 
-    const RenderResult = (props: { result: WorkbookExecutionResult, level: number, sx?: SxProps }) => {
+    const RenderResult = (props: { result: ExecutionResult, level: number, sx?: SxProps }) => {
         switch (props.result.type) {
             case 'request':
                 return <RenderRequest result={props.result} level={props.level} sx={props.sx} />
@@ -43,7 +43,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
         }
     }
 
-    const RenderRequest = (props: { result: WorkbookExecutionRequest, level: number, sx?: SxProps }) => {
+    const RenderRequest = (props: { result: ExecutionRequest, level: number, sx?: SxProps }) => {
         let showName
         let level
         if (props.level === -1) {
@@ -93,7 +93,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
     }
 
 
-    const RenderGroup = (props: { result: WorkbookExecutionGroup, level: number, sx?: SxProps }) => {
+    const RenderGroup = (props: { result: ExecutionGroup, level: number, sx?: SxProps }) => {
         let showName
         let level
         if (props.level === -1) {

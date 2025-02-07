@@ -22,7 +22,7 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
         color: {
           main: isDark ? '#202020' : '#F0F0F0',
         },
-        name: 'toolbar'
+        name: 'navigation'
       }),
       toolbar: palette.palette.augmentColor({
         color: {
@@ -38,45 +38,57 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
       }),
       request: palette.palette.augmentColor({
         color: {
-          main: '#008B8B'
+          main: '#00ace6'
         },
         name: 'request'
       }),
       scenario: palette.palette.augmentColor({
         color: {
-          main: '#00BFFF'
+          main: '#0073e6'
         },
         name: 'request'
       }),
       authorization: palette.palette.augmentColor({
         color: {
-          main: '#8000FF'
+          main: '#A0A0A0'
         },
-        name: 'request'
+        name: 'authorization'
       }),
       certificate: palette.palette.augmentColor({
         color: {
           main: '#FF8C00'
         },
-        name: 'request'
+        name: 'certificate'
       }),
       proxy: palette.palette.augmentColor({
         color: {
-          main: '#FA8072'
+          main: '#cc0099'
         },
         name: 'request'
+      }),
+      defaults: palette.palette.augmentColor({
+        color: {
+          main: '#86b300'
+        },
+        name: 'defaults'
+      }),
+      public: palette.palette.augmentColor({
+        color: {
+          main: '#009933'
+        },
+        name: 'public'
       }),
       private: palette.palette.augmentColor({
         color: {
-          main: '#f76b8a'
+          main: '#cc9900'
         },
-        name: 'request'
+        name: 'private'
       }),
-      global: palette.palette.augmentColor({
+      vault: palette.palette.augmentColor({
         color: {
-          main: '#38598b'
+          main: '#cc2900'
         },
-        name: 'request'
+        name: 'vault'
       }),
     },
     typography: {
@@ -97,10 +109,11 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
       MuiTreeItem: {
         styleOverrides: {
           content: {
-            padding: '0.02em'
+            padding: 0,
           }
         }
       },
+      
       //   MuiIconButton: {
       //     defaultProps: {
       //       sx: { padding: '0.05em' }

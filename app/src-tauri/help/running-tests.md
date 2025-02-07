@@ -1,4 +1,4 @@
-# :toolbar Running Tests
+# Running Tests :toolbar
 
 To run a test, select the [Request](help:requests) or [Group](help:groups) you want to test, and then, in the Test panel (under the Request pane), and then click on the Test button (with the round "play" icon).  
 Apicize will dispatch your request, execute test scripts (if any) and display the results.  After a request is processed, the test flask icon will be colored:

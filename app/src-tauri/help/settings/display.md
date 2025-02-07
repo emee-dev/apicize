@@ -1,4 +1,4 @@
-# :toolbar :icon[request] Settings
+# :icon[request] Settings :toolbar
 
 ## Display Pane :icon[display]
 

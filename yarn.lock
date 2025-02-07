@@ -15,7 +15,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apicize/lib-typescript@npm:^0.12.0, @apicize/lib-typescript@workspace:@apicize/lib-typescript":
+"@apicize/lib-typescript@workspace:@apicize/lib-typescript, @apicize/lib-typescript@workspace:^":
   version: 0.0.0-use.local
   resolution: "@apicize/lib-typescript@workspace:@apicize/lib-typescript"
   dependencies:
@@ -23,11 +23,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@apicize/toolkit@npm:^0.12.0, @apicize/toolkit@workspace:@apicize/toolkit":
+"@apicize/toolkit@npm:^0.15.2, @apicize/toolkit@workspace:@apicize/toolkit":
   version: 0.0.0-use.local
   resolution: "@apicize/toolkit@workspace:@apicize/toolkit"
   dependencies:
-    "@apicize/lib-typescript": "npm:^0.12.0"
+    "@apicize/lib-typescript": "workspace:^"
     "@dnd-kit/core": "npm:^6.1.0"
     "@emotion/react": "npm:^11.11.1"
     "@emotion/styled": "npm:^11.11.0"
@@ -867,6 +867,20 @@ __metadata:
   version: 8.57.0
   resolution: "@eslint/js@npm:8.57.0"
   checksum: 10c0/9a518bb8625ba3350613903a6d8c622352ab0c6557a59fe6ff6178bf882bf57123f9d92aa826ee8ac3ee74b9c6203fe630e9ee00efb03d753962dcf65ee4bd94
+  languageName: node
+  linkType: hard
+
+"@fontsource/open-sans@npm:^5.1.1":
+  version: 5.1.1
+  resolution: "@fontsource/open-sans@npm:5.1.1"
+  checksum: 10c0/48cc6710a651485fcb2605ff43359b7e5ed1046edc9fd970c0a6dc3f032f5183c5d21b2d3ca71cf976386f9617fd278858241dfc116f47c2d66bd409878b3e24
+  languageName: node
+  linkType: hard
+
+"@fontsource/roboto-mono@npm:^5.1.1":
+  version: 5.1.1
+  resolution: "@fontsource/roboto-mono@npm:5.1.1"
+  checksum: 10c0/e90814185868b517122f5dfb6961a3251a8558c7fd90f380690e51f272834658160886d1467c079bd0db4bd4090b835cbb4b2b8fb1a2686bac78cf060d470062
   languageName: node
   linkType: hard
 
@@ -2764,8 +2778,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:app"
   dependencies:
-    "@apicize/toolkit": "npm:^0.12.0"
+    "@apicize/toolkit": "npm:^0.15.2"
     "@dnd-kit/core": "npm:^6.1.0"
+    "@fontsource/open-sans": "npm:^5.1.1"
+    "@fontsource/roboto-mono": "npm:^5.1.1"
     "@mui/material": "npm:^6.1.1"
     "@mui/system": "npm:^6.1.1"
     "@tauri-apps/api": "npm:^2.2.0"
@@ -2783,8 +2799,6 @@ __metadata:
     react-dom: "npm:^18.2.0"
     remark-directive: "npm:^3.0.0"
     tauri-plugin-clipboard-api: "https://github.com/jasonterando/tauri-plugin-clipboard.git#head=v2-yarn-friendly"
-    typeface-open-sans: "npm:^1.1.13"
-    typeface-roboto-mono: "npm:^1.1.13"
     typescript: "npm:^5"
     valibot: "npm:^0.36.0"
     vite: "npm:^5.4.1"
@@ -9761,20 +9775,6 @@ __metadata:
     is-typed-array: "npm:^1.1.13"
     possible-typed-array-names: "npm:^1.0.0"
   checksum: 10c0/74253d7dc488eb28b6b2711cf31f5a9dcefc9c41b0681fd1c178ed0a1681b4468581a3626d39cd4df7aee3d3927ab62be06aa9ca74e5baf81827f61641445b77
-  languageName: node
-  linkType: hard
-
-"typeface-open-sans@npm:^1.1.13":
-  version: 1.1.13
-  resolution: "typeface-open-sans@npm:1.1.13"
-  checksum: 10c0/ea8d91c4d6f9f19f5b5d7aa0907b59de4e699a77891ed700feb239bac06ff571d43b778c8cd626e2f5967b16ced7e736499d04f04336d9d1fde67d16ee25cab6
-  languageName: node
-  linkType: hard
-
-"typeface-roboto-mono@npm:^1.1.13":
-  version: 1.1.13
-  resolution: "typeface-roboto-mono@npm:1.1.13"
-  checksum: 10c0/5caa3ba0ef28c41bde334bc78525dfb041cb376d19ab64223f8227da85bf2a4afb12a2e4d5559eafb7df58990958d56f6e6cc9453952cd97241e0eaefb016195
   languageName: node
   linkType: hard
 

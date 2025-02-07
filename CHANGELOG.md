@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.15.2
+
+* Reorganization of UI and Workspace to break out public, private and global/vault parameters
+
 # 0.12.0
 
 * Added PKCE Authorization

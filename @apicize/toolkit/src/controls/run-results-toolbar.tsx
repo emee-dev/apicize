@@ -1,15 +1,14 @@
 import { FormControl, InputLabel, Select, MenuItem, Typography } from "@mui/material";
 import { Stack, SxProps } from "@mui/system";
 import { observer } from "mobx-react-lite";
-import { EditableEntityType } from "../models/workbook/editable-entity-type";
-import { EditableWorkbookRequest } from "../models/workbook/editable-workbook-request";
+import { EditableEntityType } from "../models/workspace/editable-entity-type";
+import { EditableRequest } from "../models/workspace/editable-request";
 import { useWorkspace } from "../contexts/workspace.context";
 
 export const RunResultsToolbar = observer((props: { className?: string, sx?: SxProps }) => {
     const workspace = useWorkspace()
-    const request = ((workspace.active?.entityType === EditableEntityType.Request || workspace.active?.entityType === EditableEntityType.Group)
-        && !workspace.helpVisible)
-        ? workspace.active as EditableWorkbookRequest
+    const request = (workspace.active?.entityType === EditableEntityType.Request || workspace.active?.entityType === EditableEntityType.Group)
+        ? workspace.active as EditableRequest
         : null
 
     const requestId = request?.id ?? ''

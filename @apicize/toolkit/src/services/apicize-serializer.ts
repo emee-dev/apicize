@@ -1,16 +1,13 @@
-import { StoredGlobalSettings, Workspace, Identifiable, Selection, WorkbookAuthorization, WorkbookCertificate, WorkbookScenario, WorkbookProxy, IndexedNestedRequests, WorkbookRequest, WorkbookRequestEntry } from "@apicize/lib-typescript";
-import { EditableWorkbookAuthorization } from "../models/workbook/editable-workbook-authorization";
-import { EditableWorkbookScenario } from "../models/workbook/editable-workbook-scenario";
-import { IndexedEntities } from '@apicize/lib-typescript/src/models/indexed-entities'
+import { IndexedEntityManager, Workspace } from "@apicize/lib-typescript";
+import { EditableAuthorization } from "../models/workspace/editable-authorization";
+import { EditableScenario } from "../models/workspace/editable-scenario";
 import { Editable } from "../models/editable";
-import { EditableWorkbookRequest, EditableWorkbookRequestGroup } from "../models/workbook/editable-workbook-request";
-import { EditableNameValuePair } from "../models/workbook/editable-name-value-pair";
-import { EditableWorkspace } from "../models/workbook/editable-workspace";
-import { EditableWorkbookProxy } from "../models/workbook/editable-workbook-proxy";
-import { DEFAULT_SELECTION, NO_SELECTION } from "../models/store";
-import { EditableWorkbookCertificate } from "../models/workbook/editable-workbook-certificate";
+import { EditableRequest, EditableRequestGroup } from "../models/workspace/editable-request";
+import { EditableNameValuePair } from "../models/workspace/editable-name-value-pair";
+import { EditableProxy } from "../models/workspace/editable-proxy";
+import { EditableCertificate } from "../models/workspace/editable-certificate";
 import { toJS } from "mobx";
-import { EditableWorkbookDefaults } from "../models/workbook/editable-workbook-defaults";
+import { EditableDefaults } from "../models/workspace/editable-defaults";
 import { GenerateIdentifier } from "./random-identifier-generator";
 
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -76,91 +73,85 @@ export function base64Decode(base64: string): Uint8Array {
 }
 
 
-/**
- * Strip editable artifacts from indexed entries and re-typecast response
- * @param item 
- * @returns 
- */
-function editableIndexToStoredWorkspace<S extends Identifiable>(
-    index: IndexedEntities<Editable<S>>
-): IndexedEntities<S> {
-    const entities = new Map<string, S>()
-    for (const [id, entity] of index.entities) {
-        entities.set(id, entity.toWorkbook())
-    }
+// /**
+//  * Strip editable artifacts from indexed entries and re-typecast response
+//  * @param item 
+//  * @returns 
+//  */
+// function editableIndexToStoredWorkspace<S extends Identifiable>(
+//     index: IndexedEntities<Editable<S>>): IndexedEntities<S> {
+//     const entities = new Map<string, S>()
+//     for (const [id, entity] of index.entities) {
+//         entities.set(id, entity.toWorkspace())
+//     }
 
-    return {
-        topLevelIds: toJS(index.topLevelIds),
-        entities
-    }
-}
+//     return {
+//         topLevelIds: toJS(index.topLevelIds),
+//         entities
+//     }
+// }
+// /**
+//  * Translate the workspace returned by Rust library into an editable workspace,
+//  * making sure child properties have unique identifiers and translating
+//  * body data so we can edit it
+//  * @param workspace 
+//  * @returns 
+//  */
+// export function storedWorkspaceToEditableWorkspace(
+//     requests: IndexedEntityManager<RequestEntry>,
+//     scenarios: IndexedEntityManager<Scenario>,
+//     authorizations: IndexedEntityManager<Authorization>,
+//     certificates: IndexedEntityManager<Certificate>,
+//     proxies: IndexedEntityManager<Proxy>,
+//     warnings: string[] | undefined
+// ): EditableWorkspace {
+//     const result = {
+//         requests: new IndexedEntityManager(
+//             requests.topLevelIds,
+//             new Map(Object.values(requests.entities)
+//                 .map(e => [e.id, e['url'] === undefined
+//                     ? EditableRequestGroup.fromWorkspace(e)
+//                     : EditableRequest.fromWorkspace(e)
+//                 ])),
+//             requests.childIds ? new Map(Object.entries(requests.childIds)) : undefined
+//         }),
+//         scenarios: new IndexedEntityManager({
+//             childIds: scenarios.childIds,
+//             topLevelIds: scenarios.topLevelIds,
+//             entities: new Map([...scenarios.values].map(e => {
+//                 return [e.id, EditableScenario.fromWorkspace(e)]
+//             }))
+//         }),
+//         authorizations: new IndexedEntityManager({
+//             childIds: authorizations.childIds,
+//             topLevelIds: authorizations.topLevelIds,
+//             entities: new Map([...authorizations.values].map(e => {
+//                 return [e.id, EditableAuthorization.fromWorkspace(e)]
+//             }))
+//         }),
+//         certificates: new IndexedEntityManager({
+//             childIds: certificates.childIds,
+//             topLevelIds: certificates.topLevelIds,
+//             entities: new Map([...certificates.values].map(e => {
+//                 return [e.id, EditableCertificate.fromWorkspace(e)]
+//             }))
+//         }),
+//         proxies: new IndexedEntityManager({
+//             childIds: proxies.childIds,
+//             topLevelIds: proxies.topLevelIds,
+//             entities: new Map([...proxies.values].map(e => {
+//                 return [e.id, EditableProxy.fromWorkspace(e)]
+//             }))
+//         }),
+//         defaults: EditableDefaults.fromWorkspace(workspace),
+//     }
 
-/**
- * Generate an empty editable workspace
- * @returns empty workspace
- */
-export function newEditableWorkspace(): EditableWorkspace {
-    return {
-        requests: { entities: new Map(), topLevelIds: [] },
-        scenarios: { entities: new Map(), topLevelIds: [] },
-        authorizations: { entities: new Map(), topLevelIds: [] },
-        certificates: { entities: new Map(), topLevelIds: [] },
-        proxies: { entities: new Map(), topLevelIds: [] },
-        defaults: EditableWorkbookDefaults.new(),
-    }
-}
+//     if (warnings && (warnings.length > 0)) {
+//         result.defaults.warnings = new Map(workspace.warnings.map(w => [GenerateIdentifier(), w]))
+//     }
 
-/**
- * Translate the workspace returned by Rust library into an editable workspace,
- * making sure child properties have unique identifiers and translating
- * body data so we can edit it
- * @param workspace 
- * @returns 
- */
-export function storedWorkspaceToEditableWorkspace(workspace: Workspace): EditableWorkspace {
-    const result = {
-        requests: {
-            topLevelIds: workspace.requests.topLevelIds,
-            entities: new Map(Object.values(workspace.requests.entities)
-                .map(e => [e.id, e['url'] === undefined
-                    ? EditableWorkbookRequestGroup.fromWorkspace(e)
-                    : EditableWorkbookRequest.fromWorkbook(e)
-                ])),
-            childIds: workspace.requests.childIds ? new Map(Object.entries(workspace.requests.childIds)) : undefined
-        },
-        scenarios: {
-            topLevelIds: workspace.scenarios.topLevelIds,
-            entities: new Map(
-                Object.values(workspace.scenarios.entities).map(e => ([e.id, EditableWorkbookScenario.fromWorkbook(e)]))
-            )
-        },
-        authorizations: {
-            topLevelIds: workspace.authorizations.topLevelIds,
-            entities: new Map(
-                Object.values(workspace.authorizations.entities).map(e => ([e.id, EditableWorkbookAuthorization.fromWorkbook(e)]))
-            )
-        },
-        certificates: {
-            topLevelIds: workspace.certificates.topLevelIds,
-            entities: new Map(
-                Object.values(workspace.certificates.entities).map(e => ([e.id, EditableWorkbookCertificate.fromWorkbook(e)]))
-            )
-        },
-        proxies: {
-            topLevelIds: workspace.proxies.topLevelIds,
-            entities: new Map(
-                Object.values(workspace.proxies.entities).map(e => ([e.id, EditableWorkbookProxy.fromWorkbook(e)]))
-            )
-        },
-        defaults: EditableWorkbookDefaults.fromWorkbook(workspace),
-    }
-
-    if (workspace.warnings && (workspace.warnings.length > 0)) {
-        result.defaults.warnings = new Map(workspace.warnings.map(w => [GenerateIdentifier(), w]))
-    }
-
-    return result
-}
+//     return result
+// }
 
 export function editableToNameValuePair(pair: EditableNameValuePair) {
     return {
@@ -177,36 +168,45 @@ export function editableToNameValuePair(pair: EditableNameValuePair) {
  * @param authorizations 
  * @param certificates 
  * @param proxies 
- * @param selectedScenario 
- * @param selectedAuthorization 
- * @param selectedCertificate 
- * @param selectedProxy 
+ * @param defaults 
  * @returns 
  */
 export function editableWorkspaceToStoredWorkspace(
-    requests: IndexedNestedRequests<EditableWorkbookRequest | EditableWorkbookRequestGroup>,
-    scenarios: IndexedEntities<EditableWorkbookScenario>,
-    authorizations: IndexedEntities<EditableWorkbookAuthorization>,
-    certificates: IndexedEntities<EditableWorkbookCertificate>,
-    proxies: IndexedEntities<EditableWorkbookProxy>,
-    defaults: EditableWorkbookDefaults,
+    requests: IndexedEntityManager<EditableRequest | EditableRequestGroup>,
+    scenarios: IndexedEntityManager<EditableScenario>,
+    authorizations: IndexedEntityManager<EditableAuthorization>,
+    certificates: IndexedEntityManager<EditableCertificate>,
+    proxies: IndexedEntityManager<EditableProxy>,
+    defaults: EditableDefaults,
 ): Workspace {
-    const requestEntities = new Map<string, WorkbookRequestEntry>()
-    for (const [id, request] of requests.entities) {
-        requestEntities.set(id, request.toWorkbook())
-    }
     const result = {
         version: 1.0,
         requests: {
-            topLevelIds: toJS(requests.topLevelIds),
-            entities: requestEntities,
-            childIds: toJS(requests.childIds)
+            topLevelIds: requests.topLevelIds,
+            entities: Object.fromEntries(requests.values.map(r => [r.id, r.toWorkspace()])),
+            childIds: Object.fromEntries(requests.childIds)
         },
-        scenarios: editableIndexToStoredWorkspace<WorkbookScenario>(scenarios),
-        authorizations: editableIndexToStoredWorkspace<WorkbookAuthorization>(authorizations),
-        certificates: editableIndexToStoredWorkspace<WorkbookCertificate>(certificates),
-        proxies: editableIndexToStoredWorkspace<WorkbookProxy>(proxies),
-        defaults: defaults.toWorkbook(),
+        scenarios: {
+            topLevelIds: scenarios.topLevelIds,
+            entities: Object.fromEntries(scenarios.values.map(r => [r.id, r.toWorkspace()])),
+            childIds: Object.fromEntries(scenarios.childIds)
+        },
+        authorizations: {
+            topLevelIds: authorizations.topLevelIds,
+            entities: Object.fromEntries(authorizations.values.map(r => [r.id, r.toWorkspace()])),
+            childIds: Object.fromEntries(authorizations.childIds)
+        },
+        certificates: {
+            topLevelIds: certificates.topLevelIds,
+            entities: Object.fromEntries(certificates.values.map(r => [r.id, r.toWorkspace()])),
+            childIds: Object.fromEntries(certificates.childIds)
+        },
+        proxies: {
+            topLevelIds: proxies.topLevelIds,
+            entities: Object.fromEntries(proxies.values.map(r => [r.id, r.toWorkspace()])),
+            childIds: Object.fromEntries(proxies.childIds)
+        },
+        defaults: defaults.toWorkspace(),
     }
     return result
 }

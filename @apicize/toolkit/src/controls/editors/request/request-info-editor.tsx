@@ -1,7 +1,7 @@
 import { TextField, Select, MenuItem, FormControl, InputLabel, Box, Grid2, ToggleButton, Stack } from '@mui/material'
-import { WorkbookGroupExecution, WorkbookMethod, WorkbookMethods } from '@apicize/lib-typescript'
-import { EditableEntityType } from '../../../models/workbook/editable-entity-type'
-import { EditableWorkbookRequest } from '../../../models/workbook/editable-workbook-request'
+import { GroupExecution, Method, Methods } from '@apicize/lib-typescript'
+import { EditableEntityType } from '../../../models/workspace/editable-entity-type'
+import { EditableRequest } from '../../../models/workspace/editable-request'
 import { observer } from 'mobx-react-lite'
 import { useWorkspace } from '../../../contexts/workspace.context'
 import { ToastSeverity, useFeedback } from '../../../contexts/feedback.context'
@@ -16,12 +16,12 @@ export const RequestInfoEditor = observer(() => {
     }
 
     workspace.nextHelpTopic = 'requests/info'
-    const request = workspace.active as EditableWorkbookRequest
+    const request = workspace.active as EditableRequest
     const execution = workspace.executions.get(request.id)
     const running = execution?.running ?? false
 
     const methodMenuItems = () => {
-        return WorkbookMethods.map(method => (
+        return Methods.map(method => (
             <MenuItem key={method} value={method}>{method}</MenuItem>
         ))
     }
@@ -78,7 +78,7 @@ export const RequestInfoEditor = observer(() => {
                             aria-labelledby='request-method-label-id'
                             id="request-method"
                             value={request.method}
-                            onChange={e => workspace.setRequestMethod(e.target.value as WorkbookMethod)}
+                            onChange={e => workspace.setRequestMethod(e.target.value as Method)}
                             size='small'
                             label="Method"
                         >
@@ -136,10 +136,10 @@ export const RequestInfoEditor = observer(() => {
                             size='small'
                             sx={{ minWidth: '11em' }}
                             label='Multi-Run Execution'
-                            onChange={e => workspace.setMultiRunExecution(e.target.value as WorkbookGroupExecution)}
+                            onChange={e => workspace.setMultiRunExecution(e.target.value as GroupExecution)}
                         >
-                            <MenuItem value={WorkbookGroupExecution.Sequential}>Sequential</MenuItem>
-                            <MenuItem value={WorkbookGroupExecution.Concurrent}>Concurrent</MenuItem>
+                            <MenuItem value={GroupExecution.Sequential}>Sequential</MenuItem>
+                            <MenuItem value={GroupExecution.Concurrent}>Concurrent</MenuItem>
                         </Select>
                     </FormControl>
                 </Grid2>

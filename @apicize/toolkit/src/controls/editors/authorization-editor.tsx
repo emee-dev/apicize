@@ -1,29 +1,29 @@
-import { TextField, Select, MenuItem, FormControl, InputLabel, Stack, SxProps, Grid2, Box } from '@mui/material'
-import LockIcon from '@mui/icons-material/Lock';
-import { WorkbookAuthorizationType } from '@apicize/lib-typescript';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Stack, SxProps, Grid2, Box, SvgIcon } from '@mui/material'
+import { AuthorizationType } from '@apicize/lib-typescript';
 import { EditorTitle } from '../editor-title';
-import { PersistenceEditor } from './persistence-editor';
-import { EditableWorkbookAuthorization } from '../../models/workbook/editable-workbook-authorization';
+import { EditableAuthorization } from '../../models/workspace/editable-authorization';
 import { observer } from 'mobx-react-lite';
-import { EditableEntityType } from '../../models/workbook/editable-entity-type';
+import { EditableEntityType } from '../../models/workspace/editable-entity-type';
 import { useWorkspace } from '../../contexts/workspace.context';
 import { AuthorizationApiKeyEditor } from './authorization/authorization-apikey-editor';
 import { AuthorizationBasicEditor } from './authorization/authorization-basic-editor';
 import { AuthorizationOAuth2ClientEditor } from './authorization/authorization-oauth2-client-editor';
 import { AuthorizationOAuth2PkceEditor } from './authorization/authorization-oauth2-pkce-editor';
+import AuthIcon from '../../icons/auth-icon';
 
 export const AuthorizationEditor = observer((props: {
     sx: SxProps
 }) => {
     const workspace = useWorkspace()
-    if (workspace.active?.entityType !== EditableEntityType.Authorization || workspace.helpVisible) return null
+    if (workspace.active?.entityType !== EditableEntityType.Authorization) return null
 
-    const auth = workspace.active as EditableWorkbookAuthorization
+    const auth = workspace.active as EditableAuthorization
+    workspace.nextHelpTopic = 'workspace/authorizations'
 
     return (
         <Stack className='editor' direction={'column'} sx={props.sx}>
             <Box className='editor-panel-header'>
-                <EditorTitle icon={<LockIcon color='authorization' />} name={auth.name} />
+                <EditorTitle icon={<SvgIcon color='authorization'><AuthIcon /></SvgIcon>} name={auth.name} />
             </Box>
             <Grid2 container direction={'column'} spacing={3} className='editor-single-panel'>
                 <Grid2>
@@ -52,31 +52,30 @@ export const AuthorizationEditor = observer((props: {
                                 label='Type'
                                 size='small'
                                 onChange={e => workspace.setAuthorizationType(e.target.value as
-                                    WorkbookAuthorizationType.Basic
-                                    | WorkbookAuthorizationType.ApiKey
-                                    | WorkbookAuthorizationType.OAuth2Client
-                                    | WorkbookAuthorizationType.OAuth2Pkce)}
+                                    AuthorizationType.Basic
+                                    | AuthorizationType.ApiKey
+                                    | AuthorizationType.OAuth2Client
+                                    | AuthorizationType.OAuth2Pkce)}
                             >
-                                <MenuItem value={WorkbookAuthorizationType.Basic}>Basic Authentication</MenuItem>
-                                <MenuItem value={WorkbookAuthorizationType.ApiKey}>API Key Authentication</MenuItem>
-                                <MenuItem value={WorkbookAuthorizationType.OAuth2Client}>OAuth2 Client Flow</MenuItem>
-                                <MenuItem value={WorkbookAuthorizationType.OAuth2Pkce}>OAuth2 PKCE Flow</MenuItem>
+                                <MenuItem value={AuthorizationType.Basic}>Basic Authentication</MenuItem>
+                                <MenuItem value={AuthorizationType.ApiKey}>API Key Authentication</MenuItem>
+                                <MenuItem value={AuthorizationType.OAuth2Client}>OAuth2 Client Flow</MenuItem>
+                                <MenuItem value={AuthorizationType.OAuth2Pkce}>OAuth2 PKCE Flow</MenuItem>
                             </Select>
                         </FormControl>
-                        <PersistenceEditor onUpdatePersistence={(e) => workspace.setAuthorizationPersistence(e)} persistence={auth.persistence} />
                     </Grid2>
                 </Grid2>
                 <Grid2>
                     {
-                        auth.type === WorkbookAuthorizationType.ApiKey ?
+                        auth.type === AuthorizationType.ApiKey ?
                             <AuthorizationApiKeyEditor />
-                            : auth.type === WorkbookAuthorizationType.Basic
+                            : auth.type === AuthorizationType.Basic
                                 ? <AuthorizationBasicEditor />
-                                : auth.type === WorkbookAuthorizationType.OAuth2Client
+                                : auth.type === AuthorizationType.OAuth2Client
                                     ? <AuthorizationOAuth2ClientEditor />
-                                    : auth.type === WorkbookAuthorizationType.OAuth2Pkce
-                                    ? <AuthorizationOAuth2PkceEditor />
-                                    : null
+                                    : auth.type === AuthorizationType.OAuth2Pkce
+                                        ? <AuthorizationOAuth2PkceEditor />
+                                        : null
                     }
                 </Grid2>
             </Grid2>

@@ -5,13 +5,18 @@ export { ScenarioEditor } from './controls/editors/scenario-editor'
 export { CertificateEditor } from './controls/editors/certificate-editor'
 export { ProxyEditor } from './controls/editors/proxy-editor'
 export { SettingsEditor } from './controls/editors/settings-editor'
-export { CertificateFileType } from './models/workbook/editable-workbook-certificate'
+export { DefaultsEditor } from './controls/editors/defaults-editor'
+export { WarningsEditor } from './controls/editors/warnings-editor'
+export { EditableAuthorization } from './models/workspace/editable-authorization'
+export { CertificateFileType } from './models/workspace/editable-certificate'
 export { Navigation } from './controls/navigation'
 export { HelpPanel } from './controls/help'
+export { MainPanel } from './controls/main-panel'
+
 // Note - don't export store actions, publish method in WorkspaceContext instead, so we can abstract use of redux and other stuff
-export { editableWorkspaceToStoredWorkspace as stateToWorkspace, storedWorkspaceToEditableWorkspace, base64Decode, base64Encode } from './services/apicize-serializer'
+export { editableWorkspaceToStoredWorkspace, base64Decode, base64Encode } from './services/apicize-serializer'
 export { DndContext } from '@dnd-kit/core'
-export { EditableEntityType } from './models/workbook/editable-entity-type'
+export { EditableEntityType } from './models/workspace/editable-entity-type'
 
 export { useFeedback, FeedbackContext, FeedbackStore, ToastSeverity, ConfirmationOptions } from './contexts/feedback.context'
 export { useClipboard, ClipboardContext, ClipboardStore } from './contexts/clipboard.context'
@@ -33,6 +38,7 @@ declare module '@mui/material/styles' {
         authorization: Palette['primary']
         certificate: Palette['primary']
         proxy: Palette['primary']
+        defaults: Palette['primary']
     }
 
     interface PaletteOptions {
@@ -44,8 +50,10 @@ declare module '@mui/material/styles' {
         authorization?: PaletteOptions['primary']
         certificate?: PaletteOptions['primary']
         proxy?: PaletteOptions['primary']
+        public?: PaletteOptions['primary']
         private?: PaletteOptions['primary']
-        global?: PaletteOptions['primary']
+        vault?: PaletteOptions['primary']
+        defaults?: PaletteOptions['primary']
     }
 }
 
@@ -57,8 +65,9 @@ declare module '@mui/material/IconButton' {
         authorization: true
         certificate: true
         proxy: true
+        public: true
         private: true
-        global: true
+        vault: true
     }
 }
 
@@ -70,7 +79,9 @@ declare module '@mui/material/SvgIcon' {
         authorization: true
         certificate: true
         proxy: true,
+        public: true
         private: true
-        global: true
+        vault: true
+        defaults: true
     }
 }

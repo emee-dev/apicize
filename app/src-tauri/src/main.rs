@@ -2,13 +2,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 pub mod pkce;
+pub mod settings;
 
 use apicize_lib::{
     apicize::ApicizeExecution,
     oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token, PkceTokenResult},
-    test_runner, ApicizeSettings, ColorScheme, Workspace,
+    test_runner, Workspace,
 };
 use pkce::{OAuth2PkceInfo, OAuth2PkceRequest, OAuth2PkceService};
+use settings::{ApicizeSettings, ColorScheme};
 use std::{
     collections::HashMap,
     env, fs,
@@ -159,7 +161,7 @@ fn main() {
 
 #[tauri::command]
 async fn new_workspace() -> Result<Workspace, String> {
-    match Workspace::new(None) {
+    match Workspace::new() {
         Ok(workspace) => {
             clear_all_oauth2_tokens().await;
             Ok(workspace)
@@ -170,7 +172,7 @@ async fn new_workspace() -> Result<Workspace, String> {
 
 #[tauri::command]
 async fn open_workspace(path: String) -> Result<Workspace, String> {
-    match Workspace::open_from_file(&PathBuf::from(path), None) {
+    match Workspace::open(&PathBuf::from(path)) {
         Ok(workspace) => {
             clear_all_oauth2_tokens().await;
             Ok(workspace)
@@ -228,9 +230,9 @@ async fn run_request(
     }
 
     let response = test_runner::run(
+        &vec![request_id.clone()],
         shared_workspace,
-        Some(vec![request_id.clone()]),
-        Some(cancellation),
+        Some(Arc::new(cancellation)),
         arc_test_started,
         override_number_of_runs,
     )

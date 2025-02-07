@@ -1,55 +1,49 @@
 import { observer } from "mobx-react-lite"
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import FolderIcon from '@mui/icons-material/Folder'
 import FileOpenIcon from '@mui/icons-material/FileOpen'
 import PostAddIcon from '@mui/icons-material/PostAdd'
 import SaveIcon from '@mui/icons-material/Save'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import SaveAsIcon from '@mui/icons-material/SaveAs'
 import HelpIcon from '@mui/icons-material/Help'
-import SendIcon from '@mui/icons-material/Send'
-import LockIcon from '@mui/icons-material/Lock'
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
-import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
-import SecurityIcon from '@mui/icons-material/Security';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SettingsIcon from '@mui/icons-material/Settings';
-import SdCardAlertIcon from '@mui/icons-material/SdCardAlert';
-import FolderSharedIcon from '@mui/icons-material/FolderShared';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
-import LanguageIcon from '@mui/icons-material/Language'
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
 import { TreeItem } from '@mui/x-tree-view/TreeItem'
-import { alpha, Box, Button, Divider, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Stack, styled, useTheme } from '@mui/material'
+import { alpha, Box, Button, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Stack, styled, SvgIcon, SvgIconPropsColorOverrides, useTheme } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
-import React, { ReactNode, SyntheticEvent, useState } from 'react'
+import React, { SyntheticEvent, useState } from 'react'
 import { DndContext, DragEndEvent, useDraggable, useDroppable, useSensors, useSensor, PointerSensor, DragCancelEvent, DragMoveEvent } from '@dnd-kit/core'
-import { GetTitle, Persistence } from '@apicize/lib-typescript';
+import { GetTitle, IndexedEntityManager, Persistence } from '@apicize/lib-typescript';
 import { CSS, useCombinedRefs } from '@dnd-kit/utilities';
-import { EditableItem } from "../models/editable";
-import { EditableEntityType } from "../models/workbook/editable-entity-type";
+import { EditableItem, EditableState } from "../models/editable";
+import { EditableEntityType } from "../models/workspace/editable-entity-type";
 import { useFileOperations } from "../contexts/file-operations.context";
 import { useWorkspace } from "../contexts/workspace.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
-import { EditableWorkbookRequest } from "../models/workbook/editable-workbook-request";
-import { EditableWorkbookScenario } from "../models/workbook/editable-workbook-scenario";
-import { EditableWorkbookAuthorization } from "../models/workbook/editable-workbook-authorization";
-import { EditableWorkbookCertificate } from "../models/workbook/editable-workbook-certificate";
-import { EditableWorkbookProxy } from "../models/workbook/editable-workbook-proxy";
+import { EditableRequest, EditableRequestGroup } from "../models/workspace/editable-request";
 import { useApicizeSettings } from "../contexts/apicize-settings.context";
+import VaultIcon from '../icons/vault-icon'
+import ScenarioIcon from "../icons/scenario-icon";
+import AuthIcon from "../icons/auth-icon";
+import CertificateIcon from "../icons/certificate-icon";
+import RequestIcon from "../icons/request-icon";
+import ProxyIcon from "../icons/proxy-icon";
+import DefaultsIcon from "../icons/defaults-icon";
+import PrivateIcon from "../icons/private-icon";
+import PublicIcon from "../icons/public-icon";
+import FolderIcon from "../icons/folder-icon";
+import { DraggableData, DragPosition, DroppableData } from "../models/drag-drop";
+import { OverridableStringUnion } from "@mui/types";
 
 interface MenuPosition {
     id: string
     mouseX: number
     mouseY: number
-}
-
-enum StateIcon {
-    None,
-    Running,
-    Private,
-    Shared
+    persistence: Persistence
 }
 
 const StyledMenu = styled((props: MenuProps) => (
@@ -95,7 +89,7 @@ const StyledMenu = styled((props: MenuProps) => (
     },
 }));
 
-export const Navigation = observer((props: { onSettings?: () => void }) => {
+export const Navigation = observer(() => {
 
     const theme = useTheme()
     const workspace = useWorkspace()
@@ -103,7 +97,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
     const feedback = useFeedback()
     const settings = useApicizeSettings()
 
-    const [requestsMenu, setRequestsMenu] = useState<MenuPosition | undefined>(undefined)
+    const [requestsMenu, setRequestsMenu] = useState<MenuPosition | undefined>()
     const [reqMenu, setReqMenu] = useState<MenuPosition | undefined>(undefined)
     const [authMenu, setAuthMenu] = useState<MenuPosition | undefined>(undefined)
     const [scenarioMenu, setScenarioMenu] = useState<MenuPosition | undefined>(undefined)
@@ -134,7 +128,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                             if (!(workspace.active && (workspace.active.entityType === EditableEntityType.Request || workspace.active.entityType === EditableEntityType.Group))) {
                                 return
                             }
-                            const r = workspace.active as EditableWorkbookRequest
+                            const r = workspace.active as EditableRequest
                             await workspace.executeRequest(workspace.active.id, e.shiftKey ? r.runs : 1)
                         } catch (e) {
                             let msg1 = `${e}`
@@ -168,30 +162,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
     })
 
 
-    enum DragPosition {
-        None = 'NONE',
-        Left = 'LEFT',
-        Upper = 'UPPER',
-        Lower = 'LOWER',
-        Invalid = 'INVALID'
-    }
-
     const [dragPosition, setDragPosition] = useState(DragPosition.None)
-
-    const dragPositionToColor = (dragPosition: DragPosition) => {
-        switch (dragPosition) {
-            case DragPosition.Upper:
-                return "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 25%, rgba(64,64,64,1) 75%);"
-            case DragPosition.Lower:
-                return "linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 25%, rgba(64,64,64,1) 75%);"
-            case DragPosition.Left:
-                return "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 13%, rgba(64,64,64,1) 44%);"
-            case DragPosition.Invalid:
-                return 'rgba(128, 0, 0, 0.5)'
-            default:
-                return 'default'
-        }
-    }
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -200,313 +171,6 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             }
         })
     )
-
-    interface DraggableData {
-        type: EditableEntityType,
-        move: (destinationID: string | null, onLowerHalf: boolean | null, onLeft: boolean | null) => void
-    }
-
-    interface DroppableData {
-        isHeader: boolean
-        acceptsType: EditableEntityType
-        depth: number
-    }
-
-    function NavTreeSection(props: {
-        children?: ReactNode | undefined
-        type: EditableEntityType
-        title: string
-        helpTopic: string
-        onAdd: () => void
-    }) {
-        const { isOver, setNodeRef: setDropRef } = useDroppable({
-            id: `hdr-${props.type}`,
-            data: {
-                isHeader: true,
-                acceptsType: props.type
-            } as DroppableData
-        })
-
-        return (<TreeItem
-            itemId={`hdr-${props.type}`}
-            key={`hdr-${props.type}`}
-            id={`hdr-${props.type}`}
-            onClick={e => handleSelectHeader(e, props.helpTopic)}
-            onFocusCapture={e => e.stopPropagation()}
-            sx={{ margin: 0, padding: 0 }}
-            label={(
-                <Box
-                    component='span'
-                    display='flex'
-                    justifyContent='space-between'
-                    alignItems='center'
-                    ref={setDropRef}
-                    onClick={(e) => {
-                        // Prevent label from expanding/collapsing
-                        handleSelectHeader(e, props.helpTopic)
-                    }}
-                    sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default' }}
-                >
-                    {
-                        props.type === (EditableEntityType.Request || EditableEntityType.Group) ? (<SendIcon className='nav-folder' color='request' />) :
-                            props.type === EditableEntityType.Scenario ? (<LanguageIcon className='nav-folder' color='scenario' />) :
-                                props.type === EditableEntityType.Authorization ? (<LockIcon className='nav-folder' color='authorization' />) :
-                                    props.type === EditableEntityType.Certificate ? (<SecurityIcon className='nav-folder' color='certificate' />) :
-                                        props.type === EditableEntityType.Proxy ? (<AirlineStopsIcon className='nav-folder' color='proxy' />) :
-                                            (<></>)
-                    }
-                    <Box className='nav-node-text' sx={{ flexGrow: 1 }}>
-                        {props.title}
-                    </Box>
-                    {
-                        props.type === EditableEntityType.Request ?
-                            (
-                                <IconButton sx={{ flexGrow: 0, minHeight: '1em' }} onClick={(e) => handleShowRequestsMenu(e, 'menu-auth')}>
-                                    <MoreVertIcon />
-                                </IconButton>
-                            )
-                            :
-                            (
-                                <IconButton sx={{ flexGrow: 0, minHeight: '1em' }}
-                                    onClick={(e) => {
-                                        e.preventDefault()
-                                        e.stopPropagation()
-                                        props.onAdd()
-                                    }}>
-                                    <AddIcon />
-                                </IconButton>
-                            )
-                    }
-                </Box>
-            )}>
-            {props.children}
-        </TreeItem>
-        )
-    }
-
-    const NavTreeItem = observer((props: {
-        type: EditableEntityType,
-        item: EditableItem,
-        depth: number,
-        // onSelect?: (id: string) => void,
-        onMenu?: (event: React.MouseEvent, id: string) => void,
-        onMove?: (id: string, destinationID: string | null, onLowerHalf: boolean | null, onLeft: boolean | null) => void
-    }) => {
-        const { attributes, listeners, setNodeRef: setDragRef, transform } = useDraggable({
-            id: `${props.item.id}`,
-            data: {
-                type: props.type,
-                move: (destinationID: string, onLowerHalf: boolean, onLeft: boolean) => {
-                    if (props.onMove) {
-                        props.onMove(`${props.item.id}`, destinationID, onLowerHalf, onLeft)
-                    }
-                }
-            } as DraggableData
-        })
-
-        const iconFromStateIcon = (state: StateIcon) => {
-            switch (state) {
-                case StateIcon.Running:
-                    return <PlayArrowIcon color="success" />
-                case StateIcon.Private:
-                    return <SdCardAlertIcon color="private" />
-                case StateIcon.Shared:
-                    return <FolderSharedIcon color="global" />
-                default:
-                    return null
-            }
-        }
-
-        const dragStyle = {
-            transform: CSS.Translate.toString(transform)
-        }
-
-        const { isOver, setNodeRef: setDropRef } = useDroppable({
-            id: props.item.id,
-            data: {
-                isHeader: false,
-                acceptsType: props.type,
-                depth: props.depth
-            } as DroppableData
-        })
-
-        // Requests can be hierarchical
-        let children: EditableItem[] | undefined
-        let stateIcon: StateIcon = StateIcon.None
-
-        if (props.item.entityType === EditableEntityType.Group) {
-            const childIds = workspace.workspace.requests.childIds?.get(props.item.id)
-            children = childIds?.map(id =>
-                workspace.workspace.requests.entities.get(id)
-            )?.filter(e => e !== undefined)
-            if (workspace.executingRequestIDs.indexOf(props.item.id) !== -1) {
-                stateIcon = StateIcon.Running
-            }
-        } else if (props.item.entityType === EditableEntityType.Request) {
-            if (workspace.executingRequestIDs.indexOf(props.item.id) !== -1) {
-                stateIcon = StateIcon.Running
-            }
-        } else if (props.item.entityType === EditableEntityType.Scenario) {
-            const scenario = props.item as EditableWorkbookScenario
-            if (scenario.persistence === Persistence.Private) {
-                stateIcon = StateIcon.Private
-            } else if (scenario.persistence === Persistence.Global) {
-                stateIcon = StateIcon.Shared
-            }
-        } else if (props.item.entityType === EditableEntityType.Authorization) {
-            const auth = props.item as EditableWorkbookAuthorization
-            if (auth.persistence === Persistence.Private) {
-                stateIcon = StateIcon.Private
-            } else if (auth.persistence === Persistence.Global) {
-                stateIcon = StateIcon.Shared
-            }
-        } else if (props.item.entityType === EditableEntityType.Certificate) {
-            const cert = props.item as EditableWorkbookCertificate
-            if (cert.persistence === Persistence.Private) {
-                stateIcon = StateIcon.Private
-            } else if (cert.persistence === Persistence.Global) {
-                stateIcon = StateIcon.Shared
-            }
-        } else if (props.item.entityType === EditableEntityType.Proxy) {
-            const proxy = props.item as EditableWorkbookProxy
-            if (proxy.persistence === Persistence.Private) {
-                stateIcon = StateIcon.Private
-            } else if (proxy.persistence === Persistence.Global) {
-                stateIcon = StateIcon.Shared
-            }
-        }
-
-        return children
-            ?
-            (
-                <TreeItem
-                    itemId={`${props.item.entityType}-${props.item.id}`}
-                    key={props.item.id}
-                    {...listeners}
-                    {...attributes}
-                    sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default', margin: 0, padding: 0 }}
-                    // Add a selected class so that we can mark expandable tree items as selected and have them show up properly
-                    className={workspace.active?.id === props.item.id ? 'selected' : ''}
-                    label={(
-                        <Box
-                            key={`lbl-${props.item.id}`}
-                            id={`lbl-${props.item.id}`}
-                            ref={useCombinedRefs(setDragRef, setDropRef)}
-                            style={dragStyle}
-                            component='span'
-                            display='flex'
-                            justifyContent='space-between'
-                            alignItems='center'
-                            onClick={(e) => {
-                                // Override click behavior to set active item, but not to propogate upward
-                                // because we don't want to toggle expansion on anything other than the
-                                // lefticon click
-                                workspace.changeActive(props.item.entityType, props.item.id)
-                                e.preventDefault()
-                                e.stopPropagation()
-                            }}
-                        >
-                            <FolderIcon className='nav-folder' color='folder' />
-                            <Box
-                                className='nav-node-text'
-                                justifyContent='left'
-                                justifyItems='center'
-                                display='flex'
-                            >                                {GetTitle(props.item)}
-                                <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
-                                    {iconFromStateIcon(stateIcon)}
-                                </Box>
-                            </Box>
-                            <IconButton
-                                sx={{
-                                    visibility: props.item.id === workspace.active?.id ? 'normal' : 'hidden'
-                                }}
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    if (props.onMenu) props.onMenu(e, props.item.id)
-                                }}
-                            >
-                                <MoreVertIcon />
-                            </IconButton>
-                        </Box>
-                    )}>
-                    {children.map(c => (
-                        <NavTreeItem
-                            type={props.type}
-                            key={`csub-${c.id}`}
-                            depth={props.depth + 1}
-                            item={c}
-                            // onSelect={props.onSelect}
-                            onMenu={props.onMenu}
-                            onMove={props.onMove}
-                        />
-                    ))}
-                </TreeItem>
-            )
-            :
-            (
-                <TreeItem
-                    itemId={`${props.type}-${props.item.id}`}
-                    key={props.item.id}
-                    ref={useCombinedRefs(setDragRef, setDropRef)}
-                    style={dragStyle}
-                    {...listeners}
-                    {...attributes}
-                    // onSelect={(e) => {
-                    //     if (props.onSelect) props.onSelect(props.item.id)
-                    // }}
-                    // !!! xxx !!!!
-                    // onClick={(e) => {
-                    //     e.preventDefault()
-                    //     e.stopPropagation()
-                    //     if (props.onSelect) props.onSelect(props.item.id)
-                    // }}
-                    // onFocusCapture={e => e.stopPropagation()}
-                    sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default', margin: 0, padding: 0 }}
-                    label={(
-                        <Box
-                            component='span'
-                            display='flex'
-                            justifyContent='space-between'
-                            alignItems='center'
-                        // onFocusCapture={e => e.stopPropagation()}
-                        >
-                            {
-                                Array.isArray(children)
-                                    ? <FolderIcon color='folder' sx={{ flexGrow: 0, marginRight: '0.8em' }} />
-                                    : null
-                            }
-                            <Box
-                                className='nav-node-text'
-                                justifyContent='left'
-                                justifyItems='center'
-                                display='flex'
-                            >
-                                {
-                                    props.item.invalid ? (<WarningAmberIcon color='warning' sx={{ marginRight: '0.25em' }} />) : null
-                                }
-                                {GetTitle(props.item)}
-                                <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
-                                    {iconFromStateIcon(stateIcon)}
-                                </Box>
-                            </Box>
-                            <IconButton
-                                sx={{
-                                    visibility: props.item.id === workspace.active?.id ? 'normal' : 'hidden'
-                                }}
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    if (props.onMenu) props.onMenu(e, props.item.id)
-                                }}
-                            >
-                                <MoreVertIcon />
-                            </IconButton>
-                        </Box>
-                    )} />
-            )
-    })
 
     const clearAllSelections = () => {
         workspace.clearActive()
@@ -537,73 +201,67 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
     }
 
     const handleShowRequestsMenu = (event: React.MouseEvent, id: string) => {
-        event.preventDefault()
-        event.stopPropagation()
         setRequestsMenu(
             {
                 id,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
+                persistence: Persistence.Workbook,
             }
         )
     }
 
-    const handleShowRequestMenu = (event: React.MouseEvent, id: string) => {
-        event.preventDefault()
-        event.stopPropagation()
+    const showRequestMenu = (event: React.MouseEvent, id: string) => {
         setReqMenu(
             {
                 id,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
+                persistence: Persistence.Workbook,
             }
         )
     }
 
-    const handleShowScenarioMenu = (event: React.MouseEvent, id: string) => {
-        event.preventDefault()
-        event.stopPropagation()
+    const showScenarioMenu = (event: React.MouseEvent, persistence: Persistence, id: string) => {
         setScenarioMenu(
             {
                 id,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
+                persistence,
             }
         )
     }
 
-    const handleShowAuthMenu = (event: React.MouseEvent, id: string) => {
-        event.preventDefault()
-        event.stopPropagation()
+    const showAuthMenu = (event: React.MouseEvent, persistence: Persistence, id: string) => {
         setAuthMenu(
             {
                 id,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
+                persistence,
             }
         )
     }
 
-    const handleShowCertMenu = (event: React.MouseEvent, id: string) => {
-        event.preventDefault()
-        event.stopPropagation()
+    const showCertMenu = (event: React.MouseEvent, persistence: Persistence, id: string) => {
         setCertMenu(
             {
                 id,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
+                persistence,
             }
         )
     }
 
-    const handleShowProxyMenu = (event: React.MouseEvent, id: string) => {
-        event.preventDefault()
-        event.stopPropagation()
+    const showProxyMenu = (event: React.MouseEvent, persistence: Persistence, id: string) => {
         setProxyMenu(
             {
                 id,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
+                persistence,
             }
         )
     }
@@ -617,19 +275,24 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
         closeProxyMenu()
     }
 
-    const handleSelectHeader = (e: SyntheticEvent, helpTopic?: string) => {
+    const handleSelectHeader = (e: SyntheticEvent, headerId: string, helpTopic?: string) => {
         e.preventDefault()
         e.stopPropagation()
         closeAllMenus()
         if (helpTopic) {
+            workspace.toggleExpanded(headerId, true)
             workspace.showHelp(helpTopic)
         }
+    }
+
+    const showSettings = () => {
+        closeAllMenus()
+        workspace.changeActive(EditableEntityType.Settings, '')
     }
 
     const showHelp = () => {
         closeAllMenus()
         workspace.showNextHelpTopic()
-
     }
 
     const selectRequestOrGroup = (id: string) => {
@@ -664,23 +327,23 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
         workspace.addGroup(targetRequestId)
     }
 
-    const handleAddScenario = (targetScenarioId?: string | null) => {
+    const handleAddScenario = (persistence: Persistence, targetScenarioId?: string | null) => {
         closeScenarioMenu()
-        workspace.addScenario(targetScenarioId)
+        workspace.addScenario(persistence, targetScenarioId)
     }
 
-    const handleAddAuth = (targetAuthId?: string | null) => {
+    const handleAddAuth = (persistence: Persistence, targetAuthId?: string | null) => {
         closeAuthMenu()
-        workspace.addAuthorization(targetAuthId)
+        workspace.addAuthorization(persistence, targetAuthId)
     }
-    const handleAddCert = (targetCertId?: string | null) => {
+    const handleAddCert = (persistence: Persistence, targetCertId?: string | null) => {
         closeCertMenu()
-        workspace.addCertificate(targetCertId)
+        workspace.addCertificate(persistence, targetCertId)
     }
 
-    const handleAddProxy = (targetProxyId?: string | null) => {
+    const handleAddProxy = (persistence: Persistence, targetProxyId?: string | null) => {
         closeProxyMenu()
-        workspace.addProxy(targetProxyId)
+        workspace.addProxy(persistence, targetProxyId)
     }
 
     const handleDeleteRequest = () => {
@@ -692,7 +355,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
         const id = workspace.active?.id
         feedback.confirm({
             title: 'Delete Request',
-            message: `Are you are you sure you want to delete ${GetTitle(workspace.workspace.requests.entities.get(id))}?`,
+            message: `Are you are you sure you want to delete ${GetTitle(workspace.requests.get(id))}?`,
             okButton: 'Yes',
             cancelButton: 'No',
             defaultToCancel: true
@@ -710,7 +373,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
         const id = workspace.active?.id
         feedback.confirm({
             title: 'Delete Scenario',
-            message: `Are you are you sure you want to delete ${GetTitle(workspace.workspace.scenarios.entities.get(id))}?`,
+            message: `Are you are you sure you want to delete ${GetTitle(workspace.scenarios.get(id))}?`,
             okButton: 'Yes',
             cancelButton: 'No',
             defaultToCancel: true
@@ -728,7 +391,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
         const id = workspace.active?.id
         feedback.confirm({
             title: 'Delete Authorization',
-            message: `Are you are you sure you want to delete ${GetTitle(workspace.workspace.authorizations.entities.get(id))}?`,
+            message: `Are you are you sure you want to delete ${GetTitle(workspace.authorizations.get(id))}?`,
             okButton: 'Yes',
             cancelButton: 'No',
             defaultToCancel: true
@@ -746,7 +409,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
         const id = workspace.active?.id
         feedback.confirm({
             title: 'Delete Certificate',
-            message: `Are you are you sure you want to delete ${GetTitle(workspace.workspace.certificates.entities.get(id))}?`,
+            message: `Are you are you sure you want to delete ${GetTitle(workspace.certificates.get(id))}?`,
             okButton: 'Yes',
             cancelButton: 'No',
             defaultToCancel: true
@@ -763,7 +426,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
         const id = workspace.active?.id
         feedback.confirm({
             title: 'Delete Proxy',
-            message: `Are you are you sure you want to delete ${GetTitle(workspace.workspace.requests.entities.get(id))}?`,
+            message: `Are you are you sure you want to delete ${GetTitle(workspace.proxies.get(id))}?`,
             okButton: 'Yes',
             cancelButton: 'No',
             defaultToCancel: true
@@ -802,29 +465,29 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
         if (workspace.active?.entityType === EditableEntityType.Proxy && workspace.active?.id) workspace.copyProxy(workspace.active?.id)
     }
 
-    const handleMoveRequest = (id: string, destinationID: string | null, onLowerHalf: boolean | null, onLeft: boolean | null) => {
+    const handleMoveRequest = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
         selectRequestOrGroup(id)
-        workspace.moveRequest(id, destinationID, onLowerHalf, onLeft)
+        workspace.moveRequest(id, destinationID, onLowerHalf, isSection)
     }
 
-    const handleMoveScenario = (id: string, destinationID: string | null, onLowerHalf: boolean | null, onLeft: boolean | null) => {
+    const handleMoveScenario = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
         selectScenario(id)
-        workspace.moveScenario(id, destinationID, onLowerHalf, onLeft)
+        workspace.moveScenario(id, destinationID, onLowerHalf, isSection)
     }
 
-    const handleMoveAuth = (id: string, destinationID: string | null, onLowerHalf: boolean | null, onLeft: boolean | null) => {
+    const handleMoveAuth = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
         selectAuthorization(id)
-        workspace.moveAuthorization(id, destinationID, onLowerHalf, onLeft)
+        workspace.moveAuthorization(id, destinationID, onLowerHalf, isSection)
     }
 
-    const handleMoveCert = (id: string, destinationID: string | null, onLowerHalf: boolean | null, onLeft: boolean | null) => {
+    const handleMoveCert = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
         selectCertificate(id)
-        workspace.moveCertificate(id, destinationID, onLowerHalf, onLeft)
+        workspace.moveCertificate(id, destinationID, onLowerHalf, isSection)
     }
 
-    const handleMoveProxy = (id: string, destinationID: string | null, onLowerHalf: boolean | null, onLeft: boolean | null) => {
+    const handleMoveProxy = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
         selectProxy(id)
-        workspace.moveProxy(id, destinationID, onLowerHalf, onLeft)
+        workspace.moveProxy(id, destinationID, onLowerHalf, isSection)
     }
 
     function RequestsMenu() {
@@ -841,13 +504,13 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             >
                 <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequest(workspace.active?.id)}>
                     <ListItemIcon>
-                        <SendIcon fontSize='small' color='request' />
+                        <SvgIcon fontSize='small' color='request'><RequestIcon /></SvgIcon>
                     </ListItemIcon>
                     <ListItemText>Add Request</ListItemText>
                 </MenuItem>
                 <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequestGroup(workspace.active?.id)}>
                     <ListItemIcon>
-                        <FolderIcon fontSize='small' color='folder' />
+                        <SvgIcon fontSize='small' color='folder'><FolderIcon /></SvgIcon>
                     </ListItemIcon>
                     <ListItemText>Add Group</ListItemText>
                 </MenuItem>
@@ -869,13 +532,13 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
             >
                 <MenuItem className='navigation-menu-item' onClick={(e) => handleAddRequest(workspace.active?.id)}>
                     <ListItemIcon>
-                        <SendIcon fontSize='small' color='request' />
+                        <SvgIcon fontSize='small' color='request'><RequestIcon /></SvgIcon>
                     </ListItemIcon>
                     <ListItemText>Add Request</ListItemText>
                 </MenuItem>
                 <MenuItem className='navigation-menu-item' onClick={(e) => handleAddRequestGroup(workspace.active?.id)}>
                     <ListItemIcon>
-                        <FolderIcon fontSize='small' color='folder' />
+                        <SvgIcon fontSize='small' color='folder'><FolderIcon /></SvgIcon>
                     </ListItemIcon>
                     <ListItemText>Add Request Group</ListItemText>
                 </MenuItem>
@@ -897,8 +560,8 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
 
 
     function ScenarioMenu() {
-        return (
-            <Menu
+        return scenarioMenu
+            ? <Menu
                 id='scenario-menu'
                 open={scenarioMenu !== undefined}
                 onClose={closeScenarioMenu}
@@ -908,9 +571,9 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     left: scenarioMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddScenario(workspace.active?.id)}>
+                <MenuItem onClick={(_) => handleAddScenario(scenarioMenu.persistence, workspace.active?.id)}>
                     <ListItemIcon>
-                        <LanguageIcon fontSize='small' color='scenario' />
+                        <SvgIcon fontSize='small' color='scenario'><ScenarioIcon /></SvgIcon>
                     </ListItemIcon>
                     <ListItemText>Add Scenario</ListItemText>
                 </MenuItem>
@@ -927,24 +590,24 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     <ListItemText>Delete Scenario</ListItemText>
                 </MenuItem>
             </Menu>
-        )
+            : <></>
     }
 
     function AuthMenu() {
-        return (
-            <Menu
+        return authMenu
+            ? <Menu
                 id='auth-menu'
                 open={authMenu !== undefined}
                 onClose={closeAuthMenu}
                 anchorReference='anchorPosition'
                 anchorPosition={{
-                    top: authMenu?.mouseY ?? 0,
-                    left: authMenu?.mouseX ?? 0
+                    top: authMenu.mouseY,
+                    left: authMenu.mouseX
                 }}
             >
-                <MenuItem onClick={(_) => handleAddAuth(workspace.active?.id)}>
+                <MenuItem onClick={(_) => handleAddAuth(authMenu.persistence, workspace.active?.id)}>
                     <ListItemIcon>
-                        <LockIcon fontSize='small' color='authorization' />
+                        <SvgIcon fontSize='small' color='authorization'><AuthIcon /></SvgIcon>
                     </ListItemIcon>
                     <ListItemText>Add Authorization</ListItemText>
                 </MenuItem>
@@ -961,24 +624,24 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     <ListItemText>Delete Authorization</ListItemText>
                 </MenuItem>
             </Menu>
-        )
+            : <></>
     }
 
     function CertMenu() {
-        return (
-            <Menu
+        return certMenu
+            ? <Menu
                 id='cert-menu'
                 open={certMenu !== undefined}
                 onClose={closeCertMenu}
                 anchorReference='anchorPosition'
                 anchorPosition={{
-                    top: certMenu?.mouseY ?? 0,
-                    left: certMenu?.mouseX ?? 0
+                    top: certMenu.mouseY,
+                    left: certMenu.mouseX
                 }}
             >
-                <MenuItem onClick={(_) => handleAddCert(workspace.active?.id)}>
+                <MenuItem onClick={(_) => handleAddCert(certMenu.persistence, workspace.active?.id)}>
                     <ListItemIcon>
-                        <LockIcon fontSize='small' color='certificate' />
+                        <SvgIcon fontSize='small' color='certificate'><CertificateIcon /></SvgIcon>
                     </ListItemIcon>
                     <ListItemText>Add Certificate</ListItemText>
                 </MenuItem>
@@ -995,12 +658,12 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     <ListItemText>Delete Certificate</ListItemText>
                 </MenuItem>
             </Menu>
-        )
+            : <></>
     }
 
     function ProxyMenu() {
-        return (
-            <Menu
+        return proxyMenu
+            ? <Menu
                 id='proxy-menu'
                 open={proxyMenu !== undefined}
                 onClose={closeProxyMenu}
@@ -1010,9 +673,9 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     left: proxyMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddProxy(workspace.active?.id)}>
+                <MenuItem onClick={(_) => handleAddProxy(proxyMenu.persistence, workspace.active?.id)}>
                     <ListItemIcon>
-                        <LanguageIcon fontSize='small' color='proxy' />
+                        <SvgIcon fontSize='small' color='proxy'><ScenarioIcon /></SvgIcon>
                     </ListItemIcon>
                     <ListItemText>Add Proxy</ListItemText>
                 </MenuItem>
@@ -1029,7 +692,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     <ListItemText>Delete Proxy</ListItemText>
                 </MenuItem>
             </Menu>
-        )
+            : <></>
     }
 
     const onDragCancel = (e: DragCancelEvent) => {
@@ -1039,6 +702,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
     const onDragMove = (e: DragMoveEvent) => {
         const { activatorEvent, delta, active, over } = e
         if (!over) return
+
         const pointer = activatorEvent as unknown as any
         const activeData = active.data.current as unknown as DraggableData
         const overData = over.data.current as unknown as DroppableData
@@ -1049,26 +713,23 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
 
         let r = e.over?.rect
 
-        let onLowerHalf = false
-        let onLeft = false
-
-        if (overData.isHeader) {
-            onLowerHalf = true
-        } else if (r) {
-            if (y > r.top + (r.height / 2)) onLowerHalf = true
-            if (x < 72 + overData.depth * 16) onLeft = true
-        }
-
-        let position
-        if (active.id === over.id) {
-            position = DragPosition.None
-        } else if (activeData.type === overData.acceptsType) {
-            if (onLeft) {
-                position = DragPosition.Left
-            } else if (onLowerHalf) {
-                position = DragPosition.Lower
-            } else {
-                position = DragPosition.Upper
+        let position = DragPosition.None
+        if (active.id !== over.id) {
+            if (overData.acceptsTypes.includes(activeData.type)) {
+                if (overData.isHeader) {
+                    if (overData.acceptAppend) {
+                        position = DragPosition.Left
+                    }
+                } else if (overData.acceptAppend &&
+                    ((!overData.acceptReposition) || x < 72 + (overData.depth + 1) * 16)) {
+                    position = DragPosition.Left
+                } else if (overData.acceptReposition) {
+                    if (r) {
+                        position = (y > r.top + (r.height / 2))
+                            ? DragPosition.Lower
+                            : DragPosition.Upper
+                    }
+                }
             }
         } else {
             position = DragPosition.Invalid
@@ -1079,6 +740,7 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
     const onDragEnd = (e: DragEndEvent) => {
         const { activatorEvent, delta, active, over } = e
         if (!over) return
+
         const pointer = activatorEvent as unknown as any
         const activeData = active.data.current as unknown as DraggableData
         const overData = over.data.current as unknown as DroppableData
@@ -1091,23 +753,438 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
         let r = e.over?.rect
 
         let onLowerHalf = false
-        let onLeft = false
+        let onSection = false
 
         if (r) {
             if (y > r.top + (r.height / 2)) onLowerHalf = true
-            if (x < 72 + overData.depth * 16) onLeft = true
+            if (x < 72 + overData.depth * 16) onSection = true
         }
 
-        if (activeData.type === overData.acceptsType) {
-            activeData.move(overData.isHeader ? null : over.id.toString(), onLowerHalf, onLeft)
+        let id = overData.isHeader
+            ? (overData.persistence ? overData.persistence : null)
+            : over.id.toString()
+
+        if (overData.isHeader && overData.persistence) {
+            onSection = true
+            workspace.toggleExpanded(over.id.toString(), true)
         }
+
+        if (overData.acceptsTypes.includes(activeData.type)) {
+            activeData.move(id, onLowerHalf, onSection)
+        }
+
         setDragPosition(DragPosition.None)
+    }
+
+    const dragPositionToColor = (dragPosition: DragPosition) => {
+        switch (dragPosition) {
+            case DragPosition.Upper:
+                return "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 25%, rgba(64,64,64,1) 75%);"
+            case DragPosition.Lower:
+                return "linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 25%, rgba(64,64,64,1) 75%);"
+            case DragPosition.Left:
+                return "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 13%, rgba(64,64,64,1) 44%);"
+            case DragPosition.Invalid:
+                return 'rgba(128, 0, 0, 0.5)'
+            default:
+                return 'default'
+        }
+    }
+
+    const iconFromState = (state: EditableState) => {
+        switch (state) {
+            case EditableState.Running:
+                return <PlayArrowIcon color="success" />
+            case EditableState.Warning:
+                return <WarningAmberIcon color="warning" />
+            default:
+                return null
+        }
+    }
+
+    const NavTreeItem = observer((props: {
+        type: EditableEntityType,
+        item: EditableItem,
+        depth: number,
+        isDraggable: boolean,
+        acceptDropTypes?: EditableEntityType[],
+        acceptDropAppends?: boolean,
+        icon?: JSX.Element,
+        iconColor?: OverridableStringUnion<
+            | 'inherit'
+            | 'action'
+            | 'disabled'
+            | 'primary'
+            | 'secondary'
+            | 'error'
+            | 'info'
+            | 'success'
+            | 'warning',
+            SvgIconPropsColorOverrides>,
+        children?: JSX.Element[],
+        onSelect?: (id: string) => void,
+        onMenu?: (event: React.MouseEvent, id: string) => void,
+        onMove?: (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => void
+    }) => {
+        const workspace = useWorkspace()
+        const { attributes, listeners, setNodeRef: setDragRef, transform } = props.isDraggable
+            ? useDraggable({
+                id: `${props.item.id}`,
+                data: {
+                    type: props.type,
+                    move: (destinationID: string, onLowerHalf: boolean, isSection: boolean) => {
+                        if (props.onMove) {
+                            props.onMove(`${props.item.id}`, destinationID, onLowerHalf, isSection)
+                        }
+                    }
+                } as DraggableData
+            })
+            : {
+                attributes: undefined,
+                listeners: undefined,
+                setNodeRef: () => null,
+                transform: null
+            }
+
+        const { isOver, setNodeRef: setDropRef } = props.acceptDropTypes
+            ? useDroppable({
+                id: props.item.id,
+                data: {
+                    acceptAppend: props.acceptDropAppends === true,
+                    acceptReposition: true,
+                    acceptsTypes: props.acceptDropTypes,
+                    depth: props.depth,
+                    isHeader: false,
+                } as DroppableData
+            })
+            : { isOver: false, setNodeRef: () => null }
+
+        const dragStyle = {
+            transform: CSS.Translate.toString(transform)
+        }
+
+        return <TreeItem
+            itemId={`${props.item.entityType}-${props.item.id}`}
+            {...listeners}
+            {...attributes}
+            sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default', margin: 0, padding: 0 }}
+            onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+            }}
+            // Add a selected class so that we can mark expandable tree items as selected and have them show up properly
+            className={workspace.active?.id === props.item.id ? 'selected' : ''}
+            label={(
+                <Box
+                    key={`lbl-${props.item.id}`}
+                    id={`lbl-${props.item.id}`}
+                    ref={useCombinedRefs(setDragRef, setDropRef)}
+                    style={dragStyle}
+                    className='nav-item'
+
+                    onClick={(e) => {
+                        // Override click behavior to set active item, but not to propogate upward
+                        // because we don't want to toggle expansion on anything other than the
+                        // lefticon click
+                        workspace.changeActive(props.item.entityType, props.item.id)
+                        e.preventDefault()
+                        e.stopPropagation()
+                    }}
+                >
+                    {
+                        (props.icon && props.iconColor)
+                            ? <Box className='nav-icon-box'><SvgIcon fontSize='small' color={props.iconColor}>{props.icon}</SvgIcon></Box>
+                            : null
+                    }
+                    <Box
+                        className='nav-node-text'
+                        justifyContent='left'
+                        justifyItems='center'
+                        display='flex'
+                    >
+                        {GetTitle(props.item)}
+                        <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
+                            {iconFromState(props.item.state)}
+                        </Box>
+                    </Box>
+                    {
+                        props.onMenu
+                            ? <IconButton
+                                sx={{
+                                    visibility: props.item.id === workspace.active?.id ? 'normal' : 'hidden',
+                                    margin: 0,
+                                    padding: 0
+                                }}
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    if (props.onMenu) props.onMenu(e, props.item.id)
+                                }}
+                            >
+                                <MoreVertIcon />
+                            </IconButton>
+                            : <></>
+                    }
+                </Box>
+            )}>
+            {
+                props.children
+            }
+        </TreeItem>
+    })
+
+    const RequestSection = () => {
+
+        const buildRequest = (item: EditableRequest | EditableRequestGroup, depth: number) => {
+            switch (item.entityType) {
+                case EditableEntityType.Request:
+                    return <NavTreeItem
+                        key={item.id}
+                        item={item}
+                        depth={depth}
+                        type={EditableEntityType.Request}
+                        acceptDropTypes={[EditableEntityType.Request, EditableEntityType.Group]}
+                        onSelect={selectRequestOrGroup}
+                        onMenu={showRequestMenu}
+                        onMove={handleMoveRequest}
+                        isDraggable={true}
+                    />
+                case EditableEntityType.Group:
+                    return <NavTreeItem
+                        key={item.id}
+                        item={item}
+                        depth={depth}
+                        type={EditableEntityType.Group}
+                        acceptDropTypes={[EditableEntityType.Request, EditableEntityType.Group]}
+                        acceptDropAppends={true}
+                        onSelect={selectRequestOrGroup}
+                        onMenu={showRequestMenu}
+                        onMove={handleMoveRequest}
+                        isDraggable={true}
+                        icon={<FolderIcon />}
+                        iconColor="folder"
+                        children={workspace.requests.getChildren(item.id).map((subItem) =>
+                            buildRequest(subItem, depth + 1)
+                        )}
+                    />
+                default:
+                    return <></>
+            }
+        }
+
+        const { isOver, setNodeRef: setDropRef } = useDroppable({
+            id: 'hdr-r',
+            data: {
+                acceptAppend: true,
+                acceptReposition: false,
+                acceptsTypes: [EditableEntityType.Request, EditableEntityType.Group],
+                depth: 0,
+                isHeader: true,
+            } as DroppableData
+        })
+
+        return <TreeItem
+            itemId='hdr-r'
+            key='hdr-r'
+            onClick={e => {
+                e.preventDefault()
+                e.stopPropagation()
+            }}
+            onFocusCapture={e => e.stopPropagation()}
+            sx={{ margin: '0.5em 0 0 0', padding: 0 }}
+            label={(
+                <Box
+                    className='nav-item'
+                    ref={setDropRef}
+                    onClick={(e) => {
+                        // Prevent label from expanding/collapsing
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleSelectHeader(e, 'hdr-r', 'workspace/requests')
+                    }}
+                    sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default' }}
+                >
+                    <Box className='nav-icon-box'><SvgIcon className='nav-folder' fontSize='small' color='request'><RequestIcon /></SvgIcon></Box>
+                    <Box className='nav-node-text' sx={{ flexGrow: 1 }}>
+                        Requests
+                    </Box>
+                    <IconButton sx={{ flexGrow: 0, margin: 0, padding: 0 }} onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleShowRequestsMenu(e, 'menu-requests')
+                    }}>
+                        <MoreVertIcon />
+                    </IconButton>
+                </Box >
+            )}>
+            {
+                workspace.requests.topLevelIds.map((id) =>
+                    workspace.requests.get(id)
+                )
+                    .filter(e => e !== undefined)
+                    .map(e => buildRequest(e, 1))
+            }
+        </TreeItem >
+    }
+
+    function ParameterSubsection<T extends EditableItem>(props: {
+        type: EditableEntityType,
+        parameters: IndexedEntityManager<T>,
+        persistence: Persistence,
+        icon: JSX.Element,
+        label: string,
+        suffix: string,
+        onSelect: (id: string) => void,
+        onAdd: () => void,
+        onMove: (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => void,
+        onItemMenu: (event: React.MouseEvent, id: string) => void
+    }) {
+        const { isOver, setNodeRef: setDropRef } = useDroppable({
+            id: `hdr-${props.type}-${props.suffix}`,
+            data: {
+                acceptAppend: true,
+                acceptsTypes: [props.type],
+                depth: 0,
+                isHeader: true,
+                persistence: props.persistence,
+            } as DroppableData
+        })
+
+        const headerId = `hdr-${props.type}-${props.suffix}`
+        return <TreeItem
+            itemId={headerId}
+            key={headerId}
+            id={headerId}
+            onFocusCapture={e => e.stopPropagation()}
+            ref={setDropRef}
+            sx={{ background: isOver ? dragPositionToColor(dragPosition) : 'default', margin: '0 0 0 1.0em', padding: 0 }}
+            label={(
+                <Box
+                    className='nav-item'
+                    onClick={(e) => {
+                        // Prevent label from expanding/collapsing
+                        handleSelectHeader(e, headerId, 'parameter-storage')
+                        workspace.toggleExpanded(headerId, true)
+                    }}
+
+                >
+                    {props.icon}
+                    <Box className='nav-node-text' sx={{ flexGrow: 1, minHeight: '1em' }}>
+                        {props.label}
+                    </Box>
+                    <IconButton sx={{ flexGrow: 0, minHeight: '1em', padding: 0, margin: 0 }}
+                        onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            props.onAdd()
+                        }}>
+                        <AddIcon />
+                    </IconButton>
+                </Box>
+            )}
+        >
+            {
+                props.parameters.getChildren(props.persistence).map((e) =>
+                    <NavTreeItem
+                        key={e.id}
+                        type={props.type}
+                        item={e}
+                        depth={2}
+                        onSelect={props.onSelect}
+                        isDraggable={true}
+                        acceptDropTypes={[props.type]}
+                        onMenu={props.onItemMenu}
+                        onMove={props.onMove}
+                    />
+                )
+            }
+        </TreeItem >
+    }
+
+    function ParameterSection<T extends EditableItem>(props: {
+        type: EditableEntityType,
+        parameters: IndexedEntityManager<T>,
+        title: string,
+        helpTopic: string,
+        icon: JSX.Element,
+        iconColor: OverridableStringUnion<
+            | 'inherit'
+            | 'action'
+            | 'disabled'
+            | 'primary'
+            | 'secondary'
+            | 'error'
+            | 'info'
+            | 'success'
+            | 'warning',
+            SvgIconPropsColorOverrides>,
+        onAdd: (persistence: Persistence) => void,
+        onSelect: (id: string) => void,
+        onMove: (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => void,
+        onItemMenu: (e: React.MouseEvent, persistence: Persistence, id: string) => void,
+    }) {
+        return (<TreeItem
+            itemId={`hdr-${props.type}`}
+            key={`hdr-${props.type}`}
+            id={`hdr-${props.type}`}
+            // onClick={e => handleSelectHeader(e, `hdr-${props.type}`, props.helpTopic)}
+            onFocusCapture={e => e.stopPropagation()}
+            sx={{ margin: '1.0em 0 0 0', padding: 0 }}
+            label={(
+                <Box
+                    className='nav-item'
+                    onClick={(e) => {
+                        // Prevent label from expanding/collapsing
+                        handleSelectHeader(e, `hdr-${props.type}`, props.helpTopic)
+                    }}
+                >
+                    <Box className='nav-icon-box'><SvgIcon color={props.iconColor} fontSize='small'>{props.icon}</SvgIcon></Box>
+                    <Box className='nav-node-text' sx={{ flexGrow: 1 }}>
+                        {props.title}
+                    </Box>
+                </Box>
+            )}>
+            <ParameterSubsection
+                type={props.type}
+                persistence={Persistence.Workbook}
+                parameters={props.parameters}
+                icon={<Box className='nav-icon-box'><SvgIcon className='nav-folder' color='public' fontSize='small'><PublicIcon /></SvgIcon></Box>}
+                label="Public"
+                suffix="pub"
+                onSelect={props.onSelect}
+                onAdd={() => props.onAdd(Persistence.Workbook)}
+                onMove={props.onMove}
+                onItemMenu={(e, id) => props.onItemMenu(e, Persistence.Workbook, id)} />
+            <ParameterSubsection
+                type={props.type}
+                persistence={Persistence.Private}
+                parameters={props.parameters}
+                icon={<Box className='nav-icon-box'><SvgIcon className='nav-folder' color='private' fontSize='small'><PrivateIcon /></SvgIcon></Box>}
+                label="Private"
+                suffix="priv"
+                onSelect={props.onSelect}
+                onAdd={() => props.onAdd(Persistence.Private)}
+                onMove={props.onMove}
+                onItemMenu={(e, id) => props.onItemMenu(e, Persistence.Private, id)} />
+            <ParameterSubsection
+                type={props.type}
+                persistence={Persistence.Vault}
+                parameters={props.parameters}
+                icon={<Box className='nav-icon-box'><SvgIcon className='nav-folder' color='vault' fontSize='small'><VaultIcon /></SvgIcon></Box>}
+                label="Vault"
+                suffix="vault"
+                onSelect={props.onSelect}
+                onAdd={() => props.onAdd(Persistence.Vault)}
+                onMove={props.onMove}
+                onItemMenu={(e, id) => props.onItemMenu(e, Persistence.Vault, id)} />
+        </TreeItem>
+        )
     }
 
     return (
         <Stack bgcolor='navigation.main' direction='column' useFlexGap gap='0.2em' className='nav-selection-pane'>
-            <Stack direction='row' bgcolor='toolbar.main' padding='0.5em 1em 0.5em 0.5em'>
-                <Stack direction='row' useFlexGap gap='0.3em'>
+            <Stack direction='row' bgcolor='toolbar.main' padding='0.5em 1em 0.5em 0.5em' minWidth='22em'>
+                <Stack direction='row' useFlexGap gap='0.2em'>
                     <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()}>
                         <PostAddIcon />
                     </IconButton>
@@ -1154,9 +1231,14 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                         <SaveAsIcon />
                     </IconButton>
                 </Stack>
-                <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }} sx={{ alignSelf: 'flex-end', marginLeft: 'auto' }}>
-                    <HelpIcon />
-                </IconButton>
+                <Box sx={{ display: 'flex', alignSelf: 'flex-end', marginLeft: 'auto', alignContent: 'right', gap: '0.2em' }}>
+                    <IconButton aria-label='help' title='Settings' onClick={() => { showSettings(); }} sx={{ marginLeft: 'auto' }}>
+                        <SettingsIcon />
+                    </IconButton>
+                    <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }} sx={{ marginLeft: 'auto' }}>
+                        <HelpIcon />
+                    </IconButton>
+                </Box>
             </Stack>
             <DndContext onDragMove={onDragMove} onDragCancel={onDragCancel} onDragEnd={onDragEnd} sensors={sensors}>
                 <SimpleTreeView
@@ -1186,122 +1268,94 @@ export const Navigation = observer((props: { onSettings?: () => void }) => {
                     }}
                     className='navigation-tree'
                 >
-                    <NavTreeSection key='nav-section-request' type={EditableEntityType.Request} title='Requests' helpTopic='requests' onAdd={() => { }}>
-                        {
-                            workspace.workspace.requests.topLevelIds.map((id) =>
-                                workspace.workspace.requests.entities.get(id)
-                            )
-                                .filter(e => e !== undefined)
-                                .map(e => (
-                                    <NavTreeItem
-                                        key={`sub-${e.id}`}
-                                        item={e}
-                                        depth={0}
-                                        type={EditableEntityType.Request}
-                                        // key={`nav-section-${e.id}`}
-                                        // onSelect={selectRequestOrGroup}
-                                        onMenu={handleShowRequestMenu}
-                                        onMove={handleMoveRequest}
-                                    />)
-                                )
-                        }
-                    </NavTreeSection>
-                    <NavTreeSection key='nav-section-scenario' type={EditableEntityType.Scenario} title='Scenarios' helpTopic='scenarios' onAdd={handleAddScenario}>
-                        {
-                            workspace.workspace.scenarios.topLevelIds.map((id) =>
-                                workspace.workspace.scenarios.entities.get(id)
-                            )
-                                .filter(e => e !== undefined)
-                                .map(e => (
-                                    <NavTreeItem
-                                        item={e}
-                                        key={`sub-${e.id}`}
-                                        depth={0}
-                                        type={EditableEntityType.Scenario}
-                                        // key={`nav-section-${e.id}`}
-                                        // onSelect={selectScenario}
-                                        onMenu={handleShowScenarioMenu}
-                                        onMove={handleMoveScenario}
-                                    />)
-                                )
-                        }
-                    </NavTreeSection>
-                    <NavTreeSection key='nav-section-auth' type={EditableEntityType.Authorization} title='Authorizations' helpTopic='authorizations' onAdd={handleAddAuth}>
-                        {
-                            workspace.workspace.authorizations.topLevelIds.map((id) =>
-                                workspace.workspace.authorizations.entities.get(id)
-                            )
-                                .filter(e => e !== undefined)
-                                .map(e => (
-                                    <NavTreeItem
-                                        item={e}
-                                        key={`sub-${e.id}`}
-                                        depth={0}
-                                        type={EditableEntityType.Authorization}
-                                        // key={`nav-section-${e.id}`}
-                                        // onSelect={selectAuthorization}
-                                        onMenu={handleShowAuthMenu}
-                                        onMove={handleMoveAuth}
-                                    />)
-                                )
-                        }
-                    </NavTreeSection>
-                    <NavTreeSection key='nav-section-cert' type={EditableEntityType.Certificate} title='Certificates' helpTopic='certificates' onAdd={handleAddCert}>
-                        {
-                            workspace.workspace.certificates.topLevelIds.map((id) =>
-                                workspace.workspace.certificates.entities.get(id)
-                            )
-                                .filter(e => e !== undefined)
-                                .map(e => (
-                                    <NavTreeItem
-                                        item={e}
-                                        key={`sub-${e.id}`}
-                                        depth={0}
-                                        type={EditableEntityType.Certificate}
-                                        // key={`nav-section-${e.id}`}
-                                        // onSelect={selectCertificate}
-                                        onMenu={handleShowCertMenu}
-                                        onMove={handleMoveCert}
-                                    />)
-                                )
-                        }
-                    </NavTreeSection>
-                    <NavTreeSection key='nav-section-proxy' type={EditableEntityType.Proxy} title='Proxies' helpTopic='proxies' onAdd={handleAddProxy}>
-                        {
-                            workspace.workspace.proxies.topLevelIds.map((id) =>
-                                workspace.workspace.proxies.entities.get(id)
-                            )
-                                .filter(e => e !== undefined)
-                                .map(e => (
-                                    <NavTreeItem
-                                        item={e}
-                                        key={`sub-${e.id}`}
-                                        depth={0}
-                                        type={EditableEntityType.Proxy}
-                                        // key={`nav-section-${e.id}`}
-                                        // onSelect={selectProxy}
-                                        onMenu={handleShowProxyMenu}
-                                        onMove={handleMoveProxy}
-                                    />)
-                                )
-                        }
-                    </NavTreeSection>
+                    {
+                        workspace.warnings.hasEntries
+                            ? <TreeItem
+                                itemId="wkbk-warnings"
+                                sx={{ margin: '0.5em 0 1.0em 0', padding: 0 }}
+                                label={(
+                                    <Box
+                                        component='span'
+                                        display='flex'
+                                        justifyContent='space-between'
+                                        alignItems='center'
+                                    >
+                                        <Box className='nav-icon-box'>
+                                            <SvgIcon color='warning' fontSize='small'><WarningAmberIcon /></SvgIcon>
+                                        </Box>
+                                        <Box className='nav-node-text' display='flex' flexGrow={1} alignItems='center'>
+                                            Warnings
+                                        </Box>
+                                    </Box>
+                                )} onClick={() => workspace.changeActive(EditableEntityType.Warnings, '')} />
+                            : null
+                    }
+
+                    <RequestSection />
+
+                    <ParameterSection
+                        title='Scenarios'
+                        icon={<ScenarioIcon />}
+                        iconColor='scenario'
+                        helpTopic='workspace/scenarios'
+                        type={EditableEntityType.Scenario}
+                        parameters={workspace.scenarios}
+                        onSelect={selectScenario}
+                        onAdd={handleAddScenario}
+                        onMove={handleMoveScenario}
+                        onItemMenu={showScenarioMenu}
+                    />
+                    <ParameterSection
+                        title='Authorizations'
+                        icon={<AuthIcon />}
+                        iconColor='authorization'
+                        helpTopic='workspace/authorizations'
+                        type={EditableEntityType.Authorization}
+                        parameters={workspace.authorizations}
+                        onSelect={selectAuthorization}
+                        onAdd={handleAddAuth}
+                        onMove={handleMoveAuth}
+                        onItemMenu={showAuthMenu}
+                    />
+                    <ParameterSection
+                        title='Certificates'
+                        icon={<CertificateIcon />}
+                        iconColor='certificate'
+                        helpTopic='workspace/certificates'
+                        type={EditableEntityType.Certificate}
+                        parameters={workspace.certificates}
+                        onSelect={selectCertificate}
+                        onAdd={handleAddCert}
+                        onMove={handleMoveCert}
+                        onItemMenu={showCertMenu}
+                    />
+                    <ParameterSection
+                        title='Proxies'
+                        icon={<ProxyIcon />}
+                        iconColor='proxy'
+                        helpTopic='workspace/proxies'
+                        type={EditableEntityType.Proxy}
+                        parameters={workspace.proxies}
+                        onSelect={selectProxy}
+                        onAdd={handleAddProxy}
+                        onMove={handleMoveProxy}
+                        onItemMenu={showProxyMenu}
+                    />
                     <TreeItem
                         itemId="wkbk-defaults"
-                        sx={{ margin: 0, padding: 0 }}
+                        sx={{ margin: '1.0em 0 1.0em 0', padding: 0 }}
                         label={(
                             <Box
-                                component='span'
-                                display='flex'
-                                justifyContent='space-between'
-                                alignItems='center'
+                                className='nav-item'
                             >
-                                <SettingsIcon className='nav-folder' />
-                                <Box className='nav-node-text' display='flex' flexGrow={1} paddingTop='8px' paddingBottom='8px' alignItems='center'>
-                                    {
-                                        workspace.workspace.defaults.invalid ? (<WarningAmberIcon sx={{ color: '#FFFF00', marginRight: '0.25em' }} />) : null
-                                    }
-                                    Defaults &amp; Settings
+                                <Box className='nav-icon-box'>
+                                    <SvgIcon color='defaults' fontSize='small'><DefaultsIcon /></SvgIcon>
+                                </Box>
+                                <Box className='nav-node-text' display='flex' flexGrow={1} alignItems='center'>
+                                    Defaults
+                                </Box>
+                                <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
+                                    {iconFromState(workspace.defaults.state)}
                                 </Box>
                             </Box>
                         )} onClick={() => workspace.changeActive(EditableEntityType.Defaults, '')} />
