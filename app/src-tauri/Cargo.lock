@@ -323,6 +323,8 @@ dependencies = [
 [[package]]
 name = "apicize_lib"
 version = "0.15.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0cf9e19aac833a41dd6e2b7a6161c755c5f711ebaa0deb85e0e5ca147aac0862"
 dependencies = [
  "async-recursion",
  "async-trait",
