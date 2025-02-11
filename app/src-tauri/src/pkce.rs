@@ -146,7 +146,7 @@ impl OAuth2PkceService {
         client_id: &str,
         verifier: &str,
     ) -> Result<PkceTokenResult, String> {
-        retrieve_access_token(token_url, redirect_url, client_id, code, verifier).await
+        retrieve_access_token(token_url, redirect_url, client_id, code, verifier, true).await
     }
 
     // Exchange refresh token for access token

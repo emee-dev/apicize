@@ -54,6 +54,7 @@ export interface BodyNone {
 export interface BodyJSON {
     type: BodyType.JSON
     data: string
+    formatted?: string
 }
 
 export interface BodyXML {

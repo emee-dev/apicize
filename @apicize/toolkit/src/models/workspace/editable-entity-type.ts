@@ -9,7 +9,7 @@ export enum EditableEntityType {
     Authorization = 'a',
     Certificate = 'c',
     Proxy = 'p',
-    Defaults = 'd',
-    Settings = 'x',
     Warnings = 'w',
+    Defaults = 'd',
+    Workbook = 'wkbk'
 }

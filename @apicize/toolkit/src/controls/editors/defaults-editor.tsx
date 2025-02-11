@@ -1,9 +1,8 @@
-import { Stack, FormControl, InputLabel, MenuItem, Select, SxProps, Box, SvgIcon } from '@mui/material'
+import { Stack, FormControl, InputLabel, MenuItem, Select, SxProps, Box, SvgIcon, IconButton } from '@mui/material'
 import { observer } from 'mobx-react-lite';
-import { useWorkspace } from '../../contexts/workspace.context';
+import { useWorkspace, WorkspaceMode } from '../../contexts/workspace.context';
 import { EntitySelection } from '../../models/workspace/entity-selection';
-import { EditableEntityType } from '../../models/workspace/editable-entity-type';
-import { EditableDefaults } from '../../models/workspace/editable-defaults';
+import CloseIcon from '@mui/icons-material/Close';
 import { EditorTitle } from '../editor-title';
 import DefaultsIcon from '../../icons/defaults-icon';
 
@@ -11,9 +10,7 @@ export const DefaultsEditor = observer((props: {
     sx: SxProps
 }) => {
     const workspace = useWorkspace()
-    if (workspace.active?.entityType !== EditableEntityType.Defaults) return null
-    workspace.nextHelpTopic = 'defaults'
-    const defaults = workspace.active as EditableDefaults
+    const defaults = workspace.defaults
 
     workspace.nextHelpTopic = 'workspace/defaults'
 
@@ -29,6 +26,7 @@ export const DefaultsEditor = observer((props: {
     return <Stack direction={'column'} className='editor' sx={props.sx}>
         <Box className='editor-panel-header'>
             <EditorTitle icon={<SvgIcon color='defaults'><DefaultsIcon /></SvgIcon>} name='Workbook Defaults' />
+            <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
         </Box>
         <Stack spacing={3}>
             <FormControl>

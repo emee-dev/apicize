@@ -25,6 +25,10 @@ body .light {
   color: rgba(0, 0, 0, .9)
 }
 
+.MuiSvgIcon-colorDisabled {
+  color: rgba(255, 255, 255, .3) !important
+}
+
 .light .resize-handle {
   flex: 0 0 2rem;
   display: flex;
@@ -75,9 +79,16 @@ body .light {
 }
 
 .help blockquote {
-  background-color: #206020;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+}
+
+.help blockquote .MuiTypography-root {
+  display: block;
+  align-items: center;
+  background-color: #3a3886;
   padding: 1em;
-  margin-left: 0;
+  margin: 0;
 }
 
 .help img {
@@ -121,10 +132,16 @@ body .light {
 
 textarea,
 pre,
-.ace_text-input {
+.ace_text-input,
+.console {
   /* Make react-simple-code-editor work */
   word-break: break-all !important;
   font-family: "Roboto Mono", Monospace
+}
+
+.console {
+  bottom: 0;
+  overflow: auto;
 }
 
 pre.log {
@@ -203,13 +220,14 @@ pre.log {
 }
 
 .editor-title .MuiSvgIcon-root {
-  margin-right: 20px;
+  margin: auto 1em auto 0;
+  position: relative;
+  height: 100%;
 }
 
 .editor-title .text {
   display: inline-block;
   position: relative;
-  top: -3px;
 }
 
 .editor {

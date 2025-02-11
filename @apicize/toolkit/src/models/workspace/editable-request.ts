@@ -58,11 +58,27 @@ export class EditableRequest extends Editable<Request> {
             id: GenerateIdentifier(),
             ...q
         })) ?? []
+
+        let idxQuery = result.url.indexOf('?')
+        if (idxQuery !== -1) {
+            const params = new URLSearchParams(result.url.substring(idxQuery + 1))
+            for (const [name, value] of params) {
+                result.queryStringParams.push({
+                    id: GenerateIdentifier(),
+                    name,
+                    value
+                })
+            }
+            result.url = result.url.substring(0, idxQuery)
+        }
+
         result.body = entry.body ?? { type: BodyType.None, data: undefined }
         if (result.body && result.body.data) {
             switch (result.body.type) {
                 case BodyType.JSON:
-                    result.body.data = JSON.stringify(result.body.data)
+                    result.body.data = result.body.formatted
+                        ? result.body.formatted
+                        : JSON.stringify(result.body.data)
                     break
                 case BodyType.Form:
                     result.body.data = (result.body.data as NameValuePair[]).map(r => ({
@@ -86,6 +102,10 @@ export class EditableRequest extends Editable<Request> {
     }
 
     toWorkspace(): Request {
+        if (this.body.type === BodyType.JSON && this.body.data) {
+            this.body.formatted = this.body.data
+        }
+
         const result: Request = {
             id: this.id,
             name: this.name,

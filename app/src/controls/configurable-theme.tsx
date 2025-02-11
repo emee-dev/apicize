@@ -50,7 +50,7 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
       }),
       authorization: palette.palette.augmentColor({
         color: {
-          main: '#A0A0A0'
+          main: '#daa520'
         },
         name: 'authorization'
       }),
@@ -80,7 +80,7 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
       }),
       private: palette.palette.augmentColor({
         color: {
-          main: '#cc9900'
+          main: '#cfb53b'
         },
         name: 'private'
       }),
@@ -106,14 +106,14 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
           }
         }
       },
-      MuiTreeItem: {
-        styleOverrides: {
-          content: {
-            padding: 0,
-          }
-        }
-      },
-      
+      // MuiTreeItem: {
+      //   styleOverrides: {
+      //     content: {
+      //       padding: 0,
+      //     }
+      //   }
+      // },
+
       //   MuiIconButton: {
       //     defaultProps: {
       //       sx: { padding: '0.05em' }

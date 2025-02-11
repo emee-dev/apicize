@@ -17,13 +17,13 @@ import { ApicizeSettingsProvider } from './providers/apicize-settings.provider';
 import { ConfigurableTheme } from './controls/configurable-theme';
 import { PkceProvider } from './providers/pkce.provider';
 import { emit } from '@tauri-apps/api/event';
+import { LogProvider } from './providers/log.provider';
 
 // This is defined externally via Tauri main or other boostrap application
 declare var loadedSettings: ApplicationSettings
 const settings = new ApicizeSettings(loadedSettings)
 
 const workspaceStore = new WorkspaceStore(
-  settings,
   {
     onExecuteRequest: async (workspace, requestId, overrideNumberOfRuns) => core.invoke<ApicizeExecution>
       ('run_request', { workspace, requestId, overrideNumberOfRuns }),
@@ -47,16 +47,18 @@ export default function Home() {
         <CssBaseline />
         <FeedbackProvider>
           <FileOperationsProvider store={workspaceStore}>
-            <WorkspaceProvider store={workspaceStore}>
-              <PkceProvider store={workspaceStore}>
-                <ClipboardProvider>
-                  <MainPanel />
-                </ClipboardProvider>
-              </PkceProvider>
-            </WorkspaceProvider>
+            <LogProvider>
+              <WorkspaceProvider store={workspaceStore}>
+                <PkceProvider store={workspaceStore}>
+                  <ClipboardProvider>
+                    <MainPanel />
+                  </ClipboardProvider>
+                </PkceProvider>
+              </WorkspaceProvider>
+            </LogProvider>
           </FileOperationsProvider>
         </FeedbackProvider>
       </ConfigurableTheme>
-    </ApicizeSettingsProvider>
+    </ApicizeSettingsProvider >
   )
 }

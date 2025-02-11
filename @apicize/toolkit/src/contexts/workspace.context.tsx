@@ -8,9 +8,9 @@ import { EditableAuthorization } from "../models/workspace/editable-authorizatio
 import { EditableCertificate } from "../models/workspace/editable-certificate"
 import { EditableProxy } from "../models/workspace/editable-proxy"
 import {
-    Identifiable, Named, IndexedEntities, GetTitle, GroupExecution, BodyType, Method, BodyData, AuthorizationType,
+    Identifiable, Named, GetTitle, GroupExecution, BodyType, Method, AuthorizationType,
     CertificateType, Workspace, ApicizeExecution, ApicizeExecutionGroup, ApicizeExecutionItem, ApicizeExecutionRequest,
-    Body, ApicizeExecutionDetails, Selection, Scenario,
+    Body, ApicizeExecutionDetails, Selection,
     Persistence,
     IndexedEntityManager,
     Request,
@@ -23,13 +23,14 @@ import { EditableEntityType } from "../models/workspace/editable-entity-type"
 import { EditableItem, EditableState } from "../models/editable"
 import { createContext, useContext } from "react"
 import { EditableDefaults } from "../models/workspace/editable-defaults"
-import { ApicizeSettings } from "../models/settings"
 import { EditableWarnings } from "../models/workspace/editable-warnings"
 
 export enum WorkspaceMode {
     Normal,
     Help,
-    Settings
+    Settings,
+    Defaults,
+    Console,
 }
 
 export class WorkspaceStore {
@@ -59,6 +60,7 @@ export class WorkspaceStore {
     @observable accessor executions = new Map<string, Execution>()
 
     @observable accessor active: EditableItem | null = null
+    @observable accessor activeId: string | null = null
 
     @observable accessor appName = 'Apicize'
     @observable accessor appVersion = ''
@@ -75,7 +77,6 @@ export class WorkspaceStore {
     pendingPkceRequests = new Map<string, Map<string, number>>()
 
     constructor(
-        private readonly settings: ApicizeSettings,
         private readonly callbacks: {
             onExecuteRequest: (workspace: Workspace, requestId: string, runs?: number) => Promise<ApicizeExecution>,
             onCancelRequest: (requestId: string) => Promise<void>,
@@ -270,7 +271,21 @@ export class WorkspaceStore {
 
     @action
     changeActive(type: EditableEntityType, id: string) {
+        this.activeId = `${type}-${id}`
         switch (type) {
+            case EditableEntityType.Workbook:
+                switch (id) {
+                    case 'console':
+                        this.mode = WorkspaceMode.Console;
+                        break
+                    case 'settings':
+                        this.mode = WorkspaceMode.Settings;
+                        break
+                    case 'defaults':
+                        this.mode = WorkspaceMode.Defaults;
+                        break
+                }
+                break
             case EditableEntityType.Request:
             case EditableEntityType.Group:
                 this.mode = WorkspaceMode.Normal
@@ -302,13 +317,6 @@ export class WorkspaceStore {
                 if (!p) throw new Error(`Invalid proxy ID ${id}`)
                 this.active = p
                 break
-            case EditableEntityType.Defaults:
-                this.mode = WorkspaceMode.Normal
-                this.active = this.defaults
-                break
-            case EditableEntityType.Settings:
-                this.mode = WorkspaceMode.Settings
-                break
             case EditableEntityType.Warnings:
                 this.mode = WorkspaceMode.Normal
                 this.active = this.warnings
@@ -324,6 +332,7 @@ export class WorkspaceStore {
     @action
     clearActive() {
         this.active = null
+        this.activeId = null
     }
 
     /**
@@ -1549,9 +1558,8 @@ export class WorkspaceStore {
         }
         // Clear tokens cached in the Rust library
         await Promise.all(
-            this.authorizations.topLevelIds.map(this.callbacks.onClearToken)
+            this.authorizations.values.map(v => this.callbacks.onClearToken(v.id))
         )
-
     }
 
     @action
@@ -1572,7 +1580,7 @@ export class WorkspaceStore {
 
     @action
     setDefaultScenarioId(entityId: string) {
-        if (this.active?.entityType === EditableEntityType.Defaults) {
+        if (this.mode === WorkspaceMode.Defaults) {
             const defaults = this.active as EditableDefaults
             defaults.selectedScenario = entityId == NO_SELECTION_ID
                 ? NO_SELECTION
@@ -1583,7 +1591,7 @@ export class WorkspaceStore {
 
     @action
     setDefaultAuthorizationId(entityId: string) {
-        if (this.active?.entityType === EditableEntityType.Defaults) {
+        if (this.mode === WorkspaceMode.Defaults) {
             const defaults = this.active as EditableDefaults
             defaults.selectedAuthorization = entityId == NO_SELECTION_ID
                 ? NO_SELECTION
@@ -1594,7 +1602,7 @@ export class WorkspaceStore {
 
     @action
     setDefaultCertificateId(entityId: string) {
-        if (this.active?.entityType === EditableEntityType.Defaults) {
+        if (this.mode === WorkspaceMode.Defaults) {
             const defaults = this.active as EditableDefaults
             defaults.selectedCertificate = entityId == NO_SELECTION_ID
                 ? NO_SELECTION
@@ -1605,7 +1613,7 @@ export class WorkspaceStore {
 
     @action
     setDefaultProxyId(entityId: string) {
-        if (this.active?.entityType === EditableEntityType.Defaults) {
+        if (this.mode === WorkspaceMode.Defaults) {
             const defaults = this.active as EditableDefaults
             defaults.selectedProxy = entityId == NO_SELECTION_ID
                 ? NO_SELECTION
@@ -1663,7 +1671,6 @@ export class WorkspaceStore {
             this.pendingPkceRequests.set(authorizationId,
                 new Map([[requestOrGroupId, runs ?? 1]]))
         }
-
     }
 
     /**
@@ -1712,8 +1719,12 @@ export class WorkspaceStore {
     }
 
     @action
-    public hideHelpAndSettings() {
-        this.mode = WorkspaceMode.Normal
+    public returnToNormal() {
+        if (this.active) {
+            this.changeActive(this.active.entityType, this.active.id)
+        } else {
+            this.mode = WorkspaceMode.Normal
+        }
     }
 
     @computed

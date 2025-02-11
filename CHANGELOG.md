@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.16.0
+
+* Add reqwest trace logging
+
 # 0.15.2
 
 * Reorganization of UI and Workspace to break out public, private and global/vault parameters

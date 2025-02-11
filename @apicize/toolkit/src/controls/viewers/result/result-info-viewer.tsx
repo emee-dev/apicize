@@ -195,6 +195,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, exe
                     aria-label="copy results to clipboard"
                     title="Copy Results to Clipboard"
                     sx={{ marginLeft: '1rem' }}
+                    color='primary'
                     onClick={_ => copyToClipboard(response)}>
                     <ContentCopyIcon />
                 </IconButton>

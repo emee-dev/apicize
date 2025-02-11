@@ -26,6 +26,7 @@ export const ResultDetailsViewer = observer((props: {
                 <IconButton
                     aria-label="copy deatils to clipboard"
                     title="Copy Details to Clipboard"
+                    color='primary'
                     sx={{ marginLeft: '16px' }}
                     onClick={_ => { if (text) clipboard.writeTextToClipboard(text) }}>
                     <ContentCopyIcon />

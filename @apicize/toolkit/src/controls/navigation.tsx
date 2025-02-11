@@ -38,6 +38,7 @@ import PublicIcon from "../icons/public-icon";
 import FolderIcon from "../icons/folder-icon";
 import { DraggableData, DragPosition, DroppableData } from "../models/drag-drop";
 import { OverridableStringUnion } from "@mui/types";
+import LogIcon from "../icons/log-icon";
 
 interface MenuPosition {
     id: string
@@ -285,11 +286,6 @@ export const Navigation = observer(() => {
         }
     }
 
-    const showSettings = () => {
-        closeAllMenus()
-        workspace.changeActive(EditableEntityType.Settings, '')
-    }
-
     const showHelp = () => {
         closeAllMenus()
         workspace.showNextHelpTopic()
@@ -502,13 +498,13 @@ export const Navigation = observer(() => {
                     left: requestsMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequest(workspace.active?.id)}>
+                <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequest()}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='request'><RequestIcon /></SvgIcon>
                     </ListItemIcon>
                     <ListItemText>Add Request</ListItemText>
                 </MenuItem>
-                <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequestGroup(workspace.active?.id)}>
+                <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequestGroup()}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='folder'><FolderIcon /></SvgIcon>
                     </ListItemIcon>
@@ -873,7 +869,7 @@ export const Navigation = observer(() => {
                 e.stopPropagation()
             }}
             // Add a selected class so that we can mark expandable tree items as selected and have them show up properly
-            className={workspace.active?.id === props.item.id ? 'selected' : ''}
+            // className={workspace.active?.id === props.item.id ? 'selected' : ''}
             label={(
                 <Box
                     key={`lbl-${props.item.id}`}
@@ -1066,7 +1062,6 @@ export const Navigation = observer(() => {
                         handleSelectHeader(e, headerId, 'parameter-storage')
                         workspace.toggleExpanded(headerId, true)
                     }}
-
                 >
                     {props.icon}
                     <Box className='nav-node-text' sx={{ flexGrow: 1, minHeight: '1em' }}>
@@ -1231,11 +1226,14 @@ export const Navigation = observer(() => {
                         <SaveAsIcon />
                     </IconButton>
                 </Stack>
-                <Box sx={{ display: 'flex', alignSelf: 'flex-end', marginLeft: 'auto', alignContent: 'right', gap: '0.2em' }}>
-                    <IconButton aria-label='help' title='Settings' onClick={() => { showSettings(); }} sx={{ marginLeft: 'auto' }}>
+                <Box sx={{ display: 'flex', alignSelf: 'flex-end', marginLeft: 'auto', alignContent: 'right', gap: '0.2em', paddingLeft: '3em' }}>
+                    <IconButton aria-label='help' title='Settings' onClick={() => { workspace.changeActive(EditableEntityType.Workbook, 'settings') }}>
                         <SettingsIcon />
                     </IconButton>
-                    <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }} sx={{ marginLeft: 'auto' }}>
+                    <IconButton aria-label='help' title='Communication Logs' onClick={() => { workspace.changeActive(EditableEntityType.Workbook, 'console') }}>
+                        <SvgIcon><LogIcon /></SvgIcon>
+                    </IconButton>
+                    <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }}>
                         <HelpIcon />
                     </IconButton>
                 </Box>
@@ -1249,7 +1247,7 @@ export const Navigation = observer(() => {
                     // defaultExpandIcon={<ChevronRightIcon />}
                     sx={{ paddingRight: '0.8em' }}
                     expandedItems={workspace.expandedItems}
-                    selectedItems={workspace.active ? `${workspace.active.entityType}-${workspace.active.id}` : ''}
+                    selectedItems={workspace.activeId}
                     multiSelect={false}
                     onItemExpansionToggle={(_, itemId, isExpanded) => {
                         workspace.toggleExpanded(itemId, isExpanded)
@@ -1261,10 +1259,10 @@ export const Navigation = observer(() => {
                                 const type = itemId.substring(0, i) as EditableEntityType
                                 const id = itemId.substring(i + 1)
                                 workspace.changeActive(type, id)
-                                return
                             }
+                        } else {
+                            workspace.clearActive()
                         }
-                        workspace.clearActive()
                     }}
                     className='navigation-tree'
                 >
@@ -1358,7 +1356,7 @@ export const Navigation = observer(() => {
                                     {iconFromState(workspace.defaults.state)}
                                 </Box>
                             </Box>
-                        )} onClick={() => workspace.changeActive(EditableEntityType.Defaults, '')} />
+                        )} />
                 </SimpleTreeView>
             </DndContext>
             <RequestsMenu />

@@ -24,6 +24,8 @@ export { useFileOperations, FileOperationsContext, FileOperationsStore, SshFileT
 export { usePkce, PkceContext } from './contexts/pkce.context'
 export { useWorkspace, WorkspaceContext, WorkspaceStore } from './contexts/workspace.context'
 export { useApicizeSettings, ApicizeSettingsContext } from './contexts/apicize-settings.context'
+export { useLog, LogContext, LogStore } from './contexts/log.context'
+export { ReqwestEvent, ReqwestEventConnect, ReqwestEventRead, ReqwestEventWrite } from './models/trace';
 export { ApicizeSettings } from './models/settings'
 
 import "./toolkit.css"

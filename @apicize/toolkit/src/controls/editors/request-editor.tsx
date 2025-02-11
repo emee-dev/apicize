@@ -107,7 +107,7 @@ export const RequestEditor = observer((props: {
                     <EditorTitle icon={<SvgIcon color='folder'><FolderIcon /></SvgIcon>} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'} />
                     <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                 </Stack>
-                <RunToolbar sx={{ marginLeft: '3em' }} />
+                <RunToolbar sx={{ marginLeft: '1.5em' }} />
             </Stack>
             <Stack direction='row' flexGrow={1}>
                 <ToggleButtonGroup
@@ -142,7 +142,7 @@ export const RequestEditor = observer((props: {
                         <EditorTitle icon={<SvgIcon color='request'><RequestIcon /></SvgIcon>} name={(request.name.length > 0) ? `${request.name} - ${panel}` : `(Unnamed) - ${panel}`} />
                         <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                     </Stack>
-                    <RunToolbar sx={{ marginLeft: '3em' }} />
+                    <RunToolbar sx={{ marginLeft: '1.5em' }} />
                 </Stack>
                 <Stack direction='row' flexGrow={1}>
                     <ToggleButtonGroup

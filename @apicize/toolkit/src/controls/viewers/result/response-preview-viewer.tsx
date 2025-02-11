@@ -62,6 +62,7 @@ export function ResultResponsePreview(props: { requestOrGroupId: string, executi
                     ? (<IconButton
                         aria-label="copy image to clipboard"
                         title="Copy Image to Clipboard"
+                        color='primary'
                         sx={{ marginLeft: '16px' }}
                         onClick={_ => { if (body?.data) clipboard.writeImageToClipboard(body.data) }} >
                         <ContentCopyIcon />
@@ -70,6 +71,7 @@ export function ResultResponsePreview(props: { requestOrGroupId: string, executi
                         ? (<IconButton
                             aria-label="copy text to clipboard"
                             title="Copy Text to Clipboard"
+                            color='primary'
                             sx={{ marginLeft: '16px' }}
                             onClick={_ => clipboard.writeTextToClipboard(text)}>
                             <ContentCopyIcon />

@@ -3,6 +3,7 @@
 
 pub mod pkce;
 pub mod settings;
+pub mod trace;
 
 use apicize_lib::{
     apicize::ApicizeExecution,
@@ -21,12 +22,15 @@ use std::{
 use tauri::{Manager, State};
 use tauri_plugin_clipboard::Clipboard;
 use tokio_util::sync::CancellationToken;
+use trace::ReqwestLogger;
 
 use std::sync::{Mutex, OnceLock};
 
 struct AppState {
     pkce: Mutex<OAuth2PkceService>,
 }
+
+static REQWEST_LOGGER: OnceLock<ReqwestLogger> = OnceLock::new();
 
 fn main() {
     tauri::Builder::default()
@@ -82,6 +86,11 @@ fn main() {
                     }
                 }
             }
+
+            // Initialize log hook to monitor Reqwest activity
+            let _ =
+                log::set_logger(REQWEST_LOGGER.get_or_init(|| ReqwestLogger::new(app.handle().clone())));
+            log::set_max_level(log::LevelFilter::Trace);
 
             main_window
                 .eval(&format!(
@@ -235,6 +244,7 @@ async fn run_request(
         Some(Arc::new(cancellation)),
         arc_test_started,
         override_number_of_runs,
+        true,
     )
     .await;
 

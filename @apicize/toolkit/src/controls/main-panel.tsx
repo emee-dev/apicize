@@ -12,6 +12,7 @@ import { DefaultsEditor } from "./editors/defaults-editor";
 import { WarningsEditor } from "./editors/warnings-editor";
 import { useWorkspace, WorkspaceMode } from "../contexts/workspace.context";
 import { EditableEntityType } from "../models/workspace/editable-entity-type";
+import { LogViewer } from "./viewers/log-viewer";
 
 export const MainPanel = observer(() => {
     const workspace = useWorkspace()
@@ -23,6 +24,12 @@ export const MainPanel = observer(() => {
             break
         case WorkspaceMode.Settings:
             mainPane = <SettingsEditor sx={{ display: 'block', flexGrow: 1 }} />
+            break
+        case WorkspaceMode.Console:
+            mainPane = <LogViewer sx={{ display: 'block', flexGrow: 1 }} />
+            break
+        case WorkspaceMode.Defaults:
+            mainPane = <DefaultsEditor sx={{ display: 'block', flexGrow: 1 }} />
             break
         default:
             switch (workspace.active?.entityType) {
@@ -41,12 +48,6 @@ export const MainPanel = observer(() => {
                     break
                 case EditableEntityType.Proxy:
                     mainPane = <ProxyEditor sx={{ display: 'block', flexGrow: 1 }} />
-                    break
-                case EditableEntityType.Defaults:
-                    mainPane = <DefaultsEditor sx={{ display: 'block', flexGrow: 1 }} />
-                    break
-                case EditableEntityType.Settings:
-                    mainPane = <SettingsEditor sx={{ display: 'block', flexGrow: 1 }} />
                     break
                 case EditableEntityType.Warnings:
                     mainPane = <WarningsEditor sx={{ display: 'block', flexGrow: 1 }} />

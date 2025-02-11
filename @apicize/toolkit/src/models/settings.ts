@@ -4,13 +4,8 @@ import { action, observable } from 'mobx';
 import { EditableItem, EditableState } from './editable';
 import { EditableEntityType } from './workspace/editable-entity-type';
 
-export class ApicizeSettings implements EditableItem {
+export class ApicizeSettings {
     @observable accessor dirty = false
-
-    public readonly id = 'Settings'
-    public readonly name = 'Settings'
-    public readonly state = EditableState.None;
-    public readonly entityType = EditableEntityType.Settings;
 
     @observable accessor workbookDirectory: string = ''
     @observable accessor lastWorkbookFileName: string | undefined

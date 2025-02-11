@@ -22,15 +22,16 @@ export function ResultRawPreview(props: { requestOrGroupId: string, executionRes
         <Stack sx={{ bottom: 0, overflow: 'hidden', position: 'relative', height: '100%', display: 'flex' }}>
             <Typography variant='h2' sx={{ marginTop: 0, flexGrow: 0 }} component='div'>Response Body (Raw)
                 {(preview?.length ?? 0) > 0
-                ? (<IconButton
-                    aria-label="copy data to clipboard"
-                    title="Copy Data to Clipboard"
-                    sx={{ marginLeft: '16px' }}
-                    onClick={_ => { if (preview) clipboard.writeTextToClipboard(preview) }}>
-                    <ContentCopyIcon />
-                </IconButton>)
-                : (<></>)
-            }
+                    ? (<IconButton
+                        aria-label="copy data to clipboard"
+                        title="Copy Data to Clipboard"
+                        color='primary'
+                        sx={{ marginLeft: '16px' }}
+                        onClick={_ => { if (preview) clipboard.writeTextToClipboard(preview) }}>
+                        <ContentCopyIcon />
+                    </IconButton>)
+                    : (<></>)
+                }
             </Typography>
             {has_text
                 ? (<TextViewer text={preview} extension='txt' />)

@@ -15,8 +15,6 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
     const feedback = useFeedback()
     const settings = useApicizeSettings()
     const fileOps = useFileOperations()
-    const [canIncrease, setCanIncrease] = useState(settings.fontSize > 6)
-    const [canDecrease, setCanDecrease] = useState(settings.fontSize < 48)
 
     workspace.nextHelpTopic = 'settings/display'
 
@@ -53,7 +51,7 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
     return <Stack direction={'column'} className='editor' sx={props.sx}>
         <Box className='editor-panel-header'>
             <EditorTitle icon={<SvgIcon><SettingsIcon /></SvgIcon>} name='Settings' />
-            <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.hideHelpAndSettings()}><CloseIcon fontSize='inherit' /></IconButton>
+            <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
         </Box>
         <Stack spacing={2}>
             <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>

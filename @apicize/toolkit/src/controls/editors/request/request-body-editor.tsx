@@ -72,21 +72,18 @@ export const RequestBodyEditor = observer(() => {
   }
 
   const [allowUpdateHeader, setAllowUpdateHeader] = React.useState<boolean>(headerDoesNotMatchType(request.body.type))
-  const [beautifyBodyType, setBeautifyBodyType] = React.useState((request.body.type === BodyType.JSON || request.body.type === BodyType.XML)
-    ? request.body.type : BodyType.None)
 
   const updateBodyType = (val: BodyType | string) => {
     const v = toJS(val)
     const newBodyType = (v == "" ? undefined : v as unknown as BodyType) ?? BodyType.Text
     workspace.setRequestBodyType(newBodyType)
     setAllowUpdateHeader(headerDoesNotMatchType(newBodyType))
-    setBeautifyBodyType((newBodyType === BodyType.JSON || newBodyType === BodyType.XML) ? newBodyType : BodyType.None)
   }
 
   function performBeautify() {
     if (!editorRef.current) return
     let text = editorRef.current.editor.session.getValue()
-    switch (beautifyBodyType) {
+    switch (request.body.type) {
       case BodyType.JSON:
         text = beautify.js_beautify(text, {})
         break
@@ -190,7 +187,7 @@ export const RequestBodyEditor = observer(() => {
           </Select>
         </FormControl>
         <Grid2 container direction='row' spacing={2}>
-          <Button variant='outlined' size='small' disabled={beautifyBodyType === BodyType.None} onClick={performBeautify}>Beautify</Button>
+          <Button variant='outlined' size='small' disabled={![BodyType.JSON, BodyType.XML].includes(request.body.type)} onClick={performBeautify}>Beautify</Button>
           <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
         </Grid2>
       </Grid2>
@@ -214,11 +211,11 @@ export const RequestBodyEditor = observer(() => {
               }}
             >
               <IconButton aria-label='load body from file' title='Load Body from File' onClick={() => openFile()} sx={{ marginRight: '4px' }}>
-                <FileOpenIcon />
+                <FileOpenIcon color='primary' />
               </IconButton>
               <IconButton aria-label='copy body from clipboard' title='Paste Body from Clipboard' disabled={!clipboard.hasImage}
                 onClick={() => pasteImageFromClipboard()} sx={{ marginRight: '4px' }}>
-                <ContentPasteGoIcon />
+                <ContentPasteGoIcon color='primary' />
               </IconButton>
               <Box padding='10px'>{request.body.data ? request.body.data.length.toLocaleString() + ' Bytes' : '(None)'}</Box>
             </Stack>
@@ -245,7 +242,7 @@ export const RequestBodyEditor = observer(() => {
                   showLineNumbers: true,
                 }}
                 onChange={updateBodyAsText}
-                value={request.body.data as string}
+                value={request.body.type === BodyType.JSON && request.body.formatted ? request.body.formatted : request.body.data as string}
               />
             </Grid2>
       }

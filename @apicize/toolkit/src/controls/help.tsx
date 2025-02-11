@@ -6,7 +6,6 @@ import AltRouteIcon from '@mui/icons-material/AltRoute'
 import { createElement, Fragment, HTMLAttributes, useRef, useState } from 'react'
 import { jsx, jsxs } from 'react/jsx-runtime'
 import { visit } from 'unist-util-visit';
-import { Node as DastNode } from 'mdast';
 import SettingsIcon from '@mui/icons-material/Settings';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings'
 import ViewListIcon from '@mui/icons-material/ViewList'
@@ -41,6 +40,7 @@ import PrivateIcon from '../icons/private-icon';
 import VaultIcon from '../icons/vault-icon';
 import ApicizeIcon from '../icons/apicize-icon';
 import FolderIcon from '../icons/folder-icon';
+import { Parent } from 'unist';
 
 // Register `hName`, `hProperties` types, used when turning markdown to HTML:
 /// <reference types="mdast-util-to-hast" />
@@ -174,7 +174,7 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
             return true
         }
 
-        return (tree: DastNode) => {
+        return (tree: Parent) => {
             visit(tree, 'leafDirective', function (node: LeafDirective) {
                 handleLogo(node) || handleToolbar(node)
 
@@ -291,7 +291,7 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
                         ? <IconButton color='primary' size='medium' aria-label='About' title='About' onClick={() => workspace.showHelp('about')}><QuestionMarkIcon fontSize='inherit' /></IconButton>
                         : <></>
                 }
-                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.hideHelpAndSettings()}><CloseIcon fontSize='inherit' /></IconButton>
+                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
             </Box>
         )
     }
