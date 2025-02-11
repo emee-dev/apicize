@@ -150,6 +150,7 @@ export class WorkspaceStore {
         )
 
         this.warnings.set(newWorkspace.warnings)
+        this.defaults = new EditableDefaults()
 
         this.expandedItems = ['hdr-r']
         this.executions.clear()
@@ -1572,7 +1573,6 @@ export class WorkspaceStore {
 
     @action
     changeResultIndex(requestOrGroupId: string, resultIndex: number) {
-
         const execution = this.executions.get(requestOrGroupId)
         if (!execution) throw new Error(`Invalid Request ID ${requestOrGroupId}`)
         execution.resultIndex = resultIndex
@@ -1580,46 +1580,34 @@ export class WorkspaceStore {
 
     @action
     setDefaultScenarioId(entityId: string) {
-        if (this.mode === WorkspaceMode.Defaults) {
-            const defaults = this.active as EditableDefaults
-            defaults.selectedScenario = entityId == NO_SELECTION_ID
-                ? NO_SELECTION
-                : { id: entityId, name: GetTitle(this.scenarios.get(entityId)) }
-            this.dirty = true
-        }
+        this.defaults.selectedScenario = entityId == NO_SELECTION_ID
+            ? NO_SELECTION
+            : { id: entityId, name: GetTitle(this.scenarios.get(entityId)) }
+        this.dirty = true
     }
 
     @action
     setDefaultAuthorizationId(entityId: string) {
-        if (this.mode === WorkspaceMode.Defaults) {
-            const defaults = this.active as EditableDefaults
-            defaults.selectedAuthorization = entityId == NO_SELECTION_ID
-                ? NO_SELECTION
-                : { id: entityId, name: GetTitle(this.authorizations.get(entityId)) }
-            this.dirty = true
-        }
+        this.defaults.selectedAuthorization = entityId == NO_SELECTION_ID
+            ? NO_SELECTION
+            : { id: entityId, name: GetTitle(this.authorizations.get(entityId)) }
+        this.dirty = true
     }
 
     @action
     setDefaultCertificateId(entityId: string) {
-        if (this.mode === WorkspaceMode.Defaults) {
-            const defaults = this.active as EditableDefaults
-            defaults.selectedCertificate = entityId == NO_SELECTION_ID
-                ? NO_SELECTION
-                : { id: entityId, name: GetTitle(this.certificates.get(entityId)) }
-            this.dirty = true
-        }
+        this.defaults.selectedCertificate = entityId == NO_SELECTION_ID
+            ? NO_SELECTION
+            : { id: entityId, name: GetTitle(this.certificates.get(entityId)) }
+        this.dirty = true
     }
 
     @action
     setDefaultProxyId(entityId: string) {
-        if (this.mode === WorkspaceMode.Defaults) {
-            const defaults = this.active as EditableDefaults
-            defaults.selectedProxy = entityId == NO_SELECTION_ID
-                ? NO_SELECTION
-                : { id: entityId, name: GetTitle(this.proxies.get(entityId)) }
-            this.dirty = true
-        }
+        this.defaults.selectedProxy = entityId == NO_SELECTION_ID
+            ? NO_SELECTION
+            : { id: entityId, name: GetTitle(this.proxies.get(entityId)) }
+        this.dirty = true
     }
 
     @action

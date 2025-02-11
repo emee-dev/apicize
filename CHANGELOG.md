@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.16.1
+
+* Fix error on loading defaults
+
 # 0.16.0
 
 * Add reqwest trace logging
