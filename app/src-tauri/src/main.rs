@@ -88,8 +88,9 @@ fn main() {
             }
 
             // Initialize log hook to monitor Reqwest activity
-            let _ =
-                log::set_logger(REQWEST_LOGGER.get_or_init(|| ReqwestLogger::new(app.handle().clone())));
+            let _ = log::set_logger(
+                REQWEST_LOGGER.get_or_init(|| ReqwestLogger::new(app.handle().clone())),
+            );
             log::set_max_level(log::LevelFilter::Trace);
 
             main_window

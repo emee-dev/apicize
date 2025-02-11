@@ -1,5 +1,5 @@
 import { FormControl, InputLabel, Select, MenuItem, Typography } from "@mui/material";
-import { Stack, SxProps } from "@mui/system";
+import { Stack, SxProps } from "@mui/material";
 import { observer } from "mobx-react-lite";
 import { EditableEntityType } from "../models/workspace/editable-entity-type";
 import { EditableRequest } from "../models/workspace/editable-request";

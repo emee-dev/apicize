@@ -1,6 +1,6 @@
 import { TextViewer } from "../text-viewer"
 import { IconButton, Typography } from "@mui/material"
-import { Stack } from "@mui/system"
+import { Stack } from "@mui/material"
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import beautify from "js-beautify";
 import { observer } from "mobx-react-lite";

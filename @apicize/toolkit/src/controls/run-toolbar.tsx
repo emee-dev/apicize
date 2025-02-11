@@ -1,5 +1,5 @@
 import { ToggleButton, Button, Box } from "@mui/material";
-import { Stack, SxProps } from "@mui/system";
+import { Stack, SxProps } from "@mui/material";
 import { observer } from "mobx-react-lite";
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined'
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'

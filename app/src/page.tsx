@@ -2,10 +2,7 @@
 
 import * as core from '@tauri-apps/api/core'
 import { ApicizeSettings, MainPanel, WorkspaceStore } from '@apicize/toolkit'
-import type { } from '@mui/x-tree-view/themeAugmentation';
-import { CssBaseline } from '@mui/material'
-import { } from '@apicize/toolkit'
-import React, { } from 'react'
+import React from 'react'
 import "@fontsource/open-sans/latin.css"
 import "@fontsource/roboto-mono/latin.css"
 import { ClipboardProvider } from './providers/clipboard.provider';
@@ -18,6 +15,7 @@ import { ConfigurableTheme } from './controls/configurable-theme';
 import { PkceProvider } from './providers/pkce.provider';
 import { emit } from '@tauri-apps/api/event';
 import { LogProvider } from './providers/log.provider';
+import { CssBaseline } from '@mui/material'
 
 // This is defined externally via Tauri main or other boostrap application
 declare var loadedSettings: ApplicationSettings
@@ -44,7 +42,7 @@ export default function Home() {
   return (
     <ApicizeSettingsProvider settings={settings}>
       <ConfigurableTheme>
-        <CssBaseline />
+        <CssBaseline />  
         <FeedbackProvider>
           <FileOperationsProvider store={workspaceStore}>
             <LogProvider>

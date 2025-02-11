@@ -7,6 +7,7 @@ export function ApicizeSettingsProvider({
     settings: ApicizeSettings
     children?: ReactNode
 }) {
+    debugger
     return (
         <ApicizeSettingsContext.Provider value={settings}>
             {children}

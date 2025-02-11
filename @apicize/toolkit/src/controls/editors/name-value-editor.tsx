@@ -1,5 +1,5 @@
 import { EditableNameValuePair } from "../../models/workspace/editable-name-value-pair";
-import { Box } from "@mui/system";
+import { Box } from "@mui/material";
 import { Button, Grid2, IconButton, Stack, TextField } from "@mui/material";
 import { toJS } from "mobx";
 import { GenerateIdentifier } from "../../services/random-identifier-generator";

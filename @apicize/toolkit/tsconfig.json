@@ -3,7 +3,10 @@
     "incremental": true,
     "target": "es2021",
     "module": "esnext",
-    "lib": ["dom", "ESNext"],
+    "lib": [
+      "dom",
+      "ESNext"
+    ],
     "jsx": "react-jsx",
     "strict": true,
     "sourceMap": true,
@@ -13,10 +16,17 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "allowJs": true,
+    "allowJs": false,
     "declaration": true,
     "declarationMap": true,
     "useDefineForClassFields": true,
   },
-  "exclude": ["./dist", "test", "release/build", "release/app/dist", ".erb/dll", "node_modules"]
+  "exclude": [
+    "./dist/**/*",
+    "test",
+    "release/build",
+    "release/app/dist",
+    ".erb/dll",
+    "node_modules"
+  ]
 }

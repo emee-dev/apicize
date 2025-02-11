@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -20,9 +24,23 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@mui/material/*": [
+        "./node_modules/@apicize/toolkit/*",
+        "./node_modules/@mui/material/*"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/providers/apicize-tauri.provider.tsx", "../toolkit/src/services/toast-service.tsx", "src/page.tsx", "../toolkit/src/controls/landing.tsx", "help/build.ts", "src/.example.tsx"],
-  "exclude": ["node_modules", "src-tauri"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "src-tauri"
+  ]
 }

@@ -1,4 +1,4 @@
-import { Box, Stack, SxProps } from "@mui/system"
+import { Box, Stack, SxProps } from "@mui/material"
 import { IconButton, Typography } from "@mui/material"
 import CheckIcon from '@mui/icons-material/Check';
 import BlockIcon from '@mui/icons-material/Block';

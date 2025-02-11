@@ -540,7 +540,7 @@ export const Navigation = observer(() => {
                 </MenuItem>
                 <MenuItem className='navigation-menu-item' onClick={(e) => handleDupeRequest()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: theme.palette.request.light }} />
+                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: 'request' }} />
                     </ListItemIcon>
                     <ListItemText>Duplicate</ListItemText>
                 </MenuItem>

@@ -1,5 +1,5 @@
 import { SvgIcon, Typography } from "@mui/material";
-import { Box } from "@mui/system";
+import { Box } from "@mui/material";
 import { useWorkspace } from "../contexts/workspace.context";
 import ApicizeIcon from "../icons/apicize-icon";
 

@@ -46,7 +46,7 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
         color: {
           main: '#0073e6'
         },
-        name: 'request'
+        name: 'scenario'
       }),
       authorization: palette.palette.augmentColor({
         color: {
@@ -64,7 +64,7 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
         color: {
           main: '#cc0099'
         },
-        name: 'request'
+        name: 'proxy'
       }),
       defaults: palette.palette.augmentColor({
         color: {
@@ -159,6 +159,8 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
       }
     },
   })
+
+  console.log('Should be using theme', theme)
 
   return (
     <ThemeProvider theme={theme}>
