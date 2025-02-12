@@ -3,6 +3,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles"
 import { TypographyOptions } from "@mui/material/styles/createTypography";
 import { observer } from "mobx-react-lite"
 import { ReactNode } from "react"
+import "@mui/x-tree-view/themeAugmentation"
 
 interface ExtendedTypographyOptions extends TypographyOptions {
   code: React.CSSProperties;
@@ -106,13 +107,13 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
           }
         }
       },
-      // MuiTreeItem: {
-      //   styleOverrides: {
-      //     content: {
-      //       padding: 0,
-      //     }
-      //   }
-      // },
+      MuiTreeItem: {
+        styleOverrides: {
+          content: {
+            padding: 0,
+          }
+        }
+      },
 
       //   MuiIconButton: {
       //     defaultProps: {

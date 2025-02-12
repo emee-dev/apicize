@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.16.2
+
+* Restore padding removal on tree items
+
 # 0.16.1
 
 * Fix error on loading defaults
