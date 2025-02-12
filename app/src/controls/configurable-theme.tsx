@@ -110,7 +110,7 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
       MuiTreeItem: {
         styleOverrides: {
           content: {
-            padding: 0,
+            padding: '0.1rem',
           }
         }
       },

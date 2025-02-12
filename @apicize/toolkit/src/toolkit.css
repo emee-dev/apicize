@@ -163,7 +163,7 @@ pre.log {
 }
 
 .MuiTreeItem-iconContainer {
-  padding: .7em;
+  padding: 0.1rem 0.5rem 0.1rem 1.0rem;
 }
 
 .nav-item {
