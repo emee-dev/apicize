@@ -1,4 +1,3 @@
-import * as React from 'react'
 import Box from '@mui/material/Box'
 import { Button, FormControl, Grid2, IconButton, InputLabel, MenuItem, Select, Stack } from '@mui/material'
 import { GenerateIdentifier } from '../../../services/random-identifier-generator'
@@ -6,15 +5,6 @@ import { EditableNameValuePair } from '../../../models/workspace/editable-name-v
 import { NameValueEditor } from '../name-value-editor'
 import FileOpenIcon from '@mui/icons-material/FileOpen'
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
-
-import AceEditor from "react-ace"
-import "ace-builds/src-noconflict/mode-json"
-import "ace-builds/src-noconflict/mode-xml"
-import "ace-builds/src-noconflict/theme-gruvbox"
-import "ace-builds/src-noconflict/theme-chrome"
-import "ace-builds/src-noconflict/ext-language_tools"
-import "ace-builds/src-noconflict/ext-searchbox"
-import beautify from "js-beautify";
 import { BodyType, BodyTypes } from '@apicize/lib-typescript'
 import { EditableEntityType } from '../../../models/workspace/editable-entity-type'
 import { EditableRequest } from '../../../models/workspace/editable-request'
@@ -24,16 +14,18 @@ import { useFileOperations } from '../../../contexts/file-operations.context'
 import { toJS } from 'mobx'
 import { useWorkspace } from '../../../contexts/workspace.context'
 import { ToastSeverity, useFeedback } from '../../../contexts/feedback.context'
-import { useApicizeSettings } from '../../../contexts/apicize-settings.context'
+import { RichEditor, RichEditorCommands } from './rich-editor'
+import { useRef, useState } from 'react'
+import { EditorMode } from '../../../models/editor-mode'
 
 export const RequestBodyEditor = observer(() => {
   const workspace = useWorkspace()
-  const apicizeSettings = useApicizeSettings()
   const clipboard = useClipboard()
   const fileOps = useFileOperations()
   const feedback = useFeedback()
 
-  const editorRef = React.createRef<AceEditor>()
+  // const editorRef = React.createRef<AceEditor>()
+  const refCommands = useRef<RichEditorCommands>(null)
 
   if (workspace.active?.entityType !== EditableEntityType.Request) {
     return null
@@ -71,30 +63,34 @@ export const RequestBodyEditor = observer(() => {
     }
   }
 
-  const [allowUpdateHeader, setAllowUpdateHeader] = React.useState<boolean>(headerDoesNotMatchType(request.body.type))
+  const getBodyTypeEditorMode = (bodyType: BodyType | undefined | null) => {
+    switch (bodyType) {
+      case BodyType.JSON:
+        return EditorMode.json
+      case BodyType.XML:
+        return EditorMode.xml
+      case BodyType.Text:
+        return EditorMode.txt
+      default:
+        return undefined
+    }
+  }
+
+  const [allowUpdateHeader, setAllowUpdateHeader] = useState<boolean>(headerDoesNotMatchType(request.body.type))
+  const [editorMode, setEditorMode] = useState(getBodyTypeEditorMode(request.body.type))
 
   const updateBodyType = (val: BodyType | string) => {
     const v = toJS(val)
     const newBodyType = (v == "" ? undefined : v as unknown as BodyType) ?? BodyType.Text
     workspace.setRequestBodyType(newBodyType)
+    setEditorMode(getBodyTypeEditorMode(newBodyType))
     setAllowUpdateHeader(headerDoesNotMatchType(newBodyType))
   }
 
   function performBeautify() {
-    if (!editorRef.current) return
-    let text = editorRef.current.editor.session.getValue()
-    switch (request.body.type) {
-      case BodyType.JSON:
-        text = beautify.js_beautify(text, {})
-        break
-      case BodyType.XML:
-        text = beautify.html_beautify(text, {})
-        break
-      default:
-        return
+    if (refCommands.current) {
+      refCommands.current.beautify()
     }
-
-    editorRef.current.editor.session.setValue(text)
   }
 
   const updateBodyAsText = (data: string | undefined) => {
@@ -168,7 +164,7 @@ export const RequestBodyEditor = observer(() => {
 
   return (
     <Grid2 container direction='column' spacing={3} position='relative' width='100%' height='100%'>
-      <Grid2 direction='row' display='flex' justifyContent='space-between'>
+      <Grid2 container direction='row' display='flex' justifyContent='space-between'>
         <FormControl>
           <InputLabel id='request-body-type-label-id'>Body Content Type</InputLabel>
           <Select
@@ -220,29 +216,14 @@ export const RequestBodyEditor = observer(() => {
               <Box padding='10px'>{request.body.data ? request.body.data.length.toLocaleString() + ' Bytes' : '(None)'}</Box>
             </Stack>
             :
-            <Grid2 flexGrow={1}>
-              <AceEditor
-                ref={editorRef}
-                mode={mode}
-                name='request-body-editor'
-                theme={apicizeSettings.colorScheme === 'dark' ? 'gruvbox' : 'chrome'}
-                fontSize={`${apicizeSettings.fontSize}pt`}
-                lineHeight='1.1em'
-                width='100%'
-                height='100%'
-                showGutter={true}
-                showPrintMargin={false}
-                tabSize={3}
-                setOptions={{
-                  useWorker: false,
-                  foldStyle: "markbegin",
-                  displayIndentGuides: true,
-                  enableAutoIndent: true,
-                  fixedWidthGutter: true,
-                  showLineNumbers: true,
-                }}
-                onChange={updateBodyAsText}
-                value={request.body.type === BodyType.JSON && request.body.formatted ? request.body.formatted : request.body.data as string}
+            <Grid2 flexGrow={1} paddingBottom='5rem'>
+              <RichEditor
+                sx={{ width: '100%', height: '100%' }}
+                ref={refCommands}
+                entity={request}
+                mode={editorMode}
+                onGetValue={() => request.body.data as string}
+                onUpdateValue={updateBodyAsText}
               />
             </Grid2>
       }

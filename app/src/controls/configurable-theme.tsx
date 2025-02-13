@@ -161,8 +161,6 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
     },
   })
 
-  console.log('Should be using theme', theme)
-
   return (
     <ThemeProvider theme={theme}>
       <div className={isDark ? 'dark' : 'light'}>

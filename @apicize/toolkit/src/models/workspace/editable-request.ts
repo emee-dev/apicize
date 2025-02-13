@@ -79,6 +79,7 @@ export class EditableRequest extends Editable<Request> {
                     result.body.data = result.body.formatted
                         ? result.body.formatted
                         : JSON.stringify(result.body.data)
+                    result.body.formatted = undefined
                     break
                 case BodyType.Form:
                     result.body.data = (result.body.data as NameValuePair[]).map(r => ({

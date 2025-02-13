@@ -1,10 +1,11 @@
 import { ImageViewer, KNOWN_IMAGE_EXTENSIONS } from "../image-viewer";
-import { TextViewer } from "../text-viewer";
 import { IconButton, Stack, Typography } from "@mui/material";
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import beautify from "js-beautify";
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
+import { EditorMode } from "../../../models/editor-mode";
+import { RichViewer } from "../rich-viewer";
 
 export function ResultResponsePreview(props: { requestOrGroupId: string, executionResultId: string }) {
     const workspace = useWorkspace()
@@ -54,6 +55,39 @@ export function ResultResponsePreview(props: { requestOrGroupId: string, executi
     const showImageCopy = isImage && ((body?.data?.length ?? 0) > 0)
     const showTextCopy = (!isImage) && ((text.length ?? 0) > 0)
 
+    let viewer
+    if (isImage && showImageCopy) {
+        viewer = (<ImageViewer base64ToRender={body?.data} extensionToRender={extension} />)
+    } else {
+        let mode: EditorMode | undefined
+        switch (extension) {
+            case 'json':
+                mode = EditorMode.json
+                break
+            case 'xml':
+                mode = EditorMode.xml
+                break
+            case 'txt':
+            case 'text':
+                mode = EditorMode.txt
+                break
+            case 'html':
+            case 'htm':
+                mode = EditorMode.html
+                break
+            case 'css':
+                mode = EditorMode.css
+                break
+        }
+
+        viewer = <RichViewer
+            mode={mode}
+            text={text}
+            beautify={true}
+            sx={{ width: '100%', height: '100%' }}
+        />
+    }
+
     return (
         <Stack sx={{ bottom: 0, overflow: 'hidden', position: 'relative', height: '100%', width: '100%', display: 'flex' }}>
             <Typography variant='h2' sx={{ marginTop: 0, flexGrow: 0 }} component='div' aria-label="response body preview">
@@ -80,11 +114,7 @@ export function ResultResponsePreview(props: { requestOrGroupId: string, executi
                 }
 
             </Typography>
-            {
-                isImage && showImageCopy
-                    ? (<ImageViewer base64ToRender={body?.data} extensionToRender={extension} />)
-                    : (<TextViewer text={text} extension={extension} />)
-            }
+            {viewer}
         </Stack>
     )
 }

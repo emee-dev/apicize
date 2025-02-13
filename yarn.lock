@@ -23,7 +23,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@apicize/toolkit@npm:^0.16.2, @apicize/toolkit@workspace:@apicize/toolkit":
+"@apicize/toolkit@npm:^0.16.3, @apicize/toolkit@workspace:@apicize/toolkit":
   version: 0.0.0-use.local
   resolution: "@apicize/toolkit@workspace:@apicize/toolkit"
   dependencies:
@@ -35,6 +35,7 @@ __metadata:
     "@mui/material": "npm:^6.1.1"
     "@mui/system": "npm:^6.1.1"
     "@mui/x-tree-view": "npm:^7.19.0"
+    "@types/chai": "npm:^5"
     "@types/hast": "npm:^3.0.4"
     "@types/jest": "npm:^29.5.3"
     "@types/js-beautify": "npm:^1.14.3"
@@ -45,14 +46,15 @@ __metadata:
     "@types/react-test-renderer": "npm:^18.0.0"
     "@types/unist": "npm:^3.0.2"
     "@types/uuid": "npm:^9.0.7"
-    ace-builds: "npm:^1.33.0"
+    ace-code: "npm:^1.38.0"
+    ace-layout: "npm:^1.4.2"
+    chai: "npm:^5.1.2"
     hast-util-to-jsx-runtime: "npm:^2.3.0"
     jest: "npm:^29.6.2"
-    js-beautify: "npm:^1.14.11"
+    js-beautify: "npm:^1.15.3"
     npm: "npm:^10.2.3"
     prismjs: "npm:^1.29.0"
     react: "npm:^18.2.0"
-    react-ace: "npm:^11.0.1"
     react-dnd: "npm:^16.0.1"
     react-dom: "npm:^18.2.0"
     react-remark: "npm:^2.1.0"
@@ -72,6 +74,8 @@ __metadata:
     unified: "npm:^11.0.5"
     unist-util-visit: "npm:^5.0.0"
     uuid: "npm:^9.0.1"
+    vscode-jsonrpc: "npm:8.0.2"
+    vscode-languageserver-protocol: "npm:3.17.3"
   peerDependencies:
     mobx: ^6.13.1
     mobx-react-lite: ^4.0.7
@@ -2207,12 +2211,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/chai@npm:^5":
+  version: 5.0.1
+  resolution: "@types/chai@npm:5.0.1"
+  dependencies:
+    "@types/deep-eql": "npm:*"
+  checksum: 10c0/82cb718101d37698e35fb03e2a983a442303065bfcb9b9e8b50b49fdad2fa5759c14dabfa5cb4a4bfa5c6aff1f05377d6ab4310bae0cfbf7d3138f94c969f441
+  languageName: node
+  linkType: hard
+
 "@types/debug@npm:^4.0.0":
   version: 4.1.12
   resolution: "@types/debug@npm:4.1.12"
   dependencies:
     "@types/ms": "npm:*"
   checksum: 10c0/5dcd465edbb5a7f226e9a5efd1f399c6172407ef5840686b73e3608ce135eeca54ae8037dcd9f16bdb2768ac74925b820a8b9ecc588a58ca09eca6acabe33e2f
+  languageName: node
+  linkType: hard
+
+"@types/deep-eql@npm:*":
+  version: 4.0.2
+  resolution: "@types/deep-eql@npm:4.0.2"
+  checksum: 10c0/bf3f811843117900d7084b9d0c852da9a044d12eb40e6de73b552598a6843c21291a8a381b0532644574beecd5e3491c5ff3a0365ab86b15d59862c025384844
   languageName: node
   linkType: hard
 
@@ -2544,10 +2564,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ace-builds@npm:^1.32.8, ace-builds@npm:^1.33.0":
-  version: 1.37.5
-  resolution: "ace-builds@npm:1.37.5"
-  checksum: 10c0/6279b4e41088d7fca39f8c1764358ea0910af88c7a78027ba51fd9e8699bdc9b4108684638adf86d3b0eaa917eec8cefde1530f2c1a0f0a63119d88ae21ce4e5
+"ace-code@npm:^1.38.0":
+  version: 1.38.0
+  resolution: "ace-code@npm:1.38.0"
+  checksum: 10c0/9c2489f2d41d90acd02550790bfaa6d99c1ca5ce9a3f9721f3db0cab9c0e91d6c863f84a3030d7e4257c0dd8e14a1974dc40f84f6cb55a886ae1e87cb19ab7f5
+  languageName: node
+  linkType: hard
+
+"ace-layout@npm:^1.4.2":
+  version: 1.4.2
+  resolution: "ace-layout@npm:1.4.2"
+  checksum: 10c0/844970611c22559469d1d3076d357e024e4f59b0b4d22604315a093c72ca117b7cf3886d2587ac0b81430834db126dd059249b2c8e8d617abb51040e12cf90d6
   languageName: node
   linkType: hard
 
@@ -2679,7 +2706,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:app"
   dependencies:
-    "@apicize/toolkit": "npm:^0.16.2"
+    "@apicize/toolkit": "npm:^0.16.3"
     "@dnd-kit/core": "npm:^6.1.0"
     "@fontsource/open-sans": "npm:^5.1.1"
     "@fontsource/roboto-mono": "npm:^5.1.1"
@@ -2859,6 +2886,13 @@ __metadata:
     get-intrinsic: "npm:^1.2.6"
     is-array-buffer: "npm:^3.0.4"
   checksum: 10c0/2f2459caa06ae0f7f615003f9104b01f6435cc803e11bd2a655107d52a1781dc040532dc44d93026b694cc18793993246237423e13a5337e86b43ed604932c06
+  languageName: node
+  linkType: hard
+
+"assertion-error@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "assertion-error@npm:2.0.1"
+  checksum: 10c0/bbbcb117ac6480138f8c93cf7f535614282dea9dc828f540cdece85e3c665e8f78958b96afac52f29ff883c72638e6a87d469ecc9fe5bc902df03ed24a55dba8
   languageName: node
   linkType: hard
 
@@ -3191,6 +3225,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chai@npm:^5.1.2":
+  version: 5.1.2
+  resolution: "chai@npm:5.1.2"
+  dependencies:
+    assertion-error: "npm:^2.0.1"
+    check-error: "npm:^2.1.1"
+    deep-eql: "npm:^5.0.1"
+    loupe: "npm:^3.1.0"
+    pathval: "npm:^2.0.0"
+  checksum: 10c0/6c04ff8495b6e535df9c1b062b6b094828454e9a3c9493393e55b2f4dbff7aa2a29a4645133cad160fb00a16196c4dc03dc9bb37e1f4ba9df3b5f50d7533a736
+  languageName: node
+  linkType: hard
+
 "chalk@npm:^4.0.0, chalk@npm:^4.0.2, chalk@npm:^4.1.2":
   version: 4.1.2
   resolution: "chalk@npm:4.1.2"
@@ -3261,6 +3308,13 @@ __metadata:
   version: 2.0.1
   resolution: "character-reference-invalid@npm:2.0.1"
   checksum: 10c0/2ae0dec770cd8659d7e8b0ce24392d83b4c2f0eb4a3395c955dce5528edd4cc030a794cfa06600fcdd700b3f2de2f9b8e40e309c0011c4180e3be64a0b42e6a1
+  languageName: node
+  linkType: hard
+
+"check-error@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "check-error@npm:2.1.1"
+  checksum: 10c0/979f13eccab306cf1785fa10941a590b4e7ea9916ea2a4f8c87f0316fc3eab07eabefb6e587424ef0f88cbcd3805791f172ea739863ca3d7ce2afc54641c7f0e
   languageName: node
   linkType: hard
 
@@ -3614,6 +3668,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"deep-eql@npm:^5.0.1":
+  version: 5.0.2
+  resolution: "deep-eql@npm:5.0.2"
+  checksum: 10c0/7102cf3b7bb719c6b9c0db2e19bf0aa9318d141581befe8c7ce8ccd39af9eaa4346e5e05adef7f9bd7015da0f13a3a25dcfe306ef79dc8668aedbecb658dd247
+  languageName: node
+  linkType: hard
+
 "deep-is@npm:^0.1.3":
   version: 0.1.4
   resolution: "deep-is@npm:0.1.4"
@@ -3670,13 +3731,6 @@ __metadata:
   dependencies:
     dequal: "npm:^2.0.0"
   checksum: 10c0/e0928ab8f94c59417a2b8389c45c55ce0a02d9ac7fd74ef62d01ba48060129e1d594501b77de01f3eeafc7cb00773819b0df74d96251cf20b31c5b3071f45c0e
-  languageName: node
-  linkType: hard
-
-"diff-match-patch@npm:^1.0.5":
-  version: 1.0.5
-  resolution: "diff-match-patch@npm:1.0.5"
-  checksum: 10c0/142b6fad627b9ef309d11bd935e82b84c814165a02500f046e2773f4ea894d10ed3017ac20454900d79d4a0322079f5b713cf0986aaf15fce0ec4a2479980c86
   languageName: node
   linkType: hard
 
@@ -6119,7 +6173,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"js-beautify@npm:^1.14.11":
+"js-beautify@npm:^1.15.3":
   version: 1.15.3
   resolution: "js-beautify@npm:1.15.3"
   dependencies:
@@ -6491,20 +6545,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.get@npm:^4.4.2":
-  version: 4.4.2
-  resolution: "lodash.get@npm:4.4.2"
-  checksum: 10c0/48f40d471a1654397ed41685495acb31498d5ed696185ac8973daef424a749ca0c7871bf7b665d5c14f5cc479394479e0307e781f61d5573831769593411be6e
-  languageName: node
-  linkType: hard
-
-"lodash.isequal@npm:^4.5.0":
-  version: 4.5.0
-  resolution: "lodash.isequal@npm:4.5.0"
-  checksum: 10c0/dfdb2356db19631a4b445d5f37868a095e2402292d59539a987f134a8778c62a2810c2452d11ae9e6dcac71fc9de40a6fedcb20e2952a15b431ad8b29e50e28f
-  languageName: node
-  linkType: hard
-
 "lodash.memoize@npm:^4.1.2":
   version: 4.1.2
   resolution: "lodash.memoize@npm:4.1.2"
@@ -6541,6 +6581,13 @@ __metadata:
   bin:
     loose-envify: cli.js
   checksum: 10c0/655d110220983c1a4b9c0c679a2e8016d4b67f6e9c7b5435ff5979ecdb20d0813f4dec0a08674fcbdd4846a3f07edbb50a36811fd37930b94aaa0d9daceb017e
+  languageName: node
+  linkType: hard
+
+"loupe@npm:^3.1.0":
+  version: 3.1.3
+  resolution: "loupe@npm:3.1.3"
+  checksum: 10c0/f5dab4144254677de83a35285be1b8aba58b3861439ce4ba65875d0d5f3445a4a496daef63100ccf02b2dbc25bf58c6db84c9cb0b96d6435331e9d0a33b48541
   languageName: node
   linkType: hard
 
@@ -8106,6 +8153,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pathval@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "pathval@npm:2.0.0"
+  checksum: 10c0/602e4ee347fba8a599115af2ccd8179836a63c925c23e04bd056d0674a64b39e3a081b643cc7bc0b84390517df2d800a46fcc5598d42c155fe4977095c2f77c5
+  languageName: node
+  linkType: hard
+
 "picocolors@npm:^1.0.0, picocolors@npm:^1.1.1":
   version: 1.1.1
   resolution: "picocolors@npm:1.1.1"
@@ -8314,22 +8368,6 @@ __metadata:
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
   checksum: 10c0/900a93d3cdae3acd7d16f642c29a642aea32c2026446151f0778c62ac089d4b8e6c986811076e1ae180a694cedf077d453a11b58ff0a865629a4f82ab558e102
-  languageName: node
-  linkType: hard
-
-"react-ace@npm:^11.0.1":
-  version: 11.0.1
-  resolution: "react-ace@npm:11.0.1"
-  dependencies:
-    ace-builds: "npm:^1.32.8"
-    diff-match-patch: "npm:^1.0.5"
-    lodash.get: "npm:^4.4.2"
-    lodash.isequal: "npm:^4.5.0"
-    prop-types: "npm:^15.8.1"
-  peerDependencies:
-    react: ^0.13.0 || ^0.14.0 || ^15.0.1 || ^16.0.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^0.13.0 || ^0.14.0 || ^15.0.1 || ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 10c0/fa8acd2dc977d5edf6d99e238429c696c3cb4f35fb9f78b296cff875a399b12c6672618f34495be00c6d96ca877c3e30f37c5235b9b3878f65d19aa0ed5dab69
   languageName: node
   linkType: hard
 
@@ -10239,6 +10277,37 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 10c0/e1cad1cfbd29923a37d2dbd60f7387901ed8356758073a0226cbe844fd032425ba3bf41651332cab4965d5c54d0b51d208889ff32ce81bd282d230c0c9f0f8f1
+  languageName: node
+  linkType: hard
+
+"vscode-jsonrpc@npm:8.0.2":
+  version: 8.0.2
+  resolution: "vscode-jsonrpc@npm:8.0.2"
+  checksum: 10c0/349ae58c725d9d45f2f43914c0fdaf722a2f26669fb5f95f3200e1fd2520496936c20bee19144305dcbaa6ec2de438792444d3be365b110f454c377e37a70550
+  languageName: node
+  linkType: hard
+
+"vscode-jsonrpc@npm:8.1.0":
+  version: 8.1.0
+  resolution: "vscode-jsonrpc@npm:8.1.0"
+  checksum: 10c0/cb797b892227e7997378c6a1563b9849b6ec8190daae6fd18909fff4b33f6a98690bb315b95a3e4eeb9bf373d11896028c2111d71101544dfa16cb18a53cfcaa
+  languageName: node
+  linkType: hard
+
+"vscode-languageserver-protocol@npm:3.17.3":
+  version: 3.17.3
+  resolution: "vscode-languageserver-protocol@npm:3.17.3"
+  dependencies:
+    vscode-jsonrpc: "npm:8.1.0"
+    vscode-languageserver-types: "npm:3.17.3"
+  checksum: 10c0/c8448cab8c8e3df386825f129a2f06a748510ad3407cb3d2122c6b661e973c32bb2f2612d64ea80e8c0344001adc80ee2f4c8bbce4fa81dd3eef888309457578
+  languageName: node
+  linkType: hard
+
+"vscode-languageserver-types@npm:3.17.3":
+  version: 3.17.3
+  resolution: "vscode-languageserver-types@npm:3.17.3"
+  checksum: 10c0/a70d4ac0dbc08ba425b97e329e6a5696dabc6a264415bacb861e10d859b224f1b46d1fb41c17b6fdd31b32749d3bdfc819cb1b8a57dbe0d1e70e661ba8cfa397
   languageName: node
   linkType: hard
 

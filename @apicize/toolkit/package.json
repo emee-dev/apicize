@@ -1,7 +1,7 @@
 {
   "name": "@apicize/toolkit",
   "private": true,
-  "version": "0.16.2",
+  "version": "0.16.3",
   "description": "UI toolkit for Apicize applications",
   "keywords": [],
   "license": "MIT",
@@ -15,6 +15,7 @@
     "typeface-roboto-mono": "^1.1.13"
   },
   "devDependencies": {
+    "@types/chai": "^5",
     "@types/hast": "^3.0.4",
     "@types/jest": "^29.5.3",
     "@types/js-beautify": "^1.14.3",
@@ -50,10 +51,11 @@
     "@mui/material": "^6.1.1",
     "@mui/system": "^6.1.1",
     "@mui/x-tree-view": "^7.19.0",
-    "ace-builds": "^1.33.0",
-    "js-beautify": "^1.14.11",
+    "ace-code": "^1.38.0",
+    "ace-layout": "^1.4.2",
+    "chai": "^5.1.2",
+    "js-beautify": "^1.15.3",
     "react": "^18.2.0",
-    "react-ace": "^11.0.1",
     "react-dnd": "^16.0.1",
     "react-dom": "^18.2.0",
     "react-remark": "^2.1.0",
@@ -66,6 +68,8 @@
     "rimraf": "^5.0.5",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "vscode-jsonrpc": "8.0.2",
+    "vscode-languageserver-protocol": "3.17.3"
   }
 }

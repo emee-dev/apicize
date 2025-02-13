@@ -1,4 +1,3 @@
-import { TextViewer } from "../text-viewer"
 import { IconButton, Typography } from "@mui/material"
 import { Stack } from "@mui/material"
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -6,6 +5,8 @@ import beautify from "js-beautify";
 import { observer } from "mobx-react-lite";
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
+import { RichViewer } from "../rich-viewer";
+import { EditorMode } from "../../../models/editor-mode";
 
 export const ResultDetailsViewer = observer((props: {
     requestOrGroupId: string,
@@ -32,7 +33,7 @@ export const ResultDetailsViewer = observer((props: {
                     <ContentCopyIcon />
                 </IconButton>
             </Typography>
-            <TextViewer text={text} extension='json' />
+            <RichViewer text={text} mode={EditorMode.json} beautify={true} wrap={true} sx={{ width: '100%', height: '100%' }} />
         </Stack>
     )
 })

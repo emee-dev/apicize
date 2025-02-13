@@ -1,8 +1,9 @@
-import { TextViewer } from "../text-viewer";
 import { IconButton, Stack, Typography } from "@mui/material";
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
+import { RichViewer } from "../rich-viewer";
+import { EditorMode } from "../../../models/editor-mode";
 
 export function ResultRawPreview(props: { requestOrGroupId: string, executionResultId: string }) {
     const workspace = useWorkspace()
@@ -34,8 +35,8 @@ export function ResultRawPreview(props: { requestOrGroupId: string, executionRes
                 }
             </Typography>
             {has_text
-                ? (<TextViewer text={preview} extension='txt' />)
-                : (<><Typography aria-label="base64 response data" variant='h3' sx={{ marginTop: 0 }} component='div'>Base 64</Typography><TextViewer text={preview} extension='txt' /></>)
+                ? (<RichViewer text={preview || ''} mode={EditorMode.txt} wrap={true} sx={{ width: '100%', height: '100%' }} />)
+                : (<><Typography aria-label="base64 response data" variant='h3' sx={{ marginTop: 0 }} component='div'>Base 64</Typography><RichViewer text={preview || ''} wrap={true} mode={EditorMode.txt} /></>)
             }
         </Stack>
     )

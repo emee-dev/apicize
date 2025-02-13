@@ -17,8 +17,10 @@ import { observer } from 'mobx-react-lite';
 import { EditableEntityType } from '../../models/workspace/editable-entity-type';
 import { useWorkspace } from "../../contexts/workspace.context";
 import { ExecutionGroup, ExecutionRequest } from "../../models/workspace/execution";
-import { MAX_TEXT_RENDER_LENGTH } from "./text-viewer";
+// import { MAX_TEXT_RENDER_LENGTH } from "./text-viewer";
 import RequestIcon from "../../icons/request-icon";
+
+export const MAX_TEXT_RENDER_LENGTH = 64 * 1024 * 1024
 
 export const ResultsViewer = observer((props: {
     sx?: SxProps<Theme>

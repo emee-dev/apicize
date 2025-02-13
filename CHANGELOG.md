@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.16.3
+
+* Replaced react-ace in preparation for ace-linter integration
+
 # 0.16.2
 
 * Restore padding removal on tree items
