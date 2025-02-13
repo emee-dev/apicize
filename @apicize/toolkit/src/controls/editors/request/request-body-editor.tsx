@@ -14,7 +14,7 @@ import { useFileOperations } from '../../../contexts/file-operations.context'
 import { toJS } from 'mobx'
 import { useWorkspace } from '../../../contexts/workspace.context'
 import { ToastSeverity, useFeedback } from '../../../contexts/feedback.context'
-import { RichEditor, RichEditorCommands } from './rich-editor'
+import { RichEditor, RichEditorCommands } from '../rich-editor'
 import { useRef, useState } from 'react'
 import { EditorMode } from '../../../models/editor-mode'
 

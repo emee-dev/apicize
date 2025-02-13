@@ -14,12 +14,12 @@ import { Mode as CssMode } from 'ace-code/src/mode/css'
 import { Mode as TextMode } from 'ace-code/src/mode/text'
 
 
-import { useApicizeSettings } from '../../../contexts/apicize-settings.context'
+import { useApicizeSettings } from '../../contexts/apicize-settings.context'
 import { forwardRef, Ref, useEffect, useImperativeHandle, useRef } from 'react'
 import theme from 'ace-code/src/theme/gruvbox'
-import { EditableItem } from '../../../models/editable'
+import { EditableItem } from '../../models/editable'
 // import { beautify } from 'ace-code/src/ext/beautify'
-import { EditorMode } from '../../../models/editor-mode'
+import { EditorMode } from '../../models/editor-mode'
 import { css_beautify, html_beautify, js_beautify } from 'js-beautify'
 
 // We have to dynamically load search box because of webpack(?)

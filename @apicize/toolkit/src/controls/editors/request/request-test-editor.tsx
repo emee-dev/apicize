@@ -2,8 +2,7 @@ import { EditableEntityType } from "../../../models/workspace/editable-entity-ty
 import { EditableRequest } from "../../../models/workspace/editable-request";
 import { observer } from "mobx-react-lite";
 import { useWorkspace } from "../../../contexts/workspace.context";
-import { RichEditor, RichEditorCommands } from './rich-editor'
-import { Button } from "@mui/material";
+import { RichEditor, RichEditorCommands } from '../rich-editor'
 import { useRef } from "react";
 import { EditorMode } from "../../../models/editor-mode";
 
@@ -25,7 +24,7 @@ export const RequestTestEditor = observer(() => {
     ref={refCommands}
     mode={EditorMode.js}
     onGetValue={() => request.test}
-    onUpdateValue={(text) => { workspace.setRequestTest(text) }}
+    onUpdateValue={(text: string) => { workspace.setRequestTest(text) }}
   />
 
 })
