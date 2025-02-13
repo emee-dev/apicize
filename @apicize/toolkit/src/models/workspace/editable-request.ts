@@ -4,7 +4,7 @@ import { computed, observable, toJS } from "mobx"
 import { EditableNameValuePair } from "./editable-name-value-pair"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EditableEntityType } from "./editable-entity-type"
-
+import { js_beautify } from 'js-beautify'
 export class EditableRequest extends Editable<Request> {
     public readonly entityType = EditableEntityType.Request
 
@@ -76,10 +76,7 @@ export class EditableRequest extends Editable<Request> {
         if (result.body && result.body.data) {
             switch (result.body.type) {
                 case BodyType.JSON:
-                    result.body.data = result.body.formatted
-                        ? result.body.formatted
-                        : JSON.stringify(result.body.data)
-                    result.body.formatted = undefined
+                    result.body.data = js_beautify(JSON.stringify(result.body.data), { indent_size: 4 })
                     break
                 case BodyType.Form:
                     result.body.data = (result.body.data as NameValuePair[]).map(r => ({
@@ -103,10 +100,6 @@ export class EditableRequest extends Editable<Request> {
     }
 
     toWorkspace(): Request {
-        if (this.body.type === BodyType.JSON && this.body.data) {
-            this.body.formatted = this.body.data
-        }
-
         const result: Request = {
             id: this.id,
             name: this.name,

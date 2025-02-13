@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.16.4
+
+* Store JSON data files in "pretty" format
+* Remove support for "formatted" property on JSON body data, beautify on load instead
+
 # 0.16.3
 
 * Replaced react-ace in preparation for ace-linter integration
