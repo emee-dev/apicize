@@ -40,6 +40,7 @@ export interface ApicizeExecutionRequest {
     requestsWithErrors: number
     passedTestCount: number
     failedTestCount: number
+    error?: ApicizeError
 }
 
 export interface ApicizeExecutionRequestRun {
@@ -96,6 +97,7 @@ export interface ApicizeExecutionGroup {
     requestsWithErrors: number
     passedTestCount: number
     failedTestCount: number
+    error?: ApicizeError
 }
 
 export interface ApicizeExecutionGroupRun {

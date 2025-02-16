@@ -227,6 +227,7 @@ fn cancellation_tokens() -> &'static Mutex<HashMap<String, CancellationToken>> {
 async fn run_request(
     workspace: Workspace,
     request_id: String,
+    workbook_full_name: String,
     override_number_of_runs: Option<usize>,
 ) -> Result<ApicizeExecution, String> {
     let arc_test_started = Arc::new(Instant::now());
@@ -239,12 +240,26 @@ async fn run_request(
             .insert(request_id.clone(), cancellation.clone());
     }
 
+    let allowed_parent_path: Option<PathBuf>;
+    if workbook_full_name.is_empty() {
+        allowed_parent_path = None;
+    } else {
+        allowed_parent_path = Some(PathBuf::from(
+            std::path::absolute(&workbook_full_name)
+                .unwrap()
+                .parent()
+                .unwrap()
+                .to_path_buf(),
+        ));
+    }
+
     let response = test_runner::run(
         &vec![request_id.clone()],
         shared_workspace,
         Some(Arc::new(cancellation)),
         arc_test_started,
         override_number_of_runs,
+        allowed_parent_path,
         true,
     )
     .await;

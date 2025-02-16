@@ -8,7 +8,7 @@ export {
     Request, RequestGroup, GroupExecution
 } from './models/request'
 export { ApplicationSettings } from './models/application-settings';
-export { Scenario } from './models/scenario'
+export { Scenario, ScenarioVariable, ScenarioVariableType } from './models/scenario'
 export { Authorization, AuthorizationType as AuthorizationType, BaseAuthorization, BasicAuthorization, ApiKeyAuthorization, OAuth2ClientAuthorization, OAuth2PkceAuthorization } from './models/authorization'
 export { Certificate, CertificateType, BaseCertificate, Pkcs8PemCertificate, Pkcs12Certificate, PemCertificate } from './models/certificate'
 export { Proxy } from './models/proxy'

@@ -136,7 +136,7 @@ pre,
 .console {
   /* Make react-simple-code-editor work */
   word-break: break-all !important;
-  font-family: "Roboto Mono", Monospace
+  font-family: "Roboto Mono", Monospace !important;
 }
 
 .console {

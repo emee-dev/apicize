@@ -3,7 +3,7 @@ import { DEFAULT_SELECTION_ID, NO_SELECTION, NO_SELECTION_ID } from "../models/s
 import { Execution, ExecutionGroup, ExecutionMenuItem, ExecutionRequest, ExecutionResult } from "../models/workspace/execution"
 import { base64Decode, base64Encode, editableWorkspaceToStoredWorkspace } from "../services/apicize-serializer"
 import { EditableRequest, EditableRequestGroup } from "../models/workspace/editable-request"
-import { EditableScenario } from "../models/workspace/editable-scenario"
+import { EditableScenario, EditableScenarioVariable } from "../models/workspace/editable-scenario"
 import { EditableAuthorization } from "../models/workspace/editable-authorization"
 import { EditableCertificate } from "../models/workspace/editable-certificate"
 import { EditableProxy } from "../models/workspace/editable-proxy"
@@ -24,6 +24,7 @@ import { EditableItem, EditableState } from "../models/editable"
 import { createContext, useContext } from "react"
 import { EditableDefaults } from "../models/workspace/editable-defaults"
 import { EditableWarnings } from "../models/workspace/editable-warnings"
+import { FeedbackStore, ToastSeverity } from "./feedback.context"
 
 export enum WorkspaceMode {
     Normal,
@@ -65,7 +66,7 @@ export class WorkspaceStore {
     @observable accessor appName = 'Apicize'
     @observable accessor appVersion = ''
     @observable accessor workbookFullName = ''
-    @observable accessor workbookDisplayName = '(New )'
+    @observable accessor workbookDisplayName = '(New)'
     @observable accessor dirty: boolean = false
     @observable accessor warnOnWorkspaceCreds: boolean = true
     @observable accessor invalidItems = new Set<string>()
@@ -77,8 +78,9 @@ export class WorkspaceStore {
     pendingPkceRequests = new Map<string, Map<string, number>>()
 
     constructor(
+        private readonly feedback: FeedbackStore,
         private readonly callbacks: {
-            onExecuteRequest: (workspace: Workspace, requestId: string, runs?: number) => Promise<ApicizeExecution>,
+            onExecuteRequest: (workspace: Workspace, requestId: string, allowedParentPath: string, runs?: number) => Promise<ApicizeExecution>,
             onCancelRequest: (requestId: string) => Promise<void>,
             onClearToken: (authorizationId: string) => Promise<void>,
             onInitializePkce: (data: { authorizationId: string }) => Promise<void>,
@@ -946,19 +948,20 @@ export class WorkspaceStore {
         scenario.id = GenerateIdentifier()
         scenario.name = `${GetTitle(source)} - Copy`
         scenario.dirty = true
-        scenario.variables = source.variables.map(v => ({
-            id: GenerateIdentifier(),
-            name: v.name,
-            value: v.value,
-            disabled: v.disabled
-        }))
+        scenario.variables = source.variables.map(v => new EditableScenarioVariable(
+            GenerateIdentifier(),
+            v.name,
+            v.type,
+            v.value,
+            v.disabled
+        ))
         this.scenarios.add(scenario, false, id)
         this.dirty = true
         this.changeActive(EditableEntityType.Scenario, scenario.id)
     }
 
     @action
-    setScenarioVariables(value: EditableNameValuePair[] | undefined) {
+    setScenarioVariables(value: EditableScenarioVariable[] | undefined) {
         if (this.active?.entityType === EditableEntityType.Scenario) {
             const scenario = this.active as EditableScenario
             scenario.variables = value || []
@@ -1462,6 +1465,11 @@ export class WorkspaceStore {
         }
 
         const result = executionResults.items[0]
+        if (result.error) {
+            this.feedback.toast(result.error.description, ToastSeverity.Error)
+            return
+        }
+
         addResult(result, 0)
         execution.resultMenu = menu
         execution.results = results
@@ -1515,8 +1523,13 @@ export class WorkspaceStore {
         if (idx === -1) {
             this.executingRequestIDs.push(requestOrGroupId)
         }
+
         try {
-            let executionResults = await this.callbacks.onExecuteRequest(this.getWorkspace(), requestOrGroupId, runs)
+            let executionResults = await this.callbacks.onExecuteRequest(
+                this.getWorkspace(),
+                requestOrGroupId,
+                this.workbookFullName,
+                runs)
             this.reportExecutionResults(execution, executionResults)
         } finally {
             this.reportExecutionComplete(execution)

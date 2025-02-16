@@ -6,8 +6,7 @@ import { ReactNode } from "react"
 import { ModalBlock } from "../controls/modal-block."
 import { listen } from "@tauri-apps/api/event"
 
-export function FeedbackProvider({ children }: { children?: ReactNode }) {
-    const store = new FeedbackStore()
+export function FeedbackProvider({ store, children }: { store: FeedbackStore, children?: ReactNode }) {
     return (
         <FeedbackContext.Provider value={store}>
             <ModalBlock key='feedback-modal' />
