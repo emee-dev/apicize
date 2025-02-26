@@ -46,7 +46,6 @@ export class EditableRequest extends Editable<Request> {
         result.selectedAuthorization = entry.selectedAuthorization ?? undefined
         result.selectedCertificate = entry.selectedCertificate ?? undefined
         result.selectedProxy = entry.selectedProxy ?? undefined
-        result.selectedData = entry.selectedData ?? undefined
 
         result.url = entry.url ?? ''
         result.method = entry.method ?? Method.Get
@@ -122,7 +121,6 @@ export class EditableRequest extends Editable<Request> {
             selectedAuthorization: this.selectedAuthorization,
             selectedCertificate: this.selectedCertificate,
             selectedProxy: this.selectedProxy,
-            selectedData: this.selectedData,
         }
 
         let bodyIsValid = false
@@ -227,7 +225,6 @@ export class EditableRequestGroup extends Editable<RequestGroup> {
         result.selectedAuthorization = entry.selectedAuthorization ?? undefined
         result.selectedCertificate = entry.selectedCertificate ?? undefined
         result.selectedProxy = entry.selectedProxy ?? undefined
-        result.selectedData = entry.selectedData ?? undefined
         result.warnings = entry.warnings
             ? new Map(entry.warnings.map(w => [GenerateIdentifier(), w]))
             : new Map<string, string>()

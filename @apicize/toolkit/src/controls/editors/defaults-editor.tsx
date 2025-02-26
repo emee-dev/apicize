@@ -95,6 +95,21 @@ export const DefaultsEditor = observer((props: {
                 {itemsFromSelections(lists.proxies)}
             </Select>
         </FormControl>
+        <FormControl>
+                <InputLabel id='data-label-id'>Seed Data</InputLabel>
+                <Select
+                    labelId='data-label'
+                    aria-labelledby='data-label-id'
+                    id='cred-data'
+                    label='Seed Data'
+                    value={defaults.selectedData.id}
+                    onChange={(e) => workspace.setDefaultDataId(e.target.value)}
+                    fullWidth
+                    size='small'
+                >
+                    {itemsFromSelections(lists.data)}
+                </Select>
+            </FormControl>        
     </Stack>
 
     const DataEditor = <Stack spacing={3} maxWidth='60em'>

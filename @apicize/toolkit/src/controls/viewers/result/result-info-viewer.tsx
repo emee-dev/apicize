@@ -162,11 +162,11 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
 
         return (error || logs)
             ? <TreeItem key={key} itemId={key} className='test-result' label={
-                <Stack direction='row'>
-                    <Box sx={{ width: '2.0rem' }}>
+                <Stack direction='row' key={`tree-${idx++}`}>
+                    <Box sx={{ width: '2.0rem' }} key={`tree-${idx++}`}>
                         {props.success ? (<CheckIcon color='success' />) : (<BlockIcon color='error' />)}
                     </Box>
-                    <Box>
+                    <Box key={`tree-${idx++}`}>
                         {props.name.join(' ')}
                     </Box>
                 </Stack>}>
@@ -174,32 +174,32 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
                 {
                     (props.error?.length ?? 0) > 0
                         ?
-                        <TreeItem itemId={`tree-${idx++}`} className='test-result' label={
-                            <Stack direction='row'>
-                                <Box sx={{ width: '2.0rem' }} />
-                                <Typography sx={{ left: '-24px', marginBottom: 0, paddingTop: 0, ":first-letter": { textTransform: 'capitalize' } }} color='error'>{props.error}</Typography>
+                        <TreeItem itemId={`tree-${idx++}`} className='test-result' key={`tree-${idx++}`} label={
+                            <Stack direction='row' key={`tree-${idx++}`}>
+                                <Box sx={{ width: '2.0rem' }} key={`tree-${idx++}`} />
+                                <Typography key={`tree-${idx++}`} sx={{ left: '-24px', marginBottom: 0, paddingTop: 0, ":first-letter": { textTransform: 'capitalize' } }} color='error'>{props.error}</Typography>
                             </Stack>
                         } />
                         : <></>
                 }
                 {
                     (props.logs ?? []).map((log) => (
-                        <TreeItem itemId={`tree-${idx++}`} className='test-result' label={
-                            <Stack direction='row' left='-24px'>
-                                <Box sx={{ width: '2.0rem' }} />
-                                <pre className='log'>{log}</pre>
+                        <TreeItem itemId={`tree-${idx++}`} className='test-result' key={`tree-${idx++}`} label={
+                            <Stack direction='row' left='-24px' key={`tree-${idx++}`}>
+                                <Box sx={{ width: '2.0rem' }} key={`tree-${idx++}`} />
+                                <pre className='log' key={`tree-${idx++}`}>{log}</pre>
                             </Stack>
                         } />)
                     )
                 }
             </TreeItem>
             : <TreeItem key={key} itemId={key} className='test-result' label={
-                <Stack direction='row'>
-                    <Box sx={{ width: '1.5rem', marginRight: '0.5rem' }}>
+                <Stack direction='row' key={`tree-${idx++}`}>
+                    <Box sx={{ width: '1.5rem', marginRight: '0.5rem' }} key={`tree-${idx++}`}>
                         {props.success ? (<CheckIcon color='success' />) : (<BlockIcon color='error' />)}
                     </Box>
-                    <Box>
-                        <Typography sx={{ marginTop: 0, marginBottom: 0, paddingTop: 0 }} component='div'>
+                    <Box key={`tree-${idx++}`}>
+                        <Typography sx={{ marginTop: 0, marginBottom: 0, paddingTop: 0 }} component='div' key={`tree-${idx++}`}>
                             {props.name.join(' ')}
                         </Typography>
                     </Box>

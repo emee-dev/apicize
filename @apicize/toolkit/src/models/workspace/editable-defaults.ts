@@ -1,10 +1,10 @@
-import { Selection, SelectedParameters, Workspace } from "@apicize/lib-typescript"
+import { Selection, SelectedParameters, Workspace, SelectedParametersWithData } from "@apicize/lib-typescript"
 import { EditableItem, EditableState } from "../editable"
 import { observable, toJS } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
 import { NO_SELECTION, NO_SELECTION_ID } from "../store"
 
-export class EditableDefaults implements EditableItem, SelectedParameters {
+export class EditableDefaults implements EditableItem, SelectedParametersWithData {
     @observable accessor selectedScenario: Selection = NO_SELECTION
     @observable accessor selectedAuthorization: Selection = NO_SELECTION
     @observable accessor selectedCertificate: Selection = NO_SELECTION
@@ -27,7 +27,7 @@ export class EditableDefaults implements EditableItem, SelectedParameters {
         return result
     }
 
-    toWorkspace(): SelectedParameters {
+    toWorkspace(): SelectedParametersWithData {
         return {
             selectedScenario: this.selectedScenario.id === NO_SELECTION_ID ? undefined : toJS(this.selectedScenario),
             selectedAuthorization: this.selectedAuthorization.id === NO_SELECTION_ID ? undefined : toJS(this.selectedAuthorization),

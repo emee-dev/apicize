@@ -18,6 +18,8 @@ import {
     ApicizeGroupItem,
     ApicizeRequest,
     ApicizeGroupChildren,
+    ApicizeResult,
+    ApicizeRowList,
 } from "@apicize/lib-typescript"
 import { EntitySelection } from "../models/workspace/entity-selection"
 import { EditableNameValuePair } from "../models/workspace/editable-name-value-pair"
@@ -85,7 +87,7 @@ export class WorkspaceStore {
     constructor(
         private readonly feedback: FeedbackStore,
         private readonly callbacks: {
-            onExecuteRequest: (workspace: Workspace, requestId: string, allowedParentPath: string, singleRun: boolean) => Promise<ApicizeGroupItem[]>,
+            onExecuteRequest: (workspace: Workspace, requestId: string, allowedParentPath: string, singleRun: boolean) => Promise<ApicizeResult[]>,
             onCancelRequest: (requestId: string) => Promise<void>,
             onClearToken: (authorizationId: string) => Promise<void>,
             onInitializePkce: (data: { authorizationId: string }) => Promise<void>,
@@ -714,20 +716,6 @@ export class WorkspaceStore {
         }
     }
 
-    @action
-    setRequestSelectedDataId(entityId: string) {
-        if (this.active?.entityType === EditableEntityType.Request || this.active?.entityType === EditableEntityType.Group) {
-            const request = this.active as EditableRequest
-            request.selectedData = entityId === DEFAULT_SELECTION_ID
-                ? undefined
-                : entityId == NO_SELECTION_ID
-                    ? NO_SELECTION
-                    : { id: entityId, name: GetTitle(this.data.get(entityId)) }
-            this.dirty = true
-        }
-    }
-
-    @action
     setRequestSelectedAuthorizationId(entityId: string) {
         if (this.active?.entityType === EditableEntityType.Request || this.active?.entityType === EditableEntityType.Group) {
             const request = this.active as EditableRequest
@@ -1425,7 +1413,7 @@ export class WorkspaceStore {
     }
 
     @action
-    reportExecutionResults(execution: Execution, executionResults: ApicizeGroupItem[]) {
+    reportExecutionResults(execution: Execution, executionResults: ApicizeResult[]) {
         execution.running = false
         const previousPanel = execution.panel
 
@@ -1444,7 +1432,7 @@ export class WorkspaceStore {
             return result.info.index
         }
 
-        const processItem = (item: ApicizeGroupItem, parentIndex: number | undefined, level: number): number => {
+        const processGroupItem = (item: ApicizeGroupItem, parentIndex: number | undefined, level: number): number => {
             switch (item.type) {
                 case 'Group':
                     return processGroup(item, parentIndex, level)
@@ -1468,7 +1456,7 @@ export class WorkspaceStore {
                 switch (group.children.type) {
                     case 'Items':
                         for (const child of group.children.items) {
-                            childIds.push(processItem(child, index, level + 1))
+                            childIds.push(processGroupItem(child, index, level + 1))
                         }
                         break
                     case 'Runs':
@@ -1542,57 +1530,57 @@ export class WorkspaceStore {
                             childIds.push(appendResult(runResult, level + 1))
                         }
                         break
-                    case 'Rows':
-                        const rowCount = request.execution.items.length
-                        for (const rowExecution of request.execution.items) {
-                            const rowResult = executionResultFromExecution(
-                                {
-                                    index: 0,
-                                    parentIndex: index,
-                                    title: `Row ${rowExecution.index} of ${rowCount}`,
-                                    runNumber: rowExecution.index,
-                                    rowCount
-                                },
-                                rowExecution
-                            )
-                            childIds.push(appendResult(rowResult, level + 1))
-                        }
-                        break
-                    case 'MultiRunRows':
-                        const rowRunCount = request.execution.items.length
-                        for (const rowRun of request.execution.items) {
-                            const rowRunResult = executionResultFromSummary(
-                                {
-                                    index: 0,
-                                    parentIndex: index,
-                                    title: `Row ${rowRun.rowNumber} of ${rowRunCount}`,
-                                    rowNumber: rowRun.rowNumber,
-                                    rowCount: rowRunCount
-                                },
-                                rowRun
-                            )
-                            let rowRunIndex = appendResult(rowRunResult, level + 1)
-                            childIds.push(rowRunIndex)
+                    // case 'Rows':
+                    //     const rowCount = request.execution.items.length
+                    //     for (const rowExecution of request.execution.items) {
+                    //         const rowResult = executionResultFromExecution(
+                    //             {
+                    //                 index: 0,
+                    //                 parentIndex: index,
+                    //                 title: `Row ${rowExecution.index} of ${rowCount}`,
+                    //                 runNumber: rowExecution.index,
+                    //                 rowCount
+                    //             },
+                    //             rowExecution
+                    //         )
+                    //         childIds.push(appendResult(rowResult, level + 1))
+                    //     }
+                    //     break
+                    // case 'MultiRunRows':
+                    //     const rowRunCount = request.execution.items.length
+                    //     for (const rowRun of request.execution.items) {
+                    //         const rowRunResult = executionResultFromSummary(
+                    //             {
+                    //                 index: 0,
+                    //                 parentIndex: index,
+                    //                 title: `Row ${rowRun.rowNumber} of ${rowRunCount}`,
+                    //                 rowNumber: rowRun.rowNumber,
+                    //                 rowCount: rowRunCount
+                    //             },
+                    //             rowRun
+                    //         )
+                    //         let rowRunIndex = appendResult(rowRunResult, level + 1)
+                    //         childIds.push(rowRunIndex)
 
-                            if (rowRun.runs) {
-                                const run1Count = rowRun.runs.length
-                                for (const run of rowRun.runs) {
-                                    const runResult = executionResultFromExecution(
-                                        {
-                                            index: 0,
-                                            parentIndex: rowRunIndex,
-                                            title: `Run ${run.index} of ${run1Count}`,
-                                            runNumber: run.index,
-                                            runCount: run1Count
-                                        },
-                                        run
-                                    )
+                    //         if (rowRun.runs) {
+                    //             const run1Count = rowRun.runs.length
+                    //             for (const run of rowRun.runs) {
+                    //                 const runResult = executionResultFromExecution(
+                    //                     {
+                    //                         index: 0,
+                    //                         parentIndex: rowRunIndex,
+                    //                         title: `Run ${run.index} of ${run1Count}`,
+                    //                         runNumber: run.index,
+                    //                         runCount: run1Count
+                    //                     },
+                    //                     run
+                    //                 )
 
-                                    appendResult(runResult, level + 2)
-                                }
-                            }
-                        }
-                        break
+                    //                 appendResult(runResult, level + 2)
+                    //             }
+                    //         }
+                    //     }
+                    //     break
                 }
                 if (childIds.length > 0) {
                     result.info.childIndexes = childIds
@@ -1602,10 +1590,38 @@ export class WorkspaceStore {
             return index
         }
 
+        const processRows = (rows: ApicizeRowList, parentIndex: number | undefined, level: number) => {
+            let rowCount = rows.items.length
+            for (const row of rows.items) {
+                const result = executionResultFromSummary(
+                    {
+                        index: 0,
+                        parentIndex,
+                        title: `Row #${row.rowNumber} of ${rowCount}`
+                    },
+                    row
+                )
+                console.log(`Adding row ${row.rowNumber}`)
+                const index = appendResult(result, level)
+
+                const childIndex = processGroupItem(row.item, index, level + 1)
+                result.info.childIndexes = [childIndex]
+            }
+        }
+
         if (executionResults.length < 1) return
 
         const result = executionResults[0]
-        processItem(result, undefined, 0)
+
+        switch (result.type) {
+            case 'Group':
+            case 'Request':
+                processGroupItem(result, undefined, 0)
+                break
+            case 'Rows':
+                processRows(result, undefined, 0)
+                break
+        }
 
         execution.resultMenu = menu
         execution.results = results
@@ -1769,6 +1785,16 @@ export class WorkspaceStore {
             : { id: entityId, name: GetTitle(this.proxies.get(entityId)) }
         this.dirty = true
     }
+    @action
+    setDefaultDataId(entityId: string) {
+        this.defaults.selectedData = entityId === NO_SELECTION_ID
+            ? NO_SELECTION
+            : { id: entityId, name: GetTitle(this.data.get(entityId)) }
+        this.dirty = true
+    }
+
+    @action
+
 
     @action
     initializePkce(authorizationId: string) {

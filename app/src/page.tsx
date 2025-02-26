@@ -9,7 +9,7 @@ import { ClipboardProvider } from './providers/clipboard.provider';
 import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
 import { WorkspaceProvider } from './providers/workspace.provider';
-import { ApicizeExecution, ApplicationSettings, Workspace } from '@apicize/lib-typescript';
+import { ApicizeExecution, ApicizeResult, ApplicationSettings, Workspace } from '@apicize/lib-typescript';
 import { ApicizeSettingsProvider } from './providers/apicize-settings.provider';
 import { ConfigurableTheme } from './controls/configurable-theme';
 import { PkceProvider } from './providers/pkce.provider';
@@ -26,7 +26,7 @@ const workspaceStore = new WorkspaceStore(
   feedbackStore,
   {
     onExecuteRequest: async (workspace, requestId, workbookFullName: string) =>
-      core.invoke<ApicizeExecution>('run_request', { workspace, requestId, workbookFullName }),
+      core.invoke<ApicizeResult[]>('run_request', { workspace, requestId, workbookFullName }),
     onCancelRequest: (requestId) => core.invoke(
       'cancel_request', { requestId }),
     onClearToken: (authorizationId) => core.invoke(

@@ -1,4 +1,4 @@
-import { ApicizeBody, ApicizeError, ApicizeExecution, ApicizeExecutionType, ApicizeGroup, ApicizeGroupRun, ApicizeRequest, ApicizeResponse, ApicizeRowRuns, ApicizeTestResult } from "@apicize/lib-typescript";
+import { ApicizeBody, ApicizeError, ApicizeExecution, ApicizeExecutionType, ApicizeGroup, ApicizeGroupRun, ApicizeRequest, ApicizeResponse, ApicizeRow, ApicizeTestResult } from "@apicize/lib-typescript";
 import { OverridableStringUnion } from '@mui/types'
 import { SvgIconPropsColorOverrides } from "@mui/material"
 
@@ -8,7 +8,7 @@ export interface ExecutionMenuItem {
      level: number
 }
 
-export type ExecutionData = ApicizeGroup | ApicizeGroupRun | ApicizeRequest | ApicizeRowRuns | ApicizeExecutionType
+export type ExecutionData = ApicizeGroup | ApicizeGroupRun | ApicizeRequest | ApicizeExecutionType
 
 export interface ExecutionResultInfo {
      index: number,
@@ -57,7 +57,7 @@ export interface Execution {
      results: ExecutionResult[]
 }
 
-export function executionResultFromSummary(info: ExecutionResultInfo, summary: ApicizeGroup | ApicizeRowRuns | ApicizeGroupRun): ExecutionResult {
+export function executionResultFromSummary(info: ExecutionResultInfo, summary: ApicizeGroup | ApicizeGroupRun | ApicizeRow): ExecutionResult {
      return structuredClone({
           info,
           executedAt: summary.executedAt,

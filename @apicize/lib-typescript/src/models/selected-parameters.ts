@@ -6,5 +6,8 @@ export interface SelectedParameters {
     selectedAuthorization?: Selection,
     selectedCertificate?: Selection,
     selectedProxy?: Selection,
-    selectedData?: Selection,
+}
+
+export interface SelectedParametersWithData extends SelectedParameters {
+    selectedData?: Selection
 }

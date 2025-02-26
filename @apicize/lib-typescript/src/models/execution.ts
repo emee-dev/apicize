@@ -6,8 +6,29 @@ export type ApicizeGroupChildren = ApicizeGroupItemList | ApicizeGroupRunList
 
 export type ApicizeGroupItemChildren = ApicizeGroupItemList | ApicizeGroupRunList
 
-export type ApicizeExecutionType = ApicizeExecutionSingle | ApicizeExecutionRuns | ApicizeExecutionRows | ApicizeExecutionMultiRunRows
+export type ApicizeExecutionType = ApicizeExecutionSingle | ApicizeExecutionRuns
 
+export type ApicizeResult = ApicizeGroup | ApicizeRequest | ApicizeRowList
+
+export interface ApicizeRow {
+    rowNumber: number
+    item: ApicizeGroupItem
+
+    executedAt: number
+    duration: number
+
+    success: boolean    
+    requestSuccessCount: number
+    requestFailureCount: number
+    requestErrorCount: number
+    passedTestCount: number
+    failedTestCount: number
+}
+
+export interface ApicizeRowList {
+    type: 'Rows',
+    items: ApicizeRow[]
+}
 
 export interface ApicizeGroupItemList {
     type: 'Items',
@@ -26,16 +47,6 @@ export interface ApicizeExecutionSingle extends ApicizeExecution {
 export interface ApicizeExecutionRuns {
     type: 'Runs'
     items: ApicizeExecution[]
-}
-
-export interface ApicizeExecutionRows {
-    type: 'Rows'
-    items: ApicizeExecution[]
-}
-
-export interface ApicizeExecutionMultiRunRows {
-    type: 'MultiRunRows'
-    items: ApicizeRowRuns[]
 }
 
 export interface ApicizeGroup {
@@ -77,23 +88,23 @@ export interface ApicizeGroupRun {
     failedTestCount: number  
 }
 
-export interface ApicizeRowRuns {
-    type: 'RowRuns'
-    rowNumber: number
+// export interface ApicizeRowRuns {
+//     type: 'RowRuns'
+//     rowNumber: number
 
-    executedAt: number
-    duration: number
+//     executedAt: number
+//     duration: number
 
-    runs?: ApicizeExecution[]
-    outputVariables?: Map<string, JsonValue>
+//     runs?: ApicizeExecution[]
+//     outputVariables?: Map<string, JsonValue>
     
-    success: boolean    
-    requestSuccessCount: number
-    requestFailureCount: number
-    requestErrorCount: number
-    passedTestCount: number
-    failedTestCount: number  
-}
+//     success: boolean    
+//     requestSuccessCount: number
+//     requestFailureCount: number
+//     requestErrorCount: number
+//     passedTestCount: number
+//     failedTestCount: number  
+// }
 
 export interface ApicizeRequest {
     type: 'Request'

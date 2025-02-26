@@ -6,7 +6,8 @@ pub mod settings;
 pub mod trace;
 
 use apicize_lib::{
-    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token, PkceTokenResult}, ApicizeGroupItem, ApicizeRunner, TestRunnerContext, Workspace
+    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token, PkceTokenResult},
+    ApicizeResult, ApicizeRunner, TestRunnerContext, Workspace,
 };
 use pkce::{OAuth2PkceInfo, OAuth2PkceRequest, OAuth2PkceService};
 use settings::{ApicizeSettings, ColorScheme};
@@ -225,7 +226,7 @@ async fn run_request(
     workspace: Workspace,
     request_id: String,
     workbook_full_name: String,
-) -> Result<Vec<ApicizeGroupItem>, String> {
+) -> Result<Vec<ApicizeResult>, String> {
     let cancellation = CancellationToken::new();
     {
         cancellation_tokens()

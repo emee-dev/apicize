@@ -49,7 +49,6 @@ export const ResultsViewer = observer((props: {
 
     const handlePanelChanged = (_: React.SyntheticEvent, newValue: string) => {
         if (newValue) {
-            console.log(`Should be changing panel to ${newValue}`)
             workspace.changePanel(requestOrGroupId, newValue)
         }
     }
