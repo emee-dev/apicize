@@ -11,8 +11,5 @@
   "author": "",
   "license": "ISC",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "devDependencies": {
-    "typescript": "^5.2.2"
-  }
+  "types": "dist/index.d.ts"
 }

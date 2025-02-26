@@ -1,20 +1,23 @@
 import { action, computed, makeObservable, observable, toJS } from "mobx"
-import { DEFAULT_SELECTION_ID, NO_SELECTION, NO_SELECTION_ID } from "../models/store"
-import { Execution, ExecutionGroup, ExecutionMenuItem, ExecutionRequest, ExecutionResult } from "../models/workspace/execution"
+import { DEFAULT_SELECTION, DEFAULT_SELECTION_ID, NO_SELECTION, NO_SELECTION_ID } from "../models/store"
+import { Execution, ExecutionMenuItem, ExecutionResult, executionResultFromRequest, executionResultFromExecution, executionResultFromSummary } from "../models/workspace/execution"
 import { base64Decode, base64Encode, editableWorkspaceToStoredWorkspace } from "../services/apicize-serializer"
 import { EditableRequest, EditableRequestGroup } from "../models/workspace/editable-request"
-import { EditableScenario, EditableScenarioVariable } from "../models/workspace/editable-scenario"
+import { EditableScenario, EditableVariable } from "../models/workspace/editable-scenario"
 import { EditableAuthorization } from "../models/workspace/editable-authorization"
 import { EditableCertificate } from "../models/workspace/editable-certificate"
 import { EditableProxy } from "../models/workspace/editable-proxy"
 import {
     Identifiable, Named, GetTitle, GroupExecution, BodyType, Method, AuthorizationType,
-    CertificateType, Workspace, ApicizeExecution, ApicizeExecutionGroup, ApicizeExecutionItem, ApicizeExecutionRequest,
-    Body, ApicizeExecutionDetails, Selection,
+    CertificateType, Workspace,
+    Body, Selection,
     Persistence,
-    IndexedEntityManager,
     Request,
     RequestGroup,
+    ApicizeGroup,
+    ApicizeGroupItem,
+    ApicizeRequest,
+    ApicizeGroupChildren,
 } from "@apicize/lib-typescript"
 import { EntitySelection } from "../models/workspace/entity-selection"
 import { EditableNameValuePair } from "../models/workspace/editable-name-value-pair"
@@ -24,7 +27,9 @@ import { EditableItem, EditableState } from "../models/editable"
 import { createContext, useContext } from "react"
 import { EditableDefaults } from "../models/workspace/editable-defaults"
 import { EditableWarnings } from "../models/workspace/editable-warnings"
-import { FeedbackStore, ToastSeverity } from "./feedback.context"
+import { FeedbackStore } from "./feedback.context"
+import { EditableExternalData } from "../models/workspace/editable-external-data"
+import { IndexedEntityManager } from "../models/indexed-entity-manager"
 
 export enum WorkspaceMode {
     Normal,
@@ -39,11 +44,11 @@ export class WorkspaceStore {
      * Workspace representing all requests, scenarios, authorizations, certificates and proxies
      */
     @observable accessor requests = new IndexedEntityManager<EditableRequest | EditableRequestGroup>(new Map(), [], new Map())
-
     @observable accessor scenarios = new IndexedEntityManager<EditableScenario>(new Map(), [], new Map())
     @observable accessor authorizations = new IndexedEntityManager<EditableAuthorization>(new Map(), [], new Map())
     @observable accessor certificates = new IndexedEntityManager<EditableCertificate>(new Map(), [], new Map())
     @observable accessor proxies = new IndexedEntityManager<EditableProxy>(new Map(), [], new Map())
+    @observable accessor data = new IndexedEntityManager<EditableExternalData>(new Map(), [], new Map())
     @observable accessor defaults = new EditableDefaults()
     @observable accessor warnings = new EditableWarnings()
 
@@ -56,7 +61,7 @@ export class WorkspaceStore {
     public nextHelpTopic: string | null = null
 
     /**
-     * Apicize executions underway or completed
+     * Apicize executions underway or completed (keyed by request ID)
      */
     @observable accessor executions = new Map<string, Execution>()
 
@@ -75,12 +80,12 @@ export class WorkspaceStore {
 
     @observable accessor expandedItems = ['hdr-r']
 
-    pendingPkceRequests = new Map<string, Map<string, number>>()
+    pendingPkceRequests = new Map<string, Map<string, boolean>>()
 
     constructor(
         private readonly feedback: FeedbackStore,
         private readonly callbacks: {
-            onExecuteRequest: (workspace: Workspace, requestId: string, allowedParentPath: string, runs?: number) => Promise<ApicizeExecution>,
+            onExecuteRequest: (workspace: Workspace, requestId: string, allowedParentPath: string, singleRun: boolean) => Promise<ApicizeGroupItem[]>,
             onCancelRequest: (requestId: string) => Promise<void>,
             onClearToken: (authorizationId: string) => Promise<void>,
             onInitializePkce: (data: { authorizationId: string }) => Promise<void>,
@@ -151,6 +156,14 @@ export class WorkspaceStore {
             new Map(Object.entries(newWorkspace.proxies.childIds)),
         )
 
+        this.data = new IndexedEntityManager(
+            new Map(Object.values(newWorkspace.data.entities).map((e) =>
+                [e.id, EditableExternalData.fromWorkspace(e)]
+            )),
+            newWorkspace.data.topLevelIds ?? [],
+            new Map(Object.entries(newWorkspace.data.childIds)),
+        )
+
         this.warnings.set(newWorkspace.warnings)
         this.defaults = new EditableDefaults()
 
@@ -206,6 +219,14 @@ export class WorkspaceStore {
             new Map(Object.entries(newWorkspace.proxies.childIds)),
         )
 
+        this.data = new IndexedEntityManager(
+            new Map(Object.values(newWorkspace.data.entities).map((e) =>
+                [e.id, EditableExternalData.fromWorkspace(e)]
+            )),
+            newWorkspace.data.topLevelIds ?? [],
+            new Map(Object.entries(newWorkspace.data.childIds)),
+        )
+
         this.defaults = EditableDefaults.fromWorkspace(newWorkspace)
 
         this.warnings.set(newWorkspace.warnings)
@@ -257,6 +278,7 @@ export class WorkspaceStore {
             this.authorizations,
             this.certificates,
             this.proxies,
+            this.data,
             this.defaults,
         )
     }
@@ -362,7 +384,6 @@ export class WorkspaceStore {
 
         return list
     }
-
 
     @action
     addRequest(targetID?: string | null) {
@@ -694,6 +715,19 @@ export class WorkspaceStore {
     }
 
     @action
+    setRequestSelectedDataId(entityId: string) {
+        if (this.active?.entityType === EditableEntityType.Request || this.active?.entityType === EditableEntityType.Group) {
+            const request = this.active as EditableRequest
+            request.selectedData = entityId === DEFAULT_SELECTION_ID
+                ? undefined
+                : entityId == NO_SELECTION_ID
+                    ? NO_SELECTION
+                    : { id: entityId, name: GetTitle(this.data.get(entityId)) }
+            this.dirty = true
+        }
+    }
+
+    @action
     setRequestSelectedAuthorizationId(entityId: string) {
         if (this.active?.entityType === EditableEntityType.Request || this.active?.entityType === EditableEntityType.Group) {
             const request = this.active as EditableRequest
@@ -763,11 +797,22 @@ export class WorkspaceStore {
             : undefined
     }
 
-    getRequestParameterLists() {
-        let activeScenarioId = DEFAULT_SELECTION_ID
-        let activeAuthorizationId = DEFAULT_SELECTION_ID
-        let activeCertificateId = DEFAULT_SELECTION_ID
-        let activeProxyId = DEFAULT_SELECTION_ID
+    /**
+     * Navigate from the hierarchy to get the parameters for the active request
+     * @returns 
+     */
+    getActiveParameters(): {
+        scenario: Selection,
+        authorization: Selection,
+        certificate: Selection,
+        proxy: Selection,
+        data: Selection
+    } {
+        let scenario = DEFAULT_SELECTION
+        let authorization = DEFAULT_SELECTION
+        let certificate = DEFAULT_SELECTION
+        let proxy = DEFAULT_SELECTION
+        let data = DEFAULT_SELECTION
 
         // Determine the active credentials by working our way up the hierarchy
         if (this.active?.entityType === EditableEntityType.Request || this.active?.entityType === EditableEntityType.Group) {
@@ -775,23 +820,27 @@ export class WorkspaceStore {
             let e = this.requests.findParent(request.id)
             while (e) {
                 let r = e as (EditableRequest & EditableRequest)
-                if (activeScenarioId === DEFAULT_SELECTION_ID && r.selectedScenario) {
-                    activeScenarioId = r.selectedScenario.id
+                if (scenario.id === DEFAULT_SELECTION_ID && r.selectedScenario) {
+                    scenario = r.selectedScenario
                 }
-                if (activeAuthorizationId === DEFAULT_SELECTION_ID && r.selectedAuthorization) {
-                    activeAuthorizationId = r.selectedAuthorization.id
+                if (authorization.id === DEFAULT_SELECTION_ID && r.selectedAuthorization) {
+                    authorization = r.selectedAuthorization
                 }
-                if (activeCertificateId === DEFAULT_SELECTION_ID && r.selectedCertificate) {
-                    activeCertificateId = r.selectedCertificate.id
+                if (certificate.id === DEFAULT_SELECTION_ID && r.selectedCertificate) {
+                    certificate = r.selectedCertificate
                 }
-                if (activeProxyId === DEFAULT_SELECTION_ID && r.selectedProxy) {
-                    activeProxyId = r.selectedProxy.id
+                if (proxy.id === DEFAULT_SELECTION_ID && r.selectedProxy) {
+                    proxy = r.selectedProxy
+                }
+                if (data.id === DEFAULT_SELECTION_ID && r.selectedData) {
+                    data = r.selectedData
                 }
 
-                if (activeScenarioId !== DEFAULT_SELECTION_ID
-                    && activeAuthorizationId !== DEFAULT_SELECTION_ID
-                    && activeCertificateId !== DEFAULT_SELECTION_ID
-                    && activeProxyId !== DEFAULT_SELECTION_ID
+                if (scenario.id !== DEFAULT_SELECTION_ID
+                    && authorization.id !== DEFAULT_SELECTION_ID
+                    && certificate.id !== DEFAULT_SELECTION_ID
+                    && proxy.id !== DEFAULT_SELECTION_ID
+                    && data.id !== DEFAULT_SELECTION_ID
                 ) {
                     break
                 }
@@ -800,43 +849,65 @@ export class WorkspaceStore {
             }
         }
 
-        const defaultScenario = activeScenarioId == DEFAULT_SELECTION_ID
+        return {
+            scenario,
+            authorization,
+            certificate,
+            proxy,
+            data
+        }
+
+    }
+
+    getRequestParameterLists() {
+        const active = this.getActiveParameters()
+
+        const defaultScenario = active.scenario.id == DEFAULT_SELECTION_ID
             ? this.defaults.selectedScenario.id === NO_SELECTION_ID
                 ? 'None Configured'
-                : GetTitle(this.scenarios.get(this.defaults.selectedScenario.id))
-            : activeScenarioId === NO_SELECTION_ID
+                : GetTitle(this.defaults.selectedScenario)
+            : active.scenario.id === NO_SELECTION_ID
                 ? 'Off'
-                : GetTitle(this.scenarios.get(activeScenarioId))
+                : GetTitle(active.scenario)
 
-        const defaultAuthorization = activeAuthorizationId == DEFAULT_SELECTION_ID
+        const defaultAuthorization = active.authorization.id == DEFAULT_SELECTION_ID
             ? this.defaults.selectedAuthorization.id === NO_SELECTION_ID
                 ? 'None Configured'
-                : GetTitle(this.authorizations.get(this.defaults.selectedAuthorization.id))
-            : activeAuthorizationId === NO_SELECTION_ID
+                : GetTitle(this.defaults.selectedAuthorization)
+            : active.authorization.id === NO_SELECTION_ID
                 ? 'Off'
-                : GetTitle(this.authorizations.get(activeAuthorizationId))
+                : GetTitle(active.authorization)
 
-        const defaultCertificate = activeCertificateId == DEFAULT_SELECTION_ID
+        const defaultCertificate = active.certificate.id == DEFAULT_SELECTION_ID
             ? this.defaults.selectedCertificate.id === NO_SELECTION_ID
                 ? 'None Configured'
-                : GetTitle(this.certificates.get(this.defaults.selectedCertificate.id))
-            : activeCertificateId === NO_SELECTION_ID
+                : GetTitle(this.defaults.selectedCertificate)
+            : active.certificate.id === NO_SELECTION_ID
                 ? 'Off'
-                : GetTitle(this.certificates.get(activeCertificateId))
+                : GetTitle(active.certificate)
 
-        const defaultProxy = activeProxyId == DEFAULT_SELECTION_ID
+        const defaultProxy = active.proxy.id == DEFAULT_SELECTION_ID
             ? this.defaults.selectedProxy.id === NO_SELECTION_ID
                 ? 'None Configured'
-                : GetTitle(this.proxies.get(this.defaults.selectedProxy.id))
-            : activeProxyId === NO_SELECTION_ID
+                : GetTitle(this.defaults.selectedProxy)
+            : active.proxy.id === NO_SELECTION_ID
                 ? 'Off'
-                : GetTitle(this.proxies.get(activeProxyId))
+                : GetTitle(active.proxy)
+
+        const defaultData = active.data.name == DEFAULT_SELECTION_ID
+            ? this.defaults.selectedData.id === NO_SELECTION_ID
+                ? 'None Configured'
+                : GetTitle(this.defaults.selectedData)
+            : active.data.id === NO_SELECTION_ID
+                ? 'Off'
+                : GetTitle(active.data)
 
         return {
             scenarios: this.buildParameterList(this.scenarios, defaultScenario),
             authorizations: this.buildParameterList(this.authorizations, defaultAuthorization),
             certificates: this.buildParameterList(this.certificates, defaultCertificate),
             proxies: this.buildParameterList(this.proxies, defaultProxy),
+            data: this.buildParameterList(this.data, defaultData),
         }
     }
 
@@ -846,6 +917,7 @@ export class WorkspaceStore {
             authorizations: this.buildParameterList(this.authorizations),
             certificates: this.buildParameterList(this.certificates),
             proxies: this.buildParameterList(this.proxies),
+            data: this.buildParameterList(this.data)
         }
     }
 
@@ -856,6 +928,7 @@ export class WorkspaceStore {
             this.authorizations,
             this.certificates,
             this.proxies,
+            this.data,
             this.defaults,
         )
     }
@@ -948,7 +1021,7 @@ export class WorkspaceStore {
         scenario.id = GenerateIdentifier()
         scenario.name = `${GetTitle(source)} - Copy`
         scenario.dirty = true
-        scenario.variables = source.variables.map(v => new EditableScenarioVariable(
+        scenario.variables = source.variables.map(v => new EditableVariable(
             GenerateIdentifier(),
             v.name,
             v.type,
@@ -961,7 +1034,7 @@ export class WorkspaceStore {
     }
 
     @action
-    setScenarioVariables(value: EditableScenarioVariable[] | undefined) {
+    setScenarioVariables(value: EditableVariable[] | undefined) {
         if (this.active?.entityType === EditableEntityType.Scenario) {
             const scenario = this.active as EditableScenario
             scenario.variables = value || []
@@ -1308,6 +1381,31 @@ export class WorkspaceStore {
         }
     }
 
+    @action
+    addData() {
+        const data = new EditableExternalData()
+        data.id = GenerateIdentifier()
+        this.data.add(data, false, Persistence.Workbook)
+        // this.changeActive(EditableEntityType.ExternalData, data.id)
+        this.dirty = true
+    }
+
+    @action
+    deleteData(id: string) {
+        for (const request of this.requests.values) {
+            if (request.selectedData?.id === id) {
+                request.selectedData = NO_SELECTION
+            }
+        }
+        if (this.defaults.selectedData.id == id) {
+            this.defaults.selectedData = NO_SELECTION
+        }
+        this.data.remove(id)
+        // this.clearActive()
+        this.dirty = true
+    }
+
+    @action
     getExecution(requestOrGroupId: string) {
         let execution = this.executions.get(requestOrGroupId)
         if (!execution) {
@@ -1317,167 +1415,206 @@ export class WorkspaceStore {
         return execution
     }
 
+    @action
     deleteExecution(requestOrGroupId: string) {
         this.executions.delete(requestOrGroupId)
     }
 
-    getExecutionResult(requestOrGroupId: string, executionResultId: string): ExecutionResult | undefined {
-        return this.executions.get(requestOrGroupId)?.results.get(executionResultId)
-    }
-
-    getExecutionResultDetails(requestOrGroupId: string, executionResultId: string): ApicizeExecutionDetails | undefined {
-        const execution = this.executions.get(requestOrGroupId)?.results.get(executionResultId)
-        const executedRequest =
-            (execution?.type === 'request') ? execution : undefined
-        let variables
-        let request
-        if (executedRequest?.request) {
-            request = toJS(executedRequest.request)
-            variables = request.variables ? { ...request.variables } : undefined
-            request.variables = undefined
-        } else {
-            request = undefined
-            variables = undefined
-        }
-        const response = executedRequest?.response
-        if (response?.oauth2Token) {
-            if (!response?.oauth2Token.url) { response.oauth2Token.url = undefined }
-            if (!response?.oauth2Token.certificate) { response.oauth2Token.certificate = undefined }
-            if (!response?.oauth2Token.proxy) { response.oauth2Token.proxy = undefined }
-        }
-        return execution
-            ? {
-                runNumber: execution.runNumber,
-                executedAt: execution.executedAt,
-                duration: execution.duration,
-                testingContext: request
-                    ? {
-                        request,
-                        response,
-                        variables
-                    }
-                    : undefined,
-                success: execution.success,
-                error: executedRequest?.error ?? undefined,
-                tests: executedRequest?.tests?.map(t => ({
-                    testName: t.testName,
-                    success: t.success,
-                    error: t.error ?? undefined,
-                    logs: t.logs ?? undefined
-                })),
-                outputVariables: executedRequest?.variables,
-                requestsWithPassedTestsCount: execution.requestsWithPassedTestsCount,
-                requestsWithFailedTestsCount: execution.requestsWithFailedTestsCount,
-                requestsWithErrors: execution.requestsWithErrors,
-                passedTestCount: execution.passedTestCount,
-                failedTestCount: execution.failedTestCount
-            }
-            : undefined
-    }
-
-    getExecutionResposne(requestOrGroupId: string): ApicizeExecution | undefined {
-        return this.executions.get(requestOrGroupId)?.response
+    getExecutionResult(requestOrGroupId: string, index: number): ExecutionResult | undefined {
+        return this.executions.get(requestOrGroupId)?.results[index]
     }
 
     @action
-    reportExecutionResults(execution: Execution, executionResults: ApicizeExecution) {
+    reportExecutionResults(execution: Execution, executionResults: ApicizeGroupItem[]) {
         execution.running = false
         const previousPanel = execution.panel
 
-        if (executionResults.items.length < 1) return
-
         const menu: ExecutionMenuItem[] = []
-        const results = new Map<string, ExecutionResult>()
-        let allTestsSucceeded: boolean | null = null
+        const results: ExecutionResult[] = []
 
-        const getTitle = (name: string, runNumber: number, numberOfRuns: number, level: number) => {
-            return numberOfRuns > 1
-                ? ((level === 0) ? `Run ${runNumber + 1} of ${numberOfRuns}` : `${name} (Run ${runNumber + 1} of ${numberOfRuns})`)
-                : name
+        const appendResult = (result: ExecutionResult, level: number) => {
+            let index = results.length
+            results.push(result)
+            result.info.index = index
+            menu.push({
+                title: result.info.title,
+                level,
+                index,
+            })
+            return result.info.index
         }
 
-        const addGroupResult = (item: ApicizeExecutionGroup, level: number): string[] => {
-            const executionResultIds: string[] = []
-            const numberOfRuns = item.runs.length
-            for (let runNumber = 0; runNumber < numberOfRuns; runNumber++) {
-                const run = item.runs[runNumber]
-                const title = getTitle(item.name, runNumber, numberOfRuns, level)
-                allTestsSucceeded = (allTestsSucceeded ?? true) && (run.requestsWithErrors + run.requestsWithFailedTestsCount === 0)
-                const group: ExecutionGroup = {
-                    childExecutionIDs: [],
-                    type: 'group',
-                    id: item.id,
-                    name: item.name,
-                    runNumber: runNumber + 1,
-                    numberOfRuns,
-                    executedAt: run.executedAt,
-                    duration: run.duration,
-                    success: run.success,
-                    requestsWithPassedTestsCount: run.requestsWithPassedTestsCount,
-                    requestsWithFailedTestsCount: run.requestsWithFailedTestsCount,
-                    requestsWithErrors: run.requestsWithErrors,
-                    passedTestCount: run.passedTestCount,
-                    failedTestCount: run.passedTestCount
-                }
-                const executionResultId = GenerateIdentifier()
-                executionResultIds.push(executionResultId)
-                menu.push({ executionResultId, title, level })
-                results.set(executionResultId, group)
-
-                for (const child of run.items) {
-                    group.childExecutionIDs = [...group.childExecutionIDs, ...addResult(child, level + 1)]
-                }
-            }
-            return executionResultIds
-        }
-
-        const addRequestResult = (item: ApicizeExecutionRequest, level: number): string[] => {
-            const executionResultIds: string[] = []
-            const numberOfRuns = item.runs.length
-            for (let runNumber = 0; runNumber < numberOfRuns; runNumber++) {
-                const run = item.runs[runNumber]
-                const title = getTitle(item.name, runNumber, numberOfRuns, level)
-                allTestsSucceeded = (allTestsSucceeded ?? true) && (run.requestsWithErrors + run.requestsWithFailedTestsCount === 0)
-                const executionResultId = GenerateIdentifier()
-                executionResultIds.push(executionResultId)
-                menu.push({ executionResultId, title, level })
-                results.set(executionResultId, {
-                    type: 'request',
-                    id: item.id,
-                    name: item.name,
-                    run: runNumber + 1,
-                    numberOfRuns,
-                    ...run
-                })
-            }
-            return executionResultIds;
-        }
-
-        const addResult = (item: ApicizeExecutionItem, level: number): string[] => {
+        const processItem = (item: ApicizeGroupItem, parentIndex: number | undefined, level: number): number => {
             switch (item.type) {
-                case 'group':
-                    return addGroupResult(item, level)
-                    break
-                case 'request':
-                    return addRequestResult(item, level)
-                    break
+                case 'Group':
+                    return processGroup(item, parentIndex, level)
+                case 'Request':
+                    return processRequest(item, parentIndex, level)
             }
         }
 
-        const result = executionResults.items[0]
-        if (result.error) {
-            this.feedback.toast(result.error.description, ToastSeverity.Error)
-            return
+        const processGroup = (group: ApicizeGroup, parentIndex: number | undefined, level: number): number => {
+            const result = executionResultFromSummary(
+                {
+                    index: 0,
+                    parentIndex,
+                    title: group.name.length > 0 ? group.name : 'Unnamed Group'
+                },
+                group
+            )
+            const index = appendResult(result, level)
+            if (group.children) {
+                const childIds: number[] = []
+                switch (group.children.type) {
+                    case 'Items':
+                        for (const child of group.children.items) {
+                            childIds.push(processItem(child, index, level + 1))
+                        }
+                        break
+                    case 'Runs':
+                        const count = group.children.items.length
+                        for (const run of group.children.items) {
+                            let result = executionResultFromSummary({
+                                index: 0,
+                                parentIndex,
+                                title: `Run #${run.runNumber} of ${count}`,
+                                // runNumber: run.runNumber,
+                                // runCount: count,
+                            }, run)
+                            let index = appendResult(result, level + 1)
+                            childIds.push(index)
+
+                            if (run.children) {
+                                const childIndexes = []
+                                for (const grandChild of run.children) {
+                                    let gcIndex: number
+                                    switch (grandChild.type) {
+                                        case 'Group':
+                                            childIndexes.push(processGroup(grandChild, index, level + 2))
+                                            break
+                                        case 'Request':
+                                            childIndexes.push(processRequest(grandChild, index, level + 2))
+                                            break
+                                    }
+                                }
+                                if (childIndexes.length > 0) {
+                                    result.info.childIndexes = childIndexes
+                                }
+                            }
+                        }
+                        break
+                }
+                if (childIds.length > 0) {
+                    result.info.childIndexes = childIds
+                }
+            }
+            return index
         }
 
-        addResult(result, 0)
+        const processRequest = (request: ApicizeRequest, parentIndex: number | undefined, level: number): number => {
+            const result = executionResultFromRequest(
+                {
+                    index: 0,
+                    parentIndex: parentIndex,
+                    title: request.name.length > 0 ? request.name : 'Unnamed Request'
+                },
+                request,
+                (request.execution && request.execution.type == 'Single') ? request.execution : undefined)
+
+
+            const index = appendResult(result, level)
+            if (request.execution) {
+                const childIds: number[] = []
+                switch (request.execution.type) {
+                    case 'Runs':
+                        const runCount = request.execution.items.length
+                        for (const runExecution of request.execution.items) {
+                            const runResult = executionResultFromExecution(
+                                {
+                                    index: 0,
+                                    parentIndex: index,
+                                    title: `Run ${runExecution.index} of ${runCount}`,
+                                    runNumber: runExecution.index,
+                                    runCount
+                                },
+                                runExecution
+                            )
+                            childIds.push(appendResult(runResult, level + 1))
+                        }
+                        break
+                    case 'Rows':
+                        const rowCount = request.execution.items.length
+                        for (const rowExecution of request.execution.items) {
+                            const rowResult = executionResultFromExecution(
+                                {
+                                    index: 0,
+                                    parentIndex: index,
+                                    title: `Row ${rowExecution.index} of ${rowCount}`,
+                                    runNumber: rowExecution.index,
+                                    rowCount
+                                },
+                                rowExecution
+                            )
+                            childIds.push(appendResult(rowResult, level + 1))
+                        }
+                        break
+                    case 'MultiRunRows':
+                        const rowRunCount = request.execution.items.length
+                        for (const rowRun of request.execution.items) {
+                            const rowRunResult = executionResultFromSummary(
+                                {
+                                    index: 0,
+                                    parentIndex: index,
+                                    title: `Row ${rowRun.rowNumber} of ${rowRunCount}`,
+                                    rowNumber: rowRun.rowNumber,
+                                    rowCount: rowRunCount
+                                },
+                                rowRun
+                            )
+                            let rowRunIndex = appendResult(rowRunResult, level + 1)
+                            childIds.push(rowRunIndex)
+
+                            if (rowRun.runs) {
+                                const run1Count = rowRun.runs.length
+                                for (const run of rowRun.runs) {
+                                    const runResult = executionResultFromExecution(
+                                        {
+                                            index: 0,
+                                            parentIndex: rowRunIndex,
+                                            title: `Run ${run.index} of ${run1Count}`,
+                                            runNumber: run.index,
+                                            runCount: run1Count
+                                        },
+                                        run
+                                    )
+
+                                    appendResult(runResult, level + 2)
+                                }
+                            }
+                        }
+                        break
+                }
+                if (childIds.length > 0) {
+                    result.info.childIndexes = childIds
+                }
+            }
+
+            return index
+        }
+
+        if (executionResults.length < 1) return
+
+        const result = executionResults[0]
+        processItem(result, undefined, 0)
+
         execution.resultMenu = menu
         execution.results = results
-        execution.resultIndex = (isNaN(execution.resultIndex) || execution.resultIndex >= execution.results.size)
+        execution.resultIndex = (isNaN(execution.resultIndex) || execution.resultIndex >= execution.results.length)
             ? 0 : execution.resultIndex
-        execution.response = executionResults
-        execution.panel = (result.type === 'request' && previousPanel && allTestsSucceeded) ? previousPanel : 'Info'
+        execution.panel = (result.type === 'Request' && previousPanel && result.success) ? previousPanel : 'Info'
+
     }
+
 
     // @action
     // reportExecutionComplete(execution: Execution) {
@@ -1485,7 +1622,7 @@ export class WorkspaceStore {
     // }
 
     @action
-    async executeRequest(requestOrGroupId: string, runs?: number) {
+    async executeRequest(requestOrGroupId: string, singleRun: boolean = false) {
         const requestOrGroup = this.requests.get(requestOrGroupId)
         let execution = this.executions.get(requestOrGroupId)
         if (execution) {
@@ -1502,7 +1639,7 @@ export class WorkspaceStore {
         const auth = this.getRequestActiveAuthorization(requestOrGroup)
         if (auth?.type === AuthorizationType.OAuth2Pkce) {
             if (auth.accessToken === undefined) {
-                this.addPendingPkceRequest(auth.id, requestOrGroupId, runs)
+                this.addPendingPkceRequest(auth.id, requestOrGroupId, singleRun)
                 this.callbacks.onInitializePkce({
                     authorizationId: auth.id
                 })
@@ -1510,7 +1647,7 @@ export class WorkspaceStore {
             } else if (auth.expiration) {
                 const nowInSec = Date.now() / 1000
                 if (auth.expiration - nowInSec < 3) {
-                    this.addPendingPkceRequest(auth.id, requestOrGroupId, runs)
+                    this.addPendingPkceRequest(auth.id, requestOrGroupId, singleRun)
                     this.callbacks.onRefreshToken({
                         authorizationId: auth.id
                     })
@@ -1525,11 +1662,21 @@ export class WorkspaceStore {
         }
 
         try {
+            let workspace = this.getWorkspace()
+
+            if (singleRun) {
+                const r = workspace.requests.entities[requestOrGroupId]
+                if (r) {
+                    r.runs = 1
+                    // todo - figure out how to get timeouts updated
+                }
+            }
+
             let executionResults = await this.callbacks.onExecuteRequest(
                 this.getWorkspace(),
                 requestOrGroupId,
                 this.workbookFullName,
-                runs)
+                singleRun)
             this.reportExecutionResults(execution, executionResults)
         } finally {
             this.reportExecutionComplete(execution)
@@ -1653,8 +1800,8 @@ export class WorkspaceStore {
         auth.expiration = expiration
 
         // Execute pending requests
-        for (const [requestOrGroupId, runs] of pendingRequests) {
-            this.executeRequest(requestOrGroupId, runs)
+        for (const [requestOrGroupId, singleRun] of pendingRequests) {
+            this.executeRequest(requestOrGroupId, singleRun)
         }
     }
 
@@ -1664,13 +1811,13 @@ export class WorkspaceStore {
      * @param requestOrGroupId 
      * @param runs 
      */
-    private addPendingPkceRequest(authorizationId: string, requestOrGroupId: string, runs?: number) {
+    private addPendingPkceRequest(authorizationId: string, requestOrGroupId: string, singleRun: boolean) {
         const pendingForAuth = this.pendingPkceRequests.get(authorizationId)
         if (pendingForAuth) {
-            pendingForAuth.set(requestOrGroupId, runs ?? 1)
+            pendingForAuth.set(requestOrGroupId, singleRun)
         } else {
             this.pendingPkceRequests.set(authorizationId,
-                new Map([[requestOrGroupId, runs ?? 1]]))
+                new Map([[requestOrGroupId, singleRun]]))
         }
     }
 
@@ -1761,7 +1908,7 @@ class ExecutionEntry implements Execution {
     @observable accessor running = false
     @observable accessor resultIndex = NaN
     @observable accessor resultMenu: ExecutionMenuItem[] = []
-    @observable accessor results = new Map<string, ExecutionRequest | ExecutionGroup>()
+    @observable accessor results: ExecutionResult[] = []
     @observable accessor panel = 'Info'
 
     constructor(public readonly requestOrGroupId: string) {

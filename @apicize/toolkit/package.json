@@ -34,13 +34,13 @@
     "shx": "^0.3.4",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1",
-    "typescript": "^5",
+    "typescript": "^5.7.3",
     "undici-types": "^5.27.2",
     "unist-util-visit": "^5.0.0"
   },
   "peerDependencies": {
-    "mobx": "^6.13.1",
-    "mobx-react-lite": "^4.0.7"
+    "mobx": "^6.13.6",
+    "mobx-react-lite": "^4.1.0"
   },
   "dependencies": {
     "@apicize/lib-typescript": "workspace:^",
@@ -68,8 +68,6 @@
     "rimraf": "^5.0.5",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
-    "uuid": "^9.0.1",
-    "vscode-jsonrpc": "8.0.2",
-    "vscode-languageserver-protocol": "3.17.3"
+    "uuid": "^9.0.1"
   }
 }

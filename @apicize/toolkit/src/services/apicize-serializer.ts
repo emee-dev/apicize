@@ -1,14 +1,13 @@
-import { IndexedEntityManager, Workspace } from "@apicize/lib-typescript";
+import { Workspace } from "@apicize/lib-typescript";
 import { EditableAuthorization } from "../models/workspace/editable-authorization";
 import { EditableScenario } from "../models/workspace/editable-scenario";
-import { Editable } from "../models/editable";
 import { EditableRequest, EditableRequestGroup } from "../models/workspace/editable-request";
 import { EditableNameValuePair } from "../models/workspace/editable-name-value-pair";
 import { EditableProxy } from "../models/workspace/editable-proxy";
 import { EditableCertificate } from "../models/workspace/editable-certificate";
-import { toJS } from "mobx";
 import { EditableDefaults } from "../models/workspace/editable-defaults";
-import { GenerateIdentifier } from "./random-identifier-generator";
+import { EditableExternalData } from "../models/workspace/editable-external-data";
+import { IndexedEntityManager } from "../models/indexed-entity-manager";
 
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
@@ -177,6 +176,7 @@ export function editableWorkspaceToStoredWorkspace(
     authorizations: IndexedEntityManager<EditableAuthorization>,
     certificates: IndexedEntityManager<EditableCertificate>,
     proxies: IndexedEntityManager<EditableProxy>,
+    data: IndexedEntityManager<EditableExternalData>,
     defaults: EditableDefaults,
 ): Workspace {
     const result = {
@@ -205,6 +205,11 @@ export function editableWorkspaceToStoredWorkspace(
             topLevelIds: proxies.topLevelIds,
             entities: Object.fromEntries(proxies.values.map(r => [r.id, r.toWorkspace()])),
             childIds: Object.fromEntries(proxies.childIds)
+        },
+        data: {
+            topLevelIds: data.topLevelIds,
+            entities: Object.fromEntries(data.values.map(r => [r.id, r.toWorkspace()])),
+            childIds: Object.fromEntries(data.childIds)
         },
         defaults: defaults.toWorkspace(),
     }

@@ -153,7 +153,7 @@ pre.log {
   white-space: pre-line;
   word-break: break-word;
   font-size: 0.9em;
-  line-height: 1.1;
+  /* line-height: 1.1; */
 }
 
 .navigation-menu-item div:nth-child(2) {
@@ -268,17 +268,9 @@ pre.log {
   margin-bottom: 1em;
 }
 
-.test-result {
-  line-height: 1;
-  margin-bottom: 0.5em;
-}
-
-.test-result pre {
-  line-height: 1.5;
-}
-
-.test-details {
-  margin-top: 0.5em;
+.results-info .MuiTreeItem-content {
+  min-height: 2em;
+  font-size: 1.0rem;
 }
 
 .nav-selection-pane button {

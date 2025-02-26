@@ -62,7 +62,7 @@ export const RequestEditor = observer((props: {
     }
 
     const requestExecution = workspace.executions.get(workspace.active.id)
-    const isExecuted = (requestExecution?.results?.size ?? 0) > 0
+    const isExecuted = (requestExecution?.results?.length ?? 0) > 0
     const isRunning = requestExecution?.running
 
     let usePanel = (
@@ -158,7 +158,7 @@ export const RequestEditor = observer((props: {
                         <ToggleButton value="Headers" title="Show Request Headers" aria-label='show headers' size='small'><ViewListOutlinedIcon /></ToggleButton>
                         <ToggleButton value="Body" title="Show Request Body" aria-label='show body' size='small'><ArticleOutlinedIcon /></ToggleButton>
                         <ToggleButton value="Test" title="Show Request Tests" aria-label='show test' size='small'><ScienceIcon /></ToggleButton>
-                        <ToggleButton value="Parameters" title="Show Request Parameters" aria-label='show test' size='small'><AltRouteIcon /></ToggleButton>
+                        <ToggleButton value="Parameters" title="Show Request Parameters" aria-label='show parameters' size='small'><AltRouteIcon /></ToggleButton>
                         {
                             hasWarnings
                                 ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings' size='small'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>

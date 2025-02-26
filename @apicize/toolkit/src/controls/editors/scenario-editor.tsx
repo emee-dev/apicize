@@ -1,14 +1,13 @@
 import { Stack, TextField, SxProps, Grid2, Box, SvgIcon, IconButton, Button, FormControl, MenuItem, Select, InputLabel } from '@mui/material'
 import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';
-import { EditableScenario, EditableScenarioVariable } from '../../models/workspace/editable-scenario';
+import { EditableScenario, EditableVariable } from '../../models/workspace/editable-scenario';
 import { useWorkspace } from '../../contexts/workspace.context';
 import ScenarioIcon from '../../icons/scenario-icon';
-import { ScenarioVariableType } from '@apicize/lib-typescript';
-import { toJS } from 'mobx';
 import { GenerateIdentifier } from '../../services/random-identifier-generator';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { VariableSourceType } from '@apicize/lib-typescript';
 
 export const ScenarioEditor = observer((props: { sx: SxProps }) => {
     const workspace = useWorkspace()
@@ -16,10 +15,10 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
     workspace.nextHelpTopic = 'workspace/scenarios'
 
     const onAddVariable = () => {
-        scenario.variables.push(new EditableScenarioVariable(
+        scenario.variables.push(new EditableVariable(
             GenerateIdentifier(),
             '',
-            ScenarioVariableType.Text,
+            VariableSourceType.Text,
             ''
         ))
     }
@@ -27,7 +26,6 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
     const onDeleteVariable = (id: string) => {
         scenario.variables = scenario.variables.filter(v => v.id !== id)
     }
-
 
     return (
         <Stack direction={'column'} className='editor' sx={props.sx}>
@@ -78,12 +76,12 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
                                                     size='small'
                                                     value={variable.type}
                                                     sx={{ minWidth: '8rem' }}
-                                                    onChange={e => variable.updateType(e.target.value as ScenarioVariableType)}
+                                                    onChange={e => variable.updateSourceType(e.target.value as VariableSourceType)}
                                                 >
-                                                    <MenuItem key={`${variable.id}-type-text`} value={ScenarioVariableType.Text}>Text Value</MenuItem>
-                                                    <MenuItem key={`${variable.id}-type-json`} value={ScenarioVariableType.JSON}>JSON Value</MenuItem>
-                                                    <MenuItem key={`${variable.id}-type-file-json`} value={ScenarioVariableType.FileJSON}>JSON File</MenuItem>
-                                                    <MenuItem key={`${variable.id}-type-file-csv`} value={ScenarioVariableType.FileCSV}>CSV File</MenuItem>
+                                                    <MenuItem key={`${variable.id}-type-text`} value={VariableSourceType.Text}>Text Value</MenuItem>
+                                                    <MenuItem key={`${variable.id}-type-json`} value={VariableSourceType.JSON}>JSON Value</MenuItem>
+                                                    <MenuItem key={`${variable.id}-type-file-json`} value={VariableSourceType.FileJSON}>JSON File</MenuItem>
+                                                    <MenuItem key={`${variable.id}-type-file-csv`} value={VariableSourceType.FileCSV}>CSV File</MenuItem>
                                                 </Select>
                                             </FormControl>
                                         </Grid2>
@@ -94,7 +92,7 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
                                                 className='code'
                                                 aria-label='variable-value'
                                                 rows={10}
-                                                multiline={variable.type == ScenarioVariableType.JSON}
+                                                multiline={variable.type == VariableSourceType.JSON}
                                                 size="small"
                                                 value={variable.value}
                                                 error={variable.valueError !== null}
@@ -114,7 +112,6 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
                             <Box>
                                 <Button variant="outlined" aria-label="add" startIcon={<AddIcon />} size='small' onClick={() => onAddVariable()}>Add Scenario Variable</Button>
                             </Box>
-
                         </Grid2>
                     </Stack>
 

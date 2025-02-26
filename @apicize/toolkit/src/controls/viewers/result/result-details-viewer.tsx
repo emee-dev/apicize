@@ -8,17 +8,15 @@ import { useWorkspace } from "../../../contexts/workspace.context";
 import { RichViewer } from "../rich-viewer";
 import { EditorMode } from "../../../models/editor-mode";
 
-export const ResultDetailsViewer = observer((props: {
-    requestOrGroupId: string,
-    executionResultId: string,
-}) => {
+export const ResultDetailsViewer = observer((props: { requestOrGroupId: string, index: number }) => {
     const workspace = useWorkspace()
     const clipboard = useClipboard()
 
-    const result = workspace.getExecutionResultDetails(props.requestOrGroupId, props.executionResultId)
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
 
-    const request = result?.testingContext
-    if (!request) return null
+    if (!result) {
+        return null
+    }
 
     const text = beautify.js_beautify(JSON.stringify(result), {})
     return (

@@ -88,6 +88,21 @@ export const RequestParametersEditor = observer(() => {
                     {itemsFromSelections(lists.proxies)}
                 </Select>
             </FormControl>
+            <FormControl>
+                <InputLabel id='data-label-id'>Seed Data</InputLabel>
+                <Select
+                    labelId='data-label'
+                    aria-labelledby='data-label-id'
+                    id='cred-data'
+                    label='Seed Data'
+                    value={requestEntry.selectedData?.id ?? DEFAULT_SELECTION_ID}
+                    onChange={(e) => workspace.setRequestSelectedDataId(e.target.value)}
+                    fullWidth
+                    size='small'
+                >
+                    {itemsFromSelections(lists.data)}
+                </Select>
+            </FormControl>
         </Stack>
     )
 })

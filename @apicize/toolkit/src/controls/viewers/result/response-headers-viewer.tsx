@@ -1,16 +1,15 @@
 import { Box, Grid2, Stack, Typography } from "@mui/material"
 import { useWorkspace } from "../../../contexts/workspace.context"
 
-export function ResponseHeadersViewer(props: { requestOrGroupId: string, executionResultId: string }) {
+export function ResponseHeadersViewer(props: { requestOrGroupId: string, index: number }) {
     const workspace = useWorkspace()
 
-    const result = workspace.getExecutionResult(props.requestOrGroupId, props.executionResultId)
-
-    if (result?.type !== 'request') {
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
+    if (!result?.execution?.response) {
         return null
     }
 
-    const headers = Object.entries(result.response?.headers ?? {})
+    const headers = Object.entries(result.execution.response.headers ?? {})
     let hdrCtr = 0
 
     return (
@@ -24,7 +23,7 @@ export function ResponseHeadersViewer(props: { requestOrGroupId: string, executi
                                 headers.map(([header, value]) =>
                                     <Grid2 container size={12}>
                                         <Grid2 size={{ md: 6, lg: 4 }}>{header}</Grid2>
-                                        <Grid2 size={{ md: 6, lg: 8 }} sx={{wordBreak: 'break-word'}}>{value}</Grid2>
+                                        <Grid2 size={{ md: 6, lg: 8 }} sx={{ wordBreak: 'break-word' }}>{value}</Grid2>
                                     </Grid2>
                                 )
                             }

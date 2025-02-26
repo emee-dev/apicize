@@ -5,17 +5,16 @@ import { useWorkspace } from "../../../contexts/workspace.context";
 import { RichViewer } from "../rich-viewer";
 import { EditorMode } from "../../../models/editor-mode";
 
-export function ResultRawPreview(props: { requestOrGroupId: string, executionResultId: string }) {
+export function ResultRawPreview(props: { requestOrGroupId: string, index: number }) {
     const workspace = useWorkspace()
     const clipboard = useClipboard()
 
-    const result = workspace.getExecutionResult(props.requestOrGroupId, props.executionResultId)
-
-    if (result?.type !== 'request') {
+    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
+    if (!result?.execution?.response) {
         return null
     }
 
-    const body = result.response?.body
+    const body = result.execution.response.body
 
     let has_text = body?.text !== undefined
     let preview = has_text ? body?.text : body?.data

@@ -6,9 +6,7 @@ pub mod settings;
 pub mod trace;
 
 use apicize_lib::{
-    apicize::ApicizeExecution,
-    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token, PkceTokenResult},
-    test_runner, Workspace,
+    oauth2_client_tokens::{clear_all_oauth2_tokens, clear_oauth2_token, PkceTokenResult}, ApicizeGroupItem, ApicizeRunner, TestRunnerContext, Workspace
 };
 use pkce::{OAuth2PkceInfo, OAuth2PkceRequest, OAuth2PkceService};
 use settings::{ApicizeSettings, ColorScheme};
@@ -17,7 +15,6 @@ use std::{
     env, fs,
     path::{Path, PathBuf},
     sync::Arc,
-    time::Instant,
 };
 use tauri::{Manager, State};
 use tauri_plugin_clipboard::Clipboard;
@@ -228,10 +225,7 @@ async fn run_request(
     workspace: Workspace,
     request_id: String,
     workbook_full_name: String,
-    override_number_of_runs: Option<usize>,
-) -> Result<ApicizeExecution, String> {
-    let arc_test_started = Arc::new(Instant::now());
-    let shared_workspace = Arc::new(workspace);
+) -> Result<Vec<ApicizeGroupItem>, String> {
     let cancellation = CancellationToken::new();
     {
         cancellation_tokens()
@@ -240,11 +234,11 @@ async fn run_request(
             .insert(request_id.clone(), cancellation.clone());
     }
 
-    let allowed_parent_path: Option<PathBuf>;
+    let allowed_data_path: Option<PathBuf>;
     if workbook_full_name.is_empty() {
-        allowed_parent_path = None;
+        allowed_data_path = None;
     } else {
-        allowed_parent_path = Some(PathBuf::from(
+        allowed_data_path = Some(PathBuf::from(
             std::path::absolute(&workbook_full_name)
                 .unwrap()
                 .parent()
@@ -253,16 +247,15 @@ async fn run_request(
         ));
     }
 
-    let response = test_runner::run(
-        &vec![request_id.clone()],
-        shared_workspace,
-        Some(Arc::new(cancellation)),
-        arc_test_started,
-        override_number_of_runs,
-        allowed_parent_path,
+    let runner = Arc::new(TestRunnerContext::new(
+        workspace,
+        None,
+        None,
+        &allowed_data_path,
         true,
-    )
-    .await;
+    ));
+
+    let response = runner.run(&vec![request_id.clone()]).await;
 
     cancellation_tokens().lock().unwrap().remove(&request_id);
 

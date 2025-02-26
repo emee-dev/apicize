@@ -24,13 +24,13 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
         return null
     }
 
-    const handleRunClick = (runs?: number) => async () => {
+    const handleRunClick = (singleRun: boolean = false) => async () => {
         try {
             if (!(workspace.active && (workspace.active.entityType === EditableEntityType.Request || workspace.active.entityType === EditableEntityType.Group))) {
                 return
             }
             const requestId = workspace.active.id
-            await workspace.executeRequest(requestId, runs)
+            await workspace.executeRequest(requestId, singleRun)
         } catch (e) {
             let msg1 = `${e}`
             feedback.toast(msg1, msg1 == 'Cancelled' ? ToastSeverity.Warning : ToastSeverity.Error)
@@ -50,7 +50,7 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
 
     return (
         <Stack direction={'row'} flexGrow={0} justifyItems='center' sx={props.sx}>
-            <ToggleButton value='Run' title='Run selected request once' sx={{ marginRight: '1em' }} size='small' disabled={running} onClick={handleRunClick(1)}>
+            <ToggleButton value='Run' title='Run selected request once' sx={{ marginRight: '1em' }} size='small' disabled={running} onClick={handleRunClick(true)}>
                 <PlayCircleOutlined color={running ? 'disabled' : 'success'} />
             </ToggleButton>
             {

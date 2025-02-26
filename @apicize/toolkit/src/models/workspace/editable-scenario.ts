@@ -1,22 +1,21 @@
-import { Scenario, ScenarioVariable, ScenarioVariableType } from "@apicize/lib-typescript"
+import { Scenario, Variable, VariableSourceType } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable, toJS } from "mobx"
-import { EditableNameValuePair } from "./editable-name-value-pair"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EditableEntityType } from "./editable-entity-type"
 
-export class EditableScenarioVariable implements ScenarioVariable {
+export class EditableVariable implements Variable {
 
     @observable accessor id: string
     @observable accessor name: string
-    @observable accessor type: ScenarioVariableType
+    @observable accessor type: VariableSourceType
     @observable accessor value: string
     @observable accessor disabled: boolean | undefined
 
     public constructor(
         id: string,
         name: string,
-        type: ScenarioVariableType,
+        type: VariableSourceType,
         value: string,
         disabled?: boolean) {
         this.id = id
@@ -26,7 +25,7 @@ export class EditableScenarioVariable implements ScenarioVariable {
         this.disabled = disabled
     }
 
-    toWorkspace(): ScenarioVariable {
+    toWorkspace(): Variable {
         return {
             name: this.name,
             type: this.type,
@@ -41,7 +40,7 @@ export class EditableScenarioVariable implements ScenarioVariable {
     }
 
     @action
-    public updateType(value: ScenarioVariableType) {
+    public updateSourceType(value: VariableSourceType) {
         this.type = value
     }
 
@@ -56,7 +55,7 @@ export class EditableScenarioVariable implements ScenarioVariable {
 
     @computed get valueError(): string | null {
         switch (this.type) {
-            case ScenarioVariableType.JSON: {
+            case VariableSourceType.JSON: {
                 try {
                     JSON.parse(this.value)
                 } catch (_) {
@@ -64,12 +63,12 @@ export class EditableScenarioVariable implements ScenarioVariable {
                 }
             }
                 break
-            case ScenarioVariableType.FileJSON:
+            case VariableSourceType.FileJSON:
                 if (/^(?!\/\\)(?!.*\.\.)(?!.*\/\/)(?!.*\/\.)[\.\w\/ ]{1,200}\.json$/.exec(this.value) === null) {
                     return 'Value must be a relative .json file name using forward slashes'
                 }
                 break
-            case ScenarioVariableType.FileCSV:
+            case VariableSourceType.FileCSV:
                 if (/^(?!\/\\)(?!.*\.\.)(?!.*\/\/)(?!.*\/\.)[\.\w\/ ]{1,200}\.csv$/.exec(this.value) === null) {
                     return 'Value must be a relative .csv file name using forward slashes'
                 }
@@ -87,16 +86,16 @@ export class EditableScenarioVariable implements ScenarioVariable {
 
 export class EditableScenario extends Editable<Scenario> {
     public readonly entityType = EditableEntityType.Scenario
-    @observable accessor variables: EditableScenarioVariable[] = []
+    @observable accessor variables: EditableVariable[] = []
 
     static fromWorkspace(entry: Scenario): EditableScenario {
         const result = new EditableScenario()
         result.id = entry.id
         result.name = entry.name ?? ''
-        result.variables = entry.variables?.map(v => new EditableScenarioVariable(
+        result.variables = entry.variables?.map(v => new EditableVariable(
             GenerateIdentifier(),
             v.name,
-            v.type ?? ScenarioVariableType.Text,
+            v.type ?? VariableSourceType.Text,
             v.value,
             v.disabled
         )) ?? []

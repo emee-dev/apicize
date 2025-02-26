@@ -9,6 +9,7 @@ export class EditableDefaults implements EditableItem, SelectedParameters {
     @observable accessor selectedAuthorization: Selection = NO_SELECTION
     @observable accessor selectedCertificate: Selection = NO_SELECTION
     @observable accessor selectedProxy: Selection = NO_SELECTION
+    @observable accessor selectedData: Selection = NO_SELECTION
 
     @observable accessor id = 'Defaults'
     @observable accessor name = 'Defaults'
@@ -22,6 +23,7 @@ export class EditableDefaults implements EditableItem, SelectedParameters {
         result.selectedAuthorization = workspace?.defaults?.selectedAuthorization ?? NO_SELECTION
         result.selectedCertificate = workspace?.defaults?.selectedCertificate ?? NO_SELECTION
         result.selectedProxy = workspace?.defaults?.selectedProxy ?? NO_SELECTION
+        result.selectedData = workspace?.defaults?.selectedData ?? NO_SELECTION
         return result
     }
 
@@ -31,6 +33,7 @@ export class EditableDefaults implements EditableItem, SelectedParameters {
             selectedAuthorization: this.selectedAuthorization.id === NO_SELECTION_ID ? undefined : toJS(this.selectedAuthorization),
             selectedCertificate: this.selectedCertificate.id === NO_SELECTION_ID ? undefined : toJS(this.selectedCertificate),
             selectedProxy: this.selectedProxy.id === NO_SELECTION_ID ? undefined : toJS(this.selectedProxy),
+            selectedData: this.selectedData.id === NO_SELECTION_ID ? undefined : toJS(this.selectedData),
         }
     }
 }

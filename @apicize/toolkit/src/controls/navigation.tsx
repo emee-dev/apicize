@@ -17,7 +17,7 @@ import { alpha, Box, Button, IconButton, ListItemIcon, ListItemText, Menu, MenuI
 import AddIcon from '@mui/icons-material/Add'
 import React, { SyntheticEvent, useState } from 'react'
 import { DndContext, DragEndEvent, useDraggable, useDroppable, useSensors, useSensor, PointerSensor, DragCancelEvent, DragMoveEvent } from '@dnd-kit/core'
-import { GetTitle, IndexedEntityManager, Persistence } from '@apicize/lib-typescript';
+import { GetTitle, Persistence } from '@apicize/lib-typescript';
 import { CSS, useCombinedRefs } from '@dnd-kit/utilities';
 import { EditableItem, EditableState } from "../models/editable";
 import { EditableEntityType } from "../models/workspace/editable-entity-type";
@@ -39,6 +39,7 @@ import FolderIcon from "../icons/folder-icon";
 import { DraggableData, DragPosition, DroppableData } from "../models/drag-drop";
 import { OverridableStringUnion } from "@mui/types";
 import LogIcon from "../icons/log-icon";
+import { IndexedEntityManager } from "../models/indexed-entity-manager";
 
 interface MenuPosition {
     id: string
@@ -130,7 +131,7 @@ export const Navigation = observer(() => {
                                 return
                             }
                             const r = workspace.active as EditableRequest
-                            await workspace.executeRequest(workspace.active.id, e.shiftKey ? r.runs : 1)
+                            await workspace.executeRequest(workspace.active.id, ! e.shiftKey)
                         } catch (e) {
                             let msg1 = `${e}`
                             feedback.toast(msg1, msg1 == 'Cancelled' ? ToastSeverity.Warning : ToastSeverity.Error)

@@ -21,7 +21,7 @@ export const RunResultsToolbar = observer((props: { className?: string, sx?: SxP
     return (
         <Stack direction='row' className={props.className} sx={props.sx}>
             {
-                request && execution.results.size > 1
+                request && execution.results.length > 1
                     ? <FormControl sx={{ marginRight: '1em' }}>
                         <InputLabel id='run-id'>Runs</InputLabel>
                         <Select

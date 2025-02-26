@@ -32,6 +32,7 @@ export class EditableRequest extends Editable<Request> {
     @observable accessor selectedAuthorization: Selection | undefined = undefined
     @observable accessor selectedCertificate: Selection | undefined = undefined
     @observable accessor selectedProxy: Selection | undefined = undefined
+    @observable accessor selectedData: Selection | undefined = undefined
 
     static fromWorkspace(entry: Request): EditableRequest {
         const result = new EditableRequest()
@@ -45,6 +46,7 @@ export class EditableRequest extends Editable<Request> {
         result.selectedAuthorization = entry.selectedAuthorization ?? undefined
         result.selectedCertificate = entry.selectedCertificate ?? undefined
         result.selectedProxy = entry.selectedProxy ?? undefined
+        result.selectedData = entry.selectedData ?? undefined
 
         result.url = entry.url ?? ''
         result.method = entry.method ?? Method.Get
@@ -120,6 +122,7 @@ export class EditableRequest extends Editable<Request> {
             selectedAuthorization: this.selectedAuthorization,
             selectedCertificate: this.selectedCertificate,
             selectedProxy: this.selectedProxy,
+            selectedData: this.selectedData,
         }
 
         let bodyIsValid = false
@@ -208,6 +211,7 @@ export class EditableRequestGroup extends Editable<RequestGroup> {
     @observable accessor selectedAuthorization: Selection | undefined = undefined
     @observable accessor selectedCertificate: Selection | undefined = undefined
     @observable accessor selectedProxy: Selection | undefined = undefined
+    @observable accessor selectedData: Selection | undefined = undefined
     @observable accessor warnings: Map<string, string> | undefined = undefined
 
     static fromWorkspace(entry: RequestGroup): EditableRequestGroup {
@@ -223,6 +227,7 @@ export class EditableRequestGroup extends Editable<RequestGroup> {
         result.selectedAuthorization = entry.selectedAuthorization ?? undefined
         result.selectedCertificate = entry.selectedCertificate ?? undefined
         result.selectedProxy = entry.selectedProxy ?? undefined
+        result.selectedData = entry.selectedData ?? undefined
         result.warnings = entry.warnings
             ? new Map(entry.warnings.map(w => [GenerateIdentifier(), w]))
             : new Map<string, string>()
@@ -241,6 +246,7 @@ export class EditableRequestGroup extends Editable<RequestGroup> {
             selectedAuthorization: this.selectedAuthorization ?? undefined,
             selectedCertificate: this.selectedCertificate ?? undefined,
             selectedProxy: this.selectedProxy ?? undefined,
+            selectedData: this.selectedData ?? undefined,
         } as RequestGroup
     }
 

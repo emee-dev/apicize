@@ -13,6 +13,9 @@ import { Mode as HtmlMode } from 'ace-code/src/mode/html'
 import { Mode as CssMode } from 'ace-code/src/mode/css'
 import { Mode as TextMode } from 'ace-code/src/mode/text'
 
+// import { Mode as JavaScriptMode } from "ace-code/src/mode/javascript";
+// import { LanguageProvider } from "ace-linters";
+// import worker from "./webworker"
 
 import { useApicizeSettings } from '../../contexts/apicize-settings.context'
 import { forwardRef, Ref, useEffect, useImperativeHandle, useRef } from 'react'
@@ -106,7 +109,13 @@ export const RichEditor = forwardRef((props: {
             showLineNumbers: true,
             useWorker: false,
         })
+
+        // const worker = new Worker(new URL('./webworker.js', import.meta.url))
+        // let languageProvider = LanguageProvider.create(worker)
+        // languageProvider.registerEditor(editor.current)
+
         updateEditorMode(editor.current, props.mode)
+
         editor.current.session.on('change', () => {
             if (editor.current) {
                 props.onUpdateValue(editor.current.session.getValue())
