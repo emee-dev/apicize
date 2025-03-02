@@ -216,7 +216,7 @@ export const RequestBodyEditor = observer(() => {
               <Box padding='10px'>{request.body.data ? request.body.data.length.toLocaleString() + ' Bytes' : '(None)'}</Box>
             </Stack>
             :
-            <Grid2 flexGrow={1} paddingBottom='5rem'>
+            <Grid2 flexGrow={1}>
               <RichEditor
                 sx={{ width: '100%', height: '100%' }}
                 ref={refCommands}

@@ -5,6 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { useWorkspace } from '../../../contexts/workspace.context';
 import { ToastSeverity, useFeedback } from '../../../contexts/feedback.context'
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
+import { NO_SELECTION_ID } from '../../../models/store';
 
 export const RequestGroupEditor = observer((props: {
     sx?: SxProps
@@ -12,12 +13,12 @@ export const RequestGroupEditor = observer((props: {
     const workspace = useWorkspace()
     const feedback = useFeedback()
 
-
     const group = workspace.active as EditableRequestGroup
     const execution = workspace.executions.get(group.id)
     const running = execution?.running ?? false
     workspace.nextHelpTopic = 'workspace/groups'
 
+    const isUsingSeedData = workspace.defaults.selectedData.id !== NO_SELECTION_ID
 
     const updateRuns = (runs: number) => {
         workspace.setRequestRuns(runs)
@@ -67,21 +68,21 @@ export const RequestGroupEditor = observer((props: {
                         value={group.runs}
                         onChange={e => updateRuns(parseInt(e.target.value))}
                     />
-                    <ToggleButton value='Run' title={`Run selected request ${group.runs} times`} disabled={running} onClick={handleRunClick()} size='small'>
+                    <ToggleButton value='Run' title={`Run selected group ${group.runs} times`} disabled={running} onClick={handleRunClick()} size='small'>
                         <PlayCircleFilledIcon color={running ? 'disabled' : 'success'} />
                     </ToggleButton>
                 </Grid2>
                 <Grid2>
                     <FormControl>
-                        <InputLabel id='multirun-execution-label-id'>Multi-Run Execution</InputLabel>
+                        <InputLabel id='multirun-execution-label-id'>Group Execution</InputLabel>
                         <Select
                             labelId='execution-label-id'
-                            id='multi-run-execution'
+                            id='group-run-execution'
                             aria-labelledby='multirun-execution-label-id'
                             value={group.multiRunExecution}
                             disabled={group.runs < 2}
-                            sx={{ minWidth: '11em' }}
-                            label='Multi-Run Execution'
+                            sx={{ minWidth: '10em' }}
+                            label='Group Execution'
                             size='small'
                             onChange={e => workspace.setMultiRunExecution(e.target.value as GroupExecution)}
                         >
@@ -92,15 +93,16 @@ export const RequestGroupEditor = observer((props: {
                 </Grid2>
                 <Grid2>
                     <FormControl>
-                        <InputLabel id='execution-label-id'>Group Execution</InputLabel>
+                        <InputLabel id='execution-label-id'>Group Item Execution</InputLabel>
                         <Select
                             labelId='execution-label-id'
                             id='execution'
                             aria-labelledby='execution-label-id'
                             value={group.execution}
-                            sx={{ minWidth: '11em' }}
+                            disabled={isUsingSeedData}
+                            sx={{ minWidth: '10em' }}
                             size='small'
-                            label='Group Execution'
+                            label='Group Item Execution'
                             onChange={e => workspace.setGroupExecution(e.target.value as GroupExecution)}
                         >
                             <MenuItem value={GroupExecution.Sequential}>Sequential</MenuItem>

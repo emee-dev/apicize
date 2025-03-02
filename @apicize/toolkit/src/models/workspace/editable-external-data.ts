@@ -7,8 +7,8 @@ export class EditableExternalData extends Editable<ExternalData> {
 
     public readonly entityType = EditableEntityType.ExternalData
 
-    @observable accessor type: ExternalDataSourceType = ExternalDataSourceType.JSON
-    @observable accessor source: string = '{}'
+    @observable accessor type: ExternalDataSourceType = ExternalDataSourceType.FileJSON
+    @observable accessor source: string = ''
 
     static fromWorkspace(entry: ExternalData): EditableExternalData {
         const result = new EditableExternalData()

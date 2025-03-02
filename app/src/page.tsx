@@ -26,7 +26,7 @@ const workspaceStore = new WorkspaceStore(
   feedbackStore,
   {
     onExecuteRequest: async (workspace, requestId, workbookFullName: string) =>
-      core.invoke<ApicizeResult[]>('run_request', { workspace, requestId, workbookFullName }),
+      core.invoke<ApicizeResult>('run_request', { workspace, requestId, workbookFullName }),
     onCancelRequest: (requestId) => core.invoke(
       'cancel_request', { requestId }),
     onClearToken: (authorizationId) => core.invoke(

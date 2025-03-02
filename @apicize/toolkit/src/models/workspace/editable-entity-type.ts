@@ -12,5 +12,5 @@ export enum EditableEntityType {
     ExternalData = 'ext',
     Warnings = 'w',
     Defaults = 'd',
-    Workbook = 'wkbk'
+    Workbook = 'wkbk',
 }

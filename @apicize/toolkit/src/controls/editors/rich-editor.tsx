@@ -7,15 +7,15 @@ import { Box } from '@mui/material'
 import { SxProps } from '@mui/system'
 import ace, { Editor } from 'ace-code'
 import { Mode as JavaScriptMode } from 'ace-code/src/mode/javascript'
+// import { Mode as TypeScriptMode } from 'ace-code/src/mode/typescript'
 import { Mode as JsonMode } from 'ace-code/src/mode/json'
 import { Mode as XmlMode } from 'ace-code/src/mode/xml'
 import { Mode as HtmlMode } from 'ace-code/src/mode/html'
 import { Mode as CssMode } from 'ace-code/src/mode/css'
 import { Mode as TextMode } from 'ace-code/src/mode/text'
 
-// import { Mode as JavaScriptMode } from "ace-code/src/mode/javascript";
-// import { LanguageProvider } from "ace-linters";
-// import worker from "./webworker"
+import { LanguageProvider } from "ace-linters";
+import 'ace-code/src/ext/language_tools'
 
 import { useApicizeSettings } from '../../contexts/apicize-settings.context'
 import { forwardRef, Ref, useEffect, useImperativeHandle, useRef } from 'react'
@@ -25,6 +25,11 @@ import { EditableItem } from '../../models/editable'
 import { EditorMode } from '../../models/editor-mode'
 import { css_beautify, html_beautify, js_beautify } from 'js-beautify'
 
+const workerUrl = new URL('./webworker.js', import.meta.url)
+const worker = new Worker(workerUrl)
+const languageProvider = LanguageProvider.create(worker, { functionality: { semanticTokens: true } })
+
+
 // We have to dynamically load search box because of webpack(?)
 ace.config.dynamicModules = {
     'ace/ext/searchbox': () => import('ace-code/src/ext/searchbox')
@@ -33,6 +38,7 @@ ace.config.dynamicModules = {
 const updateEditorMode = (editor: Editor, mode: EditorMode | undefined) => {
     switch (mode) {
         case EditorMode.js:
+            // editor.session.setMode(new TypeScriptMode());
             editor.session.setMode(new JavaScriptMode());
             break
         case EditorMode.json:
@@ -97,6 +103,9 @@ export const RichEditor = forwardRef((props: {
     useEffect(() => {
         editor.current = ace.edit('editor')
         editor.current.setTheme(theme)
+        editor.current.setOption('enableBasicAutocompletion', true);
+        editor.current.setOption('enableLiveAutocompletion', true);
+
         editor.current.setOptions({
             fontSize: `${apicizeSettings.fontSize}pt`,
             showGutter: true,
@@ -110,9 +119,30 @@ export const RichEditor = forwardRef((props: {
             useWorker: false,
         })
 
-        // const worker = new Worker(new URL('./webworker.js', import.meta.url))
-        // let languageProvider = LanguageProvider.create(worker)
-        // languageProvider.registerEditor(editor.current)
+        languageProvider.setGlobalOptions('javascript', {
+            globals: {
+                magic: "readable"
+            },
+            errorMessagesToIgnore: [
+                /is not defined/
+            ]
+        })
+
+        // languageProvider.setGlobalOptions('typescript', {
+        //     extraLibs: {
+        //         'foo/index.ts': {
+        //             content: `
+        //             var magic = "12345";
+        //             declare global {
+        //                magic: string
+        //             }
+        //             `,
+        //             version: 1
+        //         }
+        //     }
+        // })
+
+        languageProvider.registerEditor(editor.current)
 
         updateEditorMode(editor.current, props.mode)
 

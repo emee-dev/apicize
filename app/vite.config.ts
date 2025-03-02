@@ -9,7 +9,16 @@ export default defineConfig(async () => ({
 
   // These need to be in to clean up @emotion duplication
   optimizeDeps: {
-    include: ['@emotion/react'],
+    include: [
+      '@emotion/react', 'ace-linters/build/service-manager',
+      // 'ace-linters/build/typescript-service', 'ace-code/src/mode/typescript',
+      'ace-code/src/mode/json', 'ace-linters/build/json-service',
+      'ace-code/src/mode/jvascript', 'ace-linters/build/javascript-service',
+      'ace-code/src/mode/xml', 'ace-linters/build/xml-service',
+      'ace-code/src/mode/html', 'ace-linters/build/html-service',
+      'ace-code/src/mode/css', 'ace-linters/build/css-service',
+      'ace-code/src/mode/text', 'ace-code/src/mode/text'
+    ],
   },
   resolve: {
     dedupe: ['@emotion/react']

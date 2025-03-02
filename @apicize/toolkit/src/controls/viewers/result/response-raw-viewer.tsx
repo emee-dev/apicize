@@ -10,11 +10,11 @@ export function ResultRawPreview(props: { requestOrGroupId: string, index: numbe
     const clipboard = useClipboard()
 
     const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
-    if (!result?.execution?.response) {
+    if (!result?.response) {
         return null
     }
 
-    const body = result.execution.response.body
+    const body = result.response.body
 
     let has_text = body?.text !== undefined
     let preview = has_text ? body?.text : body?.data

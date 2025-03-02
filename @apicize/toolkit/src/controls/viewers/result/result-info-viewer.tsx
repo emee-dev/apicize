@@ -1,27 +1,32 @@
-import { Box, Stack, SxProps } from "@mui/material"
-import { IconButton, Typography } from "@mui/material"
-import CheckIcon from '@mui/icons-material/Check';
-import BlockIcon from '@mui/icons-material/Block';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import beautify from "js-beautify";
-import { observer } from "mobx-react-lite";
-import { useClipboard } from "../../../contexts/clipboard.context";
-import { useWorkspace } from "../../../contexts/workspace.context";
-import { ApicizeError } from "@apicize/lib-typescript";
-import { ExecutionResult } from "../../../models/workspace/execution";
-import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
-import { TreeItem } from "@mui/x-tree-view/TreeItem";
-import { useEffect, useState } from "react";
+import { Box, Grid2, IconButton, Link, Stack, SvgIcon, useTheme } from "@mui/material"
+import { Typography } from "@mui/material"
+import CheckIcon from '@mui/icons-material/Check'
+import BlockIcon from '@mui/icons-material/Block'
+import { observer } from "mobx-react-lite"
+import { useClipboard } from "../../../contexts/clipboard.context"
+import { useWorkspace } from "../../../contexts/workspace.context"
+import { ApicizeError } from "@apicize/lib-typescript"
+import { ExecutionResult } from "../../../models/workspace/execution"
+import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView"
+import { TreeItem } from "@mui/x-tree-view/TreeItem"
+import React, { useState } from "react"
+import ViewIcon from "../../../icons/view-icon"
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
+import beautify from "js-beautify"
+
 
 const ApicizeErrorToString = (error?: ApicizeError): string => {
-    const sub = (err?: ApicizeError) => err ? `, ${err.description}${ApicizeErrorToString(err.source)}` : '';
+    const sub = (err?: ApicizeError) => err ? `, ${err.description}${ApicizeErrorToString(err.source)}` : ''
     return error ? `[${error.type}] ${error.description}${sub(error.source)}` : ''
 }
 
 export const ResultInfoViewer = observer((props: { requestOrGroupId: string, index: number }) => {
 
     const workspace = useWorkspace()
+    const theme = useTheme()
     const clipboardCtx = useClipboard()
+    const feedback = useFeedback()
     const requestOrGroupId = props.requestOrGroupId
 
     const mainResult = workspace.getExecutionResult(props.requestOrGroupId, props.index)
@@ -40,41 +45,56 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
         return `${m.toLocaleString().padStart(2, '0')}:${s.toString().padStart(2, '0')}${(0.1).toLocaleString()[1]}${value.toString().padEnd(3, '0')}`
     }
 
-    const RenderResult = (props: { result: ExecutionResult }) => {
-        if (props.result.execution) {
-            return <RenderExecution key={`result-${idx++}`} result={props.result} />
-        } else {
-            return <RenderSummary key={`result-${idx++}`} result={props.result} />
-        }
-    }
+    const RenderExecution = (props: { result: ExecutionResult, first?: boolean }) => {
+        // const rowSuffix = props.result.info.rowNumber && props.result.info.rowCount ? ` Row ${props.result.info.rowNumber} of ${props.result.info.rowCount}` : ''
+        const subtitle = props.result.success ? "Completed" : "Failed"
+        const color = props.result.success ? theme.palette.success.main : ((props.result.requestErrorCount ?? 0) > 0 || props.result?.error) ? theme.palette.error.main : theme.palette.warning.main
 
-    const RenderExecution = (props: { result: ExecutionResult }) => {
-        const rowSuffix = props.result.info.rowNumber && props.result.info.rowCount ? ` Row ${props.result.info.rowNumber} of ${props.result.info.rowCount}` : ''
-        const subtitle = `${(props.result.info.runCount ?? 1) > 1 ? `Run ${props.result.info.runNumber} of ${props.result.info.runCount}` : ''}${props.result.success ? "Completed" : "Failed"}`
-        const color = props.result.success ? 'success' : ((props.result.requestErrorCount ?? 0) > 0 || props.result?.execution?.error) ? 'error' : 'warning'
+        const isFirst = props.result === mainResult
+        const key = isFirst ? 'first-result' : `tree-${idx++}`
 
-        let key: string
-        if (props.result === mainResult) {
-            key = 'first-result'
-        } else {
-            key = `tree-${idx++}`;
-        }
+        return <TreeItem itemId={key} key={key} label={
+            <Grid2 container direction='row' display='flex' alignItems='center' margin='0.5rem 0 0.5rem 0.5rem'>
+                <Grid2 display='flex' flexDirection='column' alignItems='start' alignContent='center' flexGrow='content'>
+                    <Box display='flex' fontSize={props.first ? '1.1rem' : 'inherit'}>
+                        <Box sx={{ whiteSpace: 'nowrap' }}>
+                            {props.result.info.title}
+                            <Box component='span' marginLeft='1rem' marginRight='0.5em' sx={{ color }}> ({subtitle}) </Box>
+                        </Box>
+                    </Box>
+                    <Box display='flex' alignContent='start' marginLeft='1.5em' fontSize='0.9em'>
+                        {props.result.executedAt > 0 ? `@${fmtMinSec(props.result.executedAt)}` : '@Start'}{props.result.duration > 0 ? ` for ${props.result.duration.toLocaleString()} ms` : ''}
+                    </Box>
+                </Grid2>
+                <Grid2 display='flex' flexBasis='content' alignItems='center' alignContent='start' marginLeft='1.0rem'>
+                    <IconButton
+                        title="Copy Data to Clipboard"
+                        color='primary'
+                        onClick={e => copyToClipboard(e, props.result.info.index)}>
+                        <ContentCopyIcon />
+                    </IconButton>
+                    {
+                        isFirst
+                            ? <></>
+                            : <Link title='View Details' underline='hover' display='inline-flex' marginLeft='0.5rem' alignItems='center' onClick={e => changeResult(e, props.result.info.index)}><SvgIcon><ViewIcon /></SvgIcon></Link>
+                    }
+                </Grid2>
+            </Grid2 >
+        }>
 
-        return <TreeItem itemId={key} key={key} label={<Box>{props.result.info.title}{rowSuffix}
-            <Typography display='inline' margin={'0 0.8em'} color={color}>({subtitle})</Typography>
-            {props.result.executedAt > 0 ? `@${fmtMinSec(props.result.executedAt)}` : '@Start'}{props.result.duration > 0 ? ` for ${props.result.duration.toLocaleString()} ms` : ''}
-        </Box>}>
-            {(props.result.execution?.error)
-                ? (<TestInfo isError={true} text={`${ApicizeErrorToString(props.result.execution.error)}`} />)
-                : (<></>)}
-            {props.result.execution?.response
-                ? (<TestInfo text={`Status: ${props.result.execution.response.status} ${props.result.execution.response.statusText}`} />)
+            {(props.result.error)
+                ? (<TestInfo isError={true} text={`${ApicizeErrorToString(props.result.error)}`} />)
                 : (<></>)}
             {
-                (props.result.execution?.tests && props.result.execution.tests.length > 0)
+                props.result.response
+                    ? (<TestInfo text={`Status: ${props.result.response.status} ${props.result.response.statusText}`} />)
+                    : (<></>)
+            }
+            {
+                (props.result.tests && props.result.tests.length > 0)
                     ? <Box className='test-details'>
                         {
-                            props.result.execution.tests.map(test => (<TestResult
+                            props.result.tests.map(test => (<TestResult
                                 key={`test-${idx++}`}
                                 name={test.testName}
                                 success={test.success}
@@ -87,67 +107,20 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
             {
                 (props.result.info.childIndexes ?? []).map(childIndex => {
                     const child = workspace.getExecutionResult(requestOrGroupId, childIndex)
-                    if (child) {
-                        if (child.execution) {
-                            return <RenderExecution key={`result-${idx++}`} result={child} />
-                        } else {
-                            return <RenderSummary key={`result-${idx++}`} result={child} />
-                        }
-                    } else {
-                        return <></>
-                    }
+                    return child ? <RenderExecution key={`result-${idx++}`} result={child} /> : null
                 })
             }
-
-
-        </TreeItem>
+        </TreeItem >
 
         {/* //     
         //     {/* {props.tokenCached
         //             ? (<TestInfo text='OAuth bearer token retrieved from cache' />)
         //             : (<></>)} */}
 
-
-    }
-
-
-    const RenderSummary = (props: { result: ExecutionResult }) => {
-        let key: string
-        if (props.result === mainResult) {
-            key = 'first-result'
-        } else {
-            key = `tree-${idx++}`;
-        }
-
-        const childIndexes = props.result.info?.childIndexes ?? []
-        const subtitle = `${(props.result.info?.runCount ?? 0) > 1 ? `Run ${props.result.info.runNumber} of ${props.result.info.runCount}, ` : ''}${props.result.success ? "Completed" : "Failed"}`
-        let color = props.result.success ? 'success' : ((props.result.requestErrorCount ?? 0) > 0 || props.result?.execution?.error) ? 'error' : 'warning'
-
-        return <TreeItem key={key} itemId={key} label={
-            <Box>{props.result.info.title}
-                <Typography display='inline' margin='0 0.8em' color={color}>({subtitle})</Typography>
-                {props.result.executedAt > 0 ? `@${fmtMinSec(props.result.executedAt)}` : '@Start'}{props.result.duration > 0 ? ` for ${props.result.duration.toLocaleString()} ms` : ''}
-            </Box>
-        }>
-            {
-                childIndexes.map(childIndex => {
-                    const child = workspace.getExecutionResult(requestOrGroupId, childIndex)
-                    if (child) {
-                        if (child.execution) {
-                            return <RenderExecution key={`result-${idx++}`} result={child} />
-                        } else {
-                            return <RenderSummary key={`result-${idx++}`} result={child} />
-                        }
-                    } else {
-                        return <></>
-                    }
-                })
-            }
-        </TreeItem>
     }
 
     const TestInfo = (props: { isError?: boolean, text: string }) => {
-        const key = `tree-${idx++}`;
+        const key = `tree-${idx++}`
         return <TreeItem key={key} itemId={key} label={
             props.isError === true
                 ? (<Box color='#f44336' sx={{ ":first-letter": { textTransform: 'capitalize' }, whiteSpace: 'pre-wrap' }}>{props.text}</Box>)
@@ -156,7 +129,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
     }
 
     const TestResult = (props: { name: string[], success: boolean, logs?: string[], error?: string }) => {
-        const key = `tree-${idx++}`;
+        const key = `tree-${idx++}`
         const error = (props.error && props.error.length > 0) ? props.error : null
         const logs = (props.logs?.length ?? 0) > 0 ? props.logs : null
 
@@ -170,7 +143,6 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
                         {props.name.join(' ')}
                     </Box>
                 </Stack>}>
-
                 {
                     (props.error?.length ?? 0) > 0
                         ?
@@ -207,9 +179,9 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
 
     }
 
-    const [expanded, setExpanded] = useState<string[]>(['first-result']);
+    const [expanded, setExpanded] = useState<string[]>(['first-result'])
     // useEffect(() => {
-    //     setExpanded([...Array(idx).keys()].map(i => `tree-${i}`));
+    //     setExpanded([...Array(idx).keys()].map(i => `tree-${i}`))
     // }, [expanded])
 
 
@@ -221,9 +193,27 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
     //     return null
     // }
 
-    const copyToClipboard = (data: any) => {
-        const text = beautify.js_beautify(JSON.stringify(data), {})
-        clipboardCtx.writeTextToClipboard(text)
+    const changeResult = (e: React.MouseEvent, index: number) => {
+        e.preventDefault()
+        e.stopPropagation()
+        workspace.changeResultIndex(requestOrGroupId, index)
+
+    }
+
+    const copyToClipboard = (e: React.MouseEvent, index: number) => {
+        try {
+            e.preventDefault()
+            e.stopPropagation()
+            const payload = workspace.getExecutionResultSummary(props.requestOrGroupId, index)
+            if (payload) {
+                clipboardCtx.writeTextToClipboard(
+                    beautify.js_beautify(JSON.stringify(payload), {})
+                )
+                feedback.toast('Data copied to clipboard', ToastSeverity.Success)
+            }
+        } catch (e) {
+            feedback.toast(`${e}`, ToastSeverity.Error)
+        }
     }
 
     return <Stack className="results-info" sx={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '100%', overflow: 'hidden', display: 'flex' }}>
@@ -242,9 +232,8 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
             <SimpleTreeView expandedItems={expanded} onExpandedItemsChange={(_, updated) => {
                 setExpanded(updated)
             }}>
-                <RenderResult result={mainResult} />
+                <RenderExecution result={mainResult} first={true} />
             </SimpleTreeView>
         </Box>
     </Stack>
-
 })

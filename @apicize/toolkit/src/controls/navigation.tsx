@@ -13,7 +13,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
 import { TreeItem } from '@mui/x-tree-view/TreeItem'
-import { alpha, Box, Button, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Stack, styled, SvgIcon, SvgIconPropsColorOverrides, useTheme } from '@mui/material'
+import { alpha, Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Stack, styled, SvgIcon, SvgIconPropsColorOverrides, useTheme } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import React, { SyntheticEvent, useState } from 'react'
 import { DndContext, DragEndEvent, useDraggable, useDroppable, useSensors, useSensor, PointerSensor, DragCancelEvent, DragMoveEvent } from '@dnd-kit/core'
@@ -40,6 +40,7 @@ import { DraggableData, DragPosition, DroppableData } from "../models/drag-drop"
 import { OverridableStringUnion } from "@mui/types";
 import LogIcon from "../icons/log-icon";
 import { IndexedEntityManager } from "../models/indexed-entity-manager";
+import { DropdownMenu } from "./navigation/dropdown-menu";
 
 interface MenuPosition {
     id: string
@@ -48,48 +49,6 @@ interface MenuPosition {
     persistence: Persistence
 }
 
-const StyledMenu = styled((props: MenuProps) => (
-    <Menu
-        elevation={0}
-        anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
-        }}
-        transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-        }}
-        {...props}
-    />
-))(({ theme }) => ({
-    '& .MuiPaper-root': {
-        borderRadius: 6,
-        marginTop: theme.spacing(1),
-        minWidth: 180,
-        color: 'rgb(55, 65, 81)',
-        boxShadow:
-            'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-        '& .MuiMenu-list': {
-            padding: '4px 0',
-        },
-        '& .MuiMenuItem-root': {
-            '& .MuiSvgIcon-root': {
-                fontSize: 18,
-                color: theme.palette.text.secondary,
-                marginRight: theme.spacing(1.5),
-            },
-            '&:active': {
-                backgroundColor: alpha(
-                    theme.palette.primary.main,
-                    theme.palette.action.selectedOpacity
-                ),
-            },
-        },
-        ...theme.applyStyles('dark', {
-            color: theme.palette.grey[300],
-        }),
-    },
-}));
 
 export const Navigation = observer(() => {
 
@@ -105,7 +64,7 @@ export const Navigation = observer(() => {
     const [scenarioMenu, setScenarioMenu] = useState<MenuPosition | undefined>(undefined)
     const [certMenu, setCertMenu] = useState<MenuPosition | undefined>(undefined)
     const [proxyMenu, setProxyMenu] = useState<MenuPosition | undefined>(undefined)
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
 
     const fileMenuOpen = Boolean(anchorEl);
     const handleFileMenuClick = () => {
@@ -131,7 +90,7 @@ export const Navigation = observer(() => {
                                 return
                             }
                             const r = workspace.active as EditableRequest
-                            await workspace.executeRequest(workspace.active.id, ! e.shiftKey)
+                            await workspace.executeRequest(workspace.active.id, !e.shiftKey)
                         } catch (e) {
                             let msg1 = `${e}`
                             feedback.toast(msg1, msg1 == 'Cancelled' ? ToastSeverity.Warning : ToastSeverity.Error)
@@ -174,10 +133,7 @@ export const Navigation = observer(() => {
         })
     )
 
-    const clearAllSelections = () => {
-        workspace.clearActive()
-    }
-
+    
     const closeRequestsMenu = () => {
         setRequestsMenu(undefined)
     }
@@ -358,7 +314,6 @@ export const Navigation = observer(() => {
             defaultToCancel: true
         }).then((result) => {
             if (result) {
-                clearAllSelections()
                 workspace.deleteRequest(id)
             }
         })
@@ -376,7 +331,6 @@ export const Navigation = observer(() => {
             defaultToCancel: true
         }).then((result) => {
             if (result) {
-                clearAllSelections()
                 workspace.deleteScenario(id)
             }
         })
@@ -394,7 +348,6 @@ export const Navigation = observer(() => {
             defaultToCancel: true
         }).then((result) => {
             if (result) {
-                clearAllSelections()
                 workspace.deleteAuthorization(id)
             }
         })
@@ -412,7 +365,6 @@ export const Navigation = observer(() => {
             defaultToCancel: true
         }).then((result) => {
             if (result) {
-                clearAllSelections()
                 workspace.deleteCertificate(id)
             }
         })
@@ -429,7 +381,6 @@ export const Navigation = observer(() => {
             defaultToCancel: true
         }).then((result) => {
             if (result) {
-                clearAllSelections()
                 workspace.deleteProxy(id)
             }
         })
@@ -842,7 +793,7 @@ export const Navigation = observer(() => {
                 setNodeRef: () => null,
                 transform: null
             }
-
+    
         const { isOver, setNodeRef: setDropRef } = props.acceptDropTypes
             ? useDroppable({
                 id: props.item.id,
@@ -855,11 +806,11 @@ export const Navigation = observer(() => {
                 } as DroppableData
             })
             : { isOver: false, setNodeRef: () => null }
-
+    
         const dragStyle = {
             transform: CSS.Translate.toString(transform)
         }
-
+    
         return <TreeItem
             itemId={`${props.item.entityType}-${props.item.id}`}
             {...listeners}
@@ -878,7 +829,7 @@ export const Navigation = observer(() => {
                     ref={useCombinedRefs(setDragRef, setDropRef)}
                     style={dragStyle}
                     className='nav-item'
-
+    
                     onClick={(e) => {
                         // Override click behavior to set active item, but not to propogate upward
                         // because we don't want to toggle expansion on anything other than the
@@ -1177,195 +1128,195 @@ export const Navigation = observer(() => {
         )
     }
 
-    return (
-        <Stack bgcolor='navigation.main' direction='column' useFlexGap gap='0.2em' className='nav-selection-pane'>
-            <Stack direction='row' bgcolor='toolbar.main' padding='0.5em 1em 0.5em 0.5em' minWidth='22em'>
-                <Stack direction='row' useFlexGap gap='0.2em'>
-                    <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()}>
-                        <PostAddIcon />
-                    </IconButton>
-                    <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook(undefined, true)}>
-                        <FileOpenIcon />
-                    </IconButton>
-                    {
-                        settings.recentWorkbookFileNames.length > 1
-                            ? <IconButton
-                                id='file-menu-button'
-                                title='Open Recent Workbook'
-                                sx={{ padding: 0, minWidth: '1em', width: '1em', marginLeft: '-0.3em' }}
-                                onClick={handleFileMenuClick}
-                            ><KeyboardArrowDownIcon />
-                            </IconButton>
-                            : null
-                    }
-                    {
-                        settings.recentWorkbookFileNames.length > 1
-                            ? <StyledMenu
-                                id="file-menu"
-                                autoFocus
-                                MenuListProps={{
-                                    'aria-labelledby': 'file-menu-button',
-                                }}
-                                anchorEl={anchorEl}
-                                open={fileMenuOpen}
-                                onClose={handleFileMenuClose}
-                            >
-                                {
-                                    settings.recentWorkbookFileNames.map((f, idx) => (
-                                        <MenuItem autoFocus={idx == 0} key={`nav-file-${idx}`} onClick={() => handleFileOpen(f)} disableRipple>
-                                            {`${idx + 1}) ${f}`}
-                                        </MenuItem>
-                                    ))
-                                }
-                            </StyledMenu>
-                            : null
-                    }
-                    <IconButton aria-label='save' title='Save Workbook (Ctrl + S)' disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()}>
-                        <SaveIcon />
-                    </IconButton>
-                    <IconButton aria-label='save' title='Save Workbook As (Ctrl + Shift + S)' onClick={() => fileOps.saveWorkbookAs()}>
-                        <SaveAsIcon />
-                    </IconButton>
-                </Stack>
-                <Box sx={{ display: 'flex', alignSelf: 'flex-end', marginLeft: 'auto', alignContent: 'right', gap: '0.2em', paddingLeft: '3em' }}>
-                    <IconButton aria-label='help' title='Settings' onClick={() => { workspace.changeActive(EditableEntityType.Workbook, 'settings') }}>
-                        <SettingsIcon />
-                    </IconButton>
-                    <IconButton aria-label='help' title='Communication Logs' onClick={() => { workspace.changeActive(EditableEntityType.Workbook, 'console') }}>
-                        <SvgIcon><LogIcon /></SvgIcon>
-                    </IconButton>
-                    <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }}>
-                        <HelpIcon />
-                    </IconButton>
-                </Box>
-            </Stack>
-            <DndContext onDragMove={onDragMove} onDragCancel={onDragCancel} onDragEnd={onDragEnd} sensors={sensors}>
-                <SimpleTreeView
-                    id='navigation'
-                    key='navigation'
-                    aria-label='request navigator'
-                    // defaultCollapseIcon={<ExpandMoreIcon />}
-                    // defaultExpandIcon={<ChevronRightIcon />}
-                    sx={{ paddingRight: '0.8em' }}
-                    expandedItems={workspace.expandedItems}
-                    selectedItems={workspace.activeId}
-                    multiSelect={false}
-                    onItemExpansionToggle={(_, itemId, isExpanded) => {
-                        workspace.toggleExpanded(itemId, isExpanded)
-                    }}
-                    onSelectedItemsChange={(_, itemId) => {
-                        if (itemId) {
-                            const i = itemId.indexOf('-')
-                            if (i !== -1) {
-                                const type = itemId.substring(0, i) as EditableEntityType
-                                const id = itemId.substring(i + 1)
-                                workspace.changeActive(type, id)
+    return <Stack bgcolor='navigation.main' direction='column' useFlexGap gap='0.2em' className='nav-selection-pane'>
+        <Stack direction='row' bgcolor='toolbar.main' padding='0.5em 1em 0.5em 0.5em' minWidth='22em'>
+            <Stack direction='row' useFlexGap gap='0.2em'>
+                <IconButton aria-label='new' title='New Workbook (Ctrl + N)' onClick={() => fileOps.newWorkbook()}>
+                    <PostAddIcon />
+                </IconButton>
+                <IconButton aria-label='open' title='Open Workbook (Ctrl + O)' onClick={() => fileOps.openWorkbook(undefined, true)}>
+                    <FileOpenIcon />
+                </IconButton>
+                {
+                    settings.recentWorkbookFileNames.length > 1
+                        ? <IconButton
+                            id='file-menu-button'
+                            title='Open Recent Workbook'
+                            sx={{ padding: 0, minWidth: '1em', width: '1em', marginLeft: '-0.3em' }}
+                            onClick={handleFileMenuClick}
+                        ><KeyboardArrowDownIcon />
+                        </IconButton>
+                        : null
+                }
+                {
+                    settings.recentWorkbookFileNames.length > 1
+                        ? <DropdownMenu
+                            id="file-menu"
+                            autoFocus
+                            MenuListProps={{
+                                'aria-labelledby': 'file-menu-button',
+                            }}
+                            anchorEl={anchorEl}
+                            open={fileMenuOpen}
+                            onClose={handleFileMenuClose}
+                        >
+                            {
+                                settings.recentWorkbookFileNames.map((f, idx) => (
+                                    <MenuItem autoFocus={idx == 0} key={`nav-file-${idx}`} onClick={() => handleFileOpen(f)} disableRipple>
+                                        {`${idx + 1}) ${f}`}
+                                    </MenuItem>
+                                ))
                             }
-                        } else {
-                            workspace.clearActive()
+                        </DropdownMenu>
+                        : null
+                }
+                <IconButton aria-label='save' title='Save Workbook (Ctrl + S)' disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()}>
+                    <SaveIcon />
+                </IconButton>
+                <IconButton aria-label='save' title='Save Workbook As (Ctrl + Shift + S)' onClick={() => fileOps.saveWorkbookAs()}>
+                    <SaveAsIcon />
+                </IconButton>
+            </Stack>
+            <Box sx={{ display: 'flex', alignSelf: 'flex-end', marginLeft: 'auto', alignContent: 'right', gap: '0.2em', paddingLeft: '2em' }}>
+                <IconButton aria-label='help' title='Settings' onClick={() => {
+                    workspace.changeActive(EditableEntityType.Workbook, 'settings')
+                }}>
+                    <SettingsIcon />
+                </IconButton>
+                <IconButton aria-label='help' title='Communication Logs' onClick={() => { workspace.changeActive(EditableEntityType.Workbook, 'console') }}>
+                    <SvgIcon><LogIcon /></SvgIcon>
+                </IconButton>
+                <IconButton aria-label='help' title='Help' onClick={() => { showHelp(); }}>
+                    <HelpIcon />
+                </IconButton>
+            </Box>
+        </Stack>
+        <DndContext onDragMove={onDragMove} onDragCancel={onDragCancel} onDragEnd={onDragEnd} sensors={sensors}>
+            <SimpleTreeView
+                id='navigation'
+                key='navigation'
+                aria-label='request navigator'
+                // defaultCollapseIcon={<ExpandMoreIcon />}
+                // defaultExpandIcon={<ChevronRightIcon />}
+                sx={{ paddingRight: '0.8em' }}
+                expandedItems={workspace.expandedItems}
+                selectedItems={workspace.activeId}
+                multiSelect={false}
+                onItemExpansionToggle={(_, itemId, isExpanded) => {
+                    workspace.toggleExpanded(itemId, isExpanded)
+                }}
+                onSelectedItemsChange={(_, itemId) => {
+                    if (itemId) {
+                        const i = itemId.indexOf('-')
+                        if (i !== -1) {
+                            const type = itemId.substring(0, i) as EditableEntityType
+                            const id = itemId.substring(i + 1)
+                            workspace.changeActive(type, id)
                         }
-                    }}
-                    className='navigation-tree'
-                >
-                    {
-                        workspace.warnings.hasEntries
-                            ? <TreeItem
-                                itemId="wkbk-warnings"
-                                sx={{ margin: '0.5em 0 1.0em 0', padding: 0 }}
-                                label={(
-                                    <Box
-                                        component='span'
-                                        display='flex'
-                                        justifyContent='space-between'
-                                        alignItems='center'
-                                    >
-                                        <Box className='nav-icon-box'>
-                                            <SvgIcon color='warning' fontSize='small'><WarningAmberIcon /></SvgIcon>
-                                        </Box>
-                                        <Box className='nav-node-text' display='flex' flexGrow={1} alignItems='center'>
-                                            Warnings
-                                        </Box>
-                                    </Box>
-                                )} onClick={() => workspace.changeActive(EditableEntityType.Warnings, '')} />
-                            : null
+                    } else {
+                        workspace.clearActive()
                     }
+                }}
+                className='navigation-tree'
+            >
+                {
+                    workspace.warnings.hasEntries
+                        ? <TreeItem
+                            itemId="wkbk-warnings"
+                            sx={{ margin: '0.5em 0 1.0em 0', padding: 0 }}
+                            label={(
+                                <Box
+                                    component='span'
+                                    display='flex'
+                                    justifyContent='space-between'
+                                    alignItems='center'
+                                >
+                                    <Box className='nav-icon-box'>
+                                        <SvgIcon color='warning' fontSize='small'><WarningAmberIcon /></SvgIcon>
+                                    </Box>
+                                    <Box className='nav-node-text' display='flex' flexGrow={1} alignItems='center'>
+                                        Warnings
+                                    </Box>
+                                </Box>
+                            )} onClick={() => workspace.changeActive(EditableEntityType.Warnings, '')} />
+                        : null
+                }
 
-                    <RequestSection />
+                <RequestSection />
 
-                    <ParameterSection
-                        title='Scenarios'
-                        icon={<ScenarioIcon />}
-                        iconColor='scenario'
-                        helpTopic='workspace/scenarios'
-                        type={EditableEntityType.Scenario}
-                        parameters={workspace.scenarios}
-                        onSelect={selectScenario}
-                        onAdd={handleAddScenario}
-                        onMove={handleMoveScenario}
-                        onItemMenu={showScenarioMenu}
-                    />
-                    <ParameterSection
-                        title='Authorizations'
-                        icon={<AuthIcon />}
-                        iconColor='authorization'
-                        helpTopic='workspace/authorizations'
-                        type={EditableEntityType.Authorization}
-                        parameters={workspace.authorizations}
-                        onSelect={selectAuthorization}
-                        onAdd={handleAddAuth}
-                        onMove={handleMoveAuth}
-                        onItemMenu={showAuthMenu}
-                    />
-                    <ParameterSection
-                        title='Certificates'
-                        icon={<CertificateIcon />}
-                        iconColor='certificate'
-                        helpTopic='workspace/certificates'
-                        type={EditableEntityType.Certificate}
-                        parameters={workspace.certificates}
-                        onSelect={selectCertificate}
-                        onAdd={handleAddCert}
-                        onMove={handleMoveCert}
-                        onItemMenu={showCertMenu}
-                    />
-                    <ParameterSection
-                        title='Proxies'
-                        icon={<ProxyIcon />}
-                        iconColor='proxy'
-                        helpTopic='workspace/proxies'
-                        type={EditableEntityType.Proxy}
-                        parameters={workspace.proxies}
-                        onSelect={selectProxy}
-                        onAdd={handleAddProxy}
-                        onMove={handleMoveProxy}
-                        onItemMenu={showProxyMenu}
-                    />
-                    <TreeItem
-                        itemId="wkbk-defaults"
-                        sx={{ margin: '1.0em 0 1.0em 0', padding: 0 }}
-                        label={(
-                            <Box
-                                className='nav-item'
-                            >
-                                <Box className='nav-icon-box'>
-                                    <SvgIcon color='defaults' fontSize='small'><DefaultsIcon /></SvgIcon>
-                                </Box>
-                                <Box className='nav-node-text' display='flex' flexGrow={1} alignItems='center'>
-                                    Defaults
-                                </Box>
-                                <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
-                                    {iconFromState(workspace.defaults.state)}
-                                </Box>
+                <ParameterSection
+                    title='Scenarios'
+                    icon={<ScenarioIcon />}
+                    iconColor='scenario'
+                    helpTopic='workspace/scenarios'
+                    type={EditableEntityType.Scenario}
+                    parameters={workspace.scenarios}
+                    onSelect={selectScenario}
+                    onAdd={handleAddScenario}
+                    onMove={handleMoveScenario}
+                    onItemMenu={showScenarioMenu}
+                />
+                <ParameterSection
+                    title='Authorizations'
+                    icon={<AuthIcon />}
+                    iconColor='authorization'
+                    helpTopic='workspace/authorizations'
+                    type={EditableEntityType.Authorization}
+                    parameters={workspace.authorizations}
+                    onSelect={selectAuthorization}
+                    onAdd={handleAddAuth}
+                    onMove={handleMoveAuth}
+                    onItemMenu={showAuthMenu}
+                />
+                <ParameterSection
+                    title='Certificates'
+                    icon={<CertificateIcon />}
+                    iconColor='certificate'
+                    helpTopic='workspace/certificates'
+                    type={EditableEntityType.Certificate}
+                    parameters={workspace.certificates}
+                    onSelect={selectCertificate}
+                    onAdd={handleAddCert}
+                    onMove={handleMoveCert}
+                    onItemMenu={showCertMenu}
+                />
+                <ParameterSection
+                    title='Proxies'
+                    icon={<ProxyIcon />}
+                    iconColor='proxy'
+                    helpTopic='workspace/proxies'
+                    type={EditableEntityType.Proxy}
+                    parameters={workspace.proxies}
+                    onSelect={selectProxy}
+                    onAdd={handleAddProxy}
+                    onMove={handleMoveProxy}
+                    onItemMenu={showProxyMenu}
+                />
+                <TreeItem
+                    itemId="wkbk-defaults"
+                    sx={{ margin: '1.0em 0 1.0em 0', padding: 0 }}
+                    label={(
+                        <Box
+                            className='nav-item'
+                        >
+                            <Box className='nav-icon-box'>
+                                <SvgIcon color='defaults' fontSize='small'><DefaultsIcon /></SvgIcon>
                             </Box>
-                        )} />
-                </SimpleTreeView>
-            </DndContext>
-            <RequestsMenu />
-            <RequestMenu />
-            <ScenarioMenu />
-            <AuthMenu />
-            <CertMenu />
-            <ProxyMenu />
-        </Stack >
-    )
+                            <Box className='nav-node-text' display='flex' flexGrow={1} alignItems='center'>
+                                Defaults
+                            </Box>
+                            <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
+                                {iconFromState(workspace.defaults.state)}
+                            </Box>
+                        </Box>
+                    )} />
+            </SimpleTreeView>
+        </DndContext>
+        <RequestsMenu />
+        <RequestMenu />
+        <ScenarioMenu />
+        <AuthMenu />
+        <CertMenu />
+        <ProxyMenu />
+    </Stack >
 })

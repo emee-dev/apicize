@@ -1,5 +1,5 @@
 .dark .resize-handle {
-  flex: 0 0 2rem;
+  flex: 0 0 24px;
   display: flex;
   justify-content: stretch;
   align-items: stretch;
@@ -215,6 +215,7 @@ pre.log {
 
 .editor-title {
   margin-top: 0.1em;
+  padding: 0 12px;
   display: flex;
   align-content: center;
 }
@@ -231,7 +232,7 @@ pre.log {
 }
 
 .editor {
-  padding: 0 1.5em;
+  padding: 0 12px;
   width: 100vw;
   height: 100vh;
   display: flex;
@@ -249,22 +250,21 @@ pre.log {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
-  margin: 0 2em 0 2em;
+  margin: 0 0 0.5em 0;
 }
 
-.editor-panel:first-child {
-  margin-left: 0;
-}
-
-.editor-panel:last-child {
-  margin-right: 0;
+.editor-panel-no-margin {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  position: relative;
+  margin: 0;
 }
 
 .editor-panel-header {
   display: flex;
   align-items: center;
-  height: 6em;
-  padding: 0.5em 0;
+  padding: 1em 0;
   margin-bottom: 1em;
 }
 
@@ -278,4 +278,8 @@ pre.log {
   border-bottom-right-radius: 0;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+}
+
+.test-result {
+  padding: 0;
 }

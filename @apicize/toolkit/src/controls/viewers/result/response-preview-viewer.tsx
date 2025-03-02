@@ -12,12 +12,12 @@ export function ResultResponsePreview(props: { requestOrGroupId: string, index: 
     const clipboard = useClipboard()
 
     const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
-    if (!result?.execution?.response) {
+    if (!result?.response) {
         return null
     }
 
-    const headers = result.execution.response.headers
-    const body = result.execution.response.body
+    const headers = result.response.headers
+    const body = result.response.body
 
     let extension = ''
     for (const [name, value] of Object.entries(headers ?? {})) {

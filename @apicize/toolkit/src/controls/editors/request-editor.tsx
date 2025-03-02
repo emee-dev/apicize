@@ -101,9 +101,9 @@ export const RequestEditor = observer((props: {
     }
 
     const requestPanel = group ?
-        <Box marginBottom='1.5em'>
+        <Box className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
             <Stack direction='row' className='editor-panel-header'>
-                <Stack direction='row'>
+                <Stack direction='row' display='flex' alignItems='center'>
                     <EditorTitle icon={<SvgIcon color='folder'><FolderIcon /></SvgIcon>} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'} />
                     <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                 </Stack>
@@ -116,7 +116,7 @@ export const RequestEditor = observer((props: {
                     exclusive
                     onChange={handlePanelChanged}
                     value={usePanel}
-                    sx={{ marginRight: '24px', zIndex: 100 }}
+                    sx={{ marginRight: '12px', zIndex: 100 }}
                     aria-label="text alignment">
                     <ToggleButton value="Info" title="Show Group Info" aria-label='show info' size='small'><DisplaySettingsIcon /></ToggleButton>
                     <ToggleButton value="Parameters" title="Show Group Parameters" aria-label='show test' size='small'><AltRouteIcon /></ToggleButton>
@@ -151,7 +151,7 @@ export const RequestEditor = observer((props: {
                         exclusive
                         onChange={handlePanelChanged}
                         value={usePanel}
-                        sx={{ marginRight: '24px', zIndex: 100 }}
+                        sx={{ marginRight: '12px', zIndex: 100 }}
                         aria-label="text alignment">
                         <ToggleButton value="Info" title="Show Request Info" aria-label='show info' size='small'><DisplaySettingsIcon /></ToggleButton>
                         <ToggleButton value="Query String" title="Show Request Query String" aria-label='show query string' size='small'><ViewListIcon /></ToggleButton>
@@ -166,7 +166,7 @@ export const RequestEditor = observer((props: {
                         }
                     </ToggleButtonGroup>
 
-                    <Box flexGrow={1} className='panels'>
+                    <Box flexGrow={1} className='panels' padding='0 1.0em' marginBottom='1.5em'>
                         {usePanel === 'Info' ? <RequestInfoEditor />
                             : usePanel === 'Headers' ? <RequestHeadersEditor />
                                 : usePanel === 'Query String' ? <RequestQueryStringEditor />
@@ -187,19 +187,22 @@ export const RequestEditor = observer((props: {
             </Panel>
             <PanelResizeHandle className={'resize-handle'} hitAreaMargins={{ coarse: 30, fine: 10 }} />
             {
-                <Panel id='results-viewer' order={1} defaultSize={50} minSize={20} className='editor-panel'>
-                    <Box position='relative' display='flex' flexGrow={1} flexDirection='column'>
-                        <Box top={0}
-                            left={0}
-                            width='100%'
-                            height='100%'
-                            position='absolute'
-                            display={isRunning ? 'block' : 'none'}
-                            className="MuiBackdrop-root MuiModal-backdrop"
-                            sx={{ zIndex: 99999, opacity: 1, transition: "opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms", backgroundColor: "#00000080" }} />
-                        <RunResultsToolbar className='editor-panel-header' />
-                        <ResultsViewer sx={{ flexGrow: 1, marginBottom: '1.5em' }} />
+                <Panel id='results-viewer' order={1} defaultSize={50} minSize={20} className='editor-panel-no-margin'>
+                    <Box top={0}
+                        left={0}
+                        width='100%'
+                        height='100%'
+                        position='absolute'
+                        display={isRunning ? 'block' : 'none'}
+                        className="MuiBackdrop-root MuiModal-backdrop"
+                        sx={{ zIndex: 99999, opacity: 1, transition: "opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms", backgroundColor: "#00000080" }} />
+                    <Box className='editor-panel'>
+                        <Box position='relative' display='flex' flexGrow={1} flexDirection='column'>
+                            <RunResultsToolbar className='editor-panel-header' />
+                            <ResultsViewer sx={{ flexGrow: 1, marginBottom: '1.5em', padding: '0 1.0em' }} />
+                        </Box>
                     </Box>
+
                 </Panel>
             }
         </PanelGroup>

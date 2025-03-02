@@ -1,6 +1,6 @@
 import { action, computed, makeObservable, observable, toJS } from "mobx"
 import { DEFAULT_SELECTION, DEFAULT_SELECTION_ID, NO_SELECTION, NO_SELECTION_ID } from "../models/store"
-import { Execution, ExecutionMenuItem, ExecutionResult, executionResultFromRequest, executionResultFromExecution, executionResultFromSummary } from "../models/workspace/execution"
+import { Execution, ExecutionMenuItem, ExecutionResult, executionResultFromRequest, executionResultFromExecution, executionResultFromSummary, ExecutionResultSummary } from "../models/workspace/execution"
 import { base64Decode, base64Encode, editableWorkspaceToStoredWorkspace } from "../services/apicize-serializer"
 import { EditableRequest, EditableRequestGroup } from "../models/workspace/editable-request"
 import { EditableScenario, EditableVariable } from "../models/workspace/editable-scenario"
@@ -17,9 +17,10 @@ import {
     ApicizeGroup,
     ApicizeGroupItem,
     ApicizeRequest,
-    ApicizeGroupChildren,
     ApicizeResult,
-    ApicizeRowList,
+    ApicizeRowSummary,
+    ExternalDataSourceType,
+    RequestEntry,
 } from "@apicize/lib-typescript"
 import { EntitySelection } from "../models/workspace/entity-selection"
 import { EditableNameValuePair } from "../models/workspace/editable-name-value-pair"
@@ -32,6 +33,7 @@ import { EditableWarnings } from "../models/workspace/editable-warnings"
 import { FeedbackStore } from "./feedback.context"
 import { EditableExternalData } from "../models/workspace/editable-external-data"
 import { IndexedEntityManager } from "../models/indexed-entity-manager"
+import { js_beautify } from 'js-beautify'
 
 export enum WorkspaceMode {
     Normal,
@@ -50,7 +52,6 @@ export class WorkspaceStore {
     @observable accessor authorizations = new IndexedEntityManager<EditableAuthorization>(new Map(), [], new Map())
     @observable accessor certificates = new IndexedEntityManager<EditableCertificate>(new Map(), [], new Map())
     @observable accessor proxies = new IndexedEntityManager<EditableProxy>(new Map(), [], new Map())
-    @observable accessor data = new IndexedEntityManager<EditableExternalData>(new Map(), [], new Map())
     @observable accessor defaults = new EditableDefaults()
     @observable accessor warnings = new EditableWarnings()
 
@@ -87,7 +88,7 @@ export class WorkspaceStore {
     constructor(
         private readonly feedback: FeedbackStore,
         private readonly callbacks: {
-            onExecuteRequest: (workspace: Workspace, requestId: string, allowedParentPath: string, singleRun: boolean) => Promise<ApicizeResult[]>,
+            onExecuteRequest: (workspace: Workspace, requestId: string, allowedParentPath: string, singleRun: boolean) => Promise<ApicizeResult>,
             onCancelRequest: (requestId: string) => Promise<void>,
             onClearToken: (authorizationId: string) => Promise<void>,
             onInitializePkce: (data: { authorizationId: string }) => Promise<void>,
@@ -158,7 +159,9 @@ export class WorkspaceStore {
             new Map(Object.entries(newWorkspace.proxies.childIds)),
         )
 
-        this.data = new IndexedEntityManager(
+        this.warnings.set(newWorkspace.warnings)
+        this.defaults = new EditableDefaults()
+        this.defaults.data = new IndexedEntityManager(
             new Map(Object.values(newWorkspace.data.entities).map((e) =>
                 [e.id, EditableExternalData.fromWorkspace(e)]
             )),
@@ -166,14 +169,26 @@ export class WorkspaceStore {
             new Map(Object.entries(newWorkspace.data.childIds)),
         )
 
-        this.warnings.set(newWorkspace.warnings)
-        this.defaults = new EditableDefaults()
-
         this.expandedItems = ['hdr-r']
         this.executions.clear()
         this.invalidItems.clear()
         this.active = null
         this.pendingPkceRequests.clear()
+
+        // Create a request but mark it as unchanged and valid so that the user can open a workbook without getting nagged
+        const entry = new EditableRequest()
+        entry.id = GenerateIdentifier()
+        entry.runs = 1
+        entry.name = 'New Request'
+        entry.test = `describe('status', () => {
+    it('equals 200', () => {
+        expect(response.status).to.equal(200)
+    })
+})`
+        entry.dirty = false
+        this.requests.add(entry, false, null)
+        this.dirty = false
+        this.changeActive(EditableEntityType.Request, entry.id)
     }
 
     @action
@@ -221,15 +236,16 @@ export class WorkspaceStore {
             new Map(Object.entries(newWorkspace.proxies.childIds)),
         )
 
-        this.data = new IndexedEntityManager(
-            new Map(Object.values(newWorkspace.data.entities).map((e) =>
-                [e.id, EditableExternalData.fromWorkspace(e)]
-            )),
-            newWorkspace.data.topLevelIds ?? [],
-            new Map(Object.entries(newWorkspace.data.childIds)),
+        this.defaults = EditableDefaults.fromWorkspace(
+            newWorkspace,
+            new IndexedEntityManager(
+                new Map(Object.values(newWorkspace.data.entities).map((e) =>
+                    [e.id, EditableExternalData.fromWorkspace(e)]
+                )),
+                newWorkspace.data.topLevelIds ?? [],
+                new Map(Object.entries(newWorkspace.data.childIds)),
+            )
         )
-
-        this.defaults = EditableDefaults.fromWorkspace(newWorkspace)
 
         this.warnings.set(newWorkspace.warnings)
 
@@ -280,7 +296,7 @@ export class WorkspaceStore {
             this.authorizations,
             this.certificates,
             this.proxies,
-            this.data,
+            this.defaults.data,
             this.defaults,
         )
     }
@@ -316,9 +332,13 @@ export class WorkspaceStore {
             case EditableEntityType.Request:
             case EditableEntityType.Group:
                 this.mode = WorkspaceMode.Normal
-                const r = this.requests.get(id)
-                if (!r) throw new Error(`Invalid request ID ${id}`)
-                this.active = r
+                if (id.length > 0) {
+                    const r = this.requests.get(id)
+                    if (!r) throw new Error(`Invalid request ID ${id}`)
+                    this.active = r
+                } else {
+                    this.active = null;
+                }
                 break
             case EditableEntityType.Scenario:
                 this.mode = WorkspaceMode.Normal
@@ -512,6 +532,7 @@ export class WorkspaceStore {
         if (this.active?.entityType === EditableEntityType.Request) {
             const request = this.active as EditableRequest
             request.url = value
+            request.dirty = true
             this.dirty = true
         }
     }
@@ -895,7 +916,7 @@ export class WorkspaceStore {
             authorizations: this.buildParameterList(this.authorizations, defaultAuthorization),
             certificates: this.buildParameterList(this.certificates, defaultCertificate),
             proxies: this.buildParameterList(this.proxies, defaultProxy),
-            data: this.buildParameterList(this.data, defaultData),
+            data: this.buildParameterList(this.defaults.data, defaultData),
         }
     }
 
@@ -905,7 +926,7 @@ export class WorkspaceStore {
             authorizations: this.buildParameterList(this.authorizations),
             certificates: this.buildParameterList(this.certificates),
             proxies: this.buildParameterList(this.proxies),
-            data: this.buildParameterList(this.data)
+            data: this.buildParameterList(this.defaults.data)
         }
     }
 
@@ -916,7 +937,7 @@ export class WorkspaceStore {
             this.authorizations,
             this.certificates,
             this.proxies,
-            this.data,
+            this.defaults.data,
             this.defaults,
         )
     }
@@ -1373,7 +1394,7 @@ export class WorkspaceStore {
     addData() {
         const data = new EditableExternalData()
         data.id = GenerateIdentifier()
-        this.data.add(data, false, Persistence.Workbook)
+        this.defaults.data.add(data, false, Persistence.Workbook)
         // this.changeActive(EditableEntityType.ExternalData, data.id)
         this.dirty = true
     }
@@ -1388,7 +1409,7 @@ export class WorkspaceStore {
         if (this.defaults.selectedData.id == id) {
             this.defaults.selectedData = NO_SELECTION
         }
-        this.data.remove(id)
+        this.defaults.data.remove(id)
         // this.clearActive()
         this.dirty = true
     }
@@ -1412,8 +1433,65 @@ export class WorkspaceStore {
         return this.executions.get(requestOrGroupId)?.results[index]
     }
 
+    getExecutionResultSummary(requestOrGroupId: string, index: number): ExecutionResultSummary | null {
+        const result = this.executions.get(requestOrGroupId)?.results[index]
+        if (!result) return null;
+
+        const renderSummary = (index: number): ExecutionResultSummary | undefined => {
+            const result = this.executions.get(requestOrGroupId)?.results[index]
+            if (!result) return undefined
+
+            const isRequest = result.request !== undefined
+
+            const children: ExecutionResultSummary[] = []
+            if (result.info.childIndexes) {
+                for (const childIndex of result.info.childIndexes) {
+                    const child = renderSummary(childIndex)
+                    if (child) children.push(child)
+                }
+            }
+
+            return {
+                title: result.info.title,
+                runNumber: result.info.runNumber,
+                rowNumber: result.info.rowNumber,
+                executedAt: result.executedAt,
+                duration: result.duration,
+                success: result.success,
+                request: result.request,
+                response: result.response,
+                error: result.error,
+                tests: result.tests?.map(test => ({
+                    testName: test.testName.join(' '),
+                    success: test.success,
+                    error: test.error ? test.error : undefined,
+                    logs: (test.logs && test.logs.length > 0) ? test.logs : undefined
+                })),
+                requestSuccessCount: isRequest
+                    ? undefined
+                    : result.requestSuccessCount,
+                requestFailureCount: isRequest
+                    ? undefined
+                    : result.requestFailureCount,
+                requestErrorCount: isRequest
+                    ? undefined
+                    : result.requestErrorCount,
+                testPassCount: result.testPassCount,
+                testFailCount: result.testFailCount,
+                children: children.length > 0 ? children : undefined
+            }
+        }
+
+        const data = renderSummary(index)
+        if (data) {
+            return data
+        } else {
+            throw new Error('Invalid request and/or index')
+        }
+    }
+
     @action
-    reportExecutionResults(execution: Execution, executionResults: ApicizeResult[]) {
+    reportExecutionResults(execution: Execution, executionResults: ApicizeResult) {
         execution.running = false
         const previousPanel = execution.panel
 
@@ -1432,21 +1510,23 @@ export class WorkspaceStore {
             return result.info.index
         }
 
-        const processGroupItem = (item: ApicizeGroupItem, parentIndex: number | undefined, level: number): number => {
+        const processGroupItem = (item: ApicizeGroupItem, parentIndex: number | undefined, level: number, overrideTitle?: string): number => {
             switch (item.type) {
                 case 'Group':
-                    return processGroup(item, parentIndex, level)
+                    return processGroup(item, parentIndex, level, overrideTitle)
                 case 'Request':
-                    return processRequest(item, parentIndex, level)
+                    return processRequest(item, parentIndex, level, overrideTitle)
             }
         }
 
-        const processGroup = (group: ApicizeGroup, parentIndex: number | undefined, level: number): number => {
+        const processGroup = (group: ApicizeGroup, parentIndex: number | undefined, level: number, overrideTitle?: string): number => {
             const result = executionResultFromSummary(
                 {
                     index: 0,
                     parentIndex,
-                    title: group.name.length > 0 ? group.name : 'Unnamed Group'
+                    title: overrideTitle
+                        ? overrideTitle
+                        : group.name.length > 0 ? group.name : 'Unnamed Group'
                 },
                 group
             )
@@ -1464,13 +1544,13 @@ export class WorkspaceStore {
                         for (const run of group.children.items) {
                             let result = executionResultFromSummary({
                                 index: 0,
-                                parentIndex,
-                                title: `Run #${run.runNumber} of ${count}`,
+                                parentIndex: index,
+                                title: `Run ${run.runNumber} of ${count}`,
                                 // runNumber: run.runNumber,
                                 // runCount: count,
                             }, run)
-                            let index = appendResult(result, level + 1)
-                            childIds.push(index)
+                            let runIndex = appendResult(result, level + 1)
+                            childIds.push(runIndex)
 
                             if (run.children) {
                                 const childIndexes = []
@@ -1478,10 +1558,10 @@ export class WorkspaceStore {
                                     let gcIndex: number
                                     switch (grandChild.type) {
                                         case 'Group':
-                                            childIndexes.push(processGroup(grandChild, index, level + 2))
+                                            childIndexes.push(processGroup(grandChild, runIndex, level + 2))
                                             break
                                         case 'Request':
-                                            childIndexes.push(processRequest(grandChild, index, level + 2))
+                                            childIndexes.push(processRequest(grandChild, runIndex, level + 2))
                                             break
                                     }
                                 }
@@ -1499,12 +1579,14 @@ export class WorkspaceStore {
             return index
         }
 
-        const processRequest = (request: ApicizeRequest, parentIndex: number | undefined, level: number): number => {
+        const processRequest = (request: ApicizeRequest, parentIndex: number | undefined, level: number, overrideTitle?: string): number => {
             const result = executionResultFromRequest(
                 {
                     index: 0,
                     parentIndex: parentIndex,
-                    title: request.name.length > 0 ? request.name : 'Unnamed Request'
+                    title: overrideTitle
+                        ? overrideTitle
+                        : request.name.length > 0 ? request.name : 'Unnamed Request'
                 },
                 request,
                 (request.execution && request.execution.type == 'Single') ? request.execution : undefined)
@@ -1521,8 +1603,8 @@ export class WorkspaceStore {
                                 {
                                     index: 0,
                                     parentIndex: index,
-                                    title: `Run ${runExecution.index} of ${runCount}`,
-                                    runNumber: runExecution.index,
+                                    title: `Run ${runExecution.runNumber} of ${runCount}`,
+                                    runNumber: runExecution.runNumber,
                                     runCount
                                 },
                                 runExecution
@@ -1530,57 +1612,6 @@ export class WorkspaceStore {
                             childIds.push(appendResult(runResult, level + 1))
                         }
                         break
-                    // case 'Rows':
-                    //     const rowCount = request.execution.items.length
-                    //     for (const rowExecution of request.execution.items) {
-                    //         const rowResult = executionResultFromExecution(
-                    //             {
-                    //                 index: 0,
-                    //                 parentIndex: index,
-                    //                 title: `Row ${rowExecution.index} of ${rowCount}`,
-                    //                 runNumber: rowExecution.index,
-                    //                 rowCount
-                    //             },
-                    //             rowExecution
-                    //         )
-                    //         childIds.push(appendResult(rowResult, level + 1))
-                    //     }
-                    //     break
-                    // case 'MultiRunRows':
-                    //     const rowRunCount = request.execution.items.length
-                    //     for (const rowRun of request.execution.items) {
-                    //         const rowRunResult = executionResultFromSummary(
-                    //             {
-                    //                 index: 0,
-                    //                 parentIndex: index,
-                    //                 title: `Row ${rowRun.rowNumber} of ${rowRunCount}`,
-                    //                 rowNumber: rowRun.rowNumber,
-                    //                 rowCount: rowRunCount
-                    //             },
-                    //             rowRun
-                    //         )
-                    //         let rowRunIndex = appendResult(rowRunResult, level + 1)
-                    //         childIds.push(rowRunIndex)
-
-                    //         if (rowRun.runs) {
-                    //             const run1Count = rowRun.runs.length
-                    //             for (const run of rowRun.runs) {
-                    //                 const runResult = executionResultFromExecution(
-                    //                     {
-                    //                         index: 0,
-                    //                         parentIndex: rowRunIndex,
-                    //                         title: `Run ${run.index} of ${run1Count}`,
-                    //                         runNumber: run.index,
-                    //                         runCount: run1Count
-                    //                     },
-                    //                     run
-                    //                 )
-
-                    //                 appendResult(runResult, level + 2)
-                    //             }
-                    //         }
-                    //     }
-                    //     break
                 }
                 if (childIds.length > 0) {
                     result.info.childIndexes = childIds
@@ -1590,44 +1621,63 @@ export class WorkspaceStore {
             return index
         }
 
-        const processRows = (rows: ApicizeRowList, parentIndex: number | undefined, level: number) => {
-            let rowCount = rows.items.length
-            for (const row of rows.items) {
-                const result = executionResultFromSummary(
-                    {
-                        index: 0,
-                        parentIndex,
-                        title: `Row #${row.rowNumber} of ${rowCount}`
-                    },
-                    row
-                )
-                console.log(`Adding row ${row.rowNumber}`)
-                const index = appendResult(result, level)
+        const processRows = (summary: ApicizeRowSummary, parentIndex: number | undefined, level: number) => {
+            const rowCount = summary.rows.length
 
-                const childIndex = processGroupItem(row.item, index, level + 1)
-                result.info.childIndexes = [childIndex]
+            const request = this.requests.get(execution.requestOrGroupId)
+
+            const result = executionResultFromSummary({
+                index: 0,
+                parentIndex,
+                title: request.name ? `${request.name} (All Rows)` : 'All Rows'
+            }, summary)
+            const index = appendResult(result, level)
+
+            const childIndexes: number[] = []
+            for (const row of summary.rows) {
+                if (row.items.length == 1) {
+                    childIndexes.push(processGroupItem(row.items[0], index, level + 1, `Row ${row.rowNumber} of ${rowCount}`))
+                } else {
+                    const rowResult = executionResultFromSummary(
+                        {
+                            index: 0,
+                            parentIndex: index,
+                            title: `Row ${row.rowNumber} of ${rowCount}`
+                        },
+                        summary
+                    )
+                    const rowIndex = appendResult(rowResult, level)
+                    const rowChildIndexes = []
+                    for (const item of row.items) {
+                        rowChildIndexes.push(processGroupItem(row.items[0], rowIndex, level + 2))
+                    }
+
+                    rowResult.info.childIndexes = rowChildIndexes
+                }
             }
+            result.info.childIndexes = childIndexes
         }
 
-        if (executionResults.length < 1) return
-
-        const result = executionResults[0]
-
-        switch (result.type) {
-            case 'Group':
-            case 'Request':
-                processGroupItem(result, undefined, 0)
-                break
+        let success = true
+        switch (executionResults.type) {
             case 'Rows':
-                processRows(result, undefined, 0)
+                processRows(executionResults, undefined, 0)
+                success &&= executionResults.success
+                break
+            case 'Items':
+                for (const item of executionResults.items) {
+                    processGroupItem(item, undefined, 0)
+                    success &&= item.success
+                }
                 break
         }
 
+        let oldLength = execution.results.length
         execution.resultMenu = menu
         execution.results = results
-        execution.resultIndex = (isNaN(execution.resultIndex) || execution.resultIndex >= execution.results.length)
+        execution.resultIndex = (isNaN(execution.resultIndex) || execution.resultIndex >= execution.results.length || execution.results.length != oldLength)
             ? 0 : execution.resultIndex
-        execution.panel = (result.type === 'Request' && previousPanel && result.success) ? previousPanel : 'Info'
+        execution.panel = (previousPanel && success) ? previousPanel : 'Info'
 
     }
 
@@ -1680,16 +1730,33 @@ export class WorkspaceStore {
         try {
             let workspace = this.getWorkspace()
 
+            const clearTimeouts = (entry: RequestEntry) => {
+                const r = entry as Request
+                if (r.url) {
+                    r.timeout = undefined
+                } else {
+                    const childIds = workspace.requests.childIds[entry.id]
+                    if (childIds) {
+                        for (const childId of childIds) {
+                            const child = workspace.requests.entities[childId]
+                            if (child) {
+                                clearTimeouts(child)
+                            }
+                        }
+                    }
+                }
+            }
+
             if (singleRun) {
                 const r = workspace.requests.entities[requestOrGroupId]
                 if (r) {
                     r.runs = 1
-                    // todo - figure out how to get timeouts updated
+                    clearTimeouts(r)
                 }
             }
 
             let executionResults = await this.callbacks.onExecuteRequest(
-                this.getWorkspace(),
+                workspace,
                 requestOrGroupId,
                 this.workbookFullName,
                 singleRun)
@@ -1789,12 +1856,9 @@ export class WorkspaceStore {
     setDefaultDataId(entityId: string) {
         this.defaults.selectedData = entityId === NO_SELECTION_ID
             ? NO_SELECTION
-            : { id: entityId, name: GetTitle(this.data.get(entityId)) }
+            : { id: entityId, name: GetTitle(this.defaults.data.get(entityId)) }
         this.dirty = true
     }
-
-    @action
-
 
     @action
     initializePkce(authorizationId: string) {

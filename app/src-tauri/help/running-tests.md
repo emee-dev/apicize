@@ -1,6 +1,12 @@
 # Running Tests :toolbar
 
-To run a test, select the [Request](help:requests) or [Group](help:groups) you want to test, and then, in the Test panel (under the Request pane), and then click on the Test button (with the round "play" icon).  
+To run a test, select the [Request](help:requests) or [Group](help:groups) you want to test.  
+
+To execute the request or group once, with no timeout, click the Single Run button next to the name at the top of the screen
+
+
+
+, and then, in the Test panel (under the Request pane), and then click on the Test button (with the round "play" icon).  
 Apicize will dispatch your request, execute test scripts (if any) and display the results.  After a request is processed, the test flask icon will be colored:
 
 * Green:  A response was received for request(s) and all tests pass

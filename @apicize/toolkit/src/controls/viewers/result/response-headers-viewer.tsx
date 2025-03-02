@@ -5,11 +5,11 @@ export function ResponseHeadersViewer(props: { requestOrGroupId: string, index: 
     const workspace = useWorkspace()
 
     const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
-    if (!result?.execution?.response) {
+    if (!result?.response) {
         return null
     }
 
-    const headers = Object.entries(result.execution.response.headers ?? {})
+    const headers = Object.entries(result.response.headers ?? {})
     let hdrCtr = 0
 
     return (

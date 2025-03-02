@@ -8,21 +8,28 @@ import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import { useWorkspace } from "../../contexts/workspace.context"
-import { useRef } from "react"
+import { Component, useEffect, useRef } from "react"
 import { useClipboard } from "../../contexts/clipboard.context"
 
 export const LogViewer = observer((props: {
     sx?: SxProps<Theme>
 }) => {
     const log = useLog()
+    let ctr = 0;
     const clipboard = useClipboard()
     const workspace = useWorkspace()
+    const bottomRef = useRef<HTMLDivElement | null>(null);
 
-    let ctr = useRef(0)
+    useEffect(() => {
+        if (bottomRef.current) {
+            bottomRef.current.scrollIntoView();
+        }
+    }, [log.events]);
+
 
     const nextCtr = () => {
-        let newCtr = ctr.current + 1
-        ctr.current = newCtr
+        let newCtr = ctr + 1
+        ctr = newCtr
         return newCtr
     }
 
@@ -58,8 +65,8 @@ export const LogViewer = observer((props: {
         }).join('\r\n\r\n')
     }
 
-    return <Stack direction={'column'} className='editor' position='relative' bottom={0} flexGrow={1}>
-        <Box className='editor-panel-header'>
+    return <Stack display='flex' direction={'column'} className='editor' position='relative' bottom={0} flexGrow={1}>
+        <Box className='editor-panel-header' flexGrow={0}>
             <EditorTitle icon={<SvgIcon><LogIcon /></SvgIcon>} name='Communication Logs' />
             <IconButton
                 aria-label="copy text to clipboard"
@@ -73,8 +80,9 @@ export const LogViewer = observer((props: {
             <IconButton color='primary' size='medium' aria-label='Clear' title='Clear Entries' onClick={() => log.clear()}><ClearAllIcon fontSize='inherit' /></IconButton>
             <IconButton color='primary' size='medium' aria-label='Close' title='Close' onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
         </Box>
-        <Stack direction={'column'} spacing={1} className='console' paddingBottom='2em' paddingRight='2em' >
+        <Stack direction={'column'} spacing={1} className='console' paddingBottom='2em' paddingRight='2em'>
             {log.events.map(renderEvent)}
+            <div ref={bottomRef} />
         </Stack>
     </Stack>
 })

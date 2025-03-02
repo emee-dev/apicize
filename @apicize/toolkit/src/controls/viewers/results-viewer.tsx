@@ -57,17 +57,15 @@ export const ResultsViewer = observer((props: {
     let disableOtherPanels: boolean
 
 
-    if (result.execution) {
+    if (result.response) {
         disableOtherPanels = false
-        longTextInResponse = (result.execution.response?.body?.text?.length ?? 0) > MAX_TEXT_RENDER_LENGTH
+        longTextInResponse = (result.response.body?.text?.length ?? 0) > MAX_TEXT_RENDER_LENGTH
 
     } else {
         disableOtherPanels = true
         longTextInResponse = false
 
     }
-
-
 
     let panel = requestExecution?.panel
     if (disableOtherPanels && panel !== 'Info' && panel !== 'Details') {
@@ -91,7 +89,7 @@ export const ResultsViewer = observer((props: {
 
     if (result.success) {
         infoColor = 'success'
-    } else if (result.execution?.error || (result.requestErrorCount ?? 0) > 0) {
+    } else if (result.error || (result.requestErrorCount ?? 0) > 0) {
         infoColor = 'error'
     } else {
         infoColor = 'warning'
@@ -104,7 +102,7 @@ export const ResultsViewer = observer((props: {
                 exclusive
                 onChange={handlePanelChanged}
                 value={panel}
-                sx={{ marginRight: '24px' }}
+                sx={{ marginRight: '12px' }}
                 aria-label="text alignment">
                 <ToggleButton value="Info" title="Show Result Info" aria-label='show info' size='small'><ScienceIcon color={infoColor ?? 'disabled'} /></ToggleButton>
                 <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' size='small' disabled={disableOtherPanels}><ViewListOutlinedIcon /></ToggleButton>

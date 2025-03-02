@@ -1,6 +1,7 @@
-import { ApicizeBody, ApicizeError, ApicizeExecution, ApicizeExecutionType, ApicizeGroup, ApicizeGroupRun, ApicizeRequest, ApicizeResponse, ApicizeRow, ApicizeTestResult } from "@apicize/lib-typescript";
+import { ApicizeBody, ApicizeError, ApicizeExecution, ApicizeExecutionSummary, ApicizeExecutionType, ApicizeGroup, ApicizeGroupRun, ApicizeRequest, ApicizeHttpResponse, ApicizeTestResult, JsonValue, ApicizeHttpRequest } from "@apicize/lib-typescript";
 import { OverridableStringUnion } from '@mui/types'
 import { SvgIconPropsColorOverrides } from "@mui/material"
+import { exec } from "child_process";
 
 export interface ExecutionMenuItem {
      index: number
@@ -27,27 +28,61 @@ export interface ExecutionResult {
      executedAt: number
      duration: number
 
-     request?: {
-          url: string,
-          method: string
-          headers: Map<string, string>
-          body?: ApicizeBody
-          variables?: Map<string, string | number | boolean>
-     }
+     request?: ApicizeHttpRequest
+     response?: ApicizeHttpResponse
 
-     execution?: {
-          response?: ApicizeResponse
-          tests?: ApicizeTestResult[]
-          error?: ApicizeError
-     }
+     inputVariables?: Map<String, JsonValue>,
+     data?: Map<String, JsonValue>[],
+     outputVariables?: Map<String, JsonValue>,
+
+     tests?: ApicizeTestResult[]
+     error?: ApicizeError,
 
      success: boolean
      requestSuccessCount?: number
      requestFailureCount?: number
      requestErrorCount?: number
-     passedTestCount: number
-     failedTestCount: number
+     testPassCount: number
+     testFailCount: number
 }
+
+export interface ExecutionResultSummary {
+     title: string
+     runNumber?: number
+     rowNumber?: number
+
+     executedAt: number
+     duration: number
+
+     request?: ApicizeHttpRequest
+     response?: ApicizeHttpResponse
+
+     inputVariables?: Map<String, JsonValue>,
+     data?: Map<String, JsonValue>[],
+     outputVariables?: Map<String, JsonValue>,
+
+     tests?: ExecutionResultSummaryTest[]
+     error?: ApicizeError,
+
+     success: boolean
+     requestSuccessCount?: number
+     requestFailureCount?: number
+     requestErrorCount?: number
+     testPassCount: number
+     testFailCount: number
+
+     children?: ExecutionResultSummary[]
+}
+
+export interface ExecutionResultSummaryTest {
+     testName: string
+     success: boolean,
+     error?: string
+     logs?: string[]
+ }
+ 
+
+
 export interface Execution {
      requestOrGroupId: string
      running: boolean
@@ -57,7 +92,7 @@ export interface Execution {
      results: ExecutionResult[]
 }
 
-export function executionResultFromSummary(info: ExecutionResultInfo, summary: ApicizeGroup | ApicizeGroupRun | ApicizeRow): ExecutionResult {
+export function executionResultFromSummary(info: ExecutionResultInfo, summary: ApicizeExecutionSummary) {
      return structuredClone({
           info,
           executedAt: summary.executedAt,
@@ -66,8 +101,8 @@ export function executionResultFromSummary(info: ExecutionResultInfo, summary: A
           requestSuccessCount: summary.requestSuccessCount,
           requestFailureCount: summary.requestFailureCount,
           requestErrorCount: summary.requestErrorCount,
-          passedTestCount: summary.passedTestCount,
-          failedTestCount: summary.failedTestCount
+          testPassCount: summary.testPassCount,
+          testFailCount: summary.testFailCount
      })
 }
 
@@ -76,24 +111,19 @@ export function executionResultFromRequest(info: ExecutionResultInfo, request: A
           info,
           executedAt: request.executedAt,
           duration: request.duration,
-          request: execution ? {
-               url: execution.url,
-               method: execution.method,
-               headers: execution.headers,
-               body: execution.body,
-               variables: execution.variables,
-          } : undefined,
-          execution: execution ? {
-               response: execution.response,
-               tests: execution.tests,
-               error: execution.error,
-          } : undefined,
+          request: execution?.request,
+          response: execution?.response,
+          inputVariables: execution?.inputVariables,
+          data: execution?.data,
+          outputVariables: execution?.outputVariables,
+          tests: execution?.tests,
+          error: execution?.error,
           success: request.success,
           requestSuccessCount: request.requestSuccessCount,
           requestFailureCount: request.requestFailureCount,
           requestErrorCount: request.requestErrorCount,
-          passedTestCount: request.passedTestCount,
-          failedTestCount: request.failedTestCount
+          testPassCount: request.testPassCount,
+          testFailCount: request.testFailCount
      })
 }
 
@@ -102,21 +132,16 @@ export function executionResultFromExecution(info: ExecutionResultInfo, executio
           info,
           executedAt: execution.executedAt,
           duration: execution.duration,
-          request: {
-               url: execution.url,
-               method: execution.method,
-               headers: execution.headers,
-               body: execution.body,
-               variables: execution.variables,
-          },
-          execution: {
-               response: execution.response,
-               tests: execution.tests,
-               error: execution.error,
-          },
+          request: execution?.request,
+          response: execution?.response,
+          inputVariables: execution?.inputVariables,
+          data: execution?.data,
+          outputVariables: execution?.outputVariables,
+          tests: execution?.tests,
+          error: execution?.error,
           success: execution.success,
-          passedTestCount: execution.passedTestCount,
-          failedTestCount: execution.failedTestCount
+          testPassCount: execution.testPassCount,
+          testFailCount: execution.testFailCount
      })
 }
 

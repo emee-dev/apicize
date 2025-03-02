@@ -450,6 +450,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         (async () => {
             if (settings.lastWorkbookFileName) {
                 await openWorkspace(settings.lastWorkbookFileName)
+            } else {
+                await newWorkspace()
             }
         })()
     })

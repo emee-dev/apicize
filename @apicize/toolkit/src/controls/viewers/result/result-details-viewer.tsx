@@ -1,18 +1,18 @@
 import { IconButton, Typography } from "@mui/material"
 import { Stack } from "@mui/material"
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import beautify from "js-beautify";
-import { observer } from "mobx-react-lite";
-import { useClipboard } from "../../../contexts/clipboard.context";
-import { useWorkspace } from "../../../contexts/workspace.context";
-import { RichViewer } from "../rich-viewer";
-import { EditorMode } from "../../../models/editor-mode";
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import beautify from "js-beautify"
+import { observer } from "mobx-react-lite"
+import { useClipboard } from "../../../contexts/clipboard.context"
+import { useWorkspace } from "../../../contexts/workspace.context"
+import { RichViewer } from "../rich-viewer"
+import { EditorMode } from "../../../models/editor-mode"
 
 export const ResultDetailsViewer = observer((props: { requestOrGroupId: string, index: number }) => {
     const workspace = useWorkspace()
     const clipboard = useClipboard()
 
-    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
+    const result = workspace.getExecutionResultSummary(props.requestOrGroupId, props.index)
 
     if (!result) {
         return null

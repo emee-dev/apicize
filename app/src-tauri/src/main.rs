@@ -226,7 +226,7 @@ async fn run_request(
     workspace: Workspace,
     request_id: String,
     workbook_full_name: String,
-) -> Result<Vec<ApicizeResult>, String> {
+) -> Result<ApicizeResult, String> {
     let cancellation = CancellationToken::new();
     {
         cancellation_tokens()

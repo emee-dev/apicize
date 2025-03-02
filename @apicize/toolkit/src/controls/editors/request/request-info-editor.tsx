@@ -60,12 +60,13 @@ export const RequestInfoEditor = observer(() => {
                     id='request-url'
                     label="URL"
                     aria-label='request url'
+                    autoFocus
                     required
                     size="small"
                     value={request.url}
                     onChange={e => workspace.setRequestUrl(e.target.value)}
                     error={request.urlInvalid}
-                    helperText={request.urlInvalid ? 'URL must include http/https protocol prefix and address' : ''}
+                    helperText={request.urlInvalid ? 'URL is required' : ''}
                     fullWidth
                 />
             </Grid2>
@@ -91,7 +92,7 @@ export const RequestInfoEditor = observer(() => {
                         <TextField
                             aria-label='request timeout in milliseconds'
                             placeholder='Timeout in Milliseconds'
-                            label='Timeout'
+                            label='Timeout (ms)'
                             size='small'
                             sx={{ width: '8em' }}
                             type='number'
@@ -134,7 +135,7 @@ export const RequestInfoEditor = observer(() => {
                             value={request.multiRunExecution}
                             disabled={request.runs < 2}
                             size='small'
-                            sx={{ minWidth: '11em' }}
+                            sx={{ minWidth: '10em' }}
                             label='Multi-Run Execution'
                             onChange={e => workspace.setMultiRunExecution(e.target.value as GroupExecution)}
                         >

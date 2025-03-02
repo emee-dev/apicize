@@ -19,7 +19,7 @@ export interface Workspace {
     authorizations: IndexedEntities<Authorization>,
     certificates: IndexedEntities<Certificate>,
     proxies: IndexedEntities<Proxy>,
-    data: IndexedEntities<ExternalData>,
     defaults: SelectedParametersWithData,
+    data: IndexedEntities<ExternalData>,
     warnings?: string[],
 }

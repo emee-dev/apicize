@@ -8,28 +8,38 @@ export type ApicizeGroupItemChildren = ApicizeGroupItemList | ApicizeGroupRunLis
 
 export type ApicizeExecutionType = ApicizeExecutionSingle | ApicizeExecutionRuns
 
-export type ApicizeResult = ApicizeGroup | ApicizeRequest | ApicizeRowList
+export type ApicizeResult = ApicizeGroupItemList | ApicizeRowSummary
 
-export interface ApicizeRow {
-    rowNumber: number
-    item: ApicizeGroupItem
+export interface ApicizeRowSummary {
+    type: 'Rows'
+    rows: ApicizeRow[]
 
     executedAt: number
     duration: number
 
-    success: boolean    
+    success: boolean
     requestSuccessCount: number
     requestFailureCount: number
     requestErrorCount: number
-    passedTestCount: number
-    failedTestCount: number
+    testPassCount: number
+    testFailCount: number
 }
 
-export interface ApicizeRowList {
-    type: 'Rows',
-    items: ApicizeRow[]
-}
+export interface ApicizeRow {
+    rowNumber: number,
 
+    items: ApicizeGroupItem[]
+
+    executedAt: number
+    duration: number
+
+    success: boolean
+    requestSuccessCount: number
+    requestFailureCount: number
+    requestErrorCount: number
+    testPassCount: number
+    testFailCount: number
+}
 export interface ApicizeGroupItemList {
     type: 'Items',
     items: ApicizeGroupItem[]
@@ -49,7 +59,18 @@ export interface ApicizeExecutionRuns {
     items: ApicizeExecution[]
 }
 
-export interface ApicizeGroup {
+export interface ApicizeExecutionSummary {
+    executedAt: number
+    duration: number
+    success: boolean
+    requestSuccessCount: number
+    requestFailureCount: number
+    requestErrorCount: number
+    testPassCount: number
+    testFailCount: number
+}
+
+export interface ApicizeGroup extends ApicizeExecutionSummary {
     type: 'Group'
 
     id: string
@@ -60,16 +81,16 @@ export interface ApicizeGroup {
     // variables?: Map<string, JsonValue>
     outputVariables?: Map<string, JsonValue>
     children?: ApicizeGroupChildren
-    
-    success: boolean    
+
+    success: boolean
     requestSuccessCount: number
     requestFailureCount: number
     requestErrorCount: number
-    passedTestCount: number
-    failedTestCount: number
+    testPassCount: number
+    testFailCount: number
 }
 
-export interface ApicizeGroupRun {
+export interface ApicizeGroupRun extends ApicizeExecutionSummary {
     type: 'GroupRun',
     runNumber: number
 
@@ -79,34 +100,16 @@ export interface ApicizeGroupRun {
     children?: ApicizeGroupItem[]
 
     outputVariables?: Map<string, JsonValue>
-    
-    success: boolean    
+
+    success: boolean
     requestSuccessCount: number
     requestFailureCount: number
     requestErrorCount: number
-    passedTestCount: number
-    failedTestCount: number  
+    testPassCount: number
+    testFailCount: number
 }
 
-// export interface ApicizeRowRuns {
-//     type: 'RowRuns'
-//     rowNumber: number
-
-//     executedAt: number
-//     duration: number
-
-//     runs?: ApicizeExecution[]
-//     outputVariables?: Map<string, JsonValue>
-    
-//     success: boolean    
-//     requestSuccessCount: number
-//     requestFailureCount: number
-//     requestErrorCount: number
-//     passedTestCount: number
-//     failedTestCount: number  
-// }
-
-export interface ApicizeRequest {
+export interface ApicizeRequest extends ApicizeExecutionSummary {
     type: 'Request'
 
     id: string
@@ -115,40 +118,36 @@ export interface ApicizeRequest {
     executedAt: number
     duration: number
     outputVariables?: Map<string, JsonValue>
-    
+
     execution?: ApicizeExecutionType
 
-    success: boolean    
+    success: boolean
     requestSuccessCount: number
     requestFailureCount: number
     requestErrorCount: number
-    passedTestCount: number
-    failedTestCount: number
+    testPassCount: number
+    testFailCount: number
 }
 
 export interface ApicizeExecution {
-    index?: number
+    rowNumber?: number
+    runNumber?: number
 
     executedAt: number
     duration: number
 
     inputVariables?: Map<string, JsonValue>
-    data?: Map<string, JsonValue>
+    data?: Map<string, JsonValue>[]
     outputVariables?: Map<string, JsonValue>
 
-    url: string,
-    method: string
-    headers: Map<string, string>
-    body?: ApicizeBody
-    variables?: Map<string, string | number | boolean>
-    
-    response?: ApicizeResponse
+    request?: ApicizeHttpRequest
+    response?: ApicizeHttpResponse
     tests?: ApicizeTestResult[]
     error?: ApicizeError
 
-    success: boolean    
-    passedTestCount: number
-    failedTestCount: number
+    success: boolean
+    testPassCount: number
+    testFailCount: number
 }
 
 export interface ApicizeBody {
@@ -156,7 +155,15 @@ export interface ApicizeBody {
     text?: string
 }
 
-export interface ApicizeResponse {
+export interface ApicizeHttpRequest {
+    url: string,
+    method: string
+    headers: Map<string, string>
+    body?: ApicizeBody
+    variables?: Map<string, string | number | boolean>
+}
+
+export interface ApicizeHttpResponse {
     status: number
     statusText: string
     headers?: Map<string, string>
@@ -185,179 +192,3 @@ export interface ApicizeError {
     url?: string
     source?: ApicizeError
 }
-
-
-// export interface ApicizeRequestWithExecution {
-//     id: string
-//     name: string
-//     executedAt: number
-//     duration: number
-//     inputVariables?: Map<string, JsonValue>
-//     data?: Map<string, JsonValue>
-//     outputVariables?: Map<string, JsonValue>
-    
-//     url: string,
-//     method: string
-//     headers: Map<string, string>
-//     body?: ApicizeBody
-//     variables?: Map<string, string | number | boolean>
-
-//     response?: ApicizeResponse
-//     tests?: ApicizeTestResult[]
-//     error?: ApicizeError
-
-//     success: boolean
-//     passedTestCount: number
-//     failedTestCount: number
-// }
-
-
-
-
-
-
-
-// export interface ApicizeRequest {
-//     url: string,
-//     method: string
-//     headers: Map<string, string>
-//     body?: ApicizeBody
-//     variables?: Map<string, string | number | boolean>
-// }
-
-
-// export interface ApicizeExecution {
-//     duration: number
-//     items: ApicizeExecutionItem[]
-
-// }
-
-// export type ApicizeExecutionItem = ApicizeExecutionGroup | ApicizeExecutionRequest
-
-// export interface ApicizeError {
-//     type: string
-//     description: string
-//     url?: string
-//     source?: ApicizeError
-// }
-
-// export interface ApicizeExecutionRequest {
-//     type: 'request'
-//     id: string
-//     name: string
-//     executedAt: number
-//     duration: number
-//     runs: ApicizeExecutionRequestRun[]
-//     variables?: Map<string, string | number | boolean>
-//     success: boolean
-//     requestsWithPassedTestsCount: number
-//     requestsWithFailedTestsCount: number
-//     requestsWithErrors: number
-//     passedTestCount: number
-//     failedTestCount: number
-//     error?: ApicizeError
-// }
-
-// export interface ApicizeExecutionRequestRun {
-//     runNumber: number
-//     numberOfRuns: number
-//     rowNumber: number | undefined
-//     totalRows: number | undefined
-//     executedAt: number
-//     duration: number
-//     request?: ApicizeRequest
-//     response?: ApicizeResponse
-//     success: boolean
-//     error?: ApicizeError
-//     tests?: ApicizeTestResult[]
-//     variables?: Map<string, string | number | boolean>
-//     inputVariables?: Map<string, string | number | boolean>
-//     requestsWithPassedTestsCount: number
-//     requestsWithFailedTestsCount: number
-//     requestsWithErrors: number
-//     passedTestCount: number
-//     failedTestCount: number
-// }
-
-// export interface TokenResult {
-//     token: string
-//     cached: boolean
-//     url?: string
-//     certificate?: string
-//     proxy?: string
-// }
-
-// export interface ApicizeResponse {
-//     status: number
-//     statusText: string
-//     headers?: Map<string, string>
-//     body?: ApicizeBody,
-//     oauth2Token?: TokenResult
-// }
-
-// export interface ApicizeTestResult {
-//     testName: string[]
-//     success: boolean,
-//     error?: string
-//     logs?: string[]
-// }
-
-// export interface ApicizeExecutionGroup {
-//     type: 'group'
-//     id: string
-//     name: string
-//     executedAt: number
-//     duration: number
-//     runs: ApicizeExecutionGroupRun[]
-//     success: boolean
-//     requestsWithPassedTestsCount: number
-//     requestsWithFailedTestsCount: number
-//     requestsWithErrors: number
-//     passedTestCount: number
-//     failedTestCount: number
-//     error?: ApicizeError
-// }
-
-// export interface ApicizeExecutionGroupRun {
-//     runNumber: number
-//     numberOfRuns: number
-//     rowNumber: number | undefined
-//     totalRows: number | undefined
-//     executedAt: number
-//     duration: number
-//     items: ApicizeExecutionItem[]
-//     variables?: Map<string, string | number | boolean>
-//     success: boolean
-//     requestsWithPassedTestsCount: number
-//     requestsWithFailedTestsCount: number
-//     requestsWithErrors: number
-//     passedTestCount: number
-//     failedTestCount: number
-// }
-
-// /**
-//  * Formatted execution details, separating what can be accessed within the testing context
-//  */
-// export interface ApicizeExecutionDetails {
-//     runNumber: number
-//     rowNumber?: number
-//     totalRows?: number
-//     executedAt: number
-//     duration: number
-//     testingContext?: {
-//         request?: ApicizeRequest
-//         response?: ApicizeResponse
-//         variables?: Map<string, string | number | boolean>
-//     }
-//     success: boolean
-//     error?: ApicizeError
-//     tests?: ApicizeTestResult[]
-//     outputVariables?: Map<string, string | number | boolean>
-//     requestsWithPassedTestsCount: number
-//     requestsWithFailedTestsCount: number
-//     requestsWithErrors: number
-//     passedTestCount: number
-//     failedTestCount: number
-// }
-
-// export type RunError = string | 'Cancelled' | { id: string, repr: object }

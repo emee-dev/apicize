@@ -21,7 +21,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@apicize/toolkit@npm:^0.16.4, @apicize/toolkit@workspace:@apicize/toolkit":
+"@apicize/toolkit@npm:^0.17.0, @apicize/toolkit@workspace:@apicize/toolkit":
   version: 0.0.0-use.local
   resolution: "@apicize/toolkit@workspace:@apicize/toolkit"
   dependencies:
@@ -46,6 +46,7 @@ __metadata:
     "@types/uuid": "npm:^9.0.7"
     ace-code: "npm:^1.38.0"
     ace-layout: "npm:^1.4.2"
+    ace-linters: "npm:^1.5.0"
     chai: "npm:^5.1.2"
     hast-util-to-jsx-runtime: "npm:^2.3.0"
     jest: "npm:^29.6.2"
@@ -2565,6 +2566,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ace-linters@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "ace-linters@npm:1.5.0"
+  dependencies:
+    vscode-languageserver-protocol: "npm:^3.17.3"
+    vscode-languageserver-textdocument: "npm:^1.0.8"
+    vscode-languageserver-types: "npm:^3.17.3"
+  checksum: 10c0/068b120ab2f0858bfe356f59171e474230887d2747522ecd63a7ac5293bcd433f75ca508881752f9dda66bb71b8e282121ec6719200d9df2dd1adad85cd7ff49
+  languageName: node
+  linkType: hard
+
 "acorn-jsx@npm:^5.3.2":
   version: 5.3.2
   resolution: "acorn-jsx@npm:5.3.2"
@@ -2693,7 +2705,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:app"
   dependencies:
-    "@apicize/toolkit": "npm:^0.16.4"
+    "@apicize/toolkit": "npm:^0.17.0"
     "@dnd-kit/core": "npm:^6.1.0"
     "@fontsource/open-sans": "npm:^5.1.1"
     "@fontsource/roboto-mono": "npm:^5.1.1"
@@ -10285,6 +10297,37 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 10c0/4ec5ddc9436951a68b213cd59c2a157663ef423658c387400774582ea33da40dcae18e55f3adb3b629173e2183b10d49db8370bc51a0aa89797e4ca5a34702a0
+  languageName: node
+  linkType: hard
+
+"vscode-jsonrpc@npm:8.2.0":
+  version: 8.2.0
+  resolution: "vscode-jsonrpc@npm:8.2.0"
+  checksum: 10c0/0789c227057a844f5ead55c84679206227a639b9fb76e881185053abc4e9848aa487245966cc2393fcb342c4541241b015a1a2559fddd20ac1e68945c95344e6
+  languageName: node
+  linkType: hard
+
+"vscode-languageserver-protocol@npm:^3.17.3":
+  version: 3.17.5
+  resolution: "vscode-languageserver-protocol@npm:3.17.5"
+  dependencies:
+    vscode-jsonrpc: "npm:8.2.0"
+    vscode-languageserver-types: "npm:3.17.5"
+  checksum: 10c0/5f38fd80da9868d706eaa4a025f4aff9c3faad34646bcde1426f915cbd8d7e8b6c3755ce3fef6eebd256ba3145426af1085305f8a76e34276d2e95aaf339a90b
+  languageName: node
+  linkType: hard
+
+"vscode-languageserver-textdocument@npm:^1.0.8":
+  version: 1.0.12
+  resolution: "vscode-languageserver-textdocument@npm:1.0.12"
+  checksum: 10c0/534349894b059602c4d97615a1147b6c4c031141c2093e59657f54e38570f5989c21b376836f13b9375419869242e9efb4066643208b21ab1e1dee111a0f00fb
+  languageName: node
+  linkType: hard
+
+"vscode-languageserver-types@npm:3.17.5, vscode-languageserver-types@npm:^3.17.3":
+  version: 3.17.5
+  resolution: "vscode-languageserver-types@npm:3.17.5"
+  checksum: 10c0/1e1260de79a2cc8de3e46f2e0182cdc94a7eddab487db5a3bd4ee716f67728e685852707d72c059721ce500447be9a46764a04f0611e94e4321ffa088eef36f8
   languageName: node
   linkType: hard
 

@@ -180,16 +180,15 @@ export class EditableRequest extends Editable<Request> {
     }
 
     @computed get nameInvalid() {
-        return ((this.name?.length ?? 0) === 0)
+        return this.dirty && ((this.name?.length ?? 0) === 0)
     }
 
     @computed get urlInvalid() {
-        return ! /^(\{\{.+\}\}|https?:\/\/)(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?$/.test(this.url)
+        return this.dirty && this.url.length == 0
     }
 
     @computed get state() {
-        return this.nameInvalid
-            || this.urlInvalid
+        return (this.dirty && (this.nameInvalid || this.urlInvalid))
             || (this.warnings?.size ?? 0) > 0
             ? EditableState.Warning
             : EditableState.None

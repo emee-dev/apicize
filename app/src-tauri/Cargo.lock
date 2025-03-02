@@ -300,7 +300,7 @@ checksum = "34ac096ce696dc2fcabef30516bb13c0a68a11d30131d3df6f04711467681b04"
 
 [[package]]
 name = "apicize"
-version = "0.16.4"
+version = "0.17.0"
 dependencies = [
  "actix-web",
  "apicize_lib",
@@ -326,7 +326,7 @@ dependencies = [
 
 [[package]]
 name = "apicize_lib"
-version = "0.16.3"
+version = "0.17.0"
 dependencies = [
  "async-recursion",
  "async-trait",
@@ -337,6 +337,7 @@ dependencies = [
  "mime",
  "npm_rs",
  "oauth2",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",

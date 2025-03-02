@@ -7,8 +7,7 @@ export default function ApicizeIcon(props?: React.SVGProps<SVGSVGElement>) {
             id="svg1"
             xmlSpace="preserve"
             xmlns="http://www.w3.org/2000/svg"
-        ><defs
-                id="defs1" /><rect
+        ><rect
                 style={{ fill: '#b2b2b2', fillOpacity: 1, stroke: '#262626', strokeWidth: 5.29167, strokeDasharray: 'none', strokeOpacity: 1 }}
                 id="rect3"
                 width="96.028305"

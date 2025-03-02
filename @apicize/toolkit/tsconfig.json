@@ -8,6 +8,7 @@
       "ESNext"
     ],
     "jsx": "react-jsx",
+    "skipLibCheck": true,
     "strict": true,
     "sourceMap": true,
     "rootDir": "./src",

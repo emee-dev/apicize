@@ -1,4 +1,4 @@
-import { Stack } from "@mui/material";
+import { Box, Drawer, IconButton, Stack, ToggleButton } from "@mui/material";
 import { observer } from "mobx-react-lite";
 import { Navigation } from "./navigation";
 import { HelpPanel } from "./help";
@@ -13,10 +13,21 @@ import { WarningsEditor } from "./editors/warnings-editor";
 import { useWorkspace, WorkspaceMode } from "../contexts/workspace.context";
 import { EditableEntityType } from "../models/workspace/editable-entity-type";
 import { LogViewer } from "./viewers/log-viewer";
+import { useEffect, useState } from "react";
+import useWindowSize from "../window-size";
+import MenuIcon from '@mui/icons-material/Menu';
+
+const PREFERRED_WIDTH = 1200
 
 export const MainPanel = observer(() => {
     const workspace = useWorkspace()
     let mainPane
+
+    const windowSize = useWindowSize()
+    const [showDrawer, setShowDrawer] = useState(windowSize.width < PREFERRED_WIDTH &&
+        (workspace.active?.entityType === undefined || workspace.mode === WorkspaceMode.Normal)
+    )
+
 
     switch (workspace.mode) {
         case WorkspaceMode.Help:
@@ -57,8 +68,40 @@ export const MainPanel = observer(() => {
             }
     }
 
+    useEffect(() => {
+        if (showDrawer) {
+            if (workspace.active?.entityType !== undefined || workspace.mode !== WorkspaceMode.Normal) {
+                setShowDrawer(false)
+            }
+        } else {
+            if (workspace.active?.entityType === undefined || workspace.mode === WorkspaceMode.Normal) {
+                setShowDrawer(true)
+            }
+        }
+    }, [windowSize, workspace.active, workspace.mode])
+
+
     return <Stack direction='row' sx={{ width: '100%', height: '100vh', display: 'flex', padding: '0' }}>
-        <Navigation />
+        {
+            windowSize.width < PREFERRED_WIDTH
+                ? <>
+                    <Box sx={{ top: 0, left: 0, height: '100%', width: '3rem' }}>
+                        <ToggleButton value={!showDrawer} color='primary' onClick={() => setShowDrawer(true)}
+                            sx={{ display: showDrawer ? 'none' : 'block', position: 'absolute', left: '0', top: '0.5rem' }}>
+                            <MenuIcon color='primary' />
+                        </ToggleButton>
+                    </Box>
+                    <Drawer
+                        variant='temporary'
+                        open={showDrawer}
+                        anchor='left'
+                        onClose={() => setShowDrawer(false)}
+                    >
+                        <Navigation />
+                    </Drawer>
+                </>
+                : <Navigation />
+        }
         {mainPane}
     </Stack>
 

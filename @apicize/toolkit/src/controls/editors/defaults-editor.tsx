@@ -1,6 +1,6 @@
 import { Stack, FormControl, InputLabel, MenuItem, Select, SxProps, Box, SvgIcon, IconButton, ToggleButtonGroup, ToggleButton, Grid2, TextField, Button } from '@mui/material'
 import { observer } from 'mobx-react-lite';
-import { useWorkspace, WorkspaceMode } from '../../contexts/workspace.context';
+import { useWorkspace } from '../../contexts/workspace.context';
 import { EntitySelection } from '../../models/workspace/entity-selection';
 import CloseIcon from '@mui/icons-material/Close';
 import { EditorTitle } from '../editor-title';
@@ -96,25 +96,25 @@ export const DefaultsEditor = observer((props: {
             </Select>
         </FormControl>
         <FormControl>
-                <InputLabel id='data-label-id'>Seed Data</InputLabel>
-                <Select
-                    labelId='data-label'
-                    aria-labelledby='data-label-id'
-                    id='cred-data'
-                    label='Seed Data'
-                    value={defaults.selectedData.id}
-                    onChange={(e) => workspace.setDefaultDataId(e.target.value)}
-                    fullWidth
-                    size='small'
-                >
-                    {itemsFromSelections(lists.data)}
-                </Select>
-            </FormControl>        
+            <InputLabel id='data-label-id'>Seed Data</InputLabel>
+            <Select
+                labelId='data-label'
+                aria-labelledby='data-label-id'
+                id='cred-data'
+                label='Seed Data'
+                value={defaults.selectedData.id}
+                onChange={(e) => workspace.setDefaultDataId(e.target.value)}
+                fullWidth
+                size='small'
+            >
+                {itemsFromSelections(lists.data)}
+            </Select>
+        </FormControl>
     </Stack>
 
     const DataEditor = <Stack spacing={3} maxWidth='60em'>
         {
-            workspace.data.values.map(data => (
+            workspace.defaults.data.values.map(data => (
                 <Grid2 container rowSpacing={2} spacing={1} size={12} columns={13}>
                     <Grid2 size={{ md: 5, lg: 3 }}>
                         <TextField
@@ -142,9 +142,9 @@ export const DefaultsEditor = observer((props: {
                                 sx={{ minWidth: '8rem' }}
                                 onChange={e => data.updateSourceType(e.target.value as ExternalDataSourceType)}
                             >
-                                <MenuItem key={`${data.id}-type-json`} value={ExternalDataSourceType.JSON}>JSON Value</MenuItem>
                                 <MenuItem key={`${data.id}-type-file-json`} value={ExternalDataSourceType.FileJSON}>JSON File</MenuItem>
                                 <MenuItem key={`${data.id}-type-file-csv`} value={ExternalDataSourceType.FileCSV}>CSV File</MenuItem>
+                                <MenuItem key={`${data.id}-type-json`} value={ExternalDataSourceType.JSON}>JSON Value</MenuItem>
                             </Select>
                         </FormControl>
                     </Grid2>
@@ -177,7 +177,7 @@ export const DefaultsEditor = observer((props: {
         </Box>
     </Stack>
 
-    return <Box marginBottom='1.5em' sx={props.sx} className='editor-panel'>
+    return <Box marginBottom='1.5em' sx={props.sx} className='editor'>
         <Stack direction='row' className='editor-panel-header'>
             <EditorTitle icon={<SvgIcon color='defaults'><DefaultsIcon /></SvgIcon>} name={`Workbook Defaults - ${panel}`} />
             <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>

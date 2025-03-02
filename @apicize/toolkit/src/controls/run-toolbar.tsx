@@ -1,5 +1,5 @@
-import { ToggleButton, Button, Box } from "@mui/material";
-import { Stack, SxProps } from "@mui/material";
+import { ToggleButton, Button, Box, Grid2, Link, SvgIcon, IconButton, FormControl } from "@mui/material";
+import { SxProps } from "@mui/material";
 import { observer } from "mobx-react-lite";
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined'
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
@@ -7,12 +7,15 @@ import { EditableEntityType } from "../models/workspace/editable-entity-type";
 import { EditableRequest } from "../models/workspace/editable-request";
 import { useWorkspace } from "../contexts/workspace.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
+import { NO_SELECTION_ID } from "../models/store";
+import SeedIcon from "../icons/seed-icon";
 
 export const RunToolbar = observer((props: { sx?: SxProps }) => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
 
-    const request = (workspace.active?.entityType === EditableEntityType.Request || workspace.active?.entityType === EditableEntityType.Group)
+    const entityType = workspace.active?.entityType
+    const request = (entityType === EditableEntityType.Request || entityType === EditableEntityType.Group)
         ? workspace.active as EditableRequest
         : null
 
@@ -48,14 +51,17 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
         }
     }
 
+    const label = entityType === EditableEntityType.Group ? 'group' : 'request'
+
+
     return (
-        <Stack direction={'row'} flexGrow={0} justifyItems='center' sx={props.sx}>
-            <ToggleButton value='Run' title='Run selected request once' sx={{ marginRight: '1em' }} size='small' disabled={running} onClick={handleRunClick(true)}>
+        <Grid2 container direction={'row'} display='flex' flexGrow={1} justifyItems='center' justifyContent='left' sx={props.sx}>
+            <ToggleButton value='Run' title={`Run selected ${label} once (Ctrl-Enter)`} size='small' disabled={running} onClick={handleRunClick(true)}>
                 <PlayCircleOutlined color={running ? 'disabled' : 'success'} />
             </ToggleButton>
             {
                 request.runs > 1
-                    ? <ToggleButton value='Run' title={`Run selected request ${request.runs} times`} sx={{ marginRight: '1em' }} size='small' disabled={running} onClick={handleRunClick()}>
+                    ? <ToggleButton value='Run' title={`Run selected ${label} ${request.runs} time (Ctrl-Shift-Enter)`} sx={{ marginRight: '1em' }} size='small' disabled={running} onClick={handleRunClick()}>
                         <PlayCircleFilledIcon color={(running) ? 'disabled' : 'success'} />
                     </ToggleButton>
                     : null
@@ -65,6 +71,11 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
                     ? <Button aria-label='cancel execution' variant='outlined' color='error' onClick={() => handleCancel()} size='small'>Cancel</Button>
                     : null
             }
-        </Stack>
+            {
+                workspace.defaults.selectedData.id !== NO_SELECTION_ID
+                    ? <ToggleButton value='Seed' sx={{ marginLeft: 'auto' }} title={`Seeding from ${workspace.defaults.selectedData.name}`} onClick={() => workspace.changeActive(EditableEntityType.Workbook, 'defaults')}><SvgIcon className='seed-icon' color='success'><SeedIcon /></SvgIcon></ToggleButton>
+                    : <ToggleButton value='NoSeed' sx={{ marginLeft: 'auto' }} title='Not Seeding Data' onClick={() => workspace.changeActive(EditableEntityType.Workbook, 'defaults')}><SvgIcon className='seed-icon' color='primary'><SeedIcon /></SvgIcon></ToggleButton>
+            }
+        </Grid2>
     )
 })
