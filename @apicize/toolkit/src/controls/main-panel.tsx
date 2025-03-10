@@ -36,6 +36,7 @@ export const MainPanel = observer(() => {
             mainPane = <LogViewer sx={{ display: 'block', flexGrow: 1 }} />
             break
         case WorkspaceMode.Defaults:
+        case WorkspaceMode.Seed:
             mainPane = <DefaultsEditor sx={{ display: 'block', flexGrow: 1 }} />
             break
         case WorkspaceMode.RequestList:

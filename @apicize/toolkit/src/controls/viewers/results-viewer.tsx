@@ -15,7 +15,7 @@ import { ResponseHeadersViewer } from "./result/response-headers-viewer";
 import { ResultDetailsViewer } from "./result/result-details-viewer";
 import { observer } from 'mobx-react-lite';
 import { EditableEntityType } from '../../models/workspace/editable-entity-type';
-import { useWorkspace } from "../../contexts/workspace.context";
+import { ResultsPanel, useWorkspace } from "../../contexts/workspace.context";
 // import { MAX_TEXT_RENDER_LENGTH } from "./text-viewer";
 import RequestIcon from "../../icons/request-icon";
 
@@ -48,9 +48,9 @@ export const ResultsViewer = observer((props: {
         return null
     }
 
-    const handlePanelChanged = (_: React.SyntheticEvent, newValue: string) => {
+    const handlePanelChanged = (_: React.SyntheticEvent, newValue: ResultsPanel) => {
         if (newValue) {
-            workspace.changePanel(requestOrGroupId, newValue)
+            workspace.changeResultsPanel(requestOrGroupId, newValue)
         }
     }
 
@@ -131,3 +131,4 @@ export const ResultsViewer = observer((props: {
         </Stack>)
         : null
 })
+

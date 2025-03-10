@@ -5,7 +5,7 @@ import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined'
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
 import { EditableEntityType } from "../models/workspace/editable-entity-type";
 import { EditableRequest } from "../models/workspace/editable-request";
-import { useWorkspace } from "../contexts/workspace.context";
+import { useWorkspace, WorkspaceMode } from "../contexts/workspace.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 import BlockIcon from '@mui/icons-material/Block';
 import { NO_SELECTION_ID } from "../models/store";
@@ -68,24 +68,24 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
         cancelDisplay = 'none'
     }
 
+    const seedingFrom = workspace.defaults.selectedData.id === NO_SELECTION_ID ? undefined : workspace.defaults.selectedData;
+
     return (
-        <Grid2 container direction={'row'} display='flex' flexGrow={1} marginLeft='2em'  alignItems='center' justifyContent='space-between' sx={props.sx}>
+        <Grid2 container direction={'row'} display='flex' flexGrow={1} marginLeft='2em' alignItems='center' justifyContent='space-between' sx={props.sx}>
             <Box>
-                <ToggleButton value='Run' sx={{display: runDisplay}} title={`Run selected ${label} once (${workspace.ctrlKey}-Enter)`} size='small' disabled={running} onClick={handleRunClick(true)}>
+                <ToggleButton value='Run' sx={{ display: runDisplay }} title={`Run selected ${label} once (${workspace.ctrlKey}-Enter)`} size='small' disabled={running} onClick={handleRunClick(true)}>
                     <PlayCircleOutlined color={running ? 'disabled' : 'success'} />
                 </ToggleButton>
-                <ToggleButton value='Multi' sx={{ display: multiDisplay }}  title={`Run selected ${label} ${request.runs} time (${workspace.ctrlKey}-Shift-Enter)`} size='small' disabled={running} onClick={handleRunClick()}>
+                <ToggleButton value='Multi' sx={{ display: multiDisplay }} title={`Run selected ${label} ${request.runs} time (${workspace.ctrlKey}-Shift-Enter)`} size='small' disabled={running} onClick={handleRunClick()}>
                     <PlayCircleFilledIcon color={(running) ? 'disabled' : 'success'} />
                 </ToggleButton>
-                <ToggleButton value='Cancel' sx={{ display: cancelDisplay }}  title='Cancel' size='small' onClick={() => handleCancel()}>
+                <ToggleButton value='Cancel' sx={{ display: cancelDisplay }} title='Cancel' size='small' onClick={() => handleCancel()}>
                     <BlockIcon color='error' />
                 </ToggleButton>
             </Box>
-            {
-                workspace.defaults.selectedData.id !== NO_SELECTION_ID
-                    ? <ToggleButton value='Seed' size='small' title={`Seeding from ${workspace.defaults.selectedData.name}`} onClick={() => workspace.changeActive(EditableEntityType.Workbook, 'defaults')}><SvgIcon className='seed-icon' color='success'><SeedIcon /></SvgIcon></ToggleButton>
-                    : <ToggleButton value='NoSeed' size='small' title='Not Seeding Data' onClick={() => workspace.changeActive(EditableEntityType.Workbook, 'defaults')}><SvgIcon className='seed-icon' color='primary'><SeedIcon /></SvgIcon></ToggleButton>
-            }
+            <ToggleButton value='Seed' size='small' title={seedingFrom ? `Seeding from ${seedingFrom.name}` : 'Not Seeding Data'} onClick={() => workspace.setMode(WorkspaceMode.Seed)}>
+                <SvgIcon className='seed-icon' color={seedingFrom ? 'success' : 'primary'}><SeedIcon /></SvgIcon>
+            </ToggleButton>
         </Grid2>
     )
 })

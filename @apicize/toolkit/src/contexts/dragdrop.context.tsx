@@ -112,7 +112,7 @@ export const DragDropProvider = ({ children }: { children?: ReactNode }) => {
     }
 
     return <DragDropContext.Provider value={store}>
-        <DndContext sensors={sensors} onDragMove={onDragMove} onDragEnd={onDragEnd} onDragCancel={onDragCancel}>
+        <DndContext key='dnd' sensors={sensors} onDragMove={onDragMove} onDragEnd={onDragEnd} onDragCancel={onDragCancel}>
             {children}
         </DndContext>
     </DragDropContext.Provider>

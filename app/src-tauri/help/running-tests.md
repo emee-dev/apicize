@@ -23,6 +23,18 @@ have Requests in a group that rely upon variables set in a previous Request (see
 
 > Use **Sequential** Group Item Execution for a Group when setting variables in a Request's test to be used by subsequent Requests
 
+## Seeding Data
+
+You can maintain them in a JSON or CSV file separate from your workbook.  This may be useful if you have a large set of test cases
+that you want to maintain outside of Apicize.  Seed data can be used from the Apicize CLI runner.
+
+Some things to keep in mind when using Seeded data:
+
+1. Each row will be executed sequentially for Requests and Groups being tested.  The specified number of runs, concurrency, etc. will all be applied
+2. As a security measure, the Seed file **must** be in the same directory or child directory as the workbook.
+3. When using a JSON file, if the file contains a scalar value (string, number, etc.) or ab array of scalar values, a variable
+named **data** will be set.
+
 ## Viewing Results
 
 After a request is processed, the test flask icon will be colored:

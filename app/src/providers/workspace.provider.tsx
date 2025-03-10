@@ -39,7 +39,11 @@ export function WorkspaceProvider({ store, children }: { store: WorkspaceStore, 
         }
 
         store.changeApp(name, version)
-        store.setOs(os.type())
+        try {
+            store.setOs(os.type())
+        } catch (e) {
+            console.error("Uanble to detect OS type", e)
+        }
     })()
 
     useEffect(() => {

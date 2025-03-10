@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.17.1
+
+* Fix seed data icon
+* Update Demo example
+
 # 0.17.0
 
 * Add Seed data support

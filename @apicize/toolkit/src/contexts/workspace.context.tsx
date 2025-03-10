@@ -32,11 +32,14 @@ import { EditableWarnings } from "../models/workspace/editable-warnings"
 import { EditableExternalData } from "../models/workspace/editable-external-data"
 import { IndexedEntityManager } from "../models/indexed-entity-manager"
 
+export type ResultsPanel = 'Info' | 'Headers' | 'Preview' | 'Text' | 'Details'
+
 export enum WorkspaceMode {
     Normal,
     Help,
     Settings,
     Defaults,
+    Seed,
     Console,
     RequestList,
     ScenarioList,
@@ -1829,7 +1832,7 @@ export class WorkspaceStore {
     }
 
     @action
-    changePanel(requestOrGroupId: string, panel: string) {
+    changeResultsPanel(requestOrGroupId: string, panel: ResultsPanel) {
         const match = this.executions.get(requestOrGroupId)
         if (match) {
             match.panel = panel

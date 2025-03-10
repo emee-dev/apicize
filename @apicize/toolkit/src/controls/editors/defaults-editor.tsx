@@ -1,6 +1,6 @@
 import { Stack, FormControl, InputLabel, MenuItem, Select, SxProps, Box, SvgIcon, IconButton, ToggleButtonGroup, ToggleButton, Grid2, TextField, Button } from '@mui/material'
 import { observer } from 'mobx-react-lite';
-import { useWorkspace } from '../../contexts/workspace.context';
+import { useWorkspace, WorkspaceMode } from '../../contexts/workspace.context';
 import { EntitySelection } from '../../models/workspace/entity-selection';
 import CloseIcon from '@mui/icons-material/Close';
 import { EditorTitle } from '../editor-title';
@@ -12,16 +12,34 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useState } from 'react';
 import { ExternalDataSourceType } from '@apicize/lib-typescript';
 
+type DefaulltsPanels = 'Parameters' | 'ExternalData'
+
 export const DefaultsEditor = observer((props: {
     sx: SxProps
 }) => {
     const workspace = useWorkspace()
     const defaults = workspace.defaults
-    const [panel, setPanel] = useState<string>('Parameters')
+
+    let focusSeed: boolean
+    let defaultPanel: DefaulltsPanels
+    if (workspace.mode === WorkspaceMode.Seed) {
+        if (workspace.defaults.data.values.length > 0) {
+            focusSeed = true
+            defaultPanel = 'Parameters'
+        } else {
+            focusSeed = false
+            defaultPanel = 'ExternalData'
+        }
+    } else {
+        defaultPanel = 'Parameters'
+        focusSeed = false
+    }
+
+    const [panel, setPanel] = useState<DefaulltsPanels>(defaultPanel)
 
     workspace.nextHelpTopic = 'workspace/defaults'
 
-    const handlePanelChanged = (_: React.SyntheticEvent, newValue: string) => {
+    const handlePanelChanged = (_: React.SyntheticEvent, newValue: DefaulltsPanels) => {
         if (newValue) setPanel(newValue)
     }
 
@@ -98,6 +116,7 @@ export const DefaultsEditor = observer((props: {
         <FormControl>
             <InputLabel id='data-label-id'>Seed Data</InputLabel>
             <Select
+                autoFocus={focusSeed}
                 labelId='data-label'
                 aria-labelledby='data-label-id'
                 id='cred-data'
@@ -114,8 +133,8 @@ export const DefaultsEditor = observer((props: {
 
     const DataEditor = <Stack spacing={3}>
         {
-            workspace.defaults.data.values.map(data => (
-                <Grid2 container rowSpacing={2} spacing={1} size={12} columns={12}>
+            workspace.defaults.data.values.map((data, idx) => (
+                <Grid2 key={`def-data-${idx}`} container rowSpacing={2} spacing={1} size={12} columns={12}>
                     <Grid2 size={4}>
                         <TextField
                             id={`${data.id}-name`}
@@ -177,6 +196,9 @@ export const DefaultsEditor = observer((props: {
         </Box>
     </Stack>
 
+
+
+
     return <Box marginBottom='1.5em' sx={props.sx} className='editor'>
         <Stack direction='row' className='editor-panel-header'>
             <EditorTitle icon={<SvgIcon color='defaults'><DefaultsIcon /></SvgIcon>} name={`Workbook Defaults - ${panel}`}>
@@ -184,7 +206,7 @@ export const DefaultsEditor = observer((props: {
             </EditorTitle>
         </Stack>
 
-        <Box className='editor'>
+        <Box className='editor-panel'>
             <Stack className='editor-content' direction='row' flexGrow={1}>
                 <ToggleButtonGroup
                     orientation='vertical'

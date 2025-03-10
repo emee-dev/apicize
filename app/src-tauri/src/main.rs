@@ -13,7 +13,7 @@ use pkce::{OAuth2PkceInfo, OAuth2PkceRequest, OAuth2PkceService};
 use settings::{ApicizeSettings, ColorScheme};
 use std::{
     collections::HashMap,
-    env, fs,
+    env, fs, io,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -29,6 +29,26 @@ struct AppState {
 }
 
 static REQWEST_LOGGER: OnceLock<ReqwestLogger> = OnceLock::new();
+
+fn copy_files(source: &Path, destination: &Path) -> io::Result<()> {
+    let exists = fs::exists(destination)?;
+    if !exists {
+        fs::create_dir_all(destination)?;
+    }
+
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        let path = entry.path();
+        let dest = destination.join(entry.file_name());
+        if path.is_dir() {
+            copy_files(path.as_path(), &dest)?;
+        } else {
+            fs::copy(path.as_path(), &dest)?;
+        }
+    }
+
+    Ok(())
+}
 
 fn main() {
     tauri::Builder::default()
@@ -71,16 +91,17 @@ fn main() {
                         settings.last_workbook_file_name = Some(last_file.to_owned());
                     }
                 } else if let Some(workbook_directory) = &settings.workbook_directory {
-                    if let Ok(false) = fs::exists(workbook_directory) {
-                        if let Ok(()) = fs::create_dir(workbook_directory) {
-                            let destination = Path::new(workbook_directory).join("demo.apicize");
-                            if let Ok(resources) = &app.path().resource_dir() {
-                                let source = resources.join("help").join("demo.apicize");
-                                if fs::copy(&source, &destination).is_ok() {
-                                    settings.last_workbook_file_name =
-                                        Some(String::from(destination.to_string_lossy()));
-                                }
-                            }
+                    if let Ok(resources) = &app.path().resource_dir() {
+                        let src_demo_directory = resources.join("help").join("demo");
+                        let dest_demo_directory = Path::new(workbook_directory);
+
+                        if let Err(err) = copy_files(&src_demo_directory, dest_demo_directory) {
+                            eprintln!(
+                                "Unable to copy demo files from {} to {}: {}",
+                                src_demo_directory.to_string_lossy(),
+                                dest_demo_directory.to_string_lossy(),
+                                err
+                            );
                         }
                     }
                 }
@@ -106,6 +127,7 @@ fn main() {
 
             Ok(())
         })
+        .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_clipboard::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())

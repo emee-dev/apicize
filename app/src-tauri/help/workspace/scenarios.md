@@ -32,6 +32,9 @@ http://localhost:8080/quote/{{id}}
 
 Scenario variables are maintained and saved as name/string value pairs, but in scripts, they can be updated to any value that can be serialized as JSON.  
 
+You can also specify a JSON value, a JSON fille or CSV file.  The entire data set will be merged in with each call.  If you want to execute Requests or Groups for each row or entry in the external
+file, you can set up Seed data (see [**Running Tests**](help:running-tests))
+
 :image[scenarios.webp]
 
 ### See Also

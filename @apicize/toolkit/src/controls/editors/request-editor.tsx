@@ -30,10 +30,12 @@ import { useApicizeSettings } from '../../contexts/apicize-settings.context';
 import { useFileOperations } from '../../contexts/file-operations.context';
 import RequestIcon from '../../icons/request-icon';
 
+type RequestPanel = 'Info' | 'Headers' | 'Query String' | 'Body' | 'Test' | 'Parameters' | 'Warnings'
+
 export const RequestEditor = observer((props: {
     sx?: SxProps
 }) => {
-    const [panel, setPanel] = React.useState<string>('Info')
+    const [panel, setPanel] = React.useState<RequestPanel>('Info')
 
     const workspace = useWorkspace()
     const settings = useApicizeSettings()
@@ -57,7 +59,7 @@ export const RequestEditor = observer((props: {
 
     workspace.nextHelpTopic = request ? 'workspace/groups' : 'workspace/requests'
 
-    const handlePanelChanged = (_: React.SyntheticEvent, newValue: string) => {
+    const handlePanelChanged = (_: React.SyntheticEvent, newValue: RequestPanel) => {
         if (newValue) setPanel(newValue)
     }
 

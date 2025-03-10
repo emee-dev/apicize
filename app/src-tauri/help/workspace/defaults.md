@@ -17,10 +17,7 @@ a value (including "Off") it will override these defaults.  These parameters inc
 :image[workspace/parameters.webp]
 
 If you want to use an external CSV or JSON file to populate multiple test cases, you can define a Seed Data file (see below).  When 
-a seed data is active, the properties of each row (CSV) or item (JSON) will be populated along with an Scenario variables.
-
-Note:  when using a JSON file, if the file contains a scalar value (string, number, etc.) or ab array of scalar values, a variable
-named **data** will be set.
+a seed data is active, the properties of each row (CSV) or item (JSON) will be populated along with the active Scenario's variables (if set).
 
 ### See Also
 
