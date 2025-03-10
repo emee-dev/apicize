@@ -9,7 +9,7 @@ export const AuthorizationBasicEditor = observer(() => {
     if (workspace.active?.entityType !== EditableEntityType.Authorization) return null
     const auth = workspace.active as EditableAuthorization
 
-    return <Grid2 container direction={'column'} spacing={3} maxWidth='60em' className='authorization-editor-subpanel'>
+    return <Grid2 container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
         <Grid2>
             <TextField
                 id='auth-username'

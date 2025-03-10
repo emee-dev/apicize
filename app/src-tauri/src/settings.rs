@@ -64,6 +64,10 @@ pub struct ApicizeSettings {
     /// Port for UI PKCE listener
     #[serde(default = "default_pkce_listener_port")]
     pub pkce_listener_port: u16,
+
+    /// Always hide navigation tree
+    #[serde(default)]
+    pub always_hide_nav_tree: bool,
 }
 
 impl ApicizeSettings {
@@ -108,6 +112,7 @@ impl ApicizeSettings {
                 editor_panels: String::from(""),
                 recent_workbook_file_names: None,
                 pkce_listener_port: 8080,
+                always_hide_nav_tree: false,
             };
             Ok(SerializationOpenSuccess {
                 file_name: String::from(""),

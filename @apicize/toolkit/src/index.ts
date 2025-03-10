@@ -9,14 +9,13 @@ export { DefaultsEditor } from './controls/editors/defaults-editor'
 export { WarningsEditor } from './controls/editors/warnings-editor'
 export { EditableAuthorization } from './models/workspace/editable-authorization'
 export { CertificateFileType } from './models/workspace/editable-certificate'
-export { Navigation } from './controls/navigation'
+export { Navigation } from './controls/navigation/navigation'
 export { HelpPanel } from './controls/help'
 export { MainPanel } from './controls/main-panel'
 export * from './theme'
 
 // Note - don't export store actions, publish method in WorkspaceContext instead, so we can abstract use of redux and other stuff
 export { editableWorkspaceToStoredWorkspace, base64Decode, base64Encode } from './services/apicize-serializer'
-export { DndContext } from '@dnd-kit/core'
 export { EditableEntityType } from './models/workspace/editable-entity-type'
 
 export { useFeedback, FeedbackContext, FeedbackStore, ToastSeverity, ConfirmationOptions } from './contexts/feedback.context'
@@ -27,6 +26,7 @@ export { useWorkspace, WorkspaceContext, WorkspaceStore } from './contexts/works
 export { useApicizeSettings, ApicizeSettingsContext } from './contexts/apicize-settings.context'
 export { useLog, LogContext, LogStore } from './contexts/log.context'
 export { ReqwestEvent, ReqwestEventConnect, ReqwestEventRead, ReqwestEventWrite } from './models/trace';
+export { DragDropContext, DragDropProvider, useDragDrop } from './contexts/dragdrop.context'
 export { ApicizeSettings } from './models/settings'
 
 import "./toolkit.css"

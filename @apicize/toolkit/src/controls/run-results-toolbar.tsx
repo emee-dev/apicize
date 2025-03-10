@@ -33,7 +33,7 @@ export const RunResultsToolbar = observer((props: { className?: string, sx?: SxP
         ? <Stack direction='row' className={props.className} sx={props.sx} paddingTop='0.25em' paddingBottom='1.5em' display='flex' justifyContent='center'>
             {
                 length > 1
-                    ? <FormControl sx={{ marginTop: '1.5em' }}>
+                    ? <FormControl>
                         <InputLabel id='run-id'>Results</InputLabel>
                         <Select
                             labelId='run-id'

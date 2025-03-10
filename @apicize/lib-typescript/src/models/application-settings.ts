@@ -9,4 +9,5 @@ export interface ApplicationSettings {
     editorPanels: string
     recentWorkbookFileNames?: string[]
     pkceListenerPort: number | undefined
+    alwaysHideNavTree: boolean
 }

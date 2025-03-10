@@ -21,7 +21,7 @@ export const AuthorizationOAuth2PkceEditor = observer(() => {
         }
     }
 
-    return <Grid2 container direction={'column'} spacing={3} maxWidth='60em' className='authorization-editor-subpanel'>
+    return <Grid2 container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
         <Grid2>
             <Alert severity="warning">PKCE authorization requires user interaction and will not available from the Apicize CLI test runner.</Alert>
         </Grid2>

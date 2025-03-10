@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.17.0
+
+* Add Seed data support
+* Add compact navigation
+
 # 0.16.4
 
 * Store JSON data files in "pretty" format

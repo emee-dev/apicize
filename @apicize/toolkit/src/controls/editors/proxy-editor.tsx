@@ -14,38 +14,40 @@ export const ProxyEditor = observer((props: {
     workspace.nextHelpTopic = 'proxies'
     const proxy = workspace.active as EditableProxy
     return (
-        <Stack direction={'column'} className='editor' sx={props.sx}>
+        <Stack direction='column' className='editor proxy' sx={props.sx}>
             <Box className='editor-panel-header'>
                 <EditorTitle icon={<AirlineStopsIcon color='proxy' />} name={proxy.name.length > 0 ? proxy.name : '(Unnamed)'} />
             </Box>
-            <Grid2 container direction={'column'} spacing={3} className='editor-single-panel'>
-                <Grid2>
-                    <TextField
-                        id='proxy-name'
-                        label='Name'
-                        aria-label='proxy name'
-                        // size='small'
-                        value={proxy.name}
-                        onChange={e => workspace.setName(e.target.value)}
-                        error={proxy.nameInvalid}
-                        helperText={proxy.nameInvalid ? 'Proxy name is required' : ''}
-                        fullWidth
-                    />
+            <Box className='editor-panel'>
+                <Grid2 container className='editor-content' direction={'column'} spacing={3}>
+                    <Grid2>
+                        <TextField
+                            id='proxy-name'
+                            label='Name'
+                            aria-label='proxy name'
+                            size='small'
+                            value={proxy.name}
+                            onChange={e => workspace.setName(e.target.value)}
+                            error={proxy.nameInvalid}
+                            helperText={proxy.nameInvalid ? 'Proxy name is required' : ''}
+                            fullWidth
+                        />
+                    </Grid2>
+                    <Grid2>
+                        <TextField
+                            id='proxy-url'
+                            label='URL'
+                            aria-label='proxy url'
+                            size='small'
+                            value={proxy.url}
+                            onChange={e => workspace.setProxyUrl(e.target.value)}
+                            error={proxy.urlInvalid}
+                            helperText={proxy.urlInvalid ? 'URL must include http/https/socks5 protocol prefix and address' : ''}
+                            fullWidth
+                        />
+                    </Grid2>
                 </Grid2>
-                <Grid2>
-                    <TextField
-                        id='proxy-url'
-                        label='URL'
-                        aria-label='proxy url'
-                        // size='small'
-                        value={proxy.url}
-                        onChange={e => workspace.setProxyUrl(e.target.value)}
-                        error={proxy.urlInvalid}
-                        helperText={proxy.urlInvalid ? 'URL must include http/https/socks5 protocol prefix and address' : ''}
-                        fullWidth
-                    />
-                </Grid2>
-            </Grid2>
+            </Box>
         </Stack >
     )
 })

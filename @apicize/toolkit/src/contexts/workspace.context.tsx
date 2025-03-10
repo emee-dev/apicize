@@ -19,7 +19,6 @@ import {
     ApicizeRequest,
     ApicizeResult,
     ApicizeRowSummary,
-    ExternalDataSourceType,
     RequestEntry,
 } from "@apicize/lib-typescript"
 import { EntitySelection } from "../models/workspace/entity-selection"
@@ -30,10 +29,8 @@ import { EditableItem, EditableState } from "../models/editable"
 import { createContext, useContext } from "react"
 import { EditableDefaults } from "../models/workspace/editable-defaults"
 import { EditableWarnings } from "../models/workspace/editable-warnings"
-import { FeedbackStore } from "./feedback.context"
 import { EditableExternalData } from "../models/workspace/editable-external-data"
 import { IndexedEntityManager } from "../models/indexed-entity-manager"
-import { js_beautify } from 'js-beautify'
 
 export enum WorkspaceMode {
     Normal,
@@ -41,6 +38,11 @@ export enum WorkspaceMode {
     Settings,
     Defaults,
     Console,
+    RequestList,
+    ScenarioList,
+    AuthorizationList,
+    CertificateList,
+    ProxyList,
 }
 
 export class WorkspaceStore {
@@ -81,12 +83,14 @@ export class WorkspaceStore {
 
     @observable accessor executingRequestIDs: string[] = []
 
-    @observable accessor expandedItems = ['hdr-r']
+    @observable accessor expandedItems: string[] = ['hdr-r']
+    @observable accessor navTreeInitialized = new Set<EditableEntityType>()
 
     pendingPkceRequests = new Map<string, Map<string, boolean>>()
 
+    public ctrlKey: string = 'Ctrl'
+
     constructor(
-        private readonly feedback: FeedbackStore,
         private readonly callbacks: {
             onExecuteRequest: (workspace: Workspace, requestId: string, allowedParentPath: string, singleRun: boolean) => Promise<ApicizeResult>,
             onCancelRequest: (requestId: string) => Promise<void>,
@@ -117,6 +121,34 @@ export class WorkspaceStore {
     changeApp(name: string, version: string) {
         this.appName = name
         this.appVersion = version
+    }
+
+    setOs(os: string) {
+        this.ctrlKey = os === 'macos' ? 'Cmd' : 'Ctrl'
+    }
+
+    @action
+    setMode(mode: WorkspaceMode) {
+        this.mode = mode
+    }
+
+    @action
+    updateExpanded(id: string | string[], isExpanded: boolean) {
+        const expanded = [...this.expandedItems]
+        for (const thisId of Array.isArray(id) ? id : [id]) {
+            let idx = expanded.indexOf(thisId)
+            if (isExpanded) {
+                if (idx === -1) expanded.push(thisId)
+            } else {
+                if (idx !== -1) expanded.splice(idx, 1)
+            }
+        }
+        this.expandedItems = expanded
+    }
+
+    @action
+    setInitialized(type: EditableEntityType) {
+        this.navTreeInitialized.add(type)
     }
 
     @action
@@ -169,7 +201,6 @@ export class WorkspaceStore {
             new Map(Object.entries(newWorkspace.data.childIds)),
         )
 
-        this.expandedItems = ['hdr-r']
         this.executions.clear()
         this.invalidItems.clear()
         this.active = null
@@ -186,6 +217,8 @@ export class WorkspaceStore {
     })
 })`
         entry.dirty = false
+        this.expandedItems = ['hdr-r']
+        this.navTreeInitialized.clear()
         this.requests.add(entry, false, null)
         this.dirty = false
         this.changeActive(EditableEntityType.Request, entry.id)
@@ -193,6 +226,15 @@ export class WorkspaceStore {
 
     @action
     loadWorkspace(newWorkspace: Workspace, fileName: string, displayName: string) {
+        const expandedItems = ['hdr-r']
+        if (this.requests.childIds) {
+            for (const groupId of this.requests.childIds.keys()) {
+                expandedItems.push(`g-${groupId}`)
+            }
+        }
+        this.expandedItems = expandedItems
+        this.navTreeInitialized.clear()
+
         this.requests = new IndexedEntityManager(
             new Map(Object.entries(newWorkspace.requests.entities).map(([id, e]) =>
                 [id,
@@ -249,14 +291,6 @@ export class WorkspaceStore {
 
         this.warnings.set(newWorkspace.warnings)
 
-        const expandedItems = ['hdr-r']
-        if (this.requests.childIds) {
-            for (const groupId of this.requests.childIds.keys()) {
-                expandedItems.push(`g-${groupId}`)
-            }
-        }
-        this.expandedItems = expandedItems
-
         for (const entity of this.requests.values) {
             if (entity.state === EditableState.Warning) this.invalidItems.add(entity.id)
         }
@@ -275,6 +309,7 @@ export class WorkspaceStore {
         this.active = this.warnings.hasEntries ? this.warnings : null
         this.workbookFullName = fileName
         this.workbookDisplayName = displayName
+
         this.dirty = false
         this.warnOnWorkspaceCreds = true
         this.executions.clear()
@@ -301,34 +336,21 @@ export class WorkspaceStore {
         )
     }
 
-    @action
-    toggleExpanded(itemId: string, isExpanded: boolean) {
-        let expanded = new Set(this.expandedItems)
-        if (isExpanded) {
-            expanded.add(itemId)
-        } else {
-            expanded.delete(itemId)
-        }
-        this.expandedItems = [...expanded]
-    }
+    // @action
+    // toggleExpanded(itemId: string, isExpanded: boolean) {
+    //     let expanded = new Set(this.expandedItems)
+    //     if (isExpanded) {
+    //         expanded.add(itemId)
+    //     } else {
+    //         expanded.delete(itemId)
+    //     }
+    //     this.expandedItems = [...expanded]
+    // }
 
     @action
     changeActive(type: EditableEntityType, id: string) {
         this.activeId = `${type}-${id}`
         switch (type) {
-            case EditableEntityType.Workbook:
-                switch (id) {
-                    case 'console':
-                        this.mode = WorkspaceMode.Console;
-                        break
-                    case 'settings':
-                        this.mode = WorkspaceMode.Settings;
-                        break
-                    case 'defaults':
-                        this.mode = WorkspaceMode.Defaults;
-                        break
-                }
-                break
             case EditableEntityType.Request:
             case EditableEntityType.Group:
                 this.mode = WorkspaceMode.Normal

@@ -86,12 +86,12 @@ export const CertificateEditor = observer((props: {
     }
 
     return (
-        <Stack direction={'column'} className='editor' sx={props.sx}>
+        <Stack className='editor certificate' direction='column' sx={props.sx}>
             <Box className='editor-panel-header'>
                 <EditorTitle icon={<SvgIcon color='certificate'><CertificateIcon /></SvgIcon>} name={certificate.name?.length ?? 0 > 0 ? certificate.name : '(Unnamed)'} />
             </Box>
-            <Grid2 container direction={'column'} spacing={3} className='editor-single-panel'>
-                <Grid2>
+            <Box className='editor-panel'>
+                <Stack className='editor-content' direction={'column'} spacing={3}>
                     <TextField
                         id='cert-name'
                         label='Name'
@@ -99,101 +99,44 @@ export const CertificateEditor = observer((props: {
                         error={certificate.nameInvalid}
                         size='small'
                         value={certificate.name}
+                        helperText={certificate.nameInvalid ? 'Name is required' : ''}
                         onChange={e => workspace.setName(e.target.value)}
                         fullWidth
                     />
-                </Grid2>
-                <Grid2>
-                    <Stack direction={'row'} spacing={'2em'}>
-                        <FormControl>
-                            <InputLabel id='cert-type-label-id'>Type</InputLabel>
-                            <Select
-                                labelId='cert-type-label-id'
-                                id='cert-type'
-                                value={certificate.type}
-                                label='Type'
-                                size='small'
-                                onChange={e => workspace.setCertificateType(e.target.value as
-                                    CertificateType.PEM | CertificateType.PKCS8_PEM | CertificateType.PKCS12)}
-                            >
-                                <MenuItem value={CertificateType.PKCS8_PEM}>PKCS 8 (PEM)</MenuItem>
-                                <MenuItem value={CertificateType.PKCS12}>PKCS 12 (PFX)</MenuItem>
-                                <MenuItem value={CertificateType.PEM}>PEM</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Stack>
-                </Grid2>
-                {
-                    certificate.type === CertificateType.PKCS8_PEM
-                        ? (
-                            <Grid2>
-                                <Stack direction={'column'} spacing={3}>
-                                    <Stack direction={'row'} spacing={3} position='relative'>
-                                        <Typography variant='h6' component='div'>SSL PEM Certificate / Chain</Typography>
-                                        <IconButton color='primary' size='medium' aria-label='open pem certificate chain filename' title='Open Certificate PEM File'
-                                            onClick={() => openFile(SshFileType.PEM)}
-                                        ><FileOpenIcon fontSize='inherit' /></IconButton>
-                                        <IconButton color='primary' disabled={!clipboard.hasText} size='medium' aria-label='paste-pem' title='Paste PEM from Clipboard'
-                                            onClick={() => pasteDataFromClipboard(SshFileType.PEM)}><ContentPasteGoIcon fontSize='inherit' /></IconButton>
-                                    </Stack>
-                                    <TextField
-                                        id='cert-pem'
-                                        label='PEM'
-                                        aria-label='pem file contents'
-                                        error={certificate.pemInvalid}
-                                        multiline
-                                        slotProps={{
-                                            input: {
-                                                className: 'code',
-                                                readOnly: true
-                                            }
-                                        }}
-                                        rows={8}
-                                        value={pemToView}
-                                        size='small'
-                                        fullWidth
-                                    />
-                                    <Stack direction={'row'} spacing={3} position='relative'>
-                                        <Typography variant='h6' component='div'>SSL Key</Typography>
-                                        <IconButton color='primary' size='medium' aria-label='open certificate key file' title='Open Certificate Key File'
-                                            onClick={() => openFile(SshFileType.Key)}
-                                        ><FileOpenIcon fontSize='inherit' /></IconButton>
-                                        <IconButton color='primary' disabled={!clipboard.hasText} size='medium' aria-label='paste-key' title='Paste Key from Clipboard'
-                                            onClick={() => pasteDataFromClipboard(SshFileType.Key)}><ContentPasteGoIcon fontSize='inherit' /></IconButton>
-                                    </Stack>
-                                    <TextField
-                                        id='cert-key'
-                                        label='Certificate Key'
-                                        aria-label='certificate key file contents'
-                                        error={certificate.keyInvalid}
-                                        multiline
-                                        slotProps={{
-                                            input: {
-                                                className: 'code',
-                                                readOnly: true
-                                            }
-                                        }}
-                                        rows={8}
-                                        value={keyToView}
-                                        size='small'
-                                        fullWidth
-                                    />
-                                </Stack>
-                            </Grid2>
-                        )
-                        : certificate.type === CertificateType.PKCS12 ? (
-                            <Grid2>
-                                <Stack direction={'column'} spacing={3}>
-                                    <Stack direction={'row'} spacing={3} position='relative'>
-                                        <Typography variant='h6' component='div'>PFX Certificate</Typography>
-                                        <IconButton color='primary' size='medium' aria-label='open certificate pfx file' title='Open Certificate PFX File'
-                                            onClick={() => openFile(SshFileType.PFX)}
-                                        ><FileOpenIcon fontSize='inherit' /></IconButton>
-                                    </Stack>
-                                    <Stack direction={'row'} spacing={3}>
+                    <FormControl>
+                        <InputLabel id='cert-type-label-id'>Type</InputLabel>
+                        <Select
+                            labelId='cert-type-label-id'
+                            id='cert-type'
+                            value={certificate.type}
+                            label='Type'
+                            size='small'
+                            onChange={e => workspace.setCertificateType(e.target.value as
+                                CertificateType.PEM | CertificateType.PKCS8_PEM | CertificateType.PKCS12)}
+                        >
+                            <MenuItem value={CertificateType.PKCS8_PEM}>PKCS 8 (PEM)</MenuItem>
+                            <MenuItem value={CertificateType.PKCS12}>PKCS 12 (PFX)</MenuItem>
+                            <MenuItem value={CertificateType.PEM}>PEM</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <Box paddingTop='2em'>
+                        {
+                            certificate.type === CertificateType.PKCS8_PEM
+                                ? (
+                                    <Stack direction='column' spacing={3}>
+                                        <Stack direction={'row'} spacing={3} position='relative'>
+                                            <Typography variant='h6' component='div'>SSL PEM Certificate / Chain</Typography>
+                                            <IconButton color='primary' size='medium' aria-label='open pem certificate chain filename' title='Open Certificate PEM File'
+                                                onClick={() => openFile(SshFileType.PEM)}
+                                            ><FileOpenIcon fontSize='inherit' /></IconButton>
+                                            <IconButton color='primary' disabled={!clipboard.hasText} size='medium' aria-label='paste-pem' title='Paste PEM from Clipboard'
+                                                onClick={() => pasteDataFromClipboard(SshFileType.PEM)}><ContentPasteGoIcon fontSize='inherit' /></IconButton>
+                                        </Stack>
                                         <TextField
-                                            id='cert-pfx'
-                                            label='PFX'
+                                            id='cert-pem'
+                                            label='PEM'
+                                            aria-label='pem file contents'
+                                            error={certificate.pemInvalid}
                                             multiline
                                             slotProps={{
                                                 input: {
@@ -202,59 +145,109 @@ export const CertificateEditor = observer((props: {
                                                 }
                                             }}
                                             rows={8}
-                                            value={certificate.pfx ? base64Encode(new Uint8Array(Buffer.from(certificate.pfx))) : ''}
-                                            size='small'
-                                            fullWidth
-                                        />
-                                    </Stack>
-                                    <TextField
-                                        id='cert-key'
-                                        label='Certificate Key'
-                                        aria-label='certificate pfx file contents'
-                                        className="password"
-                                        value={certificate.password}
-                                        onChange={e => workspace.setCertificatePassword(e.target.value)}
-                                        size='small'
-                                        fullWidth
-                                    />
-                                </Stack>
-                            </Grid2>
-                        ) : (
-                            <Grid2>
-                                <Stack direction={'column'} spacing={3}>
-                                    <Stack direction={'row'} spacing={3} position='relative'>
-                                        <Typography variant='h6' component='div'>SSL PEM Certificate / Chain</Typography>
-                                        <IconButton color='primary' size='medium' aria-label='open pem certificate chain filename' title='Open Certificate PEM File'
-                                            onClick={() => openFile(SshFileType.PEM)}
-                                        ><FileOpenIcon fontSize='inherit' /></IconButton>
-                                        <IconButton color='primary' disabled={!clipboard.hasText} size='medium' aria-label='paste-pem' title='Paste PEM from Clipboard'
-                                            onClick={() => pasteDataFromClipboard(SshFileType.PEM)}><ContentPasteGoIcon fontSize='inherit' /></IconButton>
-                                    </Stack>
-                                    <Stack direction={'row'} spacing={3}>
-                                        <TextField
-                                            id='cert-pem'
-                                            label='PEM'
-                                            aria-label='pem file contents'
-                                            multiline
-                                            error={certificate.pemInvalid}
-                                            slotProps={{
-                                                input: {
-                                                    readOnly: true,
-                                                    className: 'code'
-                                                }
-                                            }}
-
-                                            rows={8}
                                             value={pemToView}
                                             size='small'
                                             fullWidth
                                         />
+                                        <Stack direction={'row'} spacing={3} position='relative'>
+                                            <Typography variant='h6' component='div'>SSL Key</Typography>
+                                            <IconButton color='primary' size='medium' aria-label='open certificate key file' title='Open Certificate Key File'
+                                                onClick={() => openFile(SshFileType.Key)}
+                                            ><FileOpenIcon fontSize='inherit' /></IconButton>
+                                            <IconButton color='primary' disabled={!clipboard.hasText} size='medium' aria-label='paste-key' title='Paste Key from Clipboard'
+                                                onClick={() => pasteDataFromClipboard(SshFileType.Key)}><ContentPasteGoIcon fontSize='inherit' /></IconButton>
+                                        </Stack>
+                                        <TextField
+                                            id='cert-key'
+                                            label='Certificate Key'
+                                            aria-label='certificate key file contents'
+                                            error={certificate.keyInvalid}
+                                            multiline
+                                            slotProps={{
+                                                input: {
+                                                    className: 'code',
+                                                    readOnly: true
+                                                }
+                                            }}
+                                            rows={8}
+                                            value={keyToView}
+                                            size='small'
+                                            fullWidth
+                                        />
                                     </Stack>
-                                </Stack>
-                            </Grid2>
-                        )
-                }
-            </Grid2>
+                                )
+                                : certificate.type === CertificateType.PKCS12 ? (
+                                    <Stack direction={'column'} spacing={3}>
+                                        <Stack direction={'row'} spacing={3} position='relative'>
+                                            <Typography variant='h6' component='div'>PFX Certificate</Typography>
+                                            <IconButton color='primary' size='medium' aria-label='open certificate pfx file' title='Open Certificate PFX File'
+                                                onClick={() => openFile(SshFileType.PFX)}
+                                            ><FileOpenIcon fontSize='inherit' /></IconButton>
+                                        </Stack>
+                                        <Stack direction={'row'} spacing={3}>
+                                            <TextField
+                                                id='cert-pfx'
+                                                label='PFX'
+                                                multiline
+                                                slotProps={{
+                                                    input: {
+                                                        className: 'code',
+                                                        readOnly: true
+                                                    }
+                                                }}
+                                                rows={8}
+                                                value={certificate.pfx ? base64Encode(new Uint8Array(Buffer.from(certificate.pfx))) : ''}
+                                                size='small'
+                                                fullWidth
+                                            />
+                                        </Stack>
+                                        <TextField
+                                            id='cert-key'
+                                            label='Certificate Key'
+                                            aria-label='certificate pfx file contents'
+                                            className="password"
+                                            value={certificate.password}
+                                            onChange={e => workspace.setCertificatePassword(e.target.value)}
+                                            size='small'
+                                            fullWidth
+                                        />
+                                    </Stack>
+                                ) : (
+                                    <Stack direction={'column'} spacing={3}>
+                                        <Stack direction={'row'} spacing={3} position='relative'>
+                                            <Typography variant='h6' component='div'>SSL PEM Certificate / Chain</Typography>
+                                            <IconButton color='primary' size='medium' aria-label='open pem certificate chain filename' title='Open Certificate PEM File'
+                                                onClick={() => openFile(SshFileType.PEM)}
+                                            ><FileOpenIcon fontSize='inherit' /></IconButton>
+                                            <IconButton color='primary' disabled={!clipboard.hasText} size='medium' aria-label='paste-pem' title='Paste PEM from Clipboard'
+                                                onClick={() => pasteDataFromClipboard(SshFileType.PEM)}><ContentPasteGoIcon fontSize='inherit' /></IconButton>
+                                        </Stack>
+                                        <Stack direction={'row'} spacing={3}>
+                                            <TextField
+                                                id='cert-pem'
+                                                label='PEM'
+                                                aria-label='pem file contents'
+                                                multiline
+                                                error={certificate.pemInvalid}
+                                                slotProps={{
+                                                    input: {
+                                                        readOnly: true,
+                                                        className: 'code'
+                                                    }
+                                                }}
+
+                                                rows={8}
+                                                value={pemToView}
+                                                size='small'
+                                                fullWidth
+                                            />
+                                        </Stack>
+                                    </Stack>
+                                )
+                        }
+                    </Box>
+                </Stack>
+            </Box>
         </Stack >
     )
 })

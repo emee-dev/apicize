@@ -48,45 +48,42 @@ export function NameValueEditor(props: {
         }
     }
 
-    return <Stack direction='column' position='relative' width='100%'>
-        <Grid2 container spacing={4}>
-            {
-                (props.values ?? []).map(value => [
-                    <Grid2 container rowSpacing={2} spacing={1} size={12} columns={13}>
-                        <Grid2 size={{ md: 13, lg: 4 }}>
-                            <TextField
-                                id={`${value.id}-name`}
-                                label={props.nameHeader}
-                                aria-label={props.nameHeader}
-                                size="small"
-                                value={value.name}
-                                onChange={(e) => onNameUpdate(value.id, e.target.value)}
-                                fullWidth
-                            />
-                        </Grid2>
-                        <Grid2 size={{ md: 12, lg: 8 }}>
-                            <TextField
-                                id={`${value.id}-value`}
-                                label={props.valueHeader}
-                                aria-label={props.valueHeader}
-                                size="small"
-                                value={value.value}
-                                onChange={(e) => onValueUpdate(value.id, e.target.value)}
-                                fullWidth
-                            />
-                        </Grid2>
-                        <Grid2 className='namevalue-col-btn' size={{ md: 1, lg: 1 }}>
-                            <IconButton aria-label="delete" onClick={() => onDelete(value.id)}>
-                                <DeleteIcon color='primary' />
-                            </IconButton>
-                        </Grid2>
+    return <Stack direction='column' position='relative' spacing={4} width='100%'>
+        {
+            (props.values ?? []).map(value => [
+                <Grid2 container rowSpacing={2} spacing={1} size={12} columns={12}>
+                    <Grid2 size={4}>
+                        <TextField
+                            id={`${value.id}-name`}
+                            label={props.nameHeader}
+                            aria-label={props.nameHeader}
+                            size="small"
+                            value={value.name}
+                            onChange={(e) => onNameUpdate(value.id, e.target.value)}
+                            fullWidth
+                        />
                     </Grid2>
-                ])
-            }
-            <Box>
-                <Button variant="outlined" aria-label="add" startIcon={<AddIcon />} size='small' onClick={() => onAdd()}>Add {props.title}</Button>
-            </Box>
-
-        </Grid2>
+                    <Grid2 size={7}>
+                        <TextField
+                            id={`${value.id}-value`}
+                            label={props.valueHeader}
+                            aria-label={props.valueHeader}
+                            size="small"
+                            value={value.value}
+                            onChange={(e) => onValueUpdate(value.id, e.target.value)}
+                            fullWidth
+                        />
+                    </Grid2>
+                    <Grid2 className='namevalue-col-btn' size={1}>
+                        <IconButton aria-label="delete" onClick={() => onDelete(value.id)}>
+                            <DeleteIcon color='primary' />
+                        </IconButton>
+                    </Grid2>
+                </Grid2>
+            ])
+        }
+        <Box>
+            <Button variant="outlined" aria-label="add" startIcon={<AddIcon />} size='small' onClick={() => onAdd()}>Add {props.title}</Button>
+        </Box>
     </Stack>
 }

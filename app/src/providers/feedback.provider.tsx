@@ -4,7 +4,6 @@ import { FeedbackContext, FeedbackStore, ToastSeverity } from "@apicize/toolkit"
 import React, { useEffect } from "react"
 import { ReactNode } from "react"
 import { ModalBlock } from "../controls/modal-block."
-import { listen } from "@tauri-apps/api/event"
 
 export function FeedbackProvider({ store, children }: { store: FeedbackStore, children?: ReactNode }) {
     return (

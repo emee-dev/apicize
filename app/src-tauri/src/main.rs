@@ -52,6 +52,7 @@ fn main() {
                     last_workbook_file_name: None,
                     recent_workbook_file_names: None,
                     pkce_listener_port: 8080,
+                    always_hide_nav_tree: false,
                 }
             };
 
@@ -235,18 +236,17 @@ async fn run_request(
             .insert(request_id.clone(), cancellation.clone());
     }
 
-    let allowed_data_path: Option<PathBuf>;
-    if workbook_full_name.is_empty() {
-        allowed_data_path = None;
+    let allowed_data_path: Option<PathBuf> = if workbook_full_name.is_empty() {
+        None
     } else {
-        allowed_data_path = Some(PathBuf::from(
+        Some(
             std::path::absolute(&workbook_full_name)
                 .unwrap()
                 .parent()
                 .unwrap()
                 .to_path_buf(),
-        ));
-    }
+        )
+    };
 
     let runner = Arc::new(TestRunnerContext::new(
         workspace,
@@ -256,7 +256,7 @@ async fn run_request(
         true,
     ));
 
-    let response = runner.run(&vec![request_id.clone()]).await;
+    let response = runner.run(&[request_id.clone()]).await;
 
     cancellation_tokens().lock().unwrap().remove(&request_id);
 

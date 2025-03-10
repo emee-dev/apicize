@@ -33,9 +33,8 @@ export const RequestGroupEditor = observer((props: {
         }
     }
 
-
     return (
-        <Grid2 container direction='column' spacing={3} maxWidth='60em' sx={props.sx}>
+        <Grid2 container direction='column' spacing={3} sx={props.sx}>
             <Grid2>
                 <TextField
                     id='group-name'

@@ -37,6 +37,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                     ? settings.recentWorkbookFileNames
                     : undefined,
                 pkceListenerPort: settings.pkceListenerPort,
+                alwaysHideNavTree: settings.alwaysHideNavTree,
             }
             await core.invoke<ApplicationSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {

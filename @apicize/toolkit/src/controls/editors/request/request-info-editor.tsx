@@ -40,7 +40,7 @@ export const RequestInfoEditor = observer(() => {
     }
 
     return (
-        <Grid2 container direction='column' spacing={3} maxWidth='60em'>
+        <Grid2 container direction='column' spacing={3}>
             <Grid2>
                 <TextField
                     id='request-name'

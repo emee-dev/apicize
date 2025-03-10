@@ -40,6 +40,10 @@ import PrivateIcon from '../icons/private-icon';
 import VaultIcon from '../icons/vault-icon';
 import ApicizeIcon from '../icons/apicize-icon';
 import FolderIcon from '../icons/folder-icon';
+import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined'
+import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
+import SeedIcon from "../icons/seed-icon";
+
 import { Parent } from 'unist';
 
 // Register `hName`, `hProperties` types, used when turning markdown to HTML:
@@ -147,6 +151,9 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
                 case 'version':
                     replaceWith = version
                     break
+                case 'ctrlkey':
+                    replaceWith = workspace.ctrlKey
+                    break
                 default:
                     // if not an information item that we know about, ignore it
                     return false
@@ -246,6 +253,12 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
                 return <SvgIcon className='help-icon' color='vault' sx={{ marginRight: '0.5em' }}><VaultIcon /></SvgIcon>
             case 'apicize':
                 return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><ApicizeIcon /></SvgIcon>
+            case 'runonce':
+                return <PlayCircleOutlined className='help-icon' color='success' />
+            case 'run':
+                return <PlayCircleFilledIcon className='help-icon' color='success' />
+            case 'seed':
+                return <SvgIcon className='help-icon' color='primary'><SeedIcon /></SvgIcon>
             default:
                 return null
         }

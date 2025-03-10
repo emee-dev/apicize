@@ -13,4 +13,5 @@ export enum EditableEntityType {
     Warnings = 'w',
     Defaults = 'd',
     Workbook = 'wkbk',
+    Header = 'hdr',
 }

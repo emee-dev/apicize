@@ -7,6 +7,7 @@ import { EditableEntityType } from "../models/workspace/editable-entity-type";
 import { EditableRequest } from "../models/workspace/editable-request";
 import { useWorkspace } from "../contexts/workspace.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
+import BlockIcon from '@mui/icons-material/Block';
 import { NO_SELECTION_ID } from "../models/store";
 import SeedIcon from "../icons/seed-icon";
 
@@ -53,28 +54,37 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
 
     const label = entityType === EditableEntityType.Group ? 'group' : 'request'
 
+    let runDisplay: string
+    let multiDisplay: string
+    let cancelDisplay: string
+
+    if (running) {
+        runDisplay = 'none'
+        multiDisplay = 'none'
+        cancelDisplay = 'inline-flex'
+    } else {
+        runDisplay = 'inline-flex'
+        multiDisplay = request.runs > 1 ? 'inline-flex' : 'none'
+        cancelDisplay = 'none'
+    }
 
     return (
-        <Grid2 container direction={'row'} display='flex' flexGrow={1} justifyItems='center' justifyContent='left' sx={props.sx}>
-            <ToggleButton value='Run' title={`Run selected ${label} once (Ctrl-Enter)`} size='small' disabled={running} onClick={handleRunClick(true)}>
-                <PlayCircleOutlined color={running ? 'disabled' : 'success'} />
-            </ToggleButton>
-            {
-                request.runs > 1
-                    ? <ToggleButton value='Run' title={`Run selected ${label} ${request.runs} time (Ctrl-Shift-Enter)`} sx={{ marginRight: '1em' }} size='small' disabled={running} onClick={handleRunClick()}>
-                        <PlayCircleFilledIcon color={(running) ? 'disabled' : 'success'} />
-                    </ToggleButton>
-                    : null
-            }
-            {
-                running
-                    ? <Button aria-label='cancel execution' variant='outlined' color='error' onClick={() => handleCancel()} size='small'>Cancel</Button>
-                    : null
-            }
+        <Grid2 container direction={'row'} display='flex' flexGrow={1} marginLeft='2em'  alignItems='center' justifyContent='space-between' sx={props.sx}>
+            <Box>
+                <ToggleButton value='Run' sx={{display: runDisplay}} title={`Run selected ${label} once (${workspace.ctrlKey}-Enter)`} size='small' disabled={running} onClick={handleRunClick(true)}>
+                    <PlayCircleOutlined color={running ? 'disabled' : 'success'} />
+                </ToggleButton>
+                <ToggleButton value='Multi' sx={{ display: multiDisplay }}  title={`Run selected ${label} ${request.runs} time (${workspace.ctrlKey}-Shift-Enter)`} size='small' disabled={running} onClick={handleRunClick()}>
+                    <PlayCircleFilledIcon color={(running) ? 'disabled' : 'success'} />
+                </ToggleButton>
+                <ToggleButton value='Cancel' sx={{ display: cancelDisplay }}  title='Cancel' size='small' onClick={() => handleCancel()}>
+                    <BlockIcon color='error' />
+                </ToggleButton>
+            </Box>
             {
                 workspace.defaults.selectedData.id !== NO_SELECTION_ID
-                    ? <ToggleButton value='Seed' sx={{ marginLeft: 'auto' }} title={`Seeding from ${workspace.defaults.selectedData.name}`} onClick={() => workspace.changeActive(EditableEntityType.Workbook, 'defaults')}><SvgIcon className='seed-icon' color='success'><SeedIcon /></SvgIcon></ToggleButton>
-                    : <ToggleButton value='NoSeed' sx={{ marginLeft: 'auto' }} title='Not Seeding Data' onClick={() => workspace.changeActive(EditableEntityType.Workbook, 'defaults')}><SvgIcon className='seed-icon' color='primary'><SeedIcon /></SvgIcon></ToggleButton>
+                    ? <ToggleButton value='Seed' size='small' title={`Seeding from ${workspace.defaults.selectedData.name}`} onClick={() => workspace.changeActive(EditableEntityType.Workbook, 'defaults')}><SvgIcon className='seed-icon' color='success'><SeedIcon /></SvgIcon></ToggleButton>
+                    : <ToggleButton value='NoSeed' size='small' title='Not Seeding Data' onClick={() => workspace.changeActive(EditableEntityType.Workbook, 'defaults')}><SvgIcon className='seed-icon' color='primary'><SeedIcon /></SvgIcon></ToggleButton>
             }
         </Grid2>
     )

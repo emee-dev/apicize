@@ -16,19 +16,21 @@ export const WarningsEditor = observer((props: { sx?: SxProps }) => {
         <Box className='editor-panel-header'>
             <EditorTitle icon={<SvgIcon color='warning'><WarningAmberIcon /></SvgIcon>} name='Workbook Warnings' />
         </Box>
-        <Grid2 container direction={'column'} spacing={3} className='editor-single-panel'>
-            <Grid2>
-                {
-                    workspace.warnings.hasEntries
-                        ?
-                        [...workspace.warnings.entries].map(e =>
-                            <Alert key={e[0]} variant='outlined' severity='warning' onClose={() => workspace.deleteWorkspaceWarning(e[0])}>
-                                {e[1]}
-                            </Alert>
-                        )
-                        : <Box>No Workspace Warnings</Box>
-                }
-            </Grid2>
+        <Grid2 container direction={'column'} spacing={3} className='editor'>
+            <Box className='editor-panel'>
+                <Grid2 className='editor-content' >
+                    {
+                        workspace.warnings.hasEntries
+                            ?
+                            [...workspace.warnings.entries].map(e =>
+                                <Alert key={e[0]} variant='outlined' severity='warning' onClose={() => workspace.deleteWorkspaceWarning(e[0])}>
+                                    {e[1]}
+                                </Alert>
+                            )
+                            : <Box>No Workspace Warnings</Box>
+                    }
+                </Grid2>
+            </Box>
         </Grid2>
     </Stack>
 })

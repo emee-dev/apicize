@@ -1,7 +1,7 @@
 'use client'
 
 import * as core from '@tauri-apps/api/core'
-import { ApicizeSettings, FeedbackStore, MainPanel, WorkspaceStore } from '@apicize/toolkit'
+import { ApicizeSettings, DragDropProvider, FeedbackStore, MainPanel, WorkspaceStore } from '@apicize/toolkit'
 import React from 'react'
 import "@fontsource/open-sans/latin.css"
 import "@fontsource/roboto-mono/latin.css"
@@ -9,7 +9,7 @@ import { ClipboardProvider } from './providers/clipboard.provider';
 import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
 import { WorkspaceProvider } from './providers/workspace.provider';
-import { ApicizeExecution, ApicizeResult, ApplicationSettings, Workspace } from '@apicize/lib-typescript';
+import { ApicizeResult, ApplicationSettings } from '@apicize/lib-typescript';
 import { ApicizeSettingsProvider } from './providers/apicize-settings.provider';
 import { ConfigurableTheme } from './controls/configurable-theme';
 import { PkceProvider } from './providers/pkce.provider';
@@ -21,9 +21,9 @@ import { CssBaseline } from '@mui/material'
 declare var loadedSettings: ApplicationSettings
 const settings = new ApicizeSettings(loadedSettings)
 
+// const dragDropStore = new DragDropStore()
 const feedbackStore = new FeedbackStore()
 const workspaceStore = new WorkspaceStore(
-  feedbackStore,
   {
     onExecuteRequest: async (workspace, requestId, workbookFullName: string) =>
       core.invoke<ApicizeResult>('run_request', { workspace, requestId, workbookFullName }),
@@ -49,11 +49,13 @@ export default function Home() {
           <FileOperationsProvider store={workspaceStore}>
             <LogProvider>
               <WorkspaceProvider store={workspaceStore}>
-                <PkceProvider store={workspaceStore}>
-                  <ClipboardProvider>
-                    <MainPanel />
-                  </ClipboardProvider>
-                </PkceProvider>
+                <DragDropProvider>
+                  <PkceProvider store={workspaceStore}>
+                    <ClipboardProvider>
+                      <MainPanel />
+                    </ClipboardProvider>
+                  </PkceProvider>
+                </DragDropProvider>
               </WorkspaceProvider>
             </LogProvider>
           </FileOperationsProvider>

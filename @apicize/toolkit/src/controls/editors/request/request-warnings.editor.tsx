@@ -8,7 +8,7 @@ import { toJS } from "mobx";
 export const RequestWarningsEditor = observer(() => {
   const workspace = useWorkspace()
 
-  if (workspace.active?.entityType !== EditableEntityType.Request) {
+  if (workspace.active?.entityType !== EditableEntityType.Request && workspace.active?.entityType !== EditableEntityType.Group) {
     return null
   }
 
@@ -33,6 +33,6 @@ export const RequestWarningsEditor = observer(() => {
       </Box>
     )
   } else {
-    return null
+    return <Box>Nee!</Box>
   }
 })

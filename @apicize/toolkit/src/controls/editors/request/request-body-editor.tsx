@@ -4,6 +4,7 @@ import { GenerateIdentifier } from '../../../services/random-identifier-generato
 import { EditableNameValuePair } from '../../../models/workspace/editable-name-value-pair'
 import { NameValueEditor } from '../name-value-editor'
 import FileOpenIcon from '@mui/icons-material/FileOpen'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import { BodyType, BodyTypes } from '@apicize/lib-typescript'
 import { EditableEntityType } from '../../../models/workspace/editable-entity-type'
@@ -152,36 +153,74 @@ export const RequestBodyEditor = observer(() => {
   }
 
   let mode
-
+  let allowCopy: boolean
   switch (request.body.type) {
+    case BodyType.Form:
+      allowCopy = request.body.data.length > 0
+      break
     case BodyType.JSON:
       mode = 'json'
+      allowCopy = request.body.data.length > 0
       break
     case BodyType.XML:
       mode = 'xml'
+      allowCopy = request.body.data.length > 0
       break
+    case BodyType.Text:
+      allowCopy = request.body.data.length > 0
+      break
+    default:
+      allowCopy = false
+  }
+
+  const copyToClipboard = async () => {
+    switch (request.body.type) {
+      case BodyType.Form:
+        await clipboard.writeTextToClipboard(
+          [...request.body.data.values()].map(pair => `${pair.name}=${pair.value}`).join('\n'))
+        break
+      case BodyType.JSON:
+      case BodyType.XML:
+      case BodyType.Text:
+        await clipboard.writeTextToClipboard(request.body.data)
+        break
+    }
   }
 
   return (
     <Grid2 container direction='column' spacing={3} position='relative' width='100%' height='100%'>
       <Grid2 container direction='row' display='flex' justifyContent='space-between'>
-        <FormControl>
-          <InputLabel id='request-body-type-label-id'>Body Content Type</InputLabel>
-          <Select
-            labelId='request-method-label-id'
-            id="request-method"
-            value={request.body.type}
-            label="Body Content Type"
-            sx={{
-              width: "10em"
-            }}
-            size='small'
-            onChange={e => updateBodyType(e.target.value)}
-            aria-labelledby='request-body-type-label-id'
-          >
-            {bodyTypeMenuItems()}
-          </Select>
-        </FormControl>
+        <Stack direction='row'>
+          <FormControl>
+            <InputLabel id='request-body-type-label-id'>Body Content Type</InputLabel>
+            <Select
+              labelId='request-method-label-id'
+              id="request-method"
+              value={request.body.type}
+              label="Body Content Type"
+              sx={{
+                width: "10em"
+              }}
+              size='small'
+              onChange={e => updateBodyType(e.target.value)}
+              aria-labelledby='request-body-type-label-id'
+            >
+              {bodyTypeMenuItems()}
+            </Select>
+          </FormControl>
+          {
+            allowCopy
+              ? <IconButton
+                aria-label="copy data to clipboard"
+                title="Copy Data to Clipboard"
+                color='primary'
+                sx={{ marginLeft: '16px' }}
+                onClick={_ => copyToClipboard()}>
+                <ContentCopyIcon />
+              </IconButton>
+              : <></>
+          }
+        </Stack>
         <Grid2 container direction='row' spacing={2}>
           <Button variant='outlined' size='small' disabled={![BodyType.JSON, BodyType.XML].includes(request.body.type)} onClick={performBeautify}>Beautify</Button>
           <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>

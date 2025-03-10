@@ -34,7 +34,7 @@ export const DefaultsEditor = observer((props: {
 
     const lists = workspace.getDefaultParameterLists()
 
-    const ParameterEditor = <Stack spacing={3} maxWidth='60em'>
+    const ParameterEditor = <Stack spacing={3}>
         <FormControl>
             <InputLabel id='scenario-label-id'>Scenarios</InputLabel>
             <Select
@@ -112,11 +112,11 @@ export const DefaultsEditor = observer((props: {
         </FormControl>
     </Stack>
 
-    const DataEditor = <Stack spacing={3} maxWidth='60em'>
+    const DataEditor = <Stack spacing={3}>
         {
             workspace.defaults.data.values.map(data => (
-                <Grid2 container rowSpacing={2} spacing={1} size={12} columns={13}>
-                    <Grid2 size={{ md: 5, lg: 3 }}>
+                <Grid2 container rowSpacing={2} spacing={1} size={12} columns={12}>
+                    <Grid2 size={4}>
                         <TextField
                             id={`${data.id}-name`}
                             label='Variable Name'
@@ -129,8 +129,8 @@ export const DefaultsEditor = observer((props: {
                             fullWidth
                         />
                     </Grid2>
-                    <Grid2 size={{ md: 2, lg: 2 }}>
-                        <FormControl>
+                    <Grid2 size={3}>
+                        <FormControl fullWidth>
                             <InputLabel id={`${data.id}-type-lbl`}>Type</InputLabel>
                             <Select
                                 id={`${data.id}-type`}
@@ -148,7 +148,7 @@ export const DefaultsEditor = observer((props: {
                             </Select>
                         </FormControl>
                     </Grid2>
-                    <Grid2 size={{ md: 5, lg: 7 }}>
+                    <Grid2 size={4}>
                         <TextField
                             id={`${data.id}-value`}
                             label='Value'
@@ -164,7 +164,7 @@ export const DefaultsEditor = observer((props: {
                             fullWidth
                         />
                     </Grid2>
-                    <Grid2 className='namevalue-col-btn' size={{ md: 1, lg: 1 }}>
+                    <Grid2 className='namevalue-col-btn' size={1}>
                         <IconButton aria-label="delete" onClick={() => workspace.deleteData(data.id)}>
                             <DeleteIcon color='primary' />
                         </IconButton>
@@ -179,30 +179,33 @@ export const DefaultsEditor = observer((props: {
 
     return <Box marginBottom='1.5em' sx={props.sx} className='editor'>
         <Stack direction='row' className='editor-panel-header'>
-            <EditorTitle icon={<SvgIcon color='defaults'><DefaultsIcon /></SvgIcon>} name={`Workbook Defaults - ${panel}`} />
-            <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+            <EditorTitle icon={<SvgIcon color='defaults'><DefaultsIcon /></SvgIcon>} name={`Workbook Defaults - ${panel}`}>
+                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+            </EditorTitle>
         </Stack>
 
-        <Stack direction='row' flexGrow={1}>
-            <ToggleButtonGroup
-                orientation='vertical'
-                exclusive
-                onChange={handlePanelChanged}
-                value={panel}
-                sx={{ marginRight: '24px' }}
-                aria-label="text alignment">
-                <ToggleButton value="Parameters" title="Show Default Parameters" aria-label='show test' size='small'><AltRouteIcon /></ToggleButton>
-                <ToggleButton value="ExternalData" title="Show External Data" aria-label='show test' size='small'><DatasetIcon /></ToggleButton>
-            </ToggleButtonGroup>
-            <Box flexGrow={1} className='panels'>
-                {
-                    panel == 'Parameters'
-                        ? ParameterEditor
-                        : panel == 'ExternalData'
-                            ? DataEditor
-                            : <></>
-                }
-            </Box>
-        </Stack>
+        <Box className='editor'>
+            <Stack className='editor-content' direction='row' flexGrow={1}>
+                <ToggleButtonGroup
+                    orientation='vertical'
+                    exclusive
+                    onChange={handlePanelChanged}
+                    value={panel}
+                    sx={{ marginRight: '24px' }}
+                    aria-label="text alignment">
+                    <ToggleButton value="Parameters" title="Show Default Parameters" aria-label='show test' size='small'><AltRouteIcon /></ToggleButton>
+                    <ToggleButton value="ExternalData" title="Show External Data" aria-label='show test' size='small'><DatasetIcon /></ToggleButton>
+                </ToggleButtonGroup>
+                <Box flexGrow={1} flexDirection='row' className='panels'>
+                    {
+                        panel == 'Parameters'
+                            ? ParameterEditor
+                            : panel == 'ExternalData'
+                                ? DataEditor
+                                : <></>
+                    }
+                </Box>
+            </Stack>
+        </Box>
     </Box>
 })

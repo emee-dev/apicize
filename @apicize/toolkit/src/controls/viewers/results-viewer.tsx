@@ -22,7 +22,8 @@ import RequestIcon from "../../icons/request-icon";
 export const MAX_TEXT_RENDER_LENGTH = 64 * 1024 * 1024
 
 export const ResultsViewer = observer((props: {
-    sx?: SxProps<Theme>
+    sx?: SxProps<Theme>,
+    className?: string,
 }) => {
     const workspace = useWorkspace()
 
@@ -96,7 +97,7 @@ export const ResultsViewer = observer((props: {
     }
 
     return requestExecution ? (
-        <Stack direction={'row'} sx={props.sx}>
+        <Stack direction={'row'} sx={props.sx} className={props.className}>
             <ToggleButtonGroup
                 orientation='vertical'
                 exclusive

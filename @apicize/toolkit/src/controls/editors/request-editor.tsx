@@ -66,7 +66,7 @@ export const RequestEditor = observer((props: {
     const isRunning = requestExecution?.running
 
     let usePanel = (
-        (group && panel !== 'Info' && panel !== 'Parameters')
+        (group && panel !== 'Info' && panel !== 'Parameters' && panel !== 'Warnings')
     )
         ? 'Info' : panel
 
@@ -75,8 +75,9 @@ export const RequestEditor = observer((props: {
         (request?.warnings?.size ?? 0) > 0 || (group?.warnings?.size ?? 0) > 0
 
     if (usePanel === 'Warnings') {
+        const warnings = request ? request.warnings : group?.warnings
         // If user cleared warnings, switch to Parameters
-        if ((request?.warnings?.size ?? 0) === 0 && panel === 'Warnings') {
+        if ((warnings?.size ?? 0) === 0 && panel === 'Warnings') {
             usePanel = 'Parameters'
         }
     }
@@ -100,113 +101,117 @@ export const RequestEditor = observer((props: {
         }
     }
 
-    const requestPanel = group ?
-        <Box className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
-            <Stack direction='row' className='editor-panel-header'>
-                <Stack direction='row' display='flex' alignItems='center'>
-                    <EditorTitle icon={<SvgIcon color='folder'><FolderIcon /></SvgIcon>} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'} />
-                    <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
-                </Stack>
-                <RunToolbar sx={{ marginLeft: '1.5em' }} />
-            </Stack>
-            <Stack direction='row' flexGrow={1}>
-                <ToggleButtonGroup
-                    className='button-column'
-                    orientation='vertical'
-                    exclusive
-                    onChange={handlePanelChanged}
-                    value={usePanel}
-                    sx={{ marginRight: '12px', zIndex: 100 }}
-                    aria-label="text alignment">
-                    <ToggleButton value="Info" title="Show Group Info" aria-label='show info' size='small'><DisplaySettingsIcon /></ToggleButton>
-                    <ToggleButton value="Parameters" title="Show Group Parameters" aria-label='show test' size='small'><AltRouteIcon /></ToggleButton>
-                    {
-                        hasWarnings
-                            ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
-                            : null
-                    }
-                </ToggleButtonGroup>
-                <Box className='panels' flexGrow={1}>
-                    <Box>
-                        {usePanel === 'Info' ? <RequestGroupEditor />
-                            : usePanel === 'Parameters' ? <RequestParametersEditor />
-                                : null}
-                    </Box>
-                </Box>
-            </Stack>
-        </Box>
-        : request
-            ? <Box className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
+    const RequestPanel = () => {
+        return group ?
+            <>
                 <Stack direction='row' className='editor-panel-header'>
-                    <Stack direction='row'>
-                        <EditorTitle icon={<SvgIcon color='request'><RequestIcon /></SvgIcon>} name={(request.name.length > 0) ? `${request.name} - ${panel}` : `(Unnamed) - ${panel}`} />
+                    <EditorTitle icon={<SvgIcon color='folder'><FolderIcon /></SvgIcon>} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'}>
                         <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
+                    </EditorTitle>
+                    <RunToolbar />
+                </Stack>
+                <Box className='editor-panel'>
+                    <Stack direction='row' className='editor-content' flexGrow={1}>
+                        <ToggleButtonGroup
+                            className='button-column'
+                            orientation='vertical'
+                            exclusive
+                            onChange={handlePanelChanged}
+                            value={usePanel}
+                            sx={{ marginRight: '12px', zIndex: 100 }}
+                            aria-label="text alignment">
+                            <ToggleButton value="Info" title="Show Group Info" aria-label='show info' size='small'><DisplaySettingsIcon /></ToggleButton>
+                            <ToggleButton value="Parameters" title="Show Group Parameters" aria-label='show test' size='small'><AltRouteIcon /></ToggleButton>
+                            {
+                                hasWarnings
+                                    ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
+                                    : null
+                            }
+                        </ToggleButtonGroup>
+                        <Box className='panels' flexGrow={1}>
+                            <Box>
+                                {usePanel === 'Info' ? <RequestGroupEditor />
+                                    : usePanel === 'Parameters' ? <RequestParametersEditor />
+                                        : usePanel === 'Warnings' ? <RequestWarningsEditor />
+                                            : null}
+                            </Box>
+                        </Box>
                     </Stack>
-                    <RunToolbar sx={{ marginLeft: '1.5em' }} />
-                </Stack>
-                <Stack direction='row' flexGrow={1}>
-                    <ToggleButtonGroup
-                        className='button-column'
-                        orientation='vertical'
-                        exclusive
-                        onChange={handlePanelChanged}
-                        value={usePanel}
-                        sx={{ marginRight: '12px', zIndex: 100 }}
-                        aria-label="text alignment">
-                        <ToggleButton value="Info" title="Show Request Info" aria-label='show info' size='small'><DisplaySettingsIcon /></ToggleButton>
-                        <ToggleButton value="Query String" title="Show Request Query String" aria-label='show query string' size='small'><ViewListIcon /></ToggleButton>
-                        <ToggleButton value="Headers" title="Show Request Headers" aria-label='show headers' size='small'><ViewListOutlinedIcon /></ToggleButton>
-                        <ToggleButton value="Body" title="Show Request Body" aria-label='show body' size='small'><ArticleOutlinedIcon /></ToggleButton>
-                        <ToggleButton value="Test" title="Show Request Tests" aria-label='show test' size='small'><ScienceIcon /></ToggleButton>
-                        <ToggleButton value="Parameters" title="Show Request Parameters" aria-label='show parameters' size='small'><AltRouteIcon /></ToggleButton>
-                        {
-                            hasWarnings
-                                ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings' size='small'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
-                                : null
-                        }
-                    </ToggleButtonGroup>
+                </Box>
+            </>
+            : request
+                ? <>
+                    <Stack direction='row' className='editor-panel-header'>
+                        <EditorTitle icon={<SvgIcon color='request'><RequestIcon /></SvgIcon>} name={(request.name.length > 0) ? `${request.name} - ${panel}` : `(Unnamed) - ${panel}`}>
+                            <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
+                        </EditorTitle>
+                        <RunToolbar />
+                    </Stack>
+                    <Box className='editor-panel'>
+                        <Stack direction='row' flexGrow={1} className='editor-content'>
+                            <ToggleButtonGroup
+                                className='button-column'
+                                orientation='vertical'
+                                exclusive
+                                onChange={handlePanelChanged}
+                                value={usePanel}
+                                sx={{ marginRight: '12px', zIndex: 100 }}
+                                aria-label="text alignment">
+                                <ToggleButton value="Info" title="Show Request Info" aria-label='show info' size='small'><DisplaySettingsIcon /></ToggleButton>
+                                <ToggleButton value="Query String" title="Show Request Query String" aria-label='show query string' size='small'><ViewListIcon /></ToggleButton>
+                                <ToggleButton value="Headers" title="Show Request Headers" aria-label='show headers' size='small'><ViewListOutlinedIcon /></ToggleButton>
+                                <ToggleButton value="Body" title="Show Request Body" aria-label='show body' size='small'><ArticleOutlinedIcon /></ToggleButton>
+                                <ToggleButton value="Test" title="Show Request Tests" aria-label='show test' size='small'><ScienceIcon /></ToggleButton>
+                                <ToggleButton value="Parameters" title="Show Request Parameters" aria-label='show parameters' size='small'><AltRouteIcon /></ToggleButton>
+                                {
+                                    hasWarnings
+                                        ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings' size='small'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
+                                        : null
+                                }
+                            </ToggleButtonGroup>
 
-                    <Box flexGrow={1} className='panels' padding='0 1.0em' marginBottom='1.5em'>
-                        {usePanel === 'Info' ? <RequestInfoEditor />
-                            : usePanel === 'Headers' ? <RequestHeadersEditor />
-                                : usePanel === 'Query String' ? <RequestQueryStringEditor />
-                                    : usePanel === 'Body' ? <RequestBodyEditor />
-                                        : usePanel === 'Test' ? <RequestTestEditor />
-                                            : usePanel === 'Parameters' ? <RequestParametersEditor />
-                                                : usePanel === 'Warnings' ? <RequestWarningsEditor />
-                                                    : null}
+                            <Box flexGrow={1} className='panels'>
+                                {usePanel === 'Info' ? <RequestInfoEditor />
+                                    : usePanel === 'Headers' ? <RequestHeadersEditor />
+                                        : usePanel === 'Query String' ? <RequestQueryStringEditor />
+                                            : usePanel === 'Body' ? <RequestBodyEditor />
+                                                : usePanel === 'Test' ? <RequestTestEditor />
+                                                    : usePanel === 'Parameters' ? <RequestParametersEditor />
+                                                        : usePanel === 'Warnings' ? <RequestWarningsEditor />
+                                                            : null}
+                            </Box>
+                        </Stack>
                     </Box>
-                </Stack>
-            </Box>
-            : null
+                </>
+                : null
+    }
 
     return isExecuted
-        ? <PanelGroup autoSaveId="apicize-request" direction="horizontal" className='editor' storage={sizeStorage}>
-            <Panel id='request-editor' order={0} defaultSize={50} minSize={20} className={isExecuted ? 'editor-panel' : 'editor-single-panel'}>
-                {requestPanel}
+        ? <PanelGroup autoSaveId="apicize-request" direction="horizontal" className='editor split' storage={sizeStorage}>
+            <Panel id='request-editor' order={0} defaultSize={50} minSize={20} className='split-left'>
+                <RequestPanel />
             </Panel>
             <PanelResizeHandle className={'resize-handle'} hitAreaMargins={{ coarse: 30, fine: 10 }} />
             {
-                <Panel id='results-viewer' order={1} defaultSize={50} minSize={20} className='editor-panel-no-margin'>
-                    <Box top={0}
-                        left={0}
-                        width='100%'
-                        height='100%'
-                        position='absolute'
-                        display={isRunning ? 'block' : 'none'}
-                        className="MuiBackdrop-root MuiModal-backdrop"
-                        sx={{ zIndex: 99999, opacity: 1, transition: "opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms", backgroundColor: "#00000080" }} />
-                    <Box className='editor-panel'>
-                        <Box position='relative' display='flex' flexGrow={1} flexDirection='column'>
+                <Panel id='results-viewer' order={1} defaultSize={50} minSize={20} >
+                    <Box position='relative' display='flex' flexGrow={1}>
+                        <Box top={0}
+                            left={0}
+                            width='calc(100% - 1em)'
+                            height='100%'
+                            position='absolute'
+                            display={isRunning ? 'block' : 'none'}
+                            className="MuiBackdrop-root MuiModal-backdrop"
+                            sx={{ zIndex: 99999, opacity: 0.5, transition: "opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms", backgroundColor: "#000000" }} />
+                        <Box position='relative' display='flex' flexGrow={1} flexDirection='column' className='split-right'>
                             <RunResultsToolbar className='editor-panel-header' />
-                            <ResultsViewer sx={{ flexGrow: 1, marginBottom: '1.5em', padding: '0 1.0em' }} />
+                            <ResultsViewer className='results-panel' />
                         </Box>
                     </Box>
-
                 </Panel>
             }
         </PanelGroup>
-        : <Box className='editor'>
-            {requestPanel}
+        : <Box className={`editor ${group ? 'group' : 'request'}`}>
+            <RequestPanel />
         </Box>
 })

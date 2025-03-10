@@ -67,23 +67,28 @@ export const LogViewer = observer((props: {
 
     return <Stack display='flex' direction={'column'} className='editor' position='relative' bottom={0} flexGrow={1}>
         <Box className='editor-panel-header' flexGrow={0}>
-            <EditorTitle icon={<SvgIcon><LogIcon /></SvgIcon>} name='Communication Logs' />
-            <IconButton
-                aria-label="copy text to clipboard"
-                title="Copy Text to Clipboard"
-                size='medium'
-                color='primary'
-                sx={{ marginLeft: '1rem' }}
-                onClick={_ => clipboard.writeTextToClipboard(eventsToText())}>
-                <ContentCopyIcon />
-            </IconButton>
-            <IconButton color='primary' size='medium' aria-label='Clear' title='Clear Entries' onClick={() => log.clear()}><ClearAllIcon fontSize='inherit' /></IconButton>
-            <IconButton color='primary' size='medium' aria-label='Close' title='Close' onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+            <EditorTitle icon={<SvgIcon><LogIcon /></SvgIcon>} name='Communication Logs'>
+                <Box>
+                    <IconButton
+                        aria-label="copy text to clipboard"
+                        title="Copy Text to Clipboard"
+                        size='medium'
+                        color='primary'
+                        sx={{ marginLeft: '1rem' }}
+                        onClick={_ => clipboard.writeTextToClipboard(eventsToText())}>
+                        <ContentCopyIcon />
+                    </IconButton>
+                    <IconButton color='primary' size='medium' aria-label='Clear' title='Clear Entries' onClick={() => log.clear()}><ClearAllIcon fontSize='inherit' /></IconButton>
+                    <IconButton color='primary' size='medium' aria-label='Close' title='Close' onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+                </Box>
+            </EditorTitle>
         </Box>
-        <Stack direction={'column'} spacing={1} className='console' paddingBottom='2em' paddingRight='2em'>
-            {log.events.map(renderEvent)}
-            <div ref={bottomRef} />
-        </Stack>
+        <Box className='editor-panel'>
+            <Stack direction={'column'} spacing={1} className='console' paddingBottom='2em' paddingRight='2em'>
+                {log.events.map(renderEvent)}
+                <div ref={bottomRef} />
+            </Stack>
+        </Box>
     </Stack>
 })
 

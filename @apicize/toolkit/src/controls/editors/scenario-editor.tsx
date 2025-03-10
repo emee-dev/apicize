@@ -28,12 +28,12 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
     }
 
     return (
-        <Stack direction={'column'} className='editor' sx={props.sx}>
+        <Stack direction='column' className='editor scenario' sx={props.sx}>
             <Box className='editor-panel-header'>
                 <EditorTitle icon={<SvgIcon color='scenario'><ScenarioIcon /></SvgIcon>} name={scenario.name.length > 0 ? scenario.name : '(Unnamed)'} />
             </Box>
-            <Grid2 container direction={'column'} spacing={3} className='editor-single-panel'>
-                <Grid2 marginBottom='1em'>
+            <Box className='editor-panel'>
+                <Stack className='editor-content' direction='column' spacing={3}>
                     <TextField
                         id='scenario-name'
                         label='Name'
@@ -45,14 +45,12 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
                         helperText={scenario.nameInvalid ? 'Scenario name is required' : ''}
                         fullWidth
                     />
-                </Grid2>
-                <Grid2>
-                    <Stack direction='column' position='relative' width='100%'>
-                        <Grid2 container spacing={4}>
+                    <Stack direction='column' paddingTop='2em'>
+                        <Grid2 container spacing={3}>
                             {
                                 (scenario.variables ?? []).map(variable => [
-                                    <Grid2 container rowSpacing={2} spacing={1} size={12} columns={13}>
-                                        <Grid2 size={{ md: 5, lg: 3 }}>
+                                    <Grid2 container rowSpacing={2} spacing={1} size={12} columns={12}>
+                                        <Grid2 size={{ md: 3 }}>
                                             <TextField
                                                 id={`${variable.id}-name`}
                                                 label='Variable Name'
@@ -65,8 +63,8 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
                                                 fullWidth
                                             />
                                         </Grid2>
-                                        <Grid2 size={{ md: 2, lg: 2 }}>
-                                            <FormControl>
+                                        <Grid2 size={{ md: 2 }}>
+                                            <FormControl sx={{ width: '100%' }}>
                                                 <InputLabel id={`${variable.id}-type-lbl`}>Type</InputLabel>
                                                 <Select
                                                     id={`${variable.id}-type`}
@@ -75,7 +73,6 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
                                                     arial-label='variable-type'
                                                     size='small'
                                                     value={variable.type}
-                                                    sx={{ minWidth: '8rem' }}
                                                     onChange={e => variable.updateSourceType(e.target.value as VariableSourceType)}
                                                 >
                                                     <MenuItem key={`${variable.id}-type-text`} value={VariableSourceType.Text}>Text Value</MenuItem>
@@ -85,12 +82,13 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
                                                 </Select>
                                             </FormControl>
                                         </Grid2>
-                                        <Grid2 size={{ md: 5, lg: 7 }}>
+                                        <Grid2 size={{ md: 6 }}>
                                             <TextField
                                                 id={`${variable.id}-value`}
                                                 label='Value'
                                                 className='code'
                                                 aria-label='variable-value'
+                                                sx={{ width: '100%' }}
                                                 rows={10}
                                                 multiline={variable.type == VariableSourceType.JSON}
                                                 size="small"
@@ -101,7 +99,7 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
                                                 fullWidth
                                             />
                                         </Grid2>
-                                        <Grid2 className='namevalue-col-btn' size={{ md: 1, lg: 1 }}>
+                                        <Grid2 className='namevalue-col-btn' size={{ md: 1 }}>
                                             <IconButton aria-label="delete" onClick={() => onDeleteVariable(variable.id)}>
                                                 <DeleteIcon color='primary' />
                                             </IconButton>
@@ -114,9 +112,8 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
                             </Box>
                         </Grid2>
                     </Stack>
-
-                </Grid2>
-            </Grid2>
+                </Stack>
+            </Box>
         </Stack >
     )
 })

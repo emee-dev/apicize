@@ -30,7 +30,7 @@ export const AuthorizationOAuth2ClientEditor = observer(() => {
         }
     }
 
-    return <Grid2 container direction={'column'} spacing={3} maxWidth='60em' className='authorization-editor-subpanel'>
+    return <Grid2 container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
         <Grid2>
             <TextField
                 id='auth-oauth2-access-token-url'

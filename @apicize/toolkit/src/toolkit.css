@@ -1,5 +1,9 @@
+* {
+  box-sizing: border-box;
+}
+
 .dark .resize-handle {
-  flex: 0 0 24px;
+  flex: 0 0 2rem;
   display: flex;
   justify-content: stretch;
   align-items: stretch;
@@ -56,14 +60,44 @@ body .light {
   overflow: auto;
   width: 100%;
   height: 100vh;
-  padding: 1em 4em;
   background-color: #03021f;
   color: #fff;
 }
 
-.help h1:first {
-  background-color: #1d1d24;
+.help > * {
+  padding: 0 1em;
 }
+
+.help .MuiTypography-h1:first-of-type {
+  min-height: 4rem;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-items: center;
+  align-items: center;
+}
+
+.help-toolbar {
+  display: inline-block;
+  margin-right: 1rem;
+}
+
+.help-toolbar button {
+  font-size: 24px;
+}
+
+.MuiTypeography-h1 .help-icon {
+  margin-right: 0.25rem;
+}
+
+.MuiTypeography-h2 .help-icon {
+  margin-left: 0.25rem;
+}
+
+.help-icon {
+  vertical-align: middle;
+}
+
 
 .help .MuiTypography-body1,
 .help pre,
@@ -93,7 +127,8 @@ body .light {
 
 .help img {
   position: relative;
-  max-width: 98%;
+  max-width: 80%;
+  margin: 2em 0;
 }
 
 .help table {
@@ -109,26 +144,6 @@ body .light {
   padding: 0.5em;
 }
 
-.help-toolbar {
-  display: inline-block;
-  margin-right: 1rem;
-}
-
-.help-toolbar button {
-  font-size: 24px;
-}
-
-.MuiTypeography-h1 .help-icon {
-  margin-right: 0.25rem;
-}
-
-.MuiTypeography-h2 .help-icon {
-  margin-left: 0.25rem;
-}
-
-.help-icon {
-  vertical-align: middle;
-}
 
 textarea,
 pre,
@@ -154,6 +169,17 @@ pre.log {
   word-break: break-word;
   font-size: 0.9em;
   /* line-height: 1.1; */
+}
+
+.navigation-narrow {
+  top: 0;
+  left: 0;
+  width: 4rem;
+  padding: 12px;
+  background-color: #202020;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .navigation-menu-item div:nth-child(2) {
@@ -213,17 +239,44 @@ pre.log {
   text-align: right;
 }
 
+.editor {
+  width: 100vw;
+  height: 100vh;
+  display: flex !important;
+  flex-direction: column;
+  padding: 0 0 0 12px;
+  margin: 0;
+}
+
+.editor.split {
+  max-width: none;
+  width: 100vw;
+  height: 100vh;
+  display: flex !important;
+  flex-direction: column;
+}
+
+.editor-panel-header {
+  display: flex;
+  justify-content: space-between;
+  max-width: 70em;
+  flex-direction: row;
+  align-items: center;
+  min-height: 4rem;
+  margin: 0;
+  padding: 0 1em;
+}
+
 .editor-title {
-  margin-top: 0.1em;
-  padding: 0 12px;
   display: flex;
   align-content: center;
 }
 
-.editor-title .MuiSvgIcon-root {
+.editor-title .icon {
   margin: auto 1em auto 0;
   position: relative;
-  height: 100%;
+  display: inline-flex;
+  align-items: center;
 }
 
 .editor-title .text {
@@ -231,42 +284,86 @@ pre.log {
   position: relative;
 }
 
-.editor {
-  padding: 0 12px;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.editor-single-panel {
-  max-width: 60em;
-  display: flex;
-  flex-grow: 1;
-  flex-direction: column;
-}
-
 .editor-panel {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
-  margin: 0 0 0.5em 0;
+  overflow: auto;
+  margin: 0;
+  max-width: 70em;
+  padding: 3em 1em 1em 1em;
 }
 
-.editor-panel-no-margin {
+.editor-content {
+  display: flex;
+  max-width: 70em;
+}
+
+.editor-list {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
+  overflow: auto;
+  margin: 0;
+  padding: 1em 1em 1em 1em;
+}
+
+.panels {
+  padding: 00;
+  margin-bottom: 1.5em;
+}
+
+.split-left {
+  margin-right: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.split-right {
+  margin-left: 12px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.split-left .editor-panel,
+.split-left .editor-content {
+  padding-right: 0;
+}
+
+.split-left .panels,
+.split-right .panels {
+  padding: 0;
   margin: 0;
 }
 
-.editor-panel-header {
-  display: flex;
-  align-items: center;
-  padding: 1em 0;
-  margin-bottom: 1em;
+.split-left .editor-panel-header {
+  padding: 1em 0 1em 1em;
+  margin: 0;
 }
+.split-right .editor-panel-header {
+  padding: 1em 1em 1em 0;
+  margin: 0;
+}
+
+.split-right .editor-panel {
+  padding-left: 0;
+}
+
+#results-viewer {
+  display: flex;
+  max-width: none
+}
+
+.results-panel {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  overflow: auto;
+  margin: 0;
+  padding: 3em 1em 1em 1em;
+}
+
 
 .results-info .MuiTreeItem-content {
   min-height: 2em;
