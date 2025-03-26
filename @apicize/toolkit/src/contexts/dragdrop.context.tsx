@@ -2,7 +2,7 @@ import { DndContext, DragCancelEvent, DragEndEvent, DragMoveEvent, MouseSensor, 
 import { DragPosition, DraggableData, DroppableData } from "../models/drag-drop";
 import { createContext, ReactNode, useContext, useState } from "react";
 import { action, observable, toJS } from "mobx";
-import { useWorkspace } from "./workspace.context";
+import { useWorkspaceSession } from "./workspace-session.context";
 
 /**
  * Global store for drag/drop state
@@ -20,7 +20,8 @@ export class DragDropStore {
 export const DragDropProvider = ({ children }: { children?: ReactNode }) => {
     const store = new DragDropStore()
 
-    const workspace = useWorkspace()
+    // const session = useNavigation()
+
     const sensors = useSensors(
         useSensor(MouseSensor, {
             activationConstraint: {
@@ -101,7 +102,7 @@ export const DragDropProvider = ({ children }: { children?: ReactNode }) => {
 
         if (overData.isHeader && overData.persistence) {
             onSection = true
-            workspace.updateExpanded(over.id.toString(), true)
+            // session.updateExpanded(over.id.toString(), true)
         }
 
         if (overData.acceptsTypes.includes(activeData.type)) {
@@ -123,7 +124,7 @@ export const DragDropContext = createContext<DragDropStore | null>(null)
 export function useDragDrop() {
     const context = useContext(DragDropContext);
     if (!context) {
-        throw new Error('useDragDropTree must be used within a DragDropTreeContext.Provider');
+        throw new Error('useDragDrop must be used within a DragDropContext.Provider');
     }
     return context;
 }

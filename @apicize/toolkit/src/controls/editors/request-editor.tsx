@@ -20,50 +20,50 @@ import { EditorTitle } from '../editor-title';
 import { RequestParametersEditor } from './request/request-parameters-editor';
 import { observer } from 'mobx-react-lite';
 import { EditableEntityType } from '../../models/workspace/editable-entity-type';
-import { EditableRequest, EditableRequestGroup } from '../../models/workspace/editable-request';
+import { EditableRequest } from '../../models/workspace/editable-request';
+import { EditableRequestGroup } from '../../models/workspace/editable-request-group';
 import { RunToolbar } from '../run-toolbar';
 import { useWorkspace } from '../../contexts/workspace.context';
 import { RequestWarningsEditor } from './request/request-warnings.editor';
 import { RunResultsToolbar } from '../run-results-toolbar';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { useApicizeSettings } from '../../contexts/apicize-settings.context';
 import { useFileOperations } from '../../contexts/file-operations.context';
 import RequestIcon from '../../icons/request-icon';
+import { useWorkspaceSession } from '../../contexts/workspace-session.context'
+import { useApicize } from '../../contexts/apicize.context'
 
 type RequestPanel = 'Info' | 'Headers' | 'Query String' | 'Body' | 'Test' | 'Parameters' | 'Warnings'
 
 export const RequestEditor = observer((props: {
-    sx?: SxProps
+    sx?: SxProps,
+    request: EditableRequest | EditableRequestGroup
 }) => {
     const [panel, setPanel] = React.useState<RequestPanel>('Info')
 
+    const apicize = useApicize()
     const workspace = useWorkspace()
-    const settings = useApicizeSettings()
+    const session = useWorkspaceSession()
     const fileOps = useFileOperations()
 
-    if (!workspace.active) {
-        return null
-    }
-
-    const request = (workspace.active.entityType === EditableEntityType.Request)
-        ? workspace.active as EditableRequest
+    const request = (props.request.entityType === EditableEntityType.Request)
+        ? props.request
         : null
 
-    const group = (workspace.active.entityType === EditableEntityType.Group)
-        ? workspace.active as EditableRequestGroup
+    const group = (props.request.entityType === EditableEntityType.Group)
+        ? props.request
         : null
 
     if (!(request || group)) {
         return null
     }
 
-    workspace.nextHelpTopic = request ? 'workspace/groups' : 'workspace/requests'
+    session.nextHelpTopic = request ? 'workspace/groups' : 'workspace/requests'
 
     const handlePanelChanged = (_: React.SyntheticEvent, newValue: RequestPanel) => {
         if (newValue) setPanel(newValue)
     }
 
-    const requestExecution = workspace.executions.get(workspace.active.id)
+    const requestExecution = workspace.executions.get(props.request.id)
     const isExecuted = (requestExecution?.results?.length ?? 0) > 0
     const isRunning = requestExecution?.running
 
@@ -94,23 +94,24 @@ export const RequestEditor = observer((props: {
     }
     const sizeStorage = {
         getItem: (_: string) => {
-            return settings.editorPanels
+            return apicize.editorPanels
         },
         setItem: (_: string, value: string) => {
             lastResize = Date.now()
-            settings.editorPanels = value
+            apicize.editorPanels = value
             saveIfSettled()
         }
     }
 
     const RequestPanel = () => {
+        const panelsClass = (panel === 'Body' || panel === 'Test') ? 'panels full-width' : 'panels'
         return group ?
             <>
                 <Stack direction='row' className='editor-panel-header'>
                     <EditorTitle icon={<SvgIcon color='folder'><FolderIcon /></SvgIcon>} name={group.name.length ?? 0 > 0 ? `${group.name} - ${panel}` : '(Unnamed)'}>
                         <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                     </EditorTitle>
-                    <RunToolbar />
+                    <RunToolbar requestEntry={props.request} />
                 </Stack>
                 <Box className='editor-panel'>
                     <Stack direction='row' className='editor-content' flexGrow={1}>
@@ -132,9 +133,9 @@ export const RequestEditor = observer((props: {
                         </ToggleButtonGroup>
                         <Box className='panels' flexGrow={1}>
                             <Box>
-                                {usePanel === 'Info' ? <RequestGroupEditor />
-                                    : usePanel === 'Parameters' ? <RequestParametersEditor />
-                                        : usePanel === 'Warnings' ? <RequestWarningsEditor />
+                                {usePanel === 'Info' ? <RequestGroupEditor group={group} />
+                                    : usePanel === 'Parameters' ? <RequestParametersEditor requestEntry={group} />
+                                        : usePanel === 'Warnings' ? <RequestWarningsEditor requestEntry={group} />
                                             : null}
                             </Box>
                         </Box>
@@ -147,7 +148,7 @@ export const RequestEditor = observer((props: {
                         <EditorTitle icon={<SvgIcon color='request'><RequestIcon /></SvgIcon>} name={(request.name.length > 0) ? `${request.name} - ${panel}` : `(Unnamed) - ${panel}`}>
                             <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                         </EditorTitle>
-                        <RunToolbar />
+                        <RunToolbar requestEntry={props.request} />
                     </Stack>
                     <Box className='editor-panel'>
                         <Stack direction='row' flexGrow={1} className='editor-content'>
@@ -172,14 +173,15 @@ export const RequestEditor = observer((props: {
                                 }
                             </ToggleButtonGroup>
 
-                            <Box flexGrow={1} className='panels'>
-                                {usePanel === 'Info' ? <RequestInfoEditor />
-                                    : usePanel === 'Headers' ? <RequestHeadersEditor />
-                                        : usePanel === 'Query String' ? <RequestQueryStringEditor />
-                                            : usePanel === 'Body' ? <RequestBodyEditor />
-                                                : usePanel === 'Test' ? <RequestTestEditor />
-                                                    : usePanel === 'Parameters' ? <RequestParametersEditor />
-                                                        : usePanel === 'Warnings' ? <RequestWarningsEditor />
+
+                            <Box flexGrow={1} className={panelsClass}>
+                                {usePanel === 'Info' ? <RequestInfoEditor request={request} />
+                                    : usePanel === 'Headers' ? <RequestHeadersEditor request={request} />
+                                        : usePanel === 'Query String' ? <RequestQueryStringEditor request={request} />
+                                            : usePanel === 'Body' ? <RequestBodyEditor request={request} />
+                                                : usePanel === 'Test' ? <RequestTestEditor request={request} />
+                                                    : usePanel === 'Parameters' ? <RequestParametersEditor requestEntry={request} />
+                                                        : usePanel === 'Warnings' ? <RequestWarningsEditor requestEntry={request} />
                                                             : null}
                             </Box>
                         </Stack>
@@ -206,8 +208,8 @@ export const RequestEditor = observer((props: {
                             className="MuiBackdrop-root MuiModal-backdrop"
                             sx={{ zIndex: 99999, opacity: 0.5, transition: "opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms", backgroundColor: "#000000" }} />
                         <Box position='relative' display='flex' flexGrow={1} flexDirection='column' className='split-right'>
-                            <RunResultsToolbar className='editor-panel-header' />
-                            <ResultsViewer className='results-panel' />
+                            <RunResultsToolbar className='editor-panel-header' requetEntry={props.request} />
+                            <ResultsViewer className='results-panel' requestOrGroupId={props.request.id} />
                         </Box>
                     </Box>
                 </Panel>

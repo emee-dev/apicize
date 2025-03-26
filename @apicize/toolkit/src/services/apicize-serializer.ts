@@ -1,12 +1,13 @@
 import { Workspace } from "@apicize/lib-typescript";
 import { EditableAuthorization } from "../models/workspace/editable-authorization";
 import { EditableScenario } from "../models/workspace/editable-scenario";
-import { EditableRequest, EditableRequestGroup } from "../models/workspace/editable-request";
+import { EditableRequest } from "../models/workspace/editable-request";
+import { EditableRequestGroup } from "../models/workspace/editable-request-group";
 import { EditableNameValuePair } from "../models/workspace/editable-name-value-pair";
 import { EditableProxy } from "../models/workspace/editable-proxy";
 import { EditableCertificate } from "../models/workspace/editable-certificate";
 import { EditableDefaults } from "../models/workspace/editable-defaults";
-import { EditableExternalData } from "../models/workspace/editable-external-data";
+import { EditableExternalDataEntry } from "../models/workspace/editable-external-data-entry";
 import { IndexedEntityManager } from "../models/indexed-entity-manager";
 
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -176,7 +177,7 @@ export function editableWorkspaceToStoredWorkspace(
     authorizations: IndexedEntityManager<EditableAuthorization>,
     certificates: IndexedEntityManager<EditableCertificate>,
     proxies: IndexedEntityManager<EditableProxy>,
-    data: IndexedEntityManager<EditableExternalData>,
+    data: IndexedEntityManager<EditableExternalDataEntry>,
     defaults: EditableDefaults,
 ): Workspace {
     const result = {

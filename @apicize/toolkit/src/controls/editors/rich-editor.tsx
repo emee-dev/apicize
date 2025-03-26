@@ -17,13 +17,12 @@ import { Mode as TextMode } from 'ace-code/src/mode/text'
 import { LanguageProvider } from "ace-linters";
 import 'ace-code/src/ext/language_tools'
 
-import { useApicizeSettings } from '../../contexts/apicize-settings.context'
-import { forwardRef, Ref, useEffect, useImperativeHandle, useRef } from 'react'
+import { createRef, forwardRef, Ref, RefObject, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import theme from 'ace-code/src/theme/gruvbox'
-import { EditableItem } from '../../models/editable'
-// import { beautify } from 'ace-code/src/ext/beautify'
 import { EditorMode } from '../../models/editor-mode'
 import { css_beautify, html_beautify, js_beautify } from 'js-beautify'
+import { useApicize } from '../../contexts/apicize.context'
+import { RequestEditSessionType, useWorkspaceSession } from '../../contexts/workspace-session.context'
 
 const workerUrl = new URL('./webworker.js', import.meta.url)
 const worker = new Worker(workerUrl)
@@ -60,7 +59,8 @@ const updateEditorMode = (editor: Editor, mode: EditorMode | undefined) => {
 }
 
 export interface RichEditorCommands {
-    beautify: () => void
+    beautify: () => void,
+    setText: (text: string) => void,
 }
 
 /**
@@ -70,16 +70,28 @@ export interface RichEditorCommands {
  */
 export const RichEditor = forwardRef((props: {
     sx?: SxProps,
-    entity: EditableItem,
+    // entity: EditableItem,
+    id: string,
+    type: RequestEditSessionType,
+    value: string,
     mode?: EditorMode,
-    onGetValue: () => string,
+    // onGetValue: () => string,
     onUpdateValue: (value: string) => void
 }, ref: Ref<RichEditorCommands>) => {
-    const apicizeSettings = useApicizeSettings()
+    const apicize = useApicize()
+    const session = useWorkspaceSession()
 
     const editor = useRef<Editor | null>(null)
+    const [initialized, setInitialized] = useState(false)
 
     useImperativeHandle(ref, () => ({
+        setText(text: string) {
+            if (editor.current) {
+                editor.current.setValue(text)
+                editor.current.clearSelection()
+                editor.current.renderer.scrollTo(0, 0)
+            }
+        },
         beautify() {
             if (editor.current) {
                 const session = editor.current.session
@@ -101,59 +113,71 @@ export const RichEditor = forwardRef((props: {
 
     // On initial load, set up the editor
     useEffect(() => {
-        editor.current = ace.edit('editor')
-        editor.current.setTheme(theme)
-        editor.current.setOption('enableBasicAutocompletion', true);
-        editor.current.setOption('enableLiveAutocompletion', true);
+        if (!initialized) {
+            editor.current = ace.edit('editor')
+            editor.current.setTheme(theme)
+            editor.current.setOption('enableBasicAutocompletion', true);
+            editor.current.setOption('enableLiveAutocompletion', true);
 
-        editor.current.setOptions({
-            fontSize: `${apicizeSettings.fontSize}pt`,
-            showGutter: true,
-            showPrintMargin: false,
-            tabSize: 4,
-            foldStyle: 'markbegin',
-            displayIndentGuides: true,
-            enableAutoIndent: true,
-            fixedWidthGutter: true,
-            showLineNumbers: true,
-            useWorker: false,
-        })
+            editor.current.setOptions({
+                fontSize: `${apicize.fontSize}pt`,
+                showGutter: true,
+                showPrintMargin: false,
+                tabSize: 4,
+                foldStyle: 'markbegin',
+                displayIndentGuides: true,
+                enableAutoIndent: true,
+                fixedWidthGutter: true,
+                showLineNumbers: true,
+                useWorker: false,
+            })
 
-        languageProvider.setGlobalOptions('javascript', {
-            globals: {
-                magic: "readable"
-            },
-            errorMessagesToIgnore: [
-                /is not defined/
-            ]
-        })
+            languageProvider.setGlobalOptions('javascript', {
+                globals: {
+                    magic: "readable"
+                },
+                errorMessagesToIgnore: [
+                    /is not defined/
+                ]
+            })
 
-        // languageProvider.setGlobalOptions('typescript', {
-        //     extraLibs: {
-        //         'foo/index.ts': {
-        //             content: `
-        //             var magic = "12345";
-        //             declare global {
-        //                magic: string
-        //             }
-        //             `,
-        //             version: 1
-        //         }
-        //     }
-        // })
+            // languageProvider.setGlobalOptions('typescript', {
+            //     extraLibs: {
+            //         'foo/index.ts': {
+            //             content: `
+            //             var magic = "12345";
+            //             declare global {
+            //                magic: string
+            //             }
+            //             `,
+            //             version: 1
+            //         }
+            //     }
+            // })
 
-        languageProvider.registerEditor(editor.current)
+            languageProvider.registerEditor(editor.current)
 
-        updateEditorMode(editor.current, props.mode)
-
-        editor.current.session.on('change', () => {
-            if (editor.current) {
-                props.onUpdateValue(editor.current.session.getValue())
+            const editSession = session.getRequestEditSession(props.id, props.type)
+            if (editSession) {
+                editor.current.setSession(editSession)
+            } else {
+                updateEditorMode(editor.current, props.mode)
+                editor.current.session.setValue(props.value)
+                session.setRequestEditSession(props.id, props.type, editor.current.getSession())
             }
-        })
 
-        editor.current.session.setValue(props.onGetValue())
-    }, [props.entity])
+            editor.current.on('change', (e) => {
+                if (props.onUpdateValue) {
+                    props.onUpdateValue(editor.current?.getValue() ?? '')
+                }
+            })
+
+            editor.current.focus()
+
+            setInitialized(true)
+        }
+
+    }, [props.value])
 
     useEffect(() => {
         if (editor.current) {

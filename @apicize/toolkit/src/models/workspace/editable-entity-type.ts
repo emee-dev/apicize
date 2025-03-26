@@ -11,7 +11,6 @@ export enum EditableEntityType {
     Proxy = 'p',
     ExternalData = 'ext',
     Warnings = 'w',
-    Defaults = 'd',
     Workbook = 'wkbk',
     Header = 'hdr',
 }

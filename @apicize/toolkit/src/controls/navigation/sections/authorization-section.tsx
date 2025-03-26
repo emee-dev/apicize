@@ -5,11 +5,12 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { useState } from "react"
-import { ParameterSection } from "../parameter-section"
+import { ParameterSection } from "./parameter-section"
 import { MenuPosition } from "../../../models/menu-position"
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite";
+import { useWorkspaceSession } from "../../../contexts/workspace-session.context";
 
 export const AuthorizationSection = observer((props: {
     includeHeader: boolean,
@@ -17,6 +18,7 @@ export const AuthorizationSection = observer((props: {
     const workspace = useWorkspace()
     const feedback = useFeedback()
     const theme = useTheme()
+    const session = useWorkspaceSession()
 
     const [authorizationMenu, setAuthorizationMenu] = useState<MenuPosition | undefined>(undefined)
 
@@ -36,19 +38,21 @@ export const AuthorizationSection = observer((props: {
     const handleSelectHeader = (headerId: string, helpTopic?: string) => {
         // closeAllMenus()
         if (helpTopic) {
-            workspace.updateExpanded(headerId, true)
-            workspace.showHelp(helpTopic)
+            session.updateExpanded(headerId, true)
+            session.showHelp(helpTopic)
         }
     }
 
     const handleMoveAuthorization = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
         selectAuthorization(id)
-        workspace.moveAuthorization(id, destinationID, onLowerHalf, isSection)
+        workspace.moveAuthorization(session.id, id, destinationID, onLowerHalf, isSection)
     }
 
     const handleDupeAuthorization = () => {
         closeAuthorizationMenu()
-        if (workspace.active?.entityType === EditableEntityType.Authorization && workspace.active?.id) workspace.copyAuthorization(workspace.active?.id)
+        const id = authorizationMenu?.id
+        if (!id) return
+        workspace.copyAuthorization(id)
     }
 
     const showAuthorizationMenu = (event: React.MouseEvent, persistence: Persistence, id: string) => {
@@ -64,8 +68,8 @@ export const AuthorizationSection = observer((props: {
 
     const handleDeleteAuthorization = () => {
         closeAuthorizationMenu()
-        if (!workspace.active?.id || workspace.active?.entityType !== EditableEntityType.Authorization) return
-        const id = workspace.active?.id
+        const id = authorizationMenu?.id
+        if (!id) return
         feedback.confirm({
             title: 'Delete Authorization',
             message: `Are you are you sure you want to delete ${GetTitle(workspace.authorizations.get(id))}?`,
@@ -91,7 +95,7 @@ export const AuthorizationSection = observer((props: {
                     left: authorizationMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddAuthorization(authorizationMenu.persistence, workspace.active?.id)}>
+                <MenuItem onClick={(_) => handleAddAuthorization(authorizationMenu.persistence, authorizationMenu?.id)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='authorization'><AuthorizationIcon /></SvgIcon>
                     </ListItemIcon>
@@ -111,11 +115,6 @@ export const AuthorizationSection = observer((props: {
                 </MenuItem>
             </Menu>
             : <></>
-    }
-
-    if (!props.includeHeader && !workspace.navTreeInitialized.has(EditableEntityType.Authorization)) {
-        workspace.updateExpanded(['hdr-a-pub', 'hdr-a-priv', 'hdr-a-vault'], true)
-        workspace.setInitialized(EditableEntityType.Authorization)
     }
 
     return <ParameterSection

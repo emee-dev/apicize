@@ -23,10 +23,11 @@ export { useClipboard, ClipboardContext, ClipboardStore } from './contexts/clipb
 export { useFileOperations, FileOperationsContext, FileOperationsStore, SshFileType } from './contexts/file-operations.context'
 export { usePkce, PkceContext } from './contexts/pkce.context'
 export { useWorkspace, WorkspaceContext, WorkspaceStore } from './contexts/workspace.context'
-export { useApicizeSettings, ApicizeSettingsContext } from './contexts/apicize-settings.context'
+export { useApicize, ApicizeContext } from './contexts/apicize.context'
 export { useLog, LogContext, LogStore } from './contexts/log.context'
 export { ReqwestEvent, ReqwestEventConnect, ReqwestEventRead, ReqwestEventWrite } from './models/trace';
 export { DragDropContext, DragDropProvider, useDragDrop } from './contexts/dragdrop.context'
+export { FileDragDropContext, FileDragDropStore, useFileDragDrop } from './contexts/file-dragdrop.context'
 export { ApicizeSettings } from './models/settings'
 
 import "./toolkit.css"

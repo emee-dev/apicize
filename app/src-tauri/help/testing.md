@@ -80,5 +80,5 @@ malicious Apicize test suite.
 
 * [**Running Tests**](help:running-tests)
 * [**Requests**](help:requests)
-* [**Workbooks**](help:workbooks)
+* [**Workspace**](help:home)
 

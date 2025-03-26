@@ -1,14 +1,14 @@
 # :icon[apicize] Workspace :toolbar
 
-## Overview
+The Apicize Workspace consists of:
 
-The Apicize Workspace consists of :
+## Workbook Elements
 
 ### :icon[request] [Requests](help:workspace/requests) and [Groups](workspace/groups)
 
 Information about HTTP calls to send and how to test them
 
-### :icon[scenario] [Scenarios](help:workspace/scenarios)]
+### :icon[scenario] [Scenarios](help:workspace/scenarios)
 
 Key-value pairs that can be substituted for Request URLs, headers, body content, etc. using `{{handlebars}}` placeholders for Keys
 
@@ -28,20 +28,18 @@ SOCKS5 or HTTP proxies used to connect to HTTP resources
 
 Default Parameter values to use when testing Requests (which can be overriden on individual Requests or Groups)
 
-## Storage
+## File Operations
 
-Organize your Parameters based upon whether you want to make them to other developers, and if want to reuse Parameters with multiple workbooks.
+### :icon[workbook-new] Open new Workbook
 
-A Workspace is constructed from the following sources:
+### :icon[workbook-open] Open existing Workbook
 
-### :icon[public] Workbook (Public)
+### :icon[workbook-save] Save Workspace changes to opened Workbook
 
-A list of Requests for testing and Parameters that can be shared via a Source Code Repository, email, etc.
+### :icon[workbook-save-as] Save Workspace changes to different Workbook
 
-### :icon[private] Workbook Vault (Private)
+## Other Operations
 
-Parameters that are specific to a Workbook but not meant to be shared (optional)
+## :icon[settings] [Settings](help:settings)
 
-### :icon[vault] Global Vault (Private, Global)
-
-A local store of Parameters that are available to all opened Workspaces
+## :icon[logs] Communication Logs

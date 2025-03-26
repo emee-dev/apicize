@@ -69,4 +69,4 @@ content encoded as Base64 will be displayed
 
 * [**Testing**](help:testing)
 * [**Requests**](help:requests)
-* [**Workbooks**](help:workbooks)
+* [**Workspace**](help:home)

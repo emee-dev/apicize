@@ -1,6 +1,3 @@
-import * as app from '@tauri-apps/api/app'
-import * as core from '@tauri-apps/api/core'
-import * as os from '@tauri-apps/plugin-os'
 import { Window } from "@tauri-apps/api/window"
 import { useFeedback, useFileOperations, WorkspaceContext, WorkspaceStore } from "@apicize/toolkit";
 import { ReactNode, useEffect, useRef } from "react";
@@ -27,24 +24,6 @@ export function WorkspaceProvider({ store, children }: { store: WorkspaceStore, 
 
     const _forceClose = useRef(false);
 
-    (async () => {
-        const [name, version, isReleaseMode] = await Promise.all([
-            app.getName(),
-            app.getVersion(),
-            core.invoke<boolean>('is_release_mode')
-        ])
-
-        if (isReleaseMode) {
-            document.addEventListener('contextmenu', event => event.preventDefault())
-        }
-
-        store.changeApp(name, version)
-        try {
-            store.setOs(os.type())
-        } catch (e) {
-            console.error("Uanble to detect OS type", e)
-        }
-    })()
 
     useEffect(() => {
         // Set up close event hook, warn user if "dirty"

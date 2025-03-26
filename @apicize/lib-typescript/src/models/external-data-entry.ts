@@ -7,7 +7,7 @@ export enum ExternalDataSourceType {
     FileCSV = 'FILE-CSV',
 }
 
-export interface ExternalData extends Identifiable, Named {
+export interface ExternalDataEntry extends Identifiable, Named {
     id: string
     name: string
     type: ExternalDataSourceType

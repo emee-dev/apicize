@@ -48,10 +48,11 @@ export function NameValueEditor(props: {
         }
     }
 
+    let ctr = 0
     return <Stack direction='column' position='relative' spacing={4} width='100%'>
         {
             (props.values ?? []).map(value => [
-                <Grid2 container rowSpacing={2} spacing={1} size={12} columns={12}>
+                <Grid2 container key={`nv-${ctr++}`} rowSpacing={2} spacing={1} size={12} columns={12}>
                     <Grid2 size={4}>
                         <TextField
                             id={`${value.id}-name`}

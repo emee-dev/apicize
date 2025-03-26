@@ -11,19 +11,25 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useState } from 'react';
 import { ExternalDataSourceType } from '@apicize/lib-typescript';
+import { EditableDefaults } from '../../models/workspace/editable-defaults';
+import { IndexedEntityManager } from '../../models/indexed-entity-manager';
+import { EditableExternalDataEntry } from '../../models/workspace/editable-external-data-entry';
+import { useWorkspaceSession } from '../../contexts/workspace-session.context';
 
 type DefaulltsPanels = 'Parameters' | 'ExternalData'
 
 export const DefaultsEditor = observer((props: {
-    sx: SxProps
+    sx: SxProps,
+    defaults: EditableDefaults,
+    externalData: IndexedEntityManager<EditableExternalDataEntry>
 }) => {
     const workspace = useWorkspace()
-    const defaults = workspace.defaults
+    const session = useWorkspaceSession()
 
     let focusSeed: boolean
     let defaultPanel: DefaulltsPanels
-    if (workspace.mode === WorkspaceMode.Seed) {
-        if (workspace.defaults.data.values.length > 0) {
+    if (session.mode === WorkspaceMode.Seed) {
+        if (props.externalData.values.length > 0) {
             focusSeed = true
             defaultPanel = 'Parameters'
         } else {
@@ -37,7 +43,7 @@ export const DefaultsEditor = observer((props: {
 
     const [panel, setPanel] = useState<DefaulltsPanels>(defaultPanel)
 
-    workspace.nextHelpTopic = 'workspace/defaults'
+    session.nextHelpTopic = 'workspace/defaults'
 
     const handlePanelChanged = (_: React.SyntheticEvent, newValue: DefaulltsPanels) => {
         if (newValue) setPanel(newValue)
@@ -60,8 +66,8 @@ export const DefaultsEditor = observer((props: {
                 aria-labelledby='scenario-label-id'
                 id='cred-scenario'
                 label='Scenario'
-                value={defaults.selectedScenario.id}
-                onChange={(e) => workspace.setDefaultScenarioId(e.target.value)}
+                value={props.defaults.selectedScenario.id}
+                onChange={(e) => props.defaults.setScenarioId(e.target.value)}
                 size='small'
                 fullWidth
             >
@@ -75,8 +81,8 @@ export const DefaultsEditor = observer((props: {
                 aria-labelledby='auth-label-id'
                 id='cred-auth'
                 label='Authorization'
-                value={defaults.selectedAuthorization.id}
-                onChange={(e) => workspace.setDefaultAuthorizationId(e.target.value)}
+                value={props.defaults.selectedAuthorization.id}
+                onChange={(e) => props.defaults.setAuthorizationId(e.target.value)}
                 size='small'
                 fullWidth
             >
@@ -90,8 +96,8 @@ export const DefaultsEditor = observer((props: {
                 aria-labelledby='cert-label-id'
                 id='cred-cert'
                 label='Certificate'
-                value={defaults.selectedCertificate.id}
-                onChange={(e) => workspace.setDefaultCertificateId(e.target.value)}
+                value={props.defaults.selectedCertificate.id}
+                onChange={(e) => props.defaults.setCertificateId(e.target.value)}
                 size='small'
                 fullWidth
             >
@@ -105,8 +111,8 @@ export const DefaultsEditor = observer((props: {
                 aria-labelledby='proxy-label-id'
                 id='cred-proxy'
                 label='Proxy'
-                value={defaults.selectedProxy.id}
-                onChange={(e) => workspace.setDefaultProxyId(e.target.value)}
+                value={props.defaults.selectedProxy.id}
+                onChange={(e) => props.defaults.setProxyId(e.target.value)}
                 size='small'
                 fullWidth
             >
@@ -121,8 +127,8 @@ export const DefaultsEditor = observer((props: {
                 aria-labelledby='data-label-id'
                 id='cred-data'
                 label='Seed Data'
-                value={defaults.selectedData.id}
-                onChange={(e) => workspace.setDefaultDataId(e.target.value)}
+                value={props.defaults.selectedData.id}
+                onChange={(e) => props.defaults.setDataId(e.target.value)}
                 fullWidth
                 size='small'
             >
@@ -133,7 +139,7 @@ export const DefaultsEditor = observer((props: {
 
     const DataEditor = <Stack spacing={3}>
         {
-            workspace.defaults.data.values.map((data, idx) => (
+            props.externalData.values.map((data, idx) => (
                 <Grid2 key={`def-data-${idx}`} container rowSpacing={2} spacing={1} size={12} columns={12}>
                     <Grid2 size={4}>
                         <TextField
@@ -144,7 +150,7 @@ export const DefaultsEditor = observer((props: {
                             value={data.name}
                             error={data.nameInvalid}
                             helperText={data.nameInvalid ? 'Variable name is required' : ''}
-                            onChange={(e) => data.updateName(e.target.value)}
+                            onChange={(e) => data.setName(e.target.value)}
                             fullWidth
                         />
                     </Grid2>
@@ -159,7 +165,7 @@ export const DefaultsEditor = observer((props: {
                                 size='small'
                                 value={data.type}
                                 sx={{ minWidth: '8rem' }}
-                                onChange={e => data.updateSourceType(e.target.value as ExternalDataSourceType)}
+                                onChange={e => data.setSourceType(e.target.value as ExternalDataSourceType)}
                             >
                                 <MenuItem key={`${data.id}-type-file-json`} value={ExternalDataSourceType.FileJSON}>JSON File</MenuItem>
                                 <MenuItem key={`${data.id}-type-file-csv`} value={ExternalDataSourceType.FileCSV}>CSV File</MenuItem>
@@ -179,7 +185,7 @@ export const DefaultsEditor = observer((props: {
                             value={data.source}
                             error={data.sourceError !== null}
                             helperText={data.sourceError ?? ''}
-                            onChange={(e) => data.updateSource(e.target.value)}
+                            onChange={(e) => data.setSource(e.target.value)}
                             fullWidth
                         />
                     </Grid2>
@@ -202,7 +208,7 @@ export const DefaultsEditor = observer((props: {
     return <Box marginBottom='1.5em' sx={props.sx} className='editor'>
         <Stack direction='row' className='editor-panel-header'>
             <EditorTitle icon={<SvgIcon color='defaults'><DefaultsIcon /></SvgIcon>} name={`Workbook Defaults - ${panel}`}>
-                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => session.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
             </EditorTitle>
         </Stack>
 

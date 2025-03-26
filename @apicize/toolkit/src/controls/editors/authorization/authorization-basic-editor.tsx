@@ -1,24 +1,18 @@
 import { Grid2, TextField } from "@mui/material"
 import { observer } from "mobx-react-lite"
-import { useWorkspace } from "../../../contexts/workspace.context"
 import { EditableAuthorization } from "../../../models/workspace/editable-authorization"
-import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
 
-export const AuthorizationBasicEditor = observer(() => {
-    const workspace = useWorkspace()
-    if (workspace.active?.entityType !== EditableEntityType.Authorization) return null
-    const auth = workspace.active as EditableAuthorization
-
+export const AuthorizationBasicEditor = observer((props: { authorization: EditableAuthorization }) => {
     return <Grid2 container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
         <Grid2>
             <TextField
                 id='auth-username'
                 label="Username"
                 aria-label='authorization user name'
-                value={auth.username}
-                error={auth.usernameInvalid}
-                helperText={auth.usernameInvalid ? 'Username is required' : ''}
-                onChange={e => workspace.setAuthorizationUsername(e.target.value)}
+                value={props.authorization.username}
+                error={props.authorization.usernameInvalid}
+                helperText={props.authorization.usernameInvalid ? 'Username is required' : ''}
+                onChange={e => props.authorization.setUsername(e.target.value)}
                 size='small'
                 fullWidth
             />
@@ -28,8 +22,8 @@ export const AuthorizationBasicEditor = observer(() => {
                 id='auth-password'
                 label="Password"
                 aria-label='authorization password'
-                value={auth.password}
-                onChange={e => workspace.setAuthorizationPassword(e.target.value)}
+                value={props.authorization.password}
+                onChange={e => props.authorization.setPassword(e.target.value)}
                 size='small'
                 fullWidth
             />

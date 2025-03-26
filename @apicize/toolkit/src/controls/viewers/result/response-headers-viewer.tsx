@@ -1,15 +1,12 @@
 import { Box, Grid2, Stack, Typography } from "@mui/material"
-import { useWorkspace } from "../../../contexts/workspace.context"
+import { ExecutionResult } from "../../../models/workspace/execution"
 
-export function ResponseHeadersViewer(props: { requestOrGroupId: string, index: number }) {
-    const workspace = useWorkspace()
-
-    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
-    if (!result?.response) {
+export function ResponseHeadersViewer(props: { result: ExecutionResult }) {
+    if (!props.result.response) {
         return null
     }
 
-    const headers = Object.entries(result.response.headers ?? {})
+    const headers = Object.entries(props.result.response.headers ?? {})
     let hdrCtr = 0
 
     return (
@@ -34,4 +31,3 @@ export function ResponseHeadersViewer(props: { requestOrGroupId: string, index: 
         </Stack>
     )
 }
-

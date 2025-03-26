@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo } from "react";
-import { hasImage, hasText, readText, readImageBase64, writeImageBase64, writeText, onClipboardUpdate } from "tauri-plugin-clipboard-api"
+import { hasImage, hasText, readText, readImageBase64, writeImageBase64, writeText, onClipboardUpdate, writeImageBinary, readImageBinary } from "tauri-plugin-clipboard-api"
 import { ClipboardContext, ClipboardStore, ToastSeverity, useFeedback } from "@apicize/toolkit";
 
 /**
@@ -22,13 +22,9 @@ export function ClipboardProvider({
                     feedback.toast(`${e}`, ToastSeverity.Error)
                 }
             },
-            onWriteImage: async (base64: string) => {
+            onWriteImage: async (data: Uint8Array) => {
                 try {
-                    const m = base64.length % 4
-                    if (m) {
-                        base64 += '==='.substring(0, 4 - m)
-                    }
-                    await writeImageBase64(base64)
+                    await writeImageBinary([...data])
                     feedback.toast('Image copied to clipboard', ToastSeverity.Success)
                 } catch (e) {
                     feedback.toast(`${e}`, ToastSeverity.Error)
@@ -37,8 +33,8 @@ export function ClipboardProvider({
             onGetText: () => {
                 return readText()
             },
-            onGetImage: () => {
-                return readImageBase64()
+            onGetImage: async () => {
+                return (await readImageBinary("Uint8Array")) as Uint8Array
             },
         }),
         [feedback]

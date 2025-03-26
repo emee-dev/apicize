@@ -3,18 +3,20 @@ import { SvgIconPropsColorOverrides, SvgIcon, IconButton } from "@mui/material"
 import { Box } from "@mui/system"
 import { TreeItem } from "@mui/x-tree-view/TreeItem"
 import AddIcon from '@mui/icons-material/Add'
-import PrivateIcon from "../../icons/private-icon"
-import PublicIcon from "../../icons/public-icon"
-import VaultIcon from "../../icons/vault-icon"
-import { EditableItem } from "../../models/editable"
-import { IndexedEntityManager } from "../../models/indexed-entity-manager"
-import { EditableEntityType } from "../../models/workspace/editable-entity-type"
+import PrivateIcon from "../../../icons/private-icon"
+import PublicIcon from "../../../icons/public-icon"
+import VaultIcon from "../../../icons/vault-icon"
+import { EditableItem } from "../../../models/editable"
+import { IndexedEntityManager } from "../../../models/indexed-entity-manager"
+import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
 import { OverridableStringUnion } from "@mui/types";
-import { DragPosition, DroppableData } from "../../models/drag-drop"
-import { useWorkspace } from "../../contexts/workspace.context"
-import { NavTreeItem } from "./nav-tree-item"
+import { DragPosition, DroppableData } from "../../../models/drag-drop"
+import { useWorkspace } from "../../../contexts/workspace.context"
+import { NavTreeItem } from "../nav-tree-item"
 import { useDroppable } from "@dnd-kit/core"
 import { observer } from "mobx-react-lite"
+import { useWorkspaceSession } from "../../../contexts/workspace-session.context"
+import { useApicize } from "../../../contexts/apicize.context"
 
 export function dragPositionToColor(dragPosition: DragPosition) {
     switch (dragPosition) {
@@ -44,7 +46,9 @@ const ParameterSubsection = observer(<T extends EditableItem>(props: {
     onItemMenu: (event: React.MouseEvent, id: string) => void,
     onSelectHeader: (headerId: string, helpTopic?: string) => void
 }) => {
-    const workspace = useWorkspace()
+    const settings = useApicize()
+    const session = useWorkspaceSession()
+
     const dragDrop = {
         dragPosition: DragPosition.None
     }
@@ -71,26 +75,29 @@ const ParameterSubsection = observer(<T extends EditableItem>(props: {
         label={(
             <Box
                 className='nav-item'
+                typography='navigation'
                 onClick={(e) => {
                     // Prevent label from expanding/collapsing
                     e.preventDefault()
                     e.stopPropagation()
                     props.onSelectHeader(headerId, 'parameter-storage')
-                    workspace.updateExpanded(headerId, true)
+                    session.updateExpanded(headerId, true)
                 }}
             >
                 {props.icon}
-                <Box className='nav-node-text' sx={{ flexGrow: 1, minHeight: '1em' }}>
+                <Box className='nav-node-text' typography='navigation' sx={{ flexGrow: 1, minHeight: '1em' }}>
                     {props.label}
                 </Box>
-                <IconButton sx={{ flexGrow: 0, minHeight: '1em', padding: 0, margin: 0 }}
+                <IconButton sx={{ flexGrow: 0, minHeight: '1em', padding: 0, margin: 0, fontSize: settings.navigationFontSize }}
                     onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
                         props.onAdd()
-                        workspace.updateExpanded(headerId, true)
+                        session.updateExpanded(headerId, true)
                     }}>
-                    <AddIcon />
+                    <Box className='nav-icon-context'>
+                        <AddIcon />
+                    </Box>
                 </IconButton>
             </Box>
         )}
@@ -146,7 +153,7 @@ export const ParameterSection = observer(<T extends EditableItem>(props: {
                 type={props.type}
                 persistence={Persistence.Workbook}
                 parameters={props.parameters}
-                icon={<Box className='nav-icon-box'><SvgIcon className='nav-folder' color='public' fontSize='small'><PublicIcon /></SvgIcon></Box>}
+                icon={<Box className='nav-icon-box' typography='navigation'><SvgIcon className='nav-folder' color='public'><PublicIcon /></SvgIcon></Box>}
                 label="Public"
                 suffix="pub"
                 onSelect={props.onSelect}
@@ -158,7 +165,7 @@ export const ParameterSection = observer(<T extends EditableItem>(props: {
                 type={props.type}
                 persistence={Persistence.Private}
                 parameters={props.parameters}
-                icon={<Box className='nav-icon-box'><SvgIcon className='nav-folder' color='private' fontSize='small'><PrivateIcon /></SvgIcon></Box>}
+                icon={<Box className='nav-icon-box' typography='navigation'><SvgIcon className='nav-folder' color='private'><PrivateIcon /></SvgIcon></Box>}
                 label="Private"
                 suffix="priv"
                 onSelect={props.onSelect}
@@ -170,7 +177,7 @@ export const ParameterSection = observer(<T extends EditableItem>(props: {
                 type={props.type}
                 persistence={Persistence.Vault}
                 parameters={props.parameters}
-                icon={<Box className='nav-icon-box'><SvgIcon className='nav-folder' color='vault' fontSize='small'><VaultIcon /></SvgIcon></Box>}
+                icon={<Box className='nav-icon-box' typography='navigation'><SvgIcon className='nav-folder' color='vault'><VaultIcon /></SvgIcon></Box>}
                 label="Vault"
                 suffix="vault"
                 onSelect={props.onSelect}
@@ -199,6 +206,7 @@ export const ParameterSection = observer(<T extends EditableItem>(props: {
             label={(
                 <Box
                     className='nav-item'
+                    typography='navigation'
                     onClick={(e) => {
                         // Prevent label from expanding/collapsing
                         e.preventDefault()
@@ -206,8 +214,8 @@ export const ParameterSection = observer(<T extends EditableItem>(props: {
                         props.onSelectHeader(`hdr-${props.type}`, props.helpTopic)
                     }}
                 >
-                    <Box className='nav-icon-box'><SvgIcon color={props.iconColor} fontSize='small'>{props.icon}</SvgIcon></Box>
-                    <Box className='nav-node-text' sx={{ flexGrow: 1 }}>
+                    <Box className='nav-icon-box' typography='navigation'><SvgIcon color={props.iconColor} fontSize='inherit'>{props.icon}</SvgIcon></Box>
+                    <Box className='nav-node-text' typography='navigation' sx={{ flexGrow: 1 }}>
                         {props.title}
                     </Box>
                 </Box>

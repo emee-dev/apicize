@@ -1,9 +1,9 @@
 import { action, computed, observable, toJS } from "mobx";
-import { EditableItem, EditableState } from "../editable";
+import { Editable, EditableItem, EditableState } from "../editable";
 import { EditableEntityType } from "./editable-entity-type";
 import { GenerateIdentifier } from "../../services/random-identifier-generator";
 
-export class EditableWarnings implements EditableItem {
+export class EditableWarnings {
     @observable accessor dirty = false
 
     public readonly id = 'Warnings'

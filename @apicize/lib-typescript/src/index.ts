@@ -6,7 +6,7 @@ export * from './models/scenario'
 export * from './models/authorization'
 export * from './models/certificate'
 export * from './models/proxy'
-export * from './models/external-data'
+export * from './models/external-data-entry'
 export * from './models/persistence'
 export * from './models/name-value-pair';
 export * from './models/selected-parameters'

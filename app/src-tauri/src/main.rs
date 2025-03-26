@@ -10,10 +10,13 @@ use apicize_lib::{
     ApicizeResult, ApicizeRunner, TestRunnerContext, Workspace,
 };
 use pkce::{OAuth2PkceInfo, OAuth2PkceRequest, OAuth2PkceService};
+use serde::{Deserialize, Serialize};
 use settings::{ApicizeSettings, ColorScheme};
 use std::{
     collections::HashMap,
-    env, fs, io,
+    env,
+    fs::{self, exists},
+    io::{self},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -179,12 +182,13 @@ fn main() {
             clear_cached_authorization,
             // get_environment_variables,
             is_release_mode,
-            get_clipboard_image_base64,
+            get_clipboard_image,
             set_pkce_port,
             generate_authorization_info,
             // launch_pkce_window,
             retrieve_access_token,
             refresh_token,
+            get_clipboard_file_data,
         ])
         .run(tauri::generate_context!())
         .expect("error running Apicize");
@@ -302,17 +306,81 @@ async fn clear_cached_authorization(authorization_id: String) -> bool {
 }
 
 #[tauri::command]
-fn get_clipboard_image_base64(clipboard: State<Clipboard>) -> Result<String, String> {
+fn get_clipboard_image(clipboard: State<Clipboard>) -> Result<Vec<u8>, String> {
     match clipboard.has_image() {
         Ok(has_image) => {
             if has_image {
-                clipboard.read_image_base64()
+                clipboard.read_image_binary()
             } else {
                 Err(String::from("Clipboard does not contain an image"))
             }
         }
         Err(msg) => Err(msg),
     }
+}
+
+fn translate_data(file_path: &String, data: Vec<u8>) -> DroppedFile {
+    let path = Path::new(&file_path);
+    let extension = match path.extension() {
+        Some(ext) => ext.to_ascii_lowercase().to_string_lossy().to_string(),
+        None => "".to_string(),
+    };
+
+    let len = data.len();
+    if len < 64 * 1024 * 1024 {
+        let mut parsed: Option<String> = None;
+        if data.starts_with(&[0xEF, 0xBB, 0xBF]) {
+            parsed = Some(String::from_utf8_lossy(&data).to_string());
+        } else if data.starts_with(&[0xFF, 0xFE]) {
+            if len % 2 == 0 {
+                let iter = (0..len).map(|i| u16::from_le_bytes([data[2 * i], data[2 * i + 1]]));
+                parsed = Some(String::from_utf16_lossy(&iter.collect::<Vec<u16>>()));
+            }
+        } else if data.starts_with(&[0xFE, 0xFF]) {
+            if len % 2 == 0 {
+                let iter = (0..len).map(|i| u16::from_be_bytes([data[2 * i], data[2 * i + 1]]));
+                parsed = Some(String::from_utf16_lossy(&iter.collect::<Vec<u16>>()));
+            }
+        } else {
+            // If the first 1k and last 1k do not contain non-ASCII chars, assume we have text
+            if data.is_ascii() {
+                parsed = Some(String::from_utf8_lossy(&data).to_string())
+            }
+        }
+
+        if let Some(text) = parsed {
+            return DroppedFile::Text {
+                data: text,
+                extension,
+            };
+        }
+    }
+
+    return DroppedFile::Binary { data, extension };
+}
+
+#[tauri::command]
+fn get_clipboard_file_data(paths: Vec<String>) -> Result<DroppedFile, String> {
+    for file_path in paths {
+        match exists(&file_path) {
+            Ok(found) => {
+                if found {
+                    match fs::read(&file_path) {
+                        Ok(data) => {
+                            return Ok(translate_data(&file_path, data));
+                        }
+                        Err(err) => {
+                            return Err(err.to_string());
+                        }
+                    }
+                }
+            }
+            Err(err) => {
+                return Err(err.to_string());
+            }
+        }
+    }
+    Err("Unable to locate dropped paths".to_string())
 }
 
 #[tauri::command]
@@ -370,4 +438,13 @@ async fn refresh_token(
 #[tauri::command]
 fn is_release_mode() -> bool {
     !cfg!(debug_assertions)
+}
+
+
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "type")]
+pub enum DroppedFile {
+    Text { data: String, extension: String },
+    Binary { data: Vec<u8>, extension: String },
 }

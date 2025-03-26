@@ -7,7 +7,8 @@ import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
-import { EditableRequest, EditableRequestGroup } from "../../../models/workspace/editable-request"
+import { EditableRequest } from "../../../models/workspace/editable-request"
+import { EditableRequestGroup } from "../../../models/workspace/editable-request-group"
 import { NavTreeItem } from "../nav-tree-item"
 import { GetTitle, Persistence } from "@apicize/lib-typescript"
 import { MenuPosition } from "../../../models/menu-position"
@@ -15,15 +16,19 @@ import { useState } from "react"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
-import { IndexedEntityManager } from "../../../models/indexed-entity-manager"
+import { useWorkspaceSession } from "../../../contexts/workspace-session.context"
+import { useApicize } from "../../../contexts/apicize.context"
 
 export const RequestSection = observer((props: {
     includeHeader?: boolean,
 }) => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
+    const session = useWorkspaceSession()
+    const settings = useApicize()
+
     const [requestsMenu, setRequestsMenu] = useState<MenuPosition | undefined>()
-    const [reqMenu, setReqMenu] = useState<MenuPosition | undefined>(undefined)
+    const [requestMenu, setRequestMenu] = useState<MenuPosition | undefined>(undefined)
     const [focused, setFocused] = useState<boolean>(false)
 
     const closeRequestsMenu = () => {
@@ -31,7 +36,7 @@ export const RequestSection = observer((props: {
     }
 
     const closeRequestMenu = () => {
-        setReqMenu(undefined)
+        setRequestMenu(undefined)
     }
 
     const handleShowRequestsMenu = (event: React.MouseEvent, id: string) => {
@@ -46,7 +51,7 @@ export const RequestSection = observer((props: {
     }
 
     const showRequestMenu = (event: React.MouseEvent, id: string) => {
-        setReqMenu(
+        setRequestMenu(
             {
                 id,
                 mouseX: event.clientX - 1,
@@ -60,14 +65,14 @@ export const RequestSection = observer((props: {
     const handleSelectHeader = (headerId: string, helpTopic?: string) => {
         // closeAllMenus()
         if (helpTopic) {
-            workspace.updateExpanded(headerId, true)
-            workspace.showHelp(helpTopic)
+            session.updateExpanded(headerId, true)
+            session.showHelp(helpTopic)
         }
     }
     const handleAddRequest = (targetRequestId?: string | null) => {
         closeRequestsMenu()
         closeRequestMenu()
-        workspace.addRequest(targetRequestId)
+        workspace.addRequest(session.id, targetRequestId)
     }
 
     const handleAddRequestGroup = (targetRequestId?: string | null) => {
@@ -79,10 +84,8 @@ export const RequestSection = observer((props: {
     const handleDeleteRequest = () => {
         closeRequestMenu()
         closeRequestsMenu()
-        if (!workspace.active?.id || (workspace.active?.entityType !== EditableEntityType.Request
-            && workspace.active?.entityType !== EditableEntityType.Group
-        )) return
-        const id = workspace.active?.id
+        const id = requestsMenu?.id ?? requestMenu?.id
+        if (!id) return
         feedback.confirm({
             title: 'Delete Request',
             message: `Are you are you sure you want to delete ${GetTitle(workspace.requests.get(id))}?`,
@@ -98,14 +101,15 @@ export const RequestSection = observer((props: {
 
     const handleMoveRequest = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
         selectRequestOrGroup(id)
-        workspace.moveRequest(id, destinationID, onLowerHalf, isSection)
+        workspace.moveRequest(session.id, id, destinationID, onLowerHalf, isSection)
     }
 
     const handleDupeRequest = () => {
         closeRequestMenu()
         closeRequestsMenu()
-        if ((workspace.active?.entityType === EditableEntityType.Request || workspace.active?.entityType === EditableEntityType.Group)
-            && workspace.active?.id) workspace.copyRequest(workspace.active?.id)
+        const id = requestsMenu?.id ?? requestMenu?.id
+        if (!id) return
+        workspace.copyRequest(session.id, id)
     }
 
     const selectRequestOrGroup = (id: string) => {
@@ -117,6 +121,7 @@ export const RequestSection = observer((props: {
             <Menu
                 id='requests-menu'
                 open={requestsMenu !== undefined}
+                sx={{fontSize: settings.navigationFontSize}}
                 onClose={closeRequestsMenu}
                 anchorReference='anchorPosition'
                 anchorPosition={{
@@ -124,17 +129,17 @@ export const RequestSection = observer((props: {
                     left: requestsMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequest()}>
+                <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequest()} >
                     <ListItemIcon>
-                        <SvgIcon fontSize='small' color='request'><RequestIcon /></SvgIcon>
+                        <SvgIcon fontSize='inherit' color='request'><RequestIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Add Request</ListItemText>
+                    <ListItemText sx={{fontSize: settings.navigationFontSize}} disableTypography>Add Request</ListItemText>
                 </MenuItem>
                 <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequestGroup()}>
                     <ListItemIcon>
-                        <SvgIcon fontSize='small' color='folder'><FolderIcon /></SvgIcon>
+                        <SvgIcon fontSize='inherit' color='folder'><FolderIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Add Group</ListItemText>
+                    <ListItemText sx={{fontSize: settings.navigationFontSize}} disableTypography>Add Group</ListItemText>
                 </MenuItem>
             </Menu>
         )
@@ -144,37 +149,38 @@ export const RequestSection = observer((props: {
         return (
             <Menu
                 id='req-menu'
-                open={reqMenu !== undefined}
+                open={requestMenu !== undefined}
+                sx={{fontSize: settings.navigationFontSize}}
                 onClose={closeRequestMenu}
                 anchorReference='anchorPosition'
                 anchorPosition={{
-                    top: reqMenu?.mouseY ?? 0,
-                    left: reqMenu?.mouseX ?? 0
+                    top: requestMenu?.mouseY ?? 0,
+                    left: requestMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem className='navigation-menu-item' onClick={(e) => handleAddRequest(workspace.active?.id)}>
+                <MenuItem className='navigation-menu-item' onClick={(e) => handleAddRequest(requestMenu?.id)}>
                     <ListItemIcon>
-                        <SvgIcon fontSize='small' color='request'><RequestIcon /></SvgIcon>
+                        <SvgIcon fontSize='inherit' color='request'><RequestIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Add Request</ListItemText>
+                    <ListItemText sx={{fontSize: settings.navigationFontSize}} disableTypography>Add Request</ListItemText>
                 </MenuItem>
-                <MenuItem className='navigation-menu-item' onClick={(e) => handleAddRequestGroup(workspace.active?.id)}>
+                <MenuItem className='navigation-menu-item' onClick={(e) => handleAddRequestGroup(requestMenu?.id)}>
                     <ListItemIcon>
-                        <SvgIcon fontSize='small' color='folder'><FolderIcon /></SvgIcon>
+                        <SvgIcon fontSize='inherit' color='folder'><FolderIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Add Request Group</ListItemText>
+                    <ListItemText sx={{fontSize: settings.navigationFontSize}} disableTypography>Add Request Group</ListItemText>
                 </MenuItem>
                 <MenuItem className='navigation-menu-item' onClick={(e) => handleDupeRequest()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: 'request' }} />
+                        <ContentCopyOutlinedIcon fontSize='inherit' sx={{ color: 'request' }} />
                     </ListItemIcon>
-                    <ListItemText>Duplicate</ListItemText>
+                    <ListItemText sx={{fontSize: settings.navigationFontSize}} disableTypography>Duplicate</ListItemText>
                 </MenuItem>
                 <MenuItem className='navigation-menu-item' onClick={(e) => handleDeleteRequest()}>
                     <ListItemIcon>
-                        <DeleteIcon fontSize='small' color='error' />
+                        <DeleteIcon fontSize='inherit' color='error' />
                     </ListItemIcon>
-                    <ListItemText>Delete</ListItemText>
+                    <ListItemText sx={{fontSize: settings.navigationFontSize}} disableTypography>Delete</ListItemText>
                 </MenuItem>
             </Menu>
         )
@@ -242,11 +248,6 @@ export const RequestSection = observer((props: {
         </>
     })
 
-    if (!props.includeHeader && !workspace.navTreeInitialized.has(EditableEntityType.Request)) {
-        workspace.updateExpanded([...workspace.requests.childIds.keys()].map(id => `g-${id}`), true)
-        workspace.setInitialized(EditableEntityType.Request)
-    }
-
     return props.includeHeader
         ? <TreeItem
             itemId='hdr-r'
@@ -260,6 +261,7 @@ export const RequestSection = observer((props: {
             label={(
                 <Box
                     className='nav-item'
+                    typography='navigation'
                     // ref={setDropRef}
                     onClick={(e) => {
                         // Prevent label from expanding/collapsing
@@ -277,16 +279,16 @@ export const RequestSection = observer((props: {
                     }}
                 // sx={{ background: isOver ? dragPositionToColor(dragDrop.dragPosition) : 'default' }}
                 >
-                    <Box className='nav-icon-box'><SvgIcon className='nav-folder' fontSize='small' color='request'><RequestIcon /></SvgIcon></Box>
-                    <Box className='nav-node-text' sx={{ flexGrow: 1 }}>
+                    <Box className='nav-icon-box'><SvgIcon className='nav-folder' color='request'><RequestIcon /></SvgIcon></Box>
+                    <Box className='nav-node-text' typography='navigation' sx={{ flexGrow: 1 }}>
                         Requests
                     </Box>
-                    <IconButton sx={{ flexGrow: 0, margin: 0, padding: 0, visibility: focused ? 'normal' : 'hidden', }} onClick={(e) => {
+                    <IconButton sx={{ flexGrow: 0, margin: 0, padding: 0, visibility: focused ? 'normal' : 'hidden', fontSize: settings.navigationFontSize }} onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
                         handleShowRequestsMenu(e, 'menu-requests')
                     }}>
-                        <MoreVertIcon />
+                        <Box className='nav-icon-context'><MoreVertIcon /></Box>
                     </IconButton>
                 </Box >
             )}>

@@ -43,7 +43,9 @@ pub struct OAuth2PkceInfo {
     authorize_url: String,
     access_token_url: String,
     client_id: String,
-    scope: String,
+    send_credentials_in_body: Option<bool>,
+    scope: Option<String>,
+    audience: Option<String>,
 }
 
 /// Inflight PKCE request
@@ -116,17 +118,14 @@ impl OAuth2PkceService {
         auth: OAuth2PkceInfo,
         port: u16,
     ) -> Result<OAuth2PkceRequest, String> {
-        let scopes: Option<Vec<&str>> = if auth.scope.is_empty() {
-            None
-        } else {
-            Some(auth.scope.split(',').collect())
-        };
         let redirect_uri = format!("http://localhost:{}", port);
         match generate_authorization(
             auth.authorize_url.as_str(),
             redirect_uri.as_str(),
             auth.client_id.as_str(),
-            scopes,
+            auth.send_credentials_in_body.unwrap_or(false),
+            auth.scope,
+            auth.audience,
         ) {
             Ok((url, csrf_token, verifier)) => Ok(OAuth2PkceRequest {
                 url,

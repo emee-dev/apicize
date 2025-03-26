@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef } from "react";
 import * as core from '@tauri-apps/api/core'
-import { PkceContext, ToastSeverity, useApicizeSettings, useFeedback, useWorkspace, WorkspaceStore } from "@apicize/toolkit";
+import { PkceContext, ToastSeverity, useApicize, useFeedback, useWorkspace, WorkspaceStore } from "@apicize/toolkit";
 import { listen } from "@tauri-apps/api/event";
 import { Window } from "@tauri-apps/api/window"
 import { Webview } from "@tauri-apps/api/webview"
@@ -13,7 +13,7 @@ import { autorun } from "mobx";
  */
 export const PkceProvider = observer(({ store, children }: { store: WorkspaceStore, children?: ReactNode }) => {
 
-    const settings = useApicizeSettings()
+    const apicize = useApicize()
     const feedback = useFeedback()
     const workspace = useWorkspace()
 
@@ -42,7 +42,7 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
         });
 
         autorun(async () => {
-            await core.invoke('set_pkce_port', { port: settings.pkceListenerPort })
+            await core.invoke('set_pkce_port', { port: apicize.pkceListenerPort })
         })
 
         return () => {
@@ -78,7 +78,7 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
 
             const info = await core.invoke<OAuthPkceRequest>('generate_authorization_info', {
                 auth,
-                port: settings.pkceListenerPort
+                port: apicize.pkceListenerPort
             })
 
             let ctr = window_counter.current

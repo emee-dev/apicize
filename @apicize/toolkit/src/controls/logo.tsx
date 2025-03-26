@@ -1,12 +1,12 @@
-import { SvgIcon, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { Box } from "@mui/material";
-import { useWorkspace } from "../contexts/workspace.context";
 import ApicizeIcon from "../icons/apicize-icon";
+import { useApicize } from "../contexts/apicize.context";
 
 export function logo() {
-    const workspace = useWorkspace()
-    let name = workspace.appName
-    let version = workspace.appVersion
+    const apicize = useApicize()
+    let name = apicize.appName
+    let version = apicize.appVersion
 
     return <Box display='flex'>
         <Box>

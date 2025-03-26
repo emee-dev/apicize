@@ -4,13 +4,11 @@ import { useWorkspace } from '../../contexts/workspace.context';
 import { EditorTitle } from '../editor-title';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { EditableEntityType } from '../../models/workspace/editable-entity-type';
+import { useWorkspaceSession } from '../../contexts/workspace-session.context';
 
 export const WarningsEditor = observer((props: { sx?: SxProps }) => {
     const workspace = useWorkspace()
-
-    if (workspace.active?.entityType !== EditableEntityType.Warnings) {
-        return null
-    }
+    const session = useWorkspaceSession()
 
     return <Stack direction={'column'} className='editor' sx={props.sx}>
         <Box className='editor-panel-header'>
@@ -23,7 +21,7 @@ export const WarningsEditor = observer((props: { sx?: SxProps }) => {
                         workspace.warnings.hasEntries
                             ?
                             [...workspace.warnings.entries].map(e =>
-                                <Alert key={e[0]} variant='outlined' severity='warning' onClose={() => workspace.deleteWorkspaceWarning(e[0])}>
+                                <Alert key={e[0]} variant='outlined' severity='warning' onClose={() => workspace.deleteWorkspaceWarning(session.id, e[0])}>
                                     {e[1]}
                                 </Alert>
                             )

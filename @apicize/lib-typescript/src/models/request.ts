@@ -54,7 +54,6 @@ export interface BodyNone {
 export interface BodyJSON {
     type: BodyType.JSON
     data: string
-    formatted?: string
 }
 
 export interface BodyXML {
@@ -74,19 +73,19 @@ export interface BodyForm {
 
 export interface BodyRaw {
     type: BodyType.Raw
-    data: string
+    data: Uint8Array
 }
 
 export type RequestEntry = Request | RequestGroup
 
-export interface Request extends Identifiable, Named, SelectedParameters, Executable {
+
+export interface BaseRequest extends Identifiable, Named, SelectedParameters, Executable {
     url: string
     method?: Method
     timeout?: number
     keepalive?: boolean
     headers?: NameValuePair[]
     queryStringParams?: NameValuePair[]
-    body?: Body
     redirect?: RequestRedirect
     // integrity?: string
     mode?: RequestMode
@@ -94,7 +93,11 @@ export interface Request extends Identifiable, Named, SelectedParameters, Execut
     referrerPolicy?: ReferrerPolicy
     duplex?: RequestDuplex
     test?: string,
-    warnings?: string[],
+    warnings?: string[],    
+}
+
+export interface Request extends BaseRequest {
+    body?: Body 
 }
 
 export enum GroupExecution {
@@ -106,4 +109,3 @@ export interface RequestGroup extends Identifiable, Named, SelectedParameters, E
     execution: GroupExecution
     warnings?: string[],
 }
-

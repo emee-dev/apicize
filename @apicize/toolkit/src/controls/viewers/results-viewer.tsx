@@ -14,36 +14,31 @@ import { ResultInfoViewer } from "./result/result-info-viewer";
 import { ResponseHeadersViewer } from "./result/response-headers-viewer";
 import { ResultDetailsViewer } from "./result/result-details-viewer";
 import { observer } from 'mobx-react-lite';
-import { EditableEntityType } from '../../models/workspace/editable-entity-type';
 import { ResultsPanel, useWorkspace } from "../../contexts/workspace.context";
 // import { MAX_TEXT_RENDER_LENGTH } from "./text-viewer";
 import RequestIcon from "../../icons/request-icon";
+import { toJS } from "mobx";
 
 export const MAX_TEXT_RENDER_LENGTH = 64 * 1024 * 1024
 
 export const ResultsViewer = observer((props: {
     sx?: SxProps<Theme>,
+    requestOrGroupId: string,
     className?: string,
 }) => {
     const workspace = useWorkspace()
+    const requestOrGroupId = props.requestOrGroupId
 
-    if ((!workspace.active) ||
-        (workspace.active.entityType !== EditableEntityType.Request
-            && workspace.active.entityType !== EditableEntityType.Group)) {
-        return null
-    }
-
-    const requestExecution = workspace.executions.get(workspace.active.id)
+    const requestExecution = workspace.executions.get(requestOrGroupId)
 
     if (!(requestExecution && requestExecution.results.length > 0)) {
         return null
     }
 
-    const requestOrGroupId = workspace.active.id
     const selectedExecution = requestExecution.resultMenu[requestExecution.resultIndex]
     const executionIndex = selectedExecution?.index
+    const result = requestExecution.results[executionIndex]
 
-    const result = executionIndex !== undefined ? workspace.getExecutionResult(workspace.active.id, executionIndex) : null
     if (!result) {
         return null
     }
@@ -60,7 +55,7 @@ export const ResultsViewer = observer((props: {
 
     if (result.response) {
         disableOtherPanels = false
-        longTextInResponse = (result.response.body?.text?.length ?? 0) > MAX_TEXT_RENDER_LENGTH
+        longTextInResponse = (result.response.body?.type === 'Text' ? result.response.body.data.length : 0) > MAX_TEXT_RENDER_LENGTH
 
     } else {
         disableOtherPanels = true
@@ -96,9 +91,11 @@ export const ResultsViewer = observer((props: {
         infoColor = 'warning'
     }
 
+
     return requestExecution ? (
         <Stack direction={'row'} sx={props.sx} className={props.className}>
             <ToggleButtonGroup
+                className='button-column'
                 orientation='vertical'
                 exclusive
                 onChange={handlePanelChanged}
@@ -114,16 +111,11 @@ export const ResultsViewer = observer((props: {
             <Box sx={{ overflow: 'hidden', flexGrow: 1, bottom: '0', position: 'relative' }}>
                 <Box position='relative' width='100%' height='100%'>
                     {
-                        panel === 'Info' ? <ResultInfoViewer requestOrGroupId={requestOrGroupId} index={executionIndex} />
-                            : panel === 'Headers' ? <ResponseHeadersViewer requestOrGroupId={requestOrGroupId} index={executionIndex} />
-                                : panel === 'Preview' ? <ResultResponsePreview
-                                    requestOrGroupId={requestOrGroupId} index={executionIndex}
-                                />
-                                    : panel === 'Text' ? <ResultRawPreview
-                                        requestOrGroupId={requestOrGroupId} index={executionIndex}
-                                    />
-                                        : panel === 'Details' ? <ResultDetailsViewer
-                                            requestOrGroupId={requestOrGroupId} index={executionIndex} />
+                        panel === 'Info' ? <ResultInfoViewer result={result} />
+                            : panel === 'Headers' ? <ResponseHeadersViewer result={result} />
+                                : panel === 'Preview' ? <ResultResponsePreview result={result} />
+                                    : panel === 'Text' ? <ResultRawPreview result={result} />
+                                        : panel === 'Details' ? <ResultDetailsViewer result={result} />
                                             : null
                     }
                 </Box>

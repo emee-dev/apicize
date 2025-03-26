@@ -78,7 +78,7 @@ export interface ApicizeGroup extends ApicizeExecutionSummary {
 
     executedAt: number
     duration: number
-    // variables?: Map<string, JsonValue>
+    variables?: Map<string, JsonValue>
     outputVariables?: Map<string, JsonValue>
     children?: ApicizeGroupChildren
 
@@ -99,6 +99,7 @@ export interface ApicizeGroupRun extends ApicizeExecutionSummary {
 
     children?: ApicizeGroupItem[]
 
+    variables?: Map<string, JsonValue>
     outputVariables?: Map<string, JsonValue>
 
     success: boolean
@@ -117,6 +118,7 @@ export interface ApicizeRequest extends ApicizeExecutionSummary {
 
     executedAt: number
     duration: number
+    variables?: Map<string, JsonValue>
     outputVariables?: Map<string, JsonValue>
 
     execution?: ApicizeExecutionType
@@ -136,8 +138,8 @@ export interface ApicizeExecution {
     executedAt: number
     duration: number
 
-    inputVariables?: Map<string, JsonValue>
     data?: Map<string, JsonValue>[]
+    inputVariables?: Map<string, JsonValue>
     outputVariables?: Map<string, JsonValue>
 
     request?: ApicizeHttpRequest
@@ -150,10 +152,23 @@ export interface ApicizeExecution {
     testFailCount: number
 }
 
-export interface ApicizeBody {
-    data?: string
-    text?: string
+export interface ApicizeBodyText {
+    type: 'Text'
+    data: string
 }
+
+export interface ApicizeBodyJSON {
+    type: 'JSON'
+    data: object
+    text: string
+}
+
+export interface ApicizeBodyBinary {
+    type: 'Binary'
+    data: Uint8Array
+}
+
+export type ApicizeBody = ApicizeBodyText | ApicizeBodyJSON | ApicizeBodyBinary
 
 export interface ApicizeHttpRequest {
     url: string,

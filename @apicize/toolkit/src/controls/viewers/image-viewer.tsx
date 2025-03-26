@@ -1,12 +1,13 @@
 import { Box } from "@mui/material"
+import { base64Encode } from "../../services/apicize-serializer"
 
 export const KNOWN_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'bmp', 'tif', 'tiff']
 
 export function ImageViewer(props: {
-    base64ToRender: string | undefined,
+    data: Uint8Array | undefined,
     extensionToRender?: string
 }) {
-    if (props.base64ToRender && props.base64ToRender.length > 0 && props.extensionToRender && props.extensionToRender.length > 0) {
+    if (props.data && props.data.length > 0 && props.extensionToRender && props.extensionToRender.length > 0) {
         return (
             <Box
                 style={{
@@ -25,7 +26,7 @@ export function ImageViewer(props: {
                     style={{
                         position: 'absolute'
                     }}
-                    src={`data:image/${props.extensionToRender};base64,${props.base64ToRender}`}
+                    src={`data:image/${props.extensionToRender};base64,${base64Encode(props.data)}`}
                 />
             </Box>
         )

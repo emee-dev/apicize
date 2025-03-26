@@ -4,10 +4,14 @@ import { action, observable } from 'mobx';
 
 export class ApicizeSettings {
     @observable accessor dirty = false
+    
+    @observable accessor appName = 'Apicize'
+    @observable accessor appVersion = ''
 
     @observable accessor workbookDirectory: string = ''
     @observable accessor lastWorkbookFileName: string | undefined
     @observable accessor fontSize = 12
+    @observable accessor navigationFontSize = 12
     @observable accessor colorScheme: SupportedColorScheme = 'dark'
     @observable accessor editorPanels = ''
     @observable accessor recentWorkbookFileNames: string[] = []
@@ -24,6 +28,19 @@ export class ApicizeSettings {
         this.pkceListenerPort = settings.pkceListenerPort ?? 8080
         this.alwaysHideNavTree = settings.alwaysHideNavTree
     }
+
+    public ctrlKey: string = 'Ctrl'
+
+    @action
+    changeApp(name: string, version: string) {
+        this.appName = name
+        this.appVersion = version
+    }
+
+    setOs(os: string) {
+        this.ctrlKey = os === 'macos' ? 'Cmd' : 'Ctrl'
+    }
+
 
     @action
     public setDirty(value: boolean) {
@@ -99,6 +116,13 @@ export class ApicizeSettings {
         }
     }
 
+    @action
+    public setNavigationFontSize(newFontSize: number) {
+        if (this.navigationFontSize != newFontSize) {
+            this.navigationFontSize = newFontSize
+            this.dirty = true
+        }
+    }
 
     @action
     public setColorScheme(newColorScheme: SupportedColorScheme) {

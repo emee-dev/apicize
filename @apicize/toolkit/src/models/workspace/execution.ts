@@ -12,6 +12,7 @@ export interface ExecutionMenuItem {
 export type ExecutionData = ApicizeGroup | ApicizeGroupRun | ApicizeRequest | ApicizeExecutionType
 
 export interface ExecutionResultInfo {
+     requestOrGroupId: string,
      index: number,
      title: string
      parentIndex?: number
@@ -57,8 +58,8 @@ export interface ExecutionResultSummary {
      request?: ApicizeHttpRequest
      response?: ApicizeHttpResponse
 
-     inputVariables?: Map<String, JsonValue>,
      data?: Map<String, JsonValue>[],
+     variables?: Map<String, JsonValue>,
      outputVariables?: Map<String, JsonValue>,
 
      tests?: ExecutionResultSummaryTest[]
@@ -79,9 +80,7 @@ export interface ExecutionResultSummaryTest {
      success: boolean,
      error?: string
      logs?: string[]
- }
- 
-
+}
 
 export interface Execution {
      requestOrGroupId: string

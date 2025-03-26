@@ -10,12 +10,13 @@ import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
 import { WorkspaceProvider } from './providers/workspace.provider';
 import { ApicizeResult, ApplicationSettings } from '@apicize/lib-typescript';
-import { ApicizeSettingsProvider } from './providers/apicize-settings.provider';
+import { ApicizeProvider } from './providers/apicize.provider';
 import { ConfigurableTheme } from './controls/configurable-theme';
 import { PkceProvider } from './providers/pkce.provider';
 import { emit } from '@tauri-apps/api/event';
 import { LogProvider } from './providers/log.provider';
 import { CssBaseline } from '@mui/material'
+import { FileDragDropProvider } from './providers/file-dragdrop.provider'
 
 // This is defined externally via Tauri main or other boostrap application
 declare var loadedSettings: ApplicationSettings
@@ -42,7 +43,7 @@ const workspaceStore = new WorkspaceStore(
 
 export default function Home() {
   return (
-    <ApicizeSettingsProvider settings={settings}>
+    <ApicizeProvider settings={settings}>
       <ConfigurableTheme>
         <CssBaseline />
         <FeedbackProvider store={feedbackStore}>
@@ -50,17 +51,19 @@ export default function Home() {
             <LogProvider>
               <WorkspaceProvider store={workspaceStore}>
                 <DragDropProvider>
-                  <PkceProvider store={workspaceStore}>
-                    <ClipboardProvider>
-                      <MainPanel />
-                    </ClipboardProvider>
-                  </PkceProvider>
+                  <FileDragDropProvider>
+                    <PkceProvider store={workspaceStore}>
+                      <ClipboardProvider>
+                        <MainPanel />
+                      </ClipboardProvider>
+                    </PkceProvider>
+                  </FileDragDropProvider>
                 </DragDropProvider>
               </WorkspaceProvider>
             </LogProvider>
           </FileOperationsProvider>
         </FeedbackProvider>
       </ConfigurableTheme>
-    </ApicizeSettingsProvider >
+    </ApicizeProvider >
   )
 }

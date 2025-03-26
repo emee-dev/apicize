@@ -4,7 +4,6 @@ import { SvgIconPropsColorOverrides, SvgIcon, IconButton } from "@mui/material"
 import { Box } from "@mui/system"
 import { TreeItem } from "@mui/x-tree-view/TreeItem"
 import { observer } from "mobx-react-lite"
-import { useWorkspace } from "../../contexts/workspace.context"
 import { DraggableData, DragPosition, DroppableData } from "../../models/drag-drop"
 import { EditableItem, EditableState } from "../../models/editable"
 import { EditableEntityType } from "../../models/workspace/editable-entity-type"
@@ -15,6 +14,9 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { CSS, useCombinedRefs } from '@dnd-kit/utilities';
 import { useState } from "react"
 import { useDragDrop } from "../../contexts/dragdrop.context"
+import { useWorkspaceSession } from "../../contexts/workspace-session.context"
+import { use } from "chai"
+import { useApicize } from "../../contexts/apicize.context"
 
 const dragPositionToColor = (dragPosition: DragPosition) => {
     switch (dragPosition) {
@@ -34,9 +36,9 @@ const dragPositionToColor = (dragPosition: DragPosition) => {
 const iconFromState = (state: EditableState) => {
     switch (state) {
         case EditableState.Running:
-            return <PlayArrowIcon color="success" />
+            return <PlayArrowIcon color="success" fontSize='inherit' />
         case EditableState.Warning:
-            return <WarningAmberIcon color="warning" />
+            return <WarningAmberIcon color="warning" fontSize='inherit' />
         default:
             return null
     }
@@ -66,7 +68,8 @@ export const NavTreeItem = observer((props: {
     onMenu?: (event: React.MouseEvent, id: string) => void,
     onMove?: (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => void
 }) => {
-    const workspace = useWorkspace()
+    const session = useWorkspaceSession()
+    const settings = useApicize()
     const dragDrop = useDragDrop()
     const itemId = `${props.item.entityType}-${props.item.id}`
 
@@ -118,7 +121,6 @@ export const NavTreeItem = observer((props: {
             e.stopPropagation()
         }}
         // Add a selected class so that we can mark expandable tree items as selected and have them show up properly
-        // className={workspace.active?.id === props.item.id ? 'selected' : ''}
         label={(
             <Box
                 key={`lbl-${props.item.id}`}
@@ -126,12 +128,13 @@ export const NavTreeItem = observer((props: {
                 ref={useCombinedRefs(setDragRef, setDropRef)}
                 style={dragStyle}
                 className='nav-item'
+                typography='navigation'
 
                 onClick={(e) => {
                     // Override click behavior to set active item, but not to propogate upward
                     // because we don't want to toggle expansion on anything other than the
                     // lefticon click
-                    workspace.changeActive(props.item.entityType, props.item.id)
+                    session.changeActive(props.item.entityType, props.item.id)
                     e.preventDefault()
                     e.stopPropagation()
                 }}
@@ -146,7 +149,7 @@ export const NavTreeItem = observer((props: {
             >
                 {
                     (props.icon && props.iconColor)
-                        ? <Box className='nav-icon-box'><SvgIcon fontSize='small' color={props.iconColor}>{props.icon}</SvgIcon></Box>
+                        ? <Box className='nav-icon-box'><SvgIcon color={props.iconColor}>{props.icon}</SvgIcon></Box>
                         : null
                 }
                 <Box
@@ -156,7 +159,7 @@ export const NavTreeItem = observer((props: {
                     display='flex'
                 >
                     {GetTitle(props.item)}
-                    <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
+                    <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left' typography='navigation'>
                         {iconFromState(props.item.state)}
                     </Box>
                 </Box>
@@ -166,7 +169,8 @@ export const NavTreeItem = observer((props: {
                             sx={{
                                 visibility: focused ? 'normal' : 'hidden',
                                 margin: 0,
-                                padding: 0
+                                padding: 0,
+                                fontSize: settings.navigationFontSize
                             }}
                             onClick={(e) => {
                                 e.preventDefault()
@@ -174,7 +178,7 @@ export const NavTreeItem = observer((props: {
                                 if (props.onMenu) props.onMenu(e, props.item.id)
                             }}
                         >
-                            <MoreVertIcon />
+                            <Box className='nav-icon-context'><MoreVertIcon /></Box>
                         </IconButton>
                         : <></>
                 }

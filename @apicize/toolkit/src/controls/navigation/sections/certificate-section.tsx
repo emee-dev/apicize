@@ -5,16 +5,18 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { useState } from "react"
-import { ParameterSection } from "../parameter-section"
+import { ParameterSection } from "./parameter-section"
 import { MenuPosition } from "../../../models/menu-position"
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
+import { useWorkspaceSession } from "../../../contexts/workspace-session.context"
 
 export const CertificateSection = observer((props: {
     includeHeader: boolean,
 }) => {
     const workspace = useWorkspace()
+    const session = useWorkspaceSession()
     const feedback = useFeedback()
     const theme = useTheme()
 
@@ -36,19 +38,21 @@ export const CertificateSection = observer((props: {
     const handleSelectHeader = (headerId: string, helpTopic?: string) => {
         // closeAllMenus()
         if (helpTopic) {
-            workspace.updateExpanded(headerId, true)
-            workspace.showHelp(helpTopic)
+            session.updateExpanded(headerId, true)
+            session.showHelp(helpTopic)
         }
     }
 
     const handleMoveCertificate = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
         selectCertificate(id)
-        workspace.moveCertificate(id, destinationID, onLowerHalf, isSection)
+        workspace.moveCertificate(session.id, id, destinationID, onLowerHalf, isSection)
     }
 
     const handleDupeCertificate = () => {
         closeCertificateMenu()
-        if (workspace.active?.entityType === EditableEntityType.Certificate && workspace.active?.id) workspace.copyCertificate(workspace.active?.id)
+        const id = certificateMenu?.id
+        if (!id) return
+        workspace.copyCertificate(id)
     }
 
     const showCertificateMenu = (event: React.MouseEvent, persistence: Persistence, id: string) => {
@@ -64,8 +68,8 @@ export const CertificateSection = observer((props: {
 
     const handleDeleteCertificate = () => {
         closeCertificateMenu()
-        if (!workspace.active?.id || workspace.active?.entityType !== EditableEntityType.Certificate) return
-        const id = workspace.active?.id
+        const id = certificateMenu?.id
+        if (!id) return
         feedback.confirm({
             title: 'Delete Certificate',
             message: `Are you are you sure you want to delete ${GetTitle(workspace.certificates.get(id))}?`,
@@ -91,7 +95,7 @@ export const CertificateSection = observer((props: {
                     left: certificateMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddCertificate(certificateMenu.persistence, workspace.active?.id)}>
+                <MenuItem onClick={(_) => handleAddCertificate(certificateMenu.persistence, certificateMenu?.id)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='certificate'><CertificateIcon /></SvgIcon>
                     </ListItemIcon>
@@ -111,11 +115,6 @@ export const CertificateSection = observer((props: {
                 </MenuItem>
             </Menu>
             : <></>
-    }
-
-    if (!props.includeHeader && !workspace.navTreeInitialized.has(EditableEntityType.Certificate)) {
-        workspace.updateExpanded(['hdr-c-pub', 'hdr-c-priv', 'hdr-c-vault'], true)
-        workspace.setInitialized(EditableEntityType.Certificate)
     }
 
     return <ParameterSection

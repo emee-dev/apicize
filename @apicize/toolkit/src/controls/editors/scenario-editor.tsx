@@ -2,20 +2,19 @@ import { Stack, TextField, SxProps, Grid2, Box, SvgIcon, IconButton, Button, For
 import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';
 import { EditableScenario, EditableVariable } from '../../models/workspace/editable-scenario';
-import { useWorkspace } from '../../contexts/workspace.context';
 import ScenarioIcon from '../../icons/scenario-icon';
 import { GenerateIdentifier } from '../../services/random-identifier-generator';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { VariableSourceType } from '@apicize/lib-typescript';
+import { useWorkspaceSession } from '../../contexts/workspace-session.context';
 
-export const ScenarioEditor = observer((props: { sx: SxProps }) => {
-    const workspace = useWorkspace()
-    const scenario = workspace.active as EditableScenario
-    workspace.nextHelpTopic = 'workspace/scenarios'
+export const ScenarioEditor = observer((props: { sx: SxProps, scenario: EditableScenario }) => {
+    const session = useWorkspaceSession()
+    session.nextHelpTopic = 'workspace/scenarios'
 
     const onAddVariable = () => {
-        scenario.variables.push(new EditableVariable(
+        props.scenario.variables.push(new EditableVariable(
             GenerateIdentifier(),
             '',
             VariableSourceType.Text,
@@ -24,13 +23,13 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
     }
 
     const onDeleteVariable = (id: string) => {
-        scenario.variables = scenario.variables.filter(v => v.id !== id)
+        props.scenario.variables = props.scenario.variables.filter(v => v.id !== id)
     }
 
     return (
         <Stack direction='column' className='editor scenario' sx={props.sx}>
             <Box className='editor-panel-header'>
-                <EditorTitle icon={<SvgIcon color='scenario'><ScenarioIcon /></SvgIcon>} name={scenario.name.length > 0 ? scenario.name : '(Unnamed)'} />
+                <EditorTitle icon={<SvgIcon color='scenario'><ScenarioIcon /></SvgIcon>} name={props.scenario.name.length > 0 ? props.scenario.name : '(Unnamed)'} />
             </Box>
             <Box className='editor-panel'>
                 <Stack className='editor-content' direction='column' spacing={3}>
@@ -39,16 +38,16 @@ export const ScenarioEditor = observer((props: { sx: SxProps }) => {
                         label='Name'
                         aria-label='scenario name'
                         size='small'
-                        value={scenario.name}
-                        onChange={e => workspace.setName(e.target.value)}
-                        error={scenario.nameInvalid}
-                        helperText={scenario.nameInvalid ? 'Scenario name is required' : ''}
+                        value={props.scenario.name}
+                        onChange={e => props.scenario.setName(e.target.value)}
+                        error={props.scenario.nameInvalid}
+                        helperText={props.scenario.nameInvalid ? 'Scenario name is required' : ''}
                         fullWidth
                     />
                     <Stack direction='column' paddingTop='2em'>
                         <Grid2 container spacing={3}>
                             {
-                                (scenario.variables ?? []).map(variable => [
+                                (props.scenario.variables ?? []).map(variable => [
                                     <Grid2 container rowSpacing={2} spacing={1} size={12} columns={12}>
                                         <Grid2 size={{ md: 3 }}>
                                             <TextField

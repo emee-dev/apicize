@@ -26,7 +26,6 @@ import { unified } from 'unified';
 import remarkDirective from 'remark-directive';
 import { ExtraProps } from 'hast-util-to-jsx-runtime';
 import { observer } from 'mobx-react-lite';
-import { useWorkspace } from '../contexts/workspace.context';
 import { ToastSeverity, useFeedback } from '../contexts/feedback.context';
 import { useFileOperations } from '../contexts/file-operations.context';
 import AuthIcon from '../icons/auth-icon';
@@ -40,11 +39,18 @@ import PrivateIcon from '../icons/private-icon';
 import VaultIcon from '../icons/vault-icon';
 import ApicizeIcon from '../icons/apicize-icon';
 import FolderIcon from '../icons/folder-icon';
+import LogIcon from "../icons/log-icon";
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined'
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
 import SeedIcon from "../icons/seed-icon";
+import PostAddIcon from '@mui/icons-material/PostAdd'
+import FileOpenIcon from '@mui/icons-material/FileOpen'
+import SaveIcon from '@mui/icons-material/Save'
+import SaveAsIcon from '@mui/icons-material/SaveAs'
 
 import { Parent } from 'unist';
+import { useWorkspaceSession } from '../contexts/workspace-session.context';
+import { useApicize } from '../contexts/apicize.context';
 
 // Register `hName`, `hProperties` types, used when turning markdown to HTML:
 /// <reference types="mdast-util-to-hast" />
@@ -52,12 +58,13 @@ import { Parent } from 'unist';
 /// <reference types="mdast-util-directive" />
 
 export const HelpPanel = observer((props: { sx?: SxProps }) => {
-    const workspace = useWorkspace()
+    const apicize = useApicize()
+    const session = useWorkspaceSession()
     const fileOps = useFileOperations()
     const feedback = useFeedback()
 
-    let name = workspace.appName
-    let version = workspace.appVersion
+    let name = apicize.appName
+    let version = apicize.appVersion
 
     let [content, setContent] = useState(createElement(Fragment));
     let activeTopic = useRef('')
@@ -152,7 +159,7 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
                     replaceWith = version
                     break
                 case 'ctrlkey':
-                    replaceWith = workspace.ctrlKey
+                    replaceWith = apicize.ctrlKey
                     break
                 default:
                     // if not an information item that we know about, ignore it
@@ -242,9 +249,11 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
             case 'defaults':
                 return <SvgIcon className='help-icon' color='defaults' sx={{ marginRight: '0.5em' }}><DefaultsIcon /></SvgIcon>
             case 'settings':
-                return <SettingsIcon className='help-icon' />
+                return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><SettingsIcon /></SvgIcon>
+            case 'logs':
+                return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><LogIcon /></SvgIcon>
             case 'display':
-                return <DisplaySettingsIcon className='help-icon' />
+                return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><DisplaySettingsIcon className='help-icon' /></SvgIcon>
             case 'public':
                 return <SvgIcon className='help-icon' color='public' sx={{ marginRight: '0.5em' }}><PublicIcon /></SvgIcon>
             case 'private':
@@ -254,11 +263,19 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
             case 'apicize':
                 return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><ApicizeIcon /></SvgIcon>
             case 'runonce':
-                return <PlayCircleOutlined className='help-icon' color='success' />
+                return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><PlayCircleOutlined color='success' /></SvgIcon>
             case 'run':
-                return <PlayCircleFilledIcon className='help-icon' color='success' />
+                return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><PlayCircleFilledIcon color='success' /></SvgIcon>
             case 'seed':
-                return <SvgIcon className='help-icon' color='primary'><SeedIcon /></SvgIcon>
+                return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><SvgIcon color='primary' /></SvgIcon>
+            case 'workbook-new':
+                return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><PostAddIcon /></SvgIcon>
+            case 'workbook-open':
+                return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><FileOpenIcon /></SvgIcon>
+            case 'workbook-save':
+                return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><SaveIcon /></SvgIcon>
+            case 'workbook-save-as':
+                return <SvgIcon className='help-icon' sx={{ marginRight: '0.5em' }}><SaveAsIcon /></SvgIcon>
             default:
                 return null
         }
@@ -269,7 +286,7 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
             if (attrs.href.startsWith('help:')) {
                 const topic = attrs.href.substring(5)
                 attrs = { ...attrs, href: '#' }
-                return <Link {...attrs} onClick={() => workspace.showHelp(topic)} />
+                return <Link {...attrs} onClick={() => session.showHelp(topic)} />
             }
             else if (attrs.href.startsWith('icon:')) {
                 return <DisplaySettingsIcon />
@@ -290,28 +307,28 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
         return (
             <Box className='help-toolbar' marginLeft={marginLeft}>
                 {
-                    workspace.allowHelpHome
-                        ? <IconButton color='primary' size='medium' aria-label='Home' title='Home' onClick={() => workspace.showHelp('home')}><HomeIcon fontSize='inherit' /></IconButton>
+                    session.allowHelpHome
+                        ? <IconButton color='primary' size='medium' aria-label='Home' title='Home' onClick={() => session.showHelp('home')}><HomeIcon fontSize='inherit' /></IconButton>
                         : <></>
                 }
                 {
-                    workspace.allowHelpBack
-                        ? <IconButton color='primary' size='medium' aria-label='Back' title='Back' onClick={() => workspace.helpBack()}><ArrowBackIcon fontSize='inherit' /></IconButton>
+                    session.allowHelpBack
+                        ? <IconButton color='primary' size='medium' aria-label='Back' title='Back' onClick={() => session.helpBack()}><ArrowBackIcon fontSize='inherit' /></IconButton>
                         : <></>
                 }
                 {
-                    workspace.allowHelpAbout
-                        ? <IconButton color='primary' size='medium' aria-label='About' title='About' onClick={() => workspace.showHelp('about')}><QuestionMarkIcon fontSize='inherit' /></IconButton>
+                    session.allowHelpAbout
+                        ? <IconButton color='primary' size='medium' aria-label='About' title='About' onClick={() => session.showHelp('about')}><QuestionMarkIcon fontSize='inherit' /></IconButton>
                         : <></>
                 }
-                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => session.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
             </Box>
         )
     }
 
     // Make sure we do not go through overhead of re-rendering the existing topic
-    if (workspace.helpTopic !== activeTopic.current) {
-        activeTopic.current = workspace.helpTopic ?? '';
+    if (session.helpTopic !== activeTopic.current) {
+        activeTopic.current = session.helpTopic ?? '';
 
         (async () => {
             try {

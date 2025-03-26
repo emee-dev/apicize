@@ -1,32 +1,21 @@
-import { EditableEntityType } from "../../../models/workspace/editable-entity-type";
-import { EditableRequest, EditableRequestGroup } from "../../../models/workspace/editable-request";
 import { observer } from "mobx-react-lite";
 import { useWorkspace } from "../../../contexts/workspace.context";
 import { Alert, Box } from "@mui/material";
-import { toJS } from "mobx";
+import { EditableRequestEntry } from "../../../models/workspace/editable-request-entry";
+import { useWorkspaceSession } from "../../../contexts/workspace-session.context";
 
-export const RequestWarningsEditor = observer(() => {
+export const RequestWarningsEditor = observer((props: { requestEntry: EditableRequestEntry }) => {
   const workspace = useWorkspace()
+  const session = useWorkspaceSession()
 
-  if (workspace.active?.entityType !== EditableEntityType.Request && workspace.active?.entityType !== EditableEntityType.Group) {
-    return null
-  }
-
-  workspace.nextHelpTopic = 'requests/parameters'
-  const request = workspace.active as EditableRequest
-  const group = workspace.active as EditableRequestGroup
-  const warnings = request
-    ? request.warnings
-    : group
-      ? group.warnings
-      : undefined
-
+  session.nextHelpTopic = 'requests/parameters'
+  const warnings = props.requestEntry.warnings
   if (warnings && (warnings.size > 0)) {
     return (
       <Box>
         {
           [...warnings.entries()].map(e =>
-            <Alert variant='outlined' severity='warning' onClose={() => workspace.deleteRequestWarning(e[0])}>
+            <Alert variant='outlined' severity='warning' onClose={() => workspace.deleteRequestWarning(props.requestEntry, e[0])}>
               {e[1]}
             </Alert>)
         }

@@ -62,9 +62,10 @@ body .light {
   height: 100vh;
   background-color: #03021f;
   color: #fff;
+  padding: 0 1em;
 }
 
-.help > * {
+.help>* {
   padding: 0 1em;
 }
 
@@ -208,12 +209,31 @@ pre.log {
   display: flex;
   justify-items: center;
   width: 2em;
-  height: '100%';
+}
+
+.nav-icon-context {
+  flex-grow: 0;
+  display: flex;
+  justify-items: center;
+  padding: 0.1rem;
+}
+
+.nav-toolbar .MuiSvgIcon-root,
+.nav-toolbar svg,
+.nav-toolbar Button {
+  font-size: 1.3em;
 }
 
 .nav-icon-box .MuiSvgIcon-root {
   display: flex;
-  height: 100%
+  height: 100%;
+  font-size: 1.2em
+}
+
+.nav-icon-context .MuiSvgIcon-root {
+  display: flex;
+  height: 100%;
+  font-size: 1.5em
 }
 
 .MuiTreeItem-root.selected>.MuiTreeItem-content {
@@ -237,6 +257,10 @@ pre.log {
 
 .namevalue-col-btn {
   text-align: right;
+}
+
+.button-column {
+  width: 3em;
 }
 
 .editor {
@@ -296,7 +320,6 @@ pre.log {
 
 .editor-content {
   display: flex;
-  max-width: 70em;
 }
 
 .editor-list {
@@ -309,8 +332,13 @@ pre.log {
 }
 
 .panels {
-  padding: 00;
+  /* padding: 0 1em 0 0; */
+  max-width: 65em;
   margin-bottom: 1.5em;
+}
+
+.panels.full-width {
+  max-width: None;
 }
 
 .split-left {
@@ -341,14 +369,17 @@ pre.log {
   padding: 1em 0 1em 1em;
   margin: 0;
 }
+
 .split-right .editor-panel-header {
   padding: 1em 1em 1em 0;
   margin: 0;
 }
 
-.split-right .editor-panel {
+.split-right .editor-panel,
+.split-right .results-panel {
   padding-left: 0;
 }
+
 
 #results-viewer {
   display: flex;
@@ -363,7 +394,6 @@ pre.log {
   margin: 0;
   padding: 3em 1em 1em 1em;
 }
-
 
 .results-info .MuiTreeItem-content {
   min-height: 2em;

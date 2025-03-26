@@ -7,7 +7,6 @@ import FileOpenIcon from '@mui/icons-material/FileOpen'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import { BodyType, BodyTypes } from '@apicize/lib-typescript'
-import { EditableEntityType } from '../../../models/workspace/editable-entity-type'
 import { EditableRequest } from '../../../models/workspace/editable-request'
 import { observer } from 'mobx-react-lite'
 import { useClipboard } from '../../../contexts/clipboard.context'
@@ -16,29 +15,30 @@ import { toJS } from 'mobx'
 import { useWorkspace } from '../../../contexts/workspace.context'
 import { ToastSeverity, useFeedback } from '../../../contexts/feedback.context'
 import { RichEditor, RichEditorCommands } from '../rich-editor'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { EditorMode } from '../../../models/editor-mode'
+import { RequestEditSessionType, useWorkspaceSession } from '../../../contexts/workspace-session.context'
+import { DroppedFile, useFileDragDrop } from '../../../contexts/file-dragdrop.context'
 
-export const RequestBodyEditor = observer(() => {
+export const RequestBodyEditor = observer((props: { request: EditableRequest }) => {
   const workspace = useWorkspace()
+  const session = useWorkspaceSession()
   const clipboard = useClipboard()
   const fileOps = useFileOperations()
   const feedback = useFeedback()
+  const fileDragDrop = useFileDragDrop()
 
-  // const editorRef = React.createRef<AceEditor>()
+  const refContainer = useRef<HTMLElement>(null)
   const refCommands = useRef<RichEditorCommands>(null)
 
-  if (workspace.active?.entityType !== EditableEntityType.Request) {
-    return null
-  }
+  const [isDragging, setIsDragging] = useState(false)
 
-  workspace.nextHelpTopic = 'requests/body'
-  const request = workspace.active as EditableRequest
+  session.nextHelpTopic = 'requests/body'
 
   const headerDoesNotMatchType = (bodyType: BodyType | undefined | null) => {
     let needsContextHeaderUpdate = true
     let mimeType = getBodyTypeMimeType(bodyType)
-    const contentTypeHeader = request.headers?.find(h => h.name === 'Content-Type')
+    const contentTypeHeader = props.request.headers?.find(h => h.name === 'Content-Type')
     if (contentTypeHeader) {
       needsContextHeaderUpdate = contentTypeHeader.value !== mimeType
     } else {
@@ -77,13 +77,13 @@ export const RequestBodyEditor = observer(() => {
     }
   }
 
-  const [allowUpdateHeader, setAllowUpdateHeader] = useState<boolean>(headerDoesNotMatchType(request.body.type))
-  const [editorMode, setEditorMode] = useState(getBodyTypeEditorMode(request.body.type))
+  const [allowUpdateHeader, setAllowUpdateHeader] = useState<boolean>(headerDoesNotMatchType(props.request.body.type))
+  const [editorMode, setEditorMode] = useState(getBodyTypeEditorMode(props.request.body.type))
 
   const updateBodyType = (val: BodyType | string) => {
     const v = toJS(val)
     const newBodyType = (v == "" ? undefined : v as unknown as BodyType) ?? BodyType.Text
-    workspace.setRequestBodyType(newBodyType)
+    props.request.setBodyType(newBodyType)
     setEditorMode(getBodyTypeEditorMode(newBodyType))
     setAllowUpdateHeader(headerDoesNotMatchType(newBodyType))
   }
@@ -95,16 +95,18 @@ export const RequestBodyEditor = observer(() => {
   }
 
   const updateBodyAsText = (data: string | undefined) => {
-    workspace.setRequestBodyData(data ?? '')
+    const value = data ?? ''
+    props.request.setBodyData(value)
+    workspace.updateEditorSessionText(props.request.id, RequestEditSessionType.Body, value, session.id)
   }
 
   const updateBodyAsFormData = (data: EditableNameValuePair[] | undefined) => {
-    workspace.setRequestBodyData(data ?? [])
+    props.request.setBodyData(data ?? [])
   }
 
   const updateTypeHeader = () => {
-    const mimeType = getBodyTypeMimeType(request.body.type)
-    let newHeaders = request.headers ? toJS(request.headers) : []
+    const mimeType = getBodyTypeMimeType(props.request.body.type)
+    let newHeaders = props.request.headers ? toJS(props.request.headers) : []
     const contentTypeHeader = newHeaders.find(h => h.name === 'Content-Type')
     if (contentTypeHeader) {
       if (mimeType.length === 0) {
@@ -123,7 +125,7 @@ export const RequestBodyEditor = observer(() => {
       }
     }
     setAllowUpdateHeader(false)
-    workspace.setRequestHeaders(newHeaders)
+    props.request.setHeaders(newHeaders)
   }
 
   const bodyTypeMenuItems = () => {
@@ -135,7 +137,7 @@ export const RequestBodyEditor = observer(() => {
   const pasteImageFromClipboard = async () => {
     try {
       const data = await clipboard.getClipboardImage()
-      workspace.setRequestBody({ type: BodyType.Raw, data })
+      props.request.setBody({ type: BodyType.Raw, data })
       feedback.toast('Image pasted from clipboard', ToastSeverity.Success)
     } catch (e) {
       feedback.toast(`Unable to access clipboard image - ${e}`, ToastSeverity.Error)
@@ -146,126 +148,186 @@ export const RequestBodyEditor = observer(() => {
     try {
       const data = await fileOps.openFile()
       if (!data) return
-      workspace.setRequestBody({ type: BodyType.Raw, data })
+      props.request.setBody({ type: BodyType.Raw, data })
     } catch (e) {
       feedback.toast(`Unable to open file - ${e}`, ToastSeverity.Error)
     }
   }
 
+  useEffect(() => {
+    const unregisterDragDrop = fileDragDrop.register(refContainer, {
+      onEnter: (_x, _y, _paths) => {
+        setIsDragging(true)
+      },
+      onOver: (_x, _y) => {
+        setIsDragging(true)
+      },
+      onLeave: () => {
+        setIsDragging(false)
+      },
+      onDrop: (file: DroppedFile) => {
+        setIsDragging(false)
+        switch (file.type) {
+          case 'binary':
+            props.request.setBody({
+              type: BodyType.Raw,
+              data: file.data
+            })
+            break
+          case 'text':
+            switch (file.extension) {
+              case 'json':
+                props.request.setBody({
+                  type: BodyType.JSON,
+                  data: file.data
+                })
+                break
+              case 'xml':
+                props.request.setBody({
+                  type: BodyType.XML,
+                  data: file.data
+                })
+                break
+              default:
+                props.request.setBody({
+                  type: BodyType.Text,
+                  data: file.data
+                })
+            }
+            refCommands.current?.setText(file.data)
+            break
+        }
+      }
+    })
+    return (() => {
+      unregisterDragDrop()
+    })
+  }, [])
+
   let mode
   let allowCopy: boolean
-  switch (request.body.type) {
+  switch (props.request.body.type) {
     case BodyType.Form:
-      allowCopy = request.body.data.length > 0
+      allowCopy = props.request.body.data.length > 0
       break
     case BodyType.JSON:
       mode = 'json'
-      allowCopy = request.body.data.length > 0
+      allowCopy = props.request.body.data.length > 0
       break
     case BodyType.XML:
       mode = 'xml'
-      allowCopy = request.body.data.length > 0
+      allowCopy = props.request.body.data.length > 0
       break
     case BodyType.Text:
-      allowCopy = request.body.data.length > 0
+      allowCopy = props.request.body.data.length > 0
       break
     default:
       allowCopy = false
   }
 
   const copyToClipboard = async () => {
-    switch (request.body.type) {
+    switch (props.request.body.type) {
       case BodyType.Form:
         await clipboard.writeTextToClipboard(
-          [...request.body.data.values()].map(pair => `${pair.name}=${pair.value}`).join('\n'))
+          [...props.request.body.data.values()].map(pair => `${pair.name}=${pair.value}`).join('\n'))
         break
       case BodyType.JSON:
       case BodyType.XML:
       case BodyType.Text:
-        await clipboard.writeTextToClipboard(request.body.data)
+        await clipboard.writeTextToClipboard(props.request.body.data)
         break
     }
   }
 
   return (
-    <Grid2 container direction='column' spacing={3} position='relative' width='100%' height='100%'>
-      <Grid2 container direction='row' display='flex' justifyContent='space-between'>
-        <Stack direction='row'>
-          <FormControl>
-            <InputLabel id='request-body-type-label-id'>Body Content Type</InputLabel>
-            <Select
-              labelId='request-method-label-id'
-              id="request-method"
-              value={request.body.type}
-              label="Body Content Type"
-              sx={{
-                width: "10em"
-              }}
-              size='small'
-              onChange={e => updateBodyType(e.target.value)}
-              aria-labelledby='request-body-type-label-id'
-            >
-              {bodyTypeMenuItems()}
-            </Select>
-          </FormControl>
-          {
-            allowCopy
-              ? <IconButton
-                aria-label="copy data to clipboard"
-                title="Copy Data to Clipboard"
-                color='primary'
-                sx={{ marginLeft: '16px' }}
-                onClick={_ => copyToClipboard()}>
-                <ContentCopyIcon />
-              </IconButton>
-              : <></>
-          }
-        </Stack>
-        <Grid2 container direction='row' spacing={2}>
-          <Button variant='outlined' size='small' disabled={![BodyType.JSON, BodyType.XML].includes(request.body.type)} onClick={performBeautify}>Beautify</Button>
-          <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
+    <Box id='request-body-container' ref={refContainer} position='relative' width='100%' height='100%' paddingTop='0.7em'>
+      <Box top={0}
+        left={0}
+        width='100%'
+        height='100%'
+        position='absolute'
+        display={isDragging ? 'block' : 'none'}
+        className="MuiBackdrop-root MuiModal-backdrop"
+        sx={{ zIndex: 99999, opacity: 0.5, transition: "opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms", backgroundColor: "#008000" }} />
+
+      <Stack direction='column' spacing={3} position='relative' width='100%' height='100%'>
+        <Grid2 container direction='row' display='flex' justifyContent='space-between' maxWidth='65em'>
+          <Stack direction='row'>
+            <FormControl>
+              <InputLabel id='request-body-type-label-id'>Body Content Type</InputLabel>
+              <Select
+                labelId='request-method-label-id'
+                id="request-method"
+                value={props.request.body.type}
+                label="Body Content Type"
+                sx={{
+                  width: "10em"
+                }}
+                size='small'
+                onChange={e => updateBodyType(e.target.value)}
+                aria-labelledby='request-body-type-label-id'
+              >
+                {bodyTypeMenuItems()}
+              </Select>
+            </FormControl>
+            {
+              allowCopy
+                ? <IconButton
+                  aria-label="copy data to clipboard"
+                  title="Copy Data to Clipboard"
+                  color='primary'
+                  sx={{ marginLeft: '16px' }}
+                  onClick={_ => copyToClipboard()}>
+                  <ContentCopyIcon />
+                </IconButton>
+                : <></>
+            }
+          </Stack>
+          <Grid2 container direction='row' spacing={2}>
+            <Button variant='outlined' size='small' disabled={![BodyType.JSON, BodyType.XML].includes(props.request.body.type)} onClick={performBeautify}>Beautify</Button>
+            <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
+          </Grid2>
         </Grid2>
-      </Grid2>
-      {request.body.type == BodyType.None
-        ? <></>
-        : request.body.type == BodyType.Form
-          ? <NameValueEditor
-            title='body form data'
-            values={request.body.data as EditableNameValuePair[]}
-            nameHeader='Name'
-            valueHeader='Value'
-            onUpdate={updateBodyAsFormData} />
-          : request.body.type == BodyType.Raw
-            ? <Stack
-              direction='row'
-              sx={{
-                borderRadius: '4px',
-                overflow: 'hidden',
-                border: '1px solid #444!important',
-                width: 'fit-content',
-              }}
-            >
-              <IconButton aria-label='load body from file' title='Load Body from File' onClick={() => openFile()} sx={{ marginRight: '4px' }}>
-                <FileOpenIcon color='primary' />
-              </IconButton>
-              <IconButton aria-label='copy body from clipboard' title='Paste Body from Clipboard' disabled={!clipboard.hasImage}
-                onClick={() => pasteImageFromClipboard()} sx={{ marginRight: '4px' }}>
-                <ContentPasteGoIcon color='primary' />
-              </IconButton>
-              <Box padding='10px'>{request.body.data ? request.body.data.length.toLocaleString() + ' Bytes' : '(None)'}</Box>
-            </Stack>
-            :
-            <Grid2 flexGrow={1}>
+        {props.request.body.type == BodyType.None
+          ? <></>
+          : props.request.body.type == BodyType.Form
+            ? <NameValueEditor
+              title='body form data'
+              values={props.request.body.data as EditableNameValuePair[]}
+              nameHeader='Name'
+              valueHeader='Value'
+              onUpdate={updateBodyAsFormData} />
+            : props.request.body.type == BodyType.Raw
+              ? <Stack
+                direction='row'
+                sx={{
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  border: '1px solid #444!important',
+                  width: 'fit-content',
+                }}
+              >
+                <IconButton aria-label='load body from file' title='Load Body from File' onClick={() => openFile()} sx={{ marginRight: '4px' }}>
+                  <FileOpenIcon color='primary' />
+                </IconButton>
+                <IconButton aria-label='copy body from clipboard' title='Paste Body from Clipboard' disabled={!clipboard.hasImage}
+                  onClick={() => pasteImageFromClipboard()} sx={{ marginRight: '4px' }}>
+                  <ContentPasteGoIcon color='primary' />
+                </IconButton>
+                <Box padding='10px'>{props.request.body.data ? props.request.body.data.length.toLocaleString() + ' Bytes' : '(None)'}</Box>
+              </Stack>
+              :
               <RichEditor
+                id={props.request.id}
                 sx={{ width: '100%', height: '100%' }}
                 ref={refCommands}
-                entity={request}
+                type={RequestEditSessionType.Body}
+                value={props.request.body.data}
                 mode={editorMode}
-                onGetValue={() => request.body.data as string}
                 onUpdateValue={updateBodyAsText}
               />
-            </Grid2>
-      }
-    </Grid2>
+        }
+      </Stack>
+    </Box>
   )
 })

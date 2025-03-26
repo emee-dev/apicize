@@ -5,11 +5,12 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { useState } from "react"
-import { ParameterSection } from "../parameter-section"
+import { ParameterSection } from "./parameter-section"
 import { MenuPosition } from "../../../models/menu-position"
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
+import { useWorkspaceSession } from "../../../contexts/workspace-session.context"
 
 export const ProxySection = observer((props: {
     includeHeader: boolean,
@@ -17,6 +18,7 @@ export const ProxySection = observer((props: {
     const workspace = useWorkspace()
     const feedback = useFeedback()
     const theme = useTheme()
+    const session = useWorkspaceSession()
 
     const [proxyMenu, setProxyMenu] = useState<MenuPosition | undefined>(undefined)
 
@@ -36,19 +38,21 @@ export const ProxySection = observer((props: {
     const handleSelectHeader = (headerId: string, helpTopic?: string) => {
         // closeAllMenus()
         if (helpTopic) {
-            workspace.updateExpanded(headerId, true)
-            workspace.showHelp(helpTopic)
+            session.updateExpanded(headerId, true)
+            session.showHelp(helpTopic)
         }
     }
 
     const handleMoveProxy = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
         selectProxy(id)
-        workspace.moveProxy(id, destinationID, onLowerHalf, isSection)
+        workspace.moveProxy(session.id, id, destinationID, onLowerHalf, isSection)
     }
 
     const handleDupeProxy = () => {
         closeProxyMenu()
-        if (workspace.active?.entityType === EditableEntityType.Proxy && workspace.active?.id) workspace.copyProxy(workspace.active?.id)
+        const id = proxyMenu?.id
+        if (!id) return
+        workspace.copyProxy(id)
     }
 
     const showProxyMenu = (event: React.MouseEvent, persistence: Persistence, id: string) => {
@@ -64,8 +68,8 @@ export const ProxySection = observer((props: {
 
     const handleDeleteProxy = () => {
         closeProxyMenu()
-        if (!workspace.active?.id || workspace.active?.entityType !== EditableEntityType.Proxy) return
-        const id = workspace.active?.id
+        const id = proxyMenu?.id
+        if (!id) return
         feedback.confirm({
             title: 'Delete Proxy',
             message: `Are you are you sure you want to delete ${GetTitle(workspace.proxies.get(id))}?`,
@@ -91,7 +95,7 @@ export const ProxySection = observer((props: {
                     left: proxyMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddProxy(proxyMenu.persistence, workspace.active?.id)}>
+                <MenuItem onClick={(_) => handleAddProxy(proxyMenu.persistence, proxyMenu?.id)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='proxy'><ProxyIcon /></SvgIcon>
                     </ListItemIcon>
@@ -111,11 +115,6 @@ export const ProxySection = observer((props: {
                 </MenuItem>
             </Menu>
             : <></>
-    }
-
-    if (!props.includeHeader && !workspace.navTreeInitialized.has(EditableEntityType.Proxy)) {
-        workspace.updateExpanded(['hdr-p-pub', 'hdr-p-priv', 'hdr-p-vault'], true)
-        workspace.setInitialized(EditableEntityType.Proxy)
     }
 
     return <ParameterSection

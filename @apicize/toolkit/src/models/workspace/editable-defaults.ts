@@ -1,34 +1,32 @@
-import { Selection, SelectedParameters, Workspace, SelectedParametersWithData } from "@apicize/lib-typescript"
-import { EditableItem, EditableState } from "../editable"
-import { computed, observable, toJS } from "mobx"
+import { Selection, SelectedParametersWithData, GetTitle } from "@apicize/lib-typescript"
+import { EditableState } from "../editable"
+import { action, computed, observable, toJS } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
 import { NO_SELECTION, NO_SELECTION_ID } from "../store"
 import { IndexedEntityManager } from "../indexed-entity-manager"
-import { EditableExternalData } from "./editable-external-data"
+import { WorkspaceStore } from "../../contexts/workspace.context"
 
-export class EditableDefaults implements EditableItem, SelectedParametersWithData {
+export class EditableDefaults implements SelectedParametersWithData {
     @observable accessor selectedScenario: Selection = NO_SELECTION
     @observable accessor selectedAuthorization: Selection = NO_SELECTION
     @observable accessor selectedCertificate: Selection = NO_SELECTION
     @observable accessor selectedProxy: Selection = NO_SELECTION
     @observable accessor selectedData: Selection = NO_SELECTION
 
-    @observable accessor data = new IndexedEntityManager<EditableExternalData>(new Map(), [], new Map())
-
     @observable accessor id = 'Defaults'
     @observable accessor name = 'Defaults'
-    public readonly entityType = EditableEntityType.Defaults;
-    public readonly dirty = false;
+    public dirty = false;
 
-    static fromWorkspace(workspace: Workspace, data: IndexedEntityManager<EditableExternalData>): EditableDefaults {
-        const result = new EditableDefaults()
-        result.selectedScenario = workspace?.defaults?.selectedScenario ?? NO_SELECTION
-        result.selectedAuthorization = workspace?.defaults?.selectedAuthorization ?? NO_SELECTION
-        result.selectedCertificate = workspace?.defaults?.selectedCertificate ?? NO_SELECTION
-        result.selectedProxy = workspace?.defaults?.selectedProxy ?? NO_SELECTION
-        result.selectedData = workspace?.defaults?.selectedData ?? NO_SELECTION
-        result.data = data;
-        return result
+    public constructor(defaults: SelectedParametersWithData, private readonly workspace: WorkspaceStore) {
+        this.selectedScenario = defaults?.selectedScenario ?? NO_SELECTION
+        this.selectedAuthorization = defaults?.selectedAuthorization ?? NO_SELECTION
+        this.selectedCertificate = defaults?.selectedCertificate ?? NO_SELECTION
+        this.selectedProxy = defaults?.selectedProxy ?? NO_SELECTION
+        this.selectedData = defaults?.selectedData ?? NO_SELECTION
+    }
+
+    static fromWorkspace(defaults: SelectedParametersWithData, workspace: WorkspaceStore): EditableDefaults {
+        return new EditableDefaults(defaults, workspace)
     }
 
     toWorkspace(): SelectedParametersWithData {
@@ -41,21 +39,48 @@ export class EditableDefaults implements EditableItem, SelectedParametersWithDat
         }
     }
 
-    @computed get dataInvalid() {
-        let invalid = false
-        for (const d of this.data.values) {
-            if (d.nameInvalid) {
-                invalid = true
-            }
-        }
-        return invalid
+    @action
+    setScenarioId(entityId: string) {
+        this.selectedScenario = entityId == NO_SELECTION_ID
+            ? NO_SELECTION
+            : { id: entityId, name: GetTitle(this.workspace.scenarios.get(entityId)) }
+        this.dirty = true
+        this.workspace.dirty = true
     }
 
-    @computed get state() {
-        return (this.dataInvalid)
-            ? EditableState.Warning
-            : EditableState.None
+    @action
+    setAuthorizationId(entityId: string) {
+        this.selectedAuthorization = entityId == NO_SELECTION_ID
+            ? NO_SELECTION
+            : { id: entityId, name: GetTitle(this.workspace.authorizations.get(entityId)) }
+        this.dirty = true
+        this.workspace.dirty = true
     }
 
+    @action
+    setCertificateId(entityId: string) {
+        this.selectedCertificate = entityId == NO_SELECTION_ID
+            ? NO_SELECTION
+            : { id: entityId, name: GetTitle(this.workspace.certificates.get(entityId)) }
+        this.dirty = true
+        this.workspace.dirty = true
+    }
+
+    @action
+    setProxyId(entityId: string) {
+        this.selectedProxy = entityId == NO_SELECTION_ID
+            ? NO_SELECTION
+            : { id: entityId, name: GetTitle(this.workspace.proxies.get(entityId)) }
+        this.dirty = true
+        this.workspace.dirty = true
+    }
+    @action
+    setDataId(entityId: string) {
+        this.selectedData = entityId === NO_SELECTION_ID
+            ? NO_SELECTION
+            : { id: entityId, name: GetTitle(this.workspace.externalData.get(entityId)) }
+        this.dirty = true
+        this.workspace.dirty = true
+    }
 }
 

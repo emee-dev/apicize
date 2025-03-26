@@ -3,19 +3,15 @@ import { MenuItem, FormControl, InputLabel, Select } from '@mui/material'
 import { Stack } from '@mui/material'
 import { DEFAULT_SELECTION_ID } from '../../../models/store'
 import { EditableRequest } from '../../../models/workspace/editable-request'
-import { EditableEntityType } from '../../../models/workspace/editable-entity-type'
 import { observer } from 'mobx-react-lite'
 import { useWorkspace } from '../../../contexts/workspace.context'
+import { EditableRequestGroup } from '../../../models/workspace/editable-request-group'
+import { useWorkspaceSession } from '../../../contexts/workspace-session.context'
 
-export const RequestParametersEditor = observer(() => {
+export const RequestParametersEditor = observer((props: { requestEntry: EditableRequest | EditableRequestGroup }) => {
     const workspace = useWorkspace()
-
-    if (workspace.active?.entityType !== EditableEntityType.Request && workspace.active?.entityType !== EditableEntityType.Group) {
-        return null
-    }
-
-    workspace.nextHelpTopic = 'requests/parameters'
-    const requestEntry = workspace.active as EditableRequest
+    const session = useWorkspaceSession()
+    session.nextHelpTopic = 'requests/parameters'
 
     let credIndex = 0
     const itemsFromSelections = (selections: EntitySelection[]) => {
@@ -24,7 +20,7 @@ export const RequestParametersEditor = observer(() => {
         ))
     }
 
-    const lists = workspace.getRequestParameterLists()
+    const lists = workspace.getRequestParameterLists(props.requestEntry)
 
     return (
         <Stack spacing={3}>
@@ -35,8 +31,8 @@ export const RequestParametersEditor = observer(() => {
                     aria-labelledby='scenario-label-id'
                     id='cred-scenario'
                     label='Scenario'
-                    value={requestEntry.selectedScenario?.id ?? DEFAULT_SELECTION_ID}
-                    onChange={(e) => workspace.setRequestSelectedScenarioId(e.target.value)}
+                    value={props.requestEntry.selectedScenario?.id ?? DEFAULT_SELECTION_ID}
+                    onChange={(e) => props.requestEntry.setSelectedScenarioId(e.target.value)}
                     fullWidth
                     size='small'
                 >
@@ -50,8 +46,8 @@ export const RequestParametersEditor = observer(() => {
                     aria-labelledby='auth-label-id'
                     id='cred-auth'
                     label='Authorization'
-                    value={requestEntry.selectedAuthorization?.id ?? DEFAULT_SELECTION_ID}
-                    onChange={(e) => workspace.setRequestSelectedAuthorizationId(e.target.value)}
+                    value={props.requestEntry.selectedAuthorization?.id ?? DEFAULT_SELECTION_ID}
+                    onChange={(e) => props.requestEntry.setSelectedAuthorizationId(e.target.value)}
                     fullWidth
                     size='small'
                 >
@@ -65,8 +61,8 @@ export const RequestParametersEditor = observer(() => {
                     aria-labelledby='cert-label-id'
                     id='cred-cert'
                     label='Certificate'
-                    value={requestEntry.selectedCertificate?.id ?? DEFAULT_SELECTION_ID}
-                    onChange={(e) => workspace.setRequestSelectedCertificateId(e.target.value)}
+                    value={props.requestEntry.selectedCertificate?.id ?? DEFAULT_SELECTION_ID}
+                    onChange={(e) => props.requestEntry.setSelectedCertificateId(e.target.value)}
                     fullWidth
                     size='small'
                 >
@@ -80,8 +76,8 @@ export const RequestParametersEditor = observer(() => {
                     aria-labelledby='proxy-label-id'
                     id='cred-proxy'
                     label='Proxy'
-                    value={requestEntry.selectedProxy?.id ?? DEFAULT_SELECTION_ID}
-                    onChange={(e) => workspace.setRequestSelectedProxyId(e.target.value)}
+                    value={props.requestEntry.selectedProxy?.id ?? DEFAULT_SELECTION_ID}
+                    onChange={(e) => props.requestEntry.setSelectedProxyId(e.target.value)}
                     fullWidth
                     size='small'
                 >

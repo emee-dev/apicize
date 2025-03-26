@@ -1,12 +1,12 @@
 import {
     ApiKeyAuthorization, Authorization, AuthorizationType,
     BasicAuthorization, OAuth2ClientAuthorization, Selection,
-    OAuth2PkceAuthorization
-} from "@apicize/lib-typescript"
+    OAuth2PkceAuthorization} from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
-import { computed, observable } from "mobx"
+import { action, computed, observable } from "mobx"
 import { NO_SELECTION } from "../store"
 import { EditableEntityType } from "./editable-entity-type"
+import { WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableAuthorization extends Editable<Authorization> {
     public readonly entityType = EditableEntityType.Authorization
@@ -23,47 +23,58 @@ export class EditableAuthorization extends Editable<Authorization> {
     @observable accessor clientId = ''
     @observable accessor clientSecret = ''
     @observable accessor scope = ''
+    @observable accessor audience = ''
     @observable accessor selectedCertificate: Selection | undefined = undefined
     @observable accessor selectedProxy: Selection | undefined = undefined
     // PKCE values (must be set in the client)
     @observable accessor accessToken: string | undefined = undefined
     @observable accessor refreshToken: string | undefined = undefined
     @observable accessor expiration: number | undefined = undefined
+    @observable accessor sendCredentialsInBody: boolean = false
 
-    static fromWorkspace(entry: Authorization): EditableAuthorization {
-        let result = new EditableAuthorization()
-        result.id = entry.id
-        result.name = entry.name ?? ''
-        result.type = entry.type
+    public constructor(authorization: Authorization, workspace: WorkspaceStore) {
+        super(workspace)
+        this.id = authorization.id
+        this.name = authorization.name ?? ''
+        this.type = authorization.type
 
-        switch (entry.type) {
+        switch (authorization.type) {
             case AuthorizationType.ApiKey:
-                result.header = entry.header
-                result.value = entry.value
+                this.header = authorization.header
+                this.value = authorization.value
                 break
             case AuthorizationType.Basic:
-                result.username = entry.username
-                result.password = entry.password
+                this.username = authorization.username
+                this.password = authorization.password
                 break
             case AuthorizationType.OAuth2Client:
-                result.accessTokenUrl = entry.accessTokenUrl
-                result.clientId = entry.clientId
-                result.clientSecret = entry.clientSecret
-                result.scope = entry.scope
-                result.selectedCertificate = entry.selectedCertificate ?? NO_SELECTION
-                result.selectedProxy = entry.selectedProxy ?? NO_SELECTION
+                this.accessTokenUrl = authorization.accessTokenUrl
+                this.clientId = authorization.clientId
+                this.clientSecret = authorization.clientSecret
+                this.sendCredentialsInBody = authorization.sendCredentialsInBody === true
+                this.scope = authorization.scope
+                this.audience = authorization.audience
+                this.selectedCertificate = authorization.selectedCertificate ?? NO_SELECTION
+                this.selectedProxy = authorization.selectedProxy ?? NO_SELECTION
                 break
             case AuthorizationType.OAuth2Pkce:
-                result.authorizeUrl = entry.authorizeUrl
-                result.accessTokenUrl = entry.accessTokenUrl
-                result.clientId = entry.clientId
-                result.scope = entry.scope
+                this.authorizeUrl = authorization.authorizeUrl
+                this.accessTokenUrl = authorization.accessTokenUrl
+                this.clientId = authorization.clientId
+                this.sendCredentialsInBody = authorization.sendCredentialsInBody === true
+                this.scope = authorization.scope
+                this.audience = authorization.audience
                 break
             default:
                 throw new Error('Invalid authorization type')
         }
 
-        return result
+        return this
+    }
+
+
+    static fromWorkspace(entry: Authorization, workspace: WorkspaceStore): EditableAuthorization {
+        return new EditableAuthorization(entry, workspace)
     }
 
     toWorkspace(): Authorization {
@@ -89,7 +100,9 @@ export class EditableAuthorization extends Editable<Authorization> {
                     accessTokenUrl: this.accessTokenUrl,
                     clientId: this.clientId,
                     clientSecret: this.clientSecret,
+                    sendCredentialsInBody: this.sendCredentialsInBody,
                     scope: this.scope,
+                    audience: this.audience,
                     selectedCertificate: this.selectedCertificate ?? NO_SELECTION,
                     selectedProxy: this.selectedProxy ?? NO_SELECTION
                 } as OAuth2ClientAuthorization
@@ -100,7 +113,9 @@ export class EditableAuthorization extends Editable<Authorization> {
                     authorizeUrl: this.authorizeUrl,
                     accessTokenUrl: this.accessTokenUrl,
                     clientId: this.clientId,
+                    sendCredentialsInBody: this.sendCredentialsInBody,
                     scope: this.scope,
+                    audience: this.audience,
                     token: this.accessToken,
                     refreshToken: this.refreshToken,
                     expiration: this.expiration,
@@ -115,8 +130,88 @@ export class EditableAuthorization extends Editable<Authorization> {
         return result
     }
 
-    @computed get nameInvalid() {
-        return ((this.name?.length ?? 0) === 0)
+    @action
+    setType(value: AuthorizationType) {
+        this.type = value
+        this.markAsDirty()
+    }
+
+    @action
+    setUsername(value: string) {
+        this.username = value
+        this.markAsDirty()
+    }
+
+    @action
+    setPassword(value: string) {
+        this.password = value
+        this.markAsDirty()
+    }
+
+    @action
+    setAccessTokenUrl(value: string) {
+        this.accessTokenUrl = value
+        this.markAsDirty()
+    }
+
+    @action
+    setUrl(value: string) {
+        this.authorizeUrl = value
+        this.markAsDirty()
+    }
+
+    @action
+    setClientId(value: string) {
+        this.clientId = value
+        this.markAsDirty()
+    }
+
+    @action
+    setClientSecret(value: string) {
+        this.clientSecret = value
+        this.markAsDirty()
+    }
+
+    @action
+    setCredentialsInBody(value: boolean) {
+        this.sendCredentialsInBody = value
+        this.markAsDirty()
+    }
+
+    @action
+    setScope(value: string) {
+        this.scope = value
+        this.markAsDirty()
+    }
+
+    @action
+    setAudience(value: string) {
+        this.audience = value
+        this.markAsDirty()
+    }
+
+    @action
+    setSelectedCertificate(selection: Selection | undefined) {
+        this.selectedCertificate = selection
+        this.markAsDirty()
+    }
+
+    @action
+    setSelectedProxy(selection: Selection | undefined) {
+        this.selectedProxy = selection
+        this.markAsDirty()
+    }
+
+    @action
+    setHeader(value: string) {
+        this.header = value
+        this.markAsDirty()
+    }
+
+    @action
+    setValue(value: string) {
+        this.value = value
+        this.markAsDirty()
     }
 
     @computed get headerInvalid() {

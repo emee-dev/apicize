@@ -7,7 +7,7 @@ export class FileOperationsStore {
         onSaveWorkbook: () => Promise<void>,
         onSaveWorkbookAs: () => Promise<void>,
         onOpenSshFile: (fileType: SshFileType) => Promise<string | null>,
-        onOpenFile: () => Promise<string | null>,
+        onOpenFile: () => Promise<Uint8Array | null>,
         onSaveSettings: () => Promise<void>,
         onRetrieveHelpTopic: (showTopic: string) => Promise<string>,
     }) {

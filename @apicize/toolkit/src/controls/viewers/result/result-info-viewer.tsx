@@ -14,6 +14,7 @@ import ViewIcon from "../../../icons/view-icon"
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
 import beautify from "js-beautify"
+import { toJS } from "mobx"
 
 
 const ApicizeErrorToString = (error?: ApicizeError): string => {
@@ -21,18 +22,17 @@ const ApicizeErrorToString = (error?: ApicizeError): string => {
     return error ? `[${error.type}] ${error.description}${sub(error.source)}` : ''
 }
 
-export const ResultInfoViewer = observer((props: { requestOrGroupId: string, index: number }) => {
+export const ResultInfoViewer = observer((props: { result: ExecutionResult }) => {
 
     const workspace = useWorkspace()
     const theme = useTheme()
     const clipboardCtx = useClipboard()
     const feedback = useFeedback()
-    const requestOrGroupId = props.requestOrGroupId
-
-    const mainResult = workspace.getExecutionResult(props.requestOrGroupId, props.index)
-    if (!mainResult) return null
 
     let idx = 0
+
+    let mainResult = props.result
+    let mainRequestOrGroupId = props.result.info.requestOrGroupId
 
     const fmtMinSec = (value: number, subZero: string | null = null) => {
         if (value === 0 && subZero) {
@@ -106,7 +106,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
             }
             {
                 (props.result.info.childIndexes ?? []).map(childIndex => {
-                    const child = workspace.getExecutionResult(requestOrGroupId, childIndex)
+                    const child = workspace.getExecutionResult(mainRequestOrGroupId, childIndex)
                     return child ? <RenderExecution key={`result-${idx++}`} result={child} /> : null
                 })
             }
@@ -196,7 +196,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
     const changeResult = (e: React.MouseEvent, index: number) => {
         e.preventDefault()
         e.stopPropagation()
-        workspace.changeResultIndex(requestOrGroupId, index)
+        workspace.changeResultIndex(props.result.info.requestOrGroupId, index)
 
     }
 
@@ -204,7 +204,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, ind
         try {
             e.preventDefault()
             e.stopPropagation()
-            const payload = workspace.getExecutionResultSummary(props.requestOrGroupId, index)
+            const payload = workspace.getExecutionResultSummary(props.result.info.requestOrGroupId, index)
             if (payload) {
                 clipboardCtx.writeTextToClipboard(
                     beautify.js_beautify(JSON.stringify(payload), {})

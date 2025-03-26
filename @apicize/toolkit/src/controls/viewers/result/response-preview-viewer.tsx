@@ -3,21 +3,18 @@ import { IconButton, Stack, Typography } from "@mui/material";
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import beautify from "js-beautify";
 import { useClipboard } from "../../../contexts/clipboard.context";
-import { useWorkspace } from "../../../contexts/workspace.context";
 import { EditorMode } from "../../../models/editor-mode";
 import { RichViewer } from "../rich-viewer";
+import { ResultEditSessionType } from "../../../contexts/workspace-session.context";
+import { ExecutionResult } from "../../../models/workspace/execution";
 
-export function ResultResponsePreview(props: { requestOrGroupId: string, index: number }) {
-    const workspace = useWorkspace()
+export function ResultResponsePreview(props: { result: ExecutionResult }) {
     const clipboard = useClipboard()
 
-    const result = workspace.getExecutionResult(props.requestOrGroupId, props.index)
-    if (!result?.response) {
-        return null
-    }
+    const headers = props.result.response?.headers
+    const body = props.result.response?.body
 
-    const headers = result.response.headers
-    const body = result.response.body
+    debugger
 
     let extension = ''
     for (const [name, value] of Object.entries(headers ?? {})) {
@@ -30,34 +27,44 @@ export function ResultResponsePreview(props: { requestOrGroupId: string, index: 
         }
     }
 
-    const isImage = KNOWN_IMAGE_EXTENSIONS.indexOf(extension) !== -1
-    let text = body?.text ?? ''
-    if ((!isImage) && text.length > 0) {
-        switch (extension) {
-            case 'html':
-                text = beautify.html_beautify(text, {})
-                break
-            case 'css':
-                text = beautify.css_beautify(text, {})
-                break
-            case 'js':
-                text = beautify.js_beautify(text, {})
-                break
-            case 'json':
-                text = beautify.js_beautify(text, {})
-                break
-            default:
-                break
-        }
+    let image: Uint8Array = new Uint8Array()
+    let text: string = ''
+
+    switch (body?.type) {
+        case 'Binary':
+            if (KNOWN_IMAGE_EXTENSIONS.indexOf(extension) !== -1 && body.data.length > 0) {
+                image = body.data
+            }
+            break
+        case 'JSON':
+            text = beautify.js_beautify(JSON.stringify(body.data), {})
+            break
+        case 'Text':
+            switch (extension) {
+                case 'html':
+                    text = beautify.html_beautify(body.data, {})
+                    break
+                case 'css':
+                    text = beautify.css_beautify(body.data, {})
+                    break
+                case 'js':
+                    text = beautify.js_beautify(body.data, {})
+                    break
+                case 'json':
+                    text = beautify.js_beautify(body.data, {})
+                    break
+                default:
+                    text = body.data
+            }
     }
 
-    const showImageCopy = isImage && ((body?.data?.length ?? 0) > 0)
-    const showTextCopy = (!isImage) && ((text.length ?? 0) > 0)
+    let hasImage = image.length > 0
+    let hasText = text.length > 0
 
     let viewer
-    if (isImage && showImageCopy) {
-        viewer = (<ImageViewer base64ToRender={body?.data} extensionToRender={extension} />)
-    } else {
+    if (hasImage) {
+        viewer = (<ImageViewer data={image} extensionToRender={extension} />)
+    } else if (hasText) {
         let mode: EditorMode | undefined
         switch (extension) {
             case 'json':
@@ -66,9 +73,6 @@ export function ResultResponsePreview(props: { requestOrGroupId: string, index: 
             case 'xml':
                 mode = EditorMode.xml
                 break
-            case 'txt':
-            case 'text':
-                mode = EditorMode.txt
                 break
             case 'html':
             case 'htm':
@@ -77,30 +81,39 @@ export function ResultResponsePreview(props: { requestOrGroupId: string, index: 
             case 'css':
                 mode = EditorMode.css
                 break
+            case 'txt':
+            case 'text':
+            default:
+                mode = EditorMode.txt
         }
 
         viewer = <RichViewer
+            id={props.result.info.requestOrGroupId}
+            index={props.result.info.index}
+            type={ResultEditSessionType.Preview}
             mode={mode}
             text={text}
             beautify={true}
             sx={{ width: '100%', height: '100%' }}
         />
+    } else {
+        <></>
     }
 
     return (
         <Stack sx={{ bottom: 0, overflow: 'hidden', position: 'relative', height: '100%', width: '100%', display: 'flex' }}>
             <Typography variant='h2' sx={{ marginTop: 0, flexGrow: 0 }} component='div' aria-label="response body preview">
                 Response Body (Preview)
-                {showImageCopy
+                {hasImage
                     ? (<IconButton
                         aria-label="copy image to clipboard"
                         title="Copy Image to Clipboard"
                         color='primary'
                         sx={{ marginLeft: '16px' }}
-                        onClick={_ => { if (body?.data) clipboard.writeImageToClipboard(body.data) }} >
+                        onClick={_ => clipboard.writeImageToClipboard(image)}>
                         <ContentCopyIcon />
                     </IconButton>)
-                    : showTextCopy
+                    : hasText
                         ? (<IconButton
                             aria-label="copy text to clipboard"
                             title="Copy Text to Clipboard"

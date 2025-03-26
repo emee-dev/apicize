@@ -1,39 +1,28 @@
-import { ToggleButton, Button, Box, Grid2, Link, SvgIcon, IconButton, FormControl } from "@mui/material";
+import { ToggleButton, Box, Grid2, SvgIcon } from "@mui/material";
 import { SxProps } from "@mui/material";
 import { observer } from "mobx-react-lite";
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined'
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
 import { EditableEntityType } from "../models/workspace/editable-entity-type";
-import { EditableRequest } from "../models/workspace/editable-request";
 import { useWorkspace, WorkspaceMode } from "../contexts/workspace.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 import BlockIcon from '@mui/icons-material/Block';
 import { NO_SELECTION_ID } from "../models/store";
 import SeedIcon from "../icons/seed-icon";
+import { EditableRequestEntry } from "../models/workspace/editable-request-entry";
+import { useApicize } from "../contexts/apicize.context";
 
-export const RunToolbar = observer((props: { sx?: SxProps }) => {
+export const RunToolbar = observer((props: { sx?: SxProps, requestEntry: EditableRequestEntry }) => {
+    const apicize = useApicize()
     const workspace = useWorkspace()
     const feedback = useFeedback()
 
-    const entityType = workspace.active?.entityType
-    const request = (entityType === EditableEntityType.Request || entityType === EditableEntityType.Group)
-        ? workspace.active as EditableRequest
-        : null
-
-    const requestId = request?.id ?? ''
+    const requestId = props.requestEntry.id
     const execution = workspace.executions.get(requestId)
     const running = execution?.running ?? false
 
-    if (!request) {
-        return null
-    }
-
     const handleRunClick = (singleRun: boolean = false) => async () => {
         try {
-            if (!(workspace.active && (workspace.active.entityType === EditableEntityType.Request || workspace.active.entityType === EditableEntityType.Group))) {
-                return
-            }
-            const requestId = workspace.active.id
             await workspace.executeRequest(requestId, singleRun)
         } catch (e) {
             let msg1 = `${e}`
@@ -42,17 +31,15 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
     }
 
     const handleCancel = async () => {
-        if (workspace.active?.id) {
-            try {
-                await workspace.cancelRequest(workspace.active?.id)
-                feedback.toast('Request cancelled', ToastSeverity.Info)
-            } catch (e) {
-                feedback.toast(`Unable to cancel request - ${e}`, ToastSeverity.Error)
-            }
+        try {
+            await workspace.cancelRequest(requestId)
+            feedback.toast('Request cancelled', ToastSeverity.Info)
+        } catch (e) {
+            feedback.toast(`Unable to cancel request - ${e}`, ToastSeverity.Error)
         }
     }
 
-    const label = entityType === EditableEntityType.Group ? 'group' : 'request'
+    const label = props.requestEntry.entityType === EditableEntityType.Group ? 'group' : 'request'
 
     let runDisplay: string
     let multiDisplay: string
@@ -64,7 +51,7 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
         cancelDisplay = 'inline-flex'
     } else {
         runDisplay = 'inline-flex'
-        multiDisplay = request.runs > 1 ? 'inline-flex' : 'none'
+        multiDisplay = props.requestEntry.runs > 1 ? 'inline-flex' : 'none'
         cancelDisplay = 'none'
     }
 
@@ -73,10 +60,10 @@ export const RunToolbar = observer((props: { sx?: SxProps }) => {
     return (
         <Grid2 container direction={'row'} display='flex' flexGrow={1} marginLeft='2em' alignItems='center' justifyContent='space-between' sx={props.sx}>
             <Box>
-                <ToggleButton value='Run' sx={{ display: runDisplay }} title={`Run selected ${label} once (${workspace.ctrlKey}-Enter)`} size='small' disabled={running} onClick={handleRunClick(true)}>
+                <ToggleButton value='Run' sx={{ display: runDisplay }} title={`Run selected ${label} once (${apicize.ctrlKey}-Enter)`} size='small' disabled={running} onClick={handleRunClick(true)}>
                     <PlayCircleOutlined color={running ? 'disabled' : 'success'} />
                 </ToggleButton>
-                <ToggleButton value='Multi' sx={{ display: multiDisplay }} title={`Run selected ${label} ${request.runs} time (${workspace.ctrlKey}-Shift-Enter)`} size='small' disabled={running} onClick={handleRunClick()}>
+                <ToggleButton value='Multi' sx={{ display: multiDisplay }} title={`Run selected ${label} ${props.requestEntry.runs} time (${apicize.ctrlKey}-Shift-Enter)`} size='small' disabled={running} onClick={handleRunClick()}>
                     <PlayCircleFilledIcon color={(running) ? 'disabled' : 'success'} />
                 </ToggleButton>
                 <ToggleButton value='Cancel' sx={{ display: cancelDisplay }} title='Cancel' size='small' onClick={() => handleCancel()}>

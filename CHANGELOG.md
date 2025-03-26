@@ -1,5 +1,17 @@
 # Change Log
 
+# 0.17.3
+
+* Add drag-drop file support for request bodies and test
+* Reduce base64/uint8 conversions
+* Refactor stores to prepare for multi-window support
+
+# 0.17.2
+
+* Add Audience and Send Credentials in Body to OAuth2
+* Fix Communication Log width
+* Expand group when moving request/group to it
+
 # 0.17.1
 
 * Fix seed data icon

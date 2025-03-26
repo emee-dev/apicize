@@ -7,9 +7,9 @@ import LogIcon from "../../icons/log-icon"
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
-import { useWorkspace } from "../../contexts/workspace.context"
-import { Component, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useClipboard } from "../../contexts/clipboard.context"
+import { useWorkspaceSession } from "../../contexts/workspace-session.context"
 
 export const LogViewer = observer((props: {
     sx?: SxProps<Theme>
@@ -17,7 +17,7 @@ export const LogViewer = observer((props: {
     const log = useLog()
     let ctr = 0;
     const clipboard = useClipboard()
-    const workspace = useWorkspace()
+    const session = useWorkspaceSession()
     const bottomRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -79,11 +79,11 @@ export const LogViewer = observer((props: {
                         <ContentCopyIcon />
                     </IconButton>
                     <IconButton color='primary' size='medium' aria-label='Clear' title='Clear Entries' onClick={() => log.clear()}><ClearAllIcon fontSize='inherit' /></IconButton>
-                    <IconButton color='primary' size='medium' aria-label='Close' title='Close' onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+                    <IconButton color='primary' size='medium' aria-label='Close' title='Close' onClick={() => session.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
                 </Box>
             </EditorTitle>
         </Box>
-        <Box className='editor-panel'>
+        <Box className='editor-panel full-width'>
             <Stack direction={'column'} spacing={1} className='console' paddingBottom='2em' paddingRight='2em'>
                 {log.events.map(renderEvent)}
                 <div ref={bottomRef} />

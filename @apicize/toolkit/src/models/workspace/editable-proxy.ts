@@ -1,18 +1,22 @@
 import { Proxy } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
-import { computed, observable } from "mobx"
+import { action, computed, observable } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
+import { WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableProxy extends Editable<Proxy> {
     public readonly entityType = EditableEntityType.Proxy
     @observable accessor url = ''
 
-    static fromWorkspace(entry: Proxy): EditableProxy {
-        const result = new EditableProxy()
-        result.id = entry.id
-        result.name = entry.name ?? ''
-        result.url = entry.url
-        return result
+    public constructor(entry: Proxy, workspace: WorkspaceStore) { 
+        super(workspace)
+        this.id = entry.id
+        this.name = entry.name ?? ''
+        this.url = entry.url            
+    }
+
+    static fromWorkspace(entry: Proxy, workspace: WorkspaceStore): EditableProxy {
+        return new EditableProxy(entry, workspace)
     }
 
     toWorkspace(): Proxy {
@@ -22,6 +26,13 @@ export class EditableProxy extends Editable<Proxy> {
             url: this.url
         }
     }
+
+    @action
+    setUrl(value: string) {
+        this.name = value
+        this.markAsDirty()
+    }
+
 
     @computed get nameInvalid() {
         return ((this.name?.length ?? 0) === 0)

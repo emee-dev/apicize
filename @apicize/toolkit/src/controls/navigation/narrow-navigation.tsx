@@ -19,13 +19,15 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import { DropdownMenu } from "./dropdown-menu";
 import { useFileOperations } from "../../contexts/file-operations.context";
-import { useApicizeSettings } from "../../contexts/apicize-settings.context";
 import { useState } from "react";
+import { useApicize } from "../../contexts/apicize.context";
+import { useWorkspaceSession } from "../../contexts/workspace-session.context";
 
 export const NarrowNavigation = observer((props: { sx?: SxProps }) => {
     const workspace = useWorkspace()
+    const session = useWorkspaceSession()
     const fileOps = useFileOperations()
-    const settings = useApicizeSettings()
+    const apicize = useApicize()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
     const fileMenuOpen = Boolean(anchorEl);
@@ -42,34 +44,38 @@ export const NarrowNavigation = observer((props: { sx?: SxProps }) => {
         setAnchorEl(null);
     };
 
+    const toggleMode = (mode: WorkspaceMode) => {
+        session.setMode((session.mode === mode) ? WorkspaceMode.Normal : mode)
+    }
+
     return <Box className='navigation-narrow' sx={props.sx}>
-        <ToggleButtonGroup orientation="vertical" value={workspace.mode}>
-            <ToggleButton title='Requests and Groups' value={WorkspaceMode.RequestList} onClick={() => workspace.setMode(WorkspaceMode.RequestList)}>
+        <ToggleButtonGroup orientation="vertical" value={session.mode}>
+            <ToggleButton title='Requests and Groups' value={WorkspaceMode.RequestList} onClick={() => toggleMode(WorkspaceMode.RequestList)}>
                 <SvgIcon color='request'>
                     <RequestIcon />
                 </SvgIcon>
             </ToggleButton>
-            <ToggleButton title='Scenarios' value={WorkspaceMode.ScenarioList} onClick={() => workspace.setMode(WorkspaceMode.ScenarioList)}>
+            <ToggleButton title='Scenarios' value={WorkspaceMode.ScenarioList} onClick={() => toggleMode(WorkspaceMode.ScenarioList)}>
                 <SvgIcon color='scenario'>
                     <ScenarioIcon />
                 </SvgIcon>
             </ToggleButton>
-            <ToggleButton title='Authorizations' value={WorkspaceMode.AuthorizationList} onClick={() => workspace.setMode(WorkspaceMode.AuthorizationList)}>
+            <ToggleButton title='Authorizations' value={WorkspaceMode.AuthorizationList} onClick={() => toggleMode(WorkspaceMode.AuthorizationList)}>
                 <SvgIcon color='authorization'>
                     <AuthIcon />
                 </SvgIcon>
             </ToggleButton>
-            <ToggleButton title='Certificates' value={WorkspaceMode.CertificateList} onClick={() => workspace.setMode(WorkspaceMode.CertificateList)}>
+            <ToggleButton title='Certificates' value={WorkspaceMode.CertificateList} onClick={() => toggleMode(WorkspaceMode.CertificateList)}>
                 <SvgIcon color='certificate'>
                     <CertificateIcon />
                 </SvgIcon>
             </ToggleButton>
-            <ToggleButton title='Proxies' value={WorkspaceMode.ProxyList} onClick={() => workspace.setMode(WorkspaceMode.ProxyList)}>
+            <ToggleButton title='Proxies' value={WorkspaceMode.ProxyList} onClick={() => toggleMode(WorkspaceMode.ProxyList)}>
                 <SvgIcon color='proxy'>
                     <AirlineStopsIcon />
                 </SvgIcon>
             </ToggleButton>
-            <ToggleButton title='Defaults' value={WorkspaceMode.Defaults} onClick={() => workspace.setMode(WorkspaceMode.Defaults)}>
+            <ToggleButton title='Defaults' value={WorkspaceMode.Defaults} onClick={() => toggleMode(WorkspaceMode.Defaults)}>
                 <SvgIcon color='defaults'>
                     <DefaultsIcon />
                 </SvgIcon>
@@ -86,7 +92,7 @@ export const NarrowNavigation = observer((props: { sx?: SxProps }) => {
                 </Stack>
             </ToggleButton>
             {
-                settings.recentWorkbookFileNames.length > 1
+                apicize.recentWorkbookFileNames.length > 1
                     ? <ToggleButton
                         value='file-menu'
                         id='file-menu-button'
@@ -99,7 +105,7 @@ export const NarrowNavigation = observer((props: { sx?: SxProps }) => {
                     : null
             }
             {
-                settings.recentWorkbookFileNames.length > 1
+                apicize.recentWorkbookFileNames.length > 1
                     ? <DropdownMenu
                         id="file-menu"
                         autoFocus
@@ -111,7 +117,7 @@ export const NarrowNavigation = observer((props: { sx?: SxProps }) => {
                         onClose={handleFileMenuClose}
                     >
                         {
-                            settings.recentWorkbookFileNames.map((f, idx) => (
+                            apicize.recentWorkbookFileNames.map((f, idx) => (
                                 <MenuItem autoFocus={idx == 0} key={`nav-file-${idx}`} onClick={() => handleFileOpen(f)} disableRipple>
                                     {`${idx + 1}) ${f}`}
                                 </MenuItem>
@@ -129,16 +135,17 @@ export const NarrowNavigation = observer((props: { sx?: SxProps }) => {
 
 
         </Box>
-        <ToggleButtonGroup orientation="vertical" value={workspace.mode}>
-            <ToggleButton title='Settings' value={WorkspaceMode.Settings} onClick={() => workspace.setMode(WorkspaceMode.Settings)}>
+        <ToggleButtonGroup orientation="vertical" value={session.mode}>
+            <ToggleButton title='Settings' value={WorkspaceMode.Settings} onClick={() => toggleMode(WorkspaceMode.Settings)}>
                 <SvgIcon>
                     <SettingsIcon />
                 </SvgIcon>
             </ToggleButton>
-            <ToggleButton title='Communication Logs' value={WorkspaceMode.Console} onClick={() => { workspace.setMode(WorkspaceMode.Console) }}>
+            <ToggleButton title='Communication Logs' value={WorkspaceMode.Console} onClick={() => { toggleMode(WorkspaceMode.Console) }}>
                 <SvgIcon><LogIcon /></SvgIcon>
             </ToggleButton>
-            <ToggleButton title='Help' value={WorkspaceMode.Help} onClick={() => workspace.showNextHelpTopic()}>
+            <ToggleButton title='Help' value={WorkspaceMode.Help} onClick={() => (session.mode === WorkspaceMode.Help)
+                ? session.setMode(WorkspaceMode.Normal) : session.showNextHelpTopic()}>
                 <SvgIcon><HelpIcon /></SvgIcon>
             </ToggleButton>
         </ToggleButtonGroup>

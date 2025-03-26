@@ -3,7 +3,7 @@ import * as core from '@tauri-apps/api/core'
 import * as dialog from '@tauri-apps/plugin-dialog'
 import * as path from '@tauri-apps/api/path'
 import { exists, readFile, readTextFile } from "@tauri-apps/plugin-fs"
-import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useApicizeSettings, useFeedback, WorkspaceStore } from "@apicize/toolkit";
+import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useApicize, useFeedback, WorkspaceStore } from "@apicize/toolkit";
 import { GetTitle, ApplicationSettings, Workspace, Persistence } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
 
@@ -15,7 +15,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
     const EXT = 'apicize';
 
     const feedback = useFeedback()
-    const settings = useApicizeSettings()
+    const apicize = useApicize()
 
     const _forceClose = useRef(false)
     const _sshPath = useRef('')
@@ -28,16 +28,16 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
     const saveSettings = async () => {
         try {
             const settingsToSave: ApplicationSettings = {
-                workbookDirectory: settings.workbookDirectory,
-                lastWorkbookFileName: settings.lastWorkbookFileName,
-                fontSize: settings.fontSize,
-                colorScheme: settings.colorScheme,
-                editorPanels: settings.editorPanels,
-                recentWorkbookFileNames: settings.recentWorkbookFileNames.length > 0
-                    ? settings.recentWorkbookFileNames
+                workbookDirectory: apicize.workbookDirectory,
+                lastWorkbookFileName: apicize.lastWorkbookFileName,
+                fontSize: apicize.fontSize,
+                colorScheme: apicize.colorScheme,
+                editorPanels: apicize.editorPanels,
+                recentWorkbookFileNames: apicize.recentWorkbookFileNames.length > 0
+                    ? apicize.recentWorkbookFileNames
                     : undefined,
-                pkceListenerPort: settings.pkceListenerPort,
-                alwaysHideNavTree: settings.alwaysHideNavTree,
+                pkceListenerPort: apicize.pkceListenerPort,
+                alwaysHideNavTree: apicize.alwaysHideNavTree,
             }
             await core.invoke<ApplicationSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {
@@ -74,7 +74,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         if (await exists(openSshPath)) {
             _sshPath.current = openSshPath
         } else {
-            _sshPath.current = settings.workbookDirectory
+            _sshPath.current = apicize.workbookDirectory
         }
         return _sshPath.current
     }
@@ -99,7 +99,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 return _bodyDataPath.current
             }
         }
-        _bodyDataPath.current = settings.workbookDirectory
+        _bodyDataPath.current = apicize.workbookDirectory
         return _bodyDataPath.current
     }
 
@@ -152,7 +152,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             openFileName = await dialog.open({
                 multiple: false,
                 title: 'Open Apicize Workbook',
-                defaultPath: settings.workbookDirectory,
+                defaultPath: apicize.workbookDirectory,
                 directory: false,
                 filters: [{
                     name: 'Apicize Files',
@@ -168,15 +168,15 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             const data: Workspace = await core.invoke('open_workspace', { path: openFileName })
             const displayName = await getDisplayName(openFileName)
             workspaceStore.loadWorkspace(data, openFileName, displayName)
-            settings.lastWorkbookFileName = openFileName
-            settings.addRecentWorkbookFileName(openFileName)
+            apicize.lastWorkbookFileName = openFileName
+            apicize.addRecentWorkbookFileName(openFileName)
             _forceClose.current = false
             feedback.toast(`Opened ${openFileName}`, ToastSeverity.Success)
         } catch (e) {
-            settings.removeRecentWorkbookFileName(openFileName)
+            apicize.removeRecentWorkbookFileName(openFileName)
             feedback.toast(`${e}`, ToastSeverity.Error)
         } finally {
-            if (settings.dirty) {
+            if (apicize.dirty) {
                 await saveSettings()
             }
         }
@@ -231,9 +231,9 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 workspaceStore.workbookFullName,
                 displayName
             )
-            settings.lastWorkbookFileName = workspaceStore.workbookFullName
-            settings.addRecentWorkbookFileName(workspaceStore.workbookFullName)
-            if (settings.dirty) {
+            apicize.lastWorkbookFileName = workspaceStore.workbookFullName
+            apicize.addRecentWorkbookFileName(workspaceStore.workbookFullName)
+            if (apicize.dirty) {
                 await saveSettings()
             }
         } catch (e) {
@@ -282,7 +282,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             let fileName = await dialog.save({
                 title: 'Save Apicize Workbook',
                 defaultPath: ((workspaceStore.workbookFullName?.length ?? 0) > 0)
-                    ? workspaceStore.workbookFullName : settings.workbookDirectory,
+                    ? workspaceStore.workbookFullName : apicize.workbookDirectory,
                 filters: [{
                     name: 'Apicize Files',
                     extensions: [EXT]
@@ -307,9 +307,9 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 fileName,
                 displayName
             )
-            settings.lastWorkbookFileName = fileName
-            settings.addRecentWorkbookFileName(fileName)
-            if (settings.dirty) {
+            apicize.lastWorkbookFileName = fileName
+            apicize.addRecentWorkbookFileName(fileName)
+            if (apicize.dirty) {
                 await saveSettings()
             }
         } catch (e) {
@@ -384,7 +384,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      * Open a data file and return its results
      * @returns base64 encoded string or null if no result
      */
-    const openFile = async () => {
+    const openFile = async (): Promise<Uint8Array | null> => {
         feedback.setModal(true)
         const fileName = await dialog.open({
             multiple: false,
@@ -407,8 +407,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             pathName = (await path.dirname(fileName)).substring(0, i)
         }
 
-        const data = base64Encode(await readFile(fileName))
-        return data
+        return await readFile(fileName)
     }
 
     /**
@@ -449,8 +448,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
     // Open last workspace on load
     useEffect(() => {
         (async () => {
-            if (settings.lastWorkbookFileName) {
-                await openWorkspace(settings.lastWorkbookFileName)
+            if (apicize.lastWorkbookFileName) {
+                await openWorkspace(apicize.lastWorkbookFileName)
             } else {
                 await newWorkspace()
             }

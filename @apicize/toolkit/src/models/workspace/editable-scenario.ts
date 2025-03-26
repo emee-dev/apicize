@@ -3,6 +3,7 @@ import { Editable, EditableState } from "../editable"
 import { action, computed, observable, toJS } from "mobx"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EditableEntityType } from "./editable-entity-type"
+import { WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableVariable implements Variable {
 
@@ -88,18 +89,21 @@ export class EditableScenario extends Editable<Scenario> {
     public readonly entityType = EditableEntityType.Scenario
     @observable accessor variables: EditableVariable[] = []
 
-    static fromWorkspace(entry: Scenario): EditableScenario {
-        const result = new EditableScenario()
-        result.id = entry.id
-        result.name = entry.name ?? ''
-        result.variables = entry.variables?.map(v => new EditableVariable(
+    public constructor(entry: Scenario, workspace: WorkspaceStore) {
+        super(workspace)
+        this.id = entry.id
+        this.name = entry.name ?? ''
+        this.variables = entry.variables?.map(v => new EditableVariable(
             GenerateIdentifier(),
             v.name,
             v.type ?? VariableSourceType.Text,
             v.value,
             v.disabled
         )) ?? []
-        return result
+    }
+
+    static fromWorkspace(entry: Scenario, workspace: WorkspaceStore): EditableScenario {
+        return new EditableScenario(entry, workspace)
     }
 
     toWorkspace(): Scenario {
@@ -108,6 +112,12 @@ export class EditableScenario extends Editable<Scenario> {
             name: this.name,
             variables: this.variables.map(v => v.toWorkspace())
         }
+    }
+
+    @action
+    setVariables(value: EditableVariable[] | undefined) {
+        this.variables = value || []
+        this.markAsDirty()
     }
 
     @computed get nameInvalid() {

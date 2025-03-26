@@ -28,5 +28,5 @@ In the configuration shown below, requests within the group will execute sequeun
 
 ### See Also
 
-* [**Workbooks**](help:workbooks)
+* [**Workspace**](help:home)
 * [**Testing**](help:testing)

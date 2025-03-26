@@ -5,7 +5,7 @@ import 'prismjs/themes/prism-tomorrow.css'
 
 import { Box } from '@mui/material'
 import { SxProps } from '@mui/system'
-import ace, { Editor } from 'ace-code'
+import ace, { createEditSession, Editor, EditSession } from 'ace-code'
 import { Mode as JavaScriptMode } from 'ace-code/src/mode/javascript'
 import { Mode as JsonMode } from 'ace-code/src/mode/json'
 import { Mode as XmlMode } from 'ace-code/src/mode/xml'
@@ -14,12 +14,15 @@ import { Mode as CssMode } from 'ace-code/src/mode/css'
 import { Mode as TextMode } from 'ace-code/src/mode/text'
 
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import theme from 'ace-code/src/theme/gruvbox'
 // import { beautify } from 'ace-code/src/ext/beautify'
 import { css_beautify, html_beautify, js_beautify } from 'js-beautify'
-import { useApicizeSettings } from '../../contexts/apicize-settings.context'
 import { EditorMode } from '../../models/editor-mode'
+import { useApicize } from '../../contexts/apicize.context'
+import { useWorkspace } from '../../contexts/workspace.context'
+import { ResultEditSessionType, useWorkspaceSession } from '../../contexts/workspace-session.context'
+import { observer } from 'mobx-react-lite'
 
 // We have to dynamically load search box because of webpack(?)
 ace.config.dynamicModules = {
@@ -50,19 +53,25 @@ const updateEditorMode = (editor: Editor, mode: EditorMode | undefined) => {
 }
 
 /**
- * A rich text editor / viewer
+ * A rich text editor / viewer for viewing results
  * @param props
  * @returns 
  */
-export const RichViewer = (props: {
+export const RichViewer = observer((props: {
     sx?: SxProps,
+    id: string,
+    index: number,
+    type: ResultEditSessionType,
     mode?: EditorMode,
     text: string,
     beautify?: boolean,
     wrap?: boolean,
 }) => {
+    const apicize = useApicize()
+    const session = useWorkspaceSession()
     const viewer = useRef<Editor | null>(null)
-    const apicizeSettings = useApicizeSettings()
+
+    const [initialized, setInitialized] = useState(false)
 
     let text: string
     if (props.beautify === true) {
@@ -87,25 +96,36 @@ export const RichViewer = (props: {
 
     // On initial load, set up the editor
     useEffect(() => {
-        viewer.current = ace.edit('viewer')
-        viewer.current.setTheme(theme)
-        viewer.current.setOptions({
-            fontSize: `${apicizeSettings.fontSize}pt`,
-            showGutter: true,
-            showPrintMargin: false,
-            tabSize: 4,
-            foldStyle: 'markbegin',
-            displayIndentGuides: true,
-            enableAutoIndent: true,
-            fixedWidthGutter: true,
-            showLineNumbers: true,
-            wrap: props.wrap === true,
-            useWorker: false,
-            readOnly: true,
-        })
-        updateEditorMode(viewer.current, props.mode)
-        viewer.current.session.setValue(props.text)
-    }, [text])
+        if (!initialized) {
+            viewer.current = ace.edit('viewer')
+            viewer.current.setTheme(theme)
+            viewer.current.setOptions({
+                fontSize: `${apicize.fontSize}pt`,
+                showGutter: true,
+                showPrintMargin: false,
+                tabSize: 4,
+                foldStyle: 'markbegin',
+                displayIndentGuides: true,
+                enableAutoIndent: true,
+                fixedWidthGutter: true,
+                showLineNumbers: true,
+                wrap: props.wrap === true,
+                useWorker: false,
+                readOnly: true,
+            })
+            setInitialized(true)
+        }
 
+        const editSession = session.getResultEditSession(props.id, props.index, props.type)
+        if (viewer.current) {
+            if (editSession) {
+                viewer.current.setSession(editSession)
+            } else {
+                updateEditorMode(viewer.current, props.mode)
+                viewer.current.session.setValue(props.text)
+                session.setResultEditSession(props.id, props.index, props.type, viewer.current.getSession())
+            }
+        }
+    }, [text])
     return <Box id='viewer' sx={props.sx} />
-}
+})

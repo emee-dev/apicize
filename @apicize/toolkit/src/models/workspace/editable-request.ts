@@ -1,11 +1,16 @@
-import { Selection, Body, BodyType, GroupExecution, Method, NameValuePair, Request, RequestGroup } from "@apicize/lib-typescript"
+import { Selection, Body, BodyType, GroupExecution, Method, NameValuePair, Request } from "@apicize/lib-typescript"
 import { Editable, EditableItem, EditableState } from "../editable"
-import { computed, observable, toJS } from "mobx"
+import { action, computed, get, observable, toJS } from "mobx"
 import { EditableNameValuePair } from "./editable-name-value-pair"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EditableEntityType } from "./editable-entity-type"
 import { js_beautify } from 'js-beautify'
-export class EditableRequest extends Editable<Request> {
+import { WorkspaceStore } from "../../contexts/workspace.context"
+import { base64Encode, base64Decode } from "../../services/apicize-serializer"
+import { DEFAULT_SELECTION_ID, NO_SELECTION_ID, NO_SELECTION } from "../store"
+import { EditableRequestGroup } from "./editable-request-group"
+import { EditableRequestEntry } from "./editable-request-entry"
+export class EditableRequest extends EditableRequestEntry {
     public readonly entityType = EditableEntityType.Request
 
     @observable public accessor url = ''
@@ -23,81 +28,61 @@ export class EditableRequest extends Editable<Request> {
     @observable public accessor referrerPolicy = undefined
     @observable public accessor duplex = undefined
     @observable public accessor test = ''
-    @observable public accessor warnings: Map<string, string> | undefined = undefined
 
-    @observable accessor runs = 0
-    @observable public accessor multiRunExecution = GroupExecution.Sequential
+    public constructor(entry: Request, workspace: WorkspaceStore) {
+        super(workspace)
+        this.id = entry.id
+        this.name = entry.name ?? ''
 
-    @observable accessor selectedScenario: Selection | undefined = undefined
-    @observable accessor selectedAuthorization: Selection | undefined = undefined
-    @observable accessor selectedCertificate: Selection | undefined = undefined
-    @observable accessor selectedProxy: Selection | undefined = undefined
-    @observable accessor selectedData: Selection | undefined = undefined
+        this.runs = entry.runs
+        this.multiRunExecution = entry.multiRunExecution
 
-    static fromWorkspace(entry: Request): EditableRequest {
-        const result = new EditableRequest()
-        result.id = entry.id
-        result.name = entry.name ?? ''
+        this.selectedScenario = entry.selectedScenario ?? undefined
+        this.selectedAuthorization = entry.selectedAuthorization ?? undefined
+        this.selectedCertificate = entry.selectedCertificate ?? undefined
+        this.selectedProxy = entry.selectedProxy ?? undefined
 
-        result.runs = entry.runs
-        result.multiRunExecution = entry.multiRunExecution
-
-        result.selectedScenario = entry.selectedScenario ?? undefined
-        result.selectedAuthorization = entry.selectedAuthorization ?? undefined
-        result.selectedCertificate = entry.selectedCertificate ?? undefined
-        result.selectedProxy = entry.selectedProxy ?? undefined
-
-        result.url = entry.url ?? ''
-        result.method = entry.method ?? Method.Get
-        result.timeout = entry.timeout ?? 30000
-        result.keepalive = entry.keepalive
-        result.headers = entry.headers?.map(h => ({
+        this.url = entry.url ?? ''
+        this.method = entry.method ?? Method.Get
+        this.timeout = entry.timeout ?? 30000
+        this.keepalive = entry.keepalive
+        this.headers = entry.headers?.map(h => ({
             id: GenerateIdentifier(),
             ...h
         })) ?? []
-        result.queryStringParams = entry.queryStringParams?.map(q => ({
+        this.queryStringParams = entry.queryStringParams?.map(q => ({
             id: GenerateIdentifier(),
             ...q
         })) ?? []
 
-        let idxQuery = result.url.indexOf('?')
+        let idxQuery = this.url.indexOf('?')
         if (idxQuery !== -1) {
-            const params = new URLSearchParams(result.url.substring(idxQuery + 1))
+            const params = new URLSearchParams(this.url.substring(idxQuery + 1))
             for (const [name, value] of params) {
-                result.queryStringParams.push({
+                this.queryStringParams.push({
                     id: GenerateIdentifier(),
                     name,
                     value
                 })
             }
-            result.url = result.url.substring(0, idxQuery)
+            this.url = this.url.substring(0, idxQuery)
         }
 
-        result.body = entry.body ?? { type: BodyType.None, data: undefined }
-        if (result.body && result.body.data) {
-            switch (result.body.type) {
-                case BodyType.JSON:
-                    result.body.data = js_beautify(JSON.stringify(result.body.data), { indent_size: 4 })
-                    break
-                case BodyType.Form:
-                    result.body.data = (result.body.data as NameValuePair[]).map(r => ({
-                        id: GenerateIdentifier(),
-                        ...r
-                    }))
-                    break
-            }
-        } else {
-            result.body = {
+        this.body = (entry.body && entry.body.data)
+            ? entry.body
+            : {
                 type: BodyType.None,
                 data: undefined
             }
-        }
-        result.test = entry.test ?? ''
-        result.warnings = entry.warnings
+
+        this.test = entry.test ?? ''
+        this.warnings = entry.warnings
             ? new Map(entry.warnings.map(w => [GenerateIdentifier(), w]))
             : new Map<string, string>()
+    }
 
-        return result
+    static fromWorkspace(entry: Request, workspace: WorkspaceStore): EditableRequest {
+        return new EditableRequest(entry, workspace)
     }
 
     toWorkspace(): Request {
@@ -108,7 +93,9 @@ export class EditableRequest extends Editable<Request> {
             method: this.method,
             headers: toJS(this.headers),
             queryStringParams: toJS(this.queryStringParams),
-            body: toJS(this.body),
+            body: (this.body && this.body.type !== BodyType.None)
+                ? toJS(this.body)
+                : undefined,
             test: this.test,
             duplex: this.duplex,
             // integrity: this.integrity,
@@ -123,47 +110,8 @@ export class EditableRequest extends Editable<Request> {
             selectedProxy: this.selectedProxy,
         }
 
-        let bodyIsValid = false
-        if (result.body?.data) {
-            switch (result.body?.type) {
-                case BodyType.Form:
-                    const bodyAsForm = result.body.data as EditableNameValuePair[]
-                    bodyIsValid = bodyAsForm.length > 0
-                    if (bodyIsValid) {
-                        result.body = {
-                            type: BodyType.Form,
-                            data: bodyAsForm.map(pair => ({
-                                name: pair.name,
-                                value: pair.value,
-                                disabled: pair.disabled
-                            }))
-                        }
-                    }
-                    break
-                case BodyType.JSON:
-                    if (typeof result.body.data === 'string') {
-                        try {
-                            result.body.data = JSON.parse(result.body.data)
-                            bodyIsValid = true
-                        } catch (e) {
-                            throw new Error(`Invalid JSON data - ${(e as Error).message}`)
-                        }
-                    }
-                    break
-                default:
-                    const bodyAsText = result.body.data as string
-                    bodyIsValid = bodyAsText.length > 0
-                    if (bodyIsValid) {
-                        result.body = {
-                            type: result.body.type,
-                            data: bodyAsText
-                        }
-                    }
-                    break
-            }
-        }
-        if (!bodyIsValid) {
-            delete result.body
+        if (result.body?.type === BodyType.None) {
+            result.body = undefined
         }
 
         if ((result.headers?.length ?? 0) === 0) {
@@ -179,8 +127,162 @@ export class EditableRequest extends Editable<Request> {
         return result
     }
 
-    @computed get nameInvalid() {
-        return this.dirty && ((this.name?.length ?? 0) === 0)
+    @action
+    setUrl(value: string) {
+        this.url = value
+        this.markAsDirty()
+    }
+
+    @action
+    setMethod(value: Method) {
+        this.method = value
+        this.markAsDirty()
+    }
+
+    @action
+    setTimeout(value: number) {
+        this.timeout = value
+        this.markAsDirty()
+    }
+
+    @action
+    setQueryStringParams(value: EditableNameValuePair[] | undefined) {
+        this.queryStringParams = value ?? []
+        this.markAsDirty()
+    }
+
+    @action
+    setHeaders(value: EditableNameValuePair[] | undefined) {
+        this.headers = value ?? []
+        this.markAsDirty()
+    }
+
+    @action
+    setBodyType(value: BodyType | undefined) {
+        let newBody: Body
+        if (this.body && this.body.data) {
+            switch (value) {
+                case BodyType.Raw:
+                    switch (this.body.type) {
+                        case BodyType.Form:
+                            newBody = {
+                                type: BodyType.Raw, data: (new TextEncoder()).encode(
+                                    encodeFormData(this.body.data as EditableNameValuePair[])
+                                )
+                            }
+                            break
+                        case BodyType.XML:
+                        case BodyType.JSON:
+                        case BodyType.Text:
+                            newBody = { type: BodyType.Raw, data: (new TextEncoder()).encode(this.body.data) }
+                            break
+                        case BodyType.Raw:
+                            newBody = { type: BodyType.Raw, data: this.body.data }
+                            break
+                        default:
+                            newBody = {
+                                type: BodyType.Raw, data: new Uint8Array()
+                            }
+                    }
+                    break
+                case BodyType.Form:
+                    switch (this.body.type) {
+                        case BodyType.JSON:
+                        case BodyType.XML:
+                        case BodyType.Text:
+                            newBody = {
+                                type: BodyType.Form,
+                                data: decodeFormData(this.body.data)
+                            }
+                            break
+                        case BodyType.Raw:
+                            newBody = {
+                                type: BodyType.Form,
+                                data: decodeFormData(new TextDecoder().decode(this.body.data))
+                            }
+                            break
+                        case BodyType.Form:
+                            newBody = { type: BodyType.Form, data: this.body.data }
+                            break
+                        default:
+                            newBody = {
+                                type: BodyType.Form, data: []
+                            }
+                            break
+                    }
+                    break
+                case BodyType.JSON:
+                case BodyType.XML:
+                case BodyType.Text:
+                    switch (this.body.type) {
+                        case BodyType.JSON:
+                        case BodyType.XML:
+                        case BodyType.Text:
+                            newBody = { type: value, data: this.body.data }
+                            break
+                        case BodyType.Raw:
+                            newBody = { type: value, data: (new TextDecoder()).decode(this.body.data) }
+                            break
+                        default:
+                            newBody = { type: BodyType.None, data: undefined }
+                            break
+                    }
+                    break
+                case BodyType.None:
+                default:
+                    newBody = {
+                        type: BodyType.None,
+                        data: undefined
+                    }
+
+            }
+        } else {
+            switch (value) {
+                case BodyType.Form:
+                    newBody = {
+                        type: BodyType.Form,
+                        data: []
+                    }
+                    break
+                case BodyType.XML:
+                case BodyType.JSON:
+                case BodyType.Text:
+                    newBody = {
+                        type: value,
+                        data: ''
+                    }
+                    break
+                case BodyType.None:
+                default:
+                    newBody = {
+                        type: BodyType.None,
+                        data: undefined
+                    }
+                    break
+            }
+
+        }
+
+        this.body = newBody
+        this.markAsDirty()
+    }
+
+    @action
+    setBody(body: Body) {
+        this.body = body
+        this.markAsDirty()
+    }
+
+    @action
+    setBodyData(value: string | EditableNameValuePair[]) {
+        this.body.data = value
+        this.markAsDirty()
+    }
+
+    @action
+    setTest(value: string | undefined) {
+        this.test = value ?? ''
+        this.markAsDirty()
     }
 
     @computed get urlInvalid() {
@@ -195,64 +297,34 @@ export class EditableRequest extends Editable<Request> {
     }
 }
 
-export class EditableRequestGroup extends Editable<RequestGroup> {
-    public readonly entityType = EditableEntityType.Group
 
-    @observable public accessor execution = GroupExecution.Sequential
+const encodeFormData = (data: EditableNameValuePair[]) =>
+    (data.length === 0)
+        ? ''
+        : data.map(nv =>
+            `${encodeURIComponent(nv.name)}=${encodeURIComponent(nv.value)}`
+        ).join('&')
 
-    @observable accessor runs = 0
-    @observable accessor timeout = 0
-    @observable public accessor multiRunExecution = GroupExecution.Sequential
-
-    @observable accessor selectedScenario: Selection | undefined = undefined
-    @observable accessor selectedAuthorization: Selection | undefined = undefined
-    @observable accessor selectedCertificate: Selection | undefined = undefined
-    @observable accessor selectedProxy: Selection | undefined = undefined
-    @observable accessor selectedData: Selection | undefined = undefined
-    @observable accessor warnings: Map<string, string> | undefined = undefined
-
-    static fromWorkspace(entry: RequestGroup): EditableRequestGroup {
-        const result = new EditableRequestGroup()
-        result.id = entry.id
-        result.name = entry.name ?? ''
-
-        result.execution = entry.execution
-        result.multiRunExecution = entry.multiRunExecution
-
-        result.runs = entry.runs
-        result.selectedScenario = entry.selectedScenario ?? undefined
-        result.selectedAuthorization = entry.selectedAuthorization ?? undefined
-        result.selectedCertificate = entry.selectedCertificate ?? undefined
-        result.selectedProxy = entry.selectedProxy ?? undefined
-        result.warnings = entry.warnings
-            ? new Map(entry.warnings.map(w => [GenerateIdentifier(), w]))
-            : new Map<string, string>()
-
-        return result
+const decodeFormData = (bodyData: string | number[] | undefined) => {
+    let data: string | undefined;
+    if (bodyData instanceof Array) {
+        const buffer = Uint8Array.from(bodyData)
+        data = (new TextDecoder()).decode(buffer)
+    } else {
+        data = bodyData
     }
-
-    toWorkspace(): RequestGroup {
-        return {
-            id: this.id,
-            name: this.name,
-            runs: this.runs,
-            execution: this.execution,
-            multiRunExecution: this.multiRunExecution,
-            selectedScenario: this.selectedScenario ?? undefined,
-            selectedAuthorization: this.selectedAuthorization ?? undefined,
-            selectedCertificate: this.selectedCertificate ?? undefined,
-            selectedProxy: this.selectedProxy ?? undefined,
-            selectedData: this.selectedData ?? undefined,
-        } as RequestGroup
-    }
-
-    @computed get nameInvalid() {
-        return ((this.name?.length ?? 0) === 0)
-    }
-
-    @computed get state() {
-        return this.nameInvalid || (this.warnings?.size ?? 0) > 0
-            ? EditableState.Warning
-            : EditableState.None
+    if (data && data.length > 0) {
+        const parts = data.split('&')
+        return parts.map(p => {
+            const id = GenerateIdentifier()
+            const nv = p.split('=')
+            if (nv.length == 1) {
+                return { id, name: decodeURIComponent(nv[0]), value: "" } as EditableNameValuePair
+            } else {
+                return { id, name: decodeURIComponent(nv[0]), value: decodeURIComponent(nv[1]) } as EditableNameValuePair
+            }
+        })
+    } else {
+        return []
     }
 }

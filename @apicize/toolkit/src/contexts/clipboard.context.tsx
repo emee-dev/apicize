@@ -7,9 +7,9 @@ export class ClipboardStore {
 
     constructor(private readonly callbacks: {
         onWriteText: (text: string) => Promise<void>,
-        onWriteImage: (base64: string) => Promise<void>,
+        onWriteImage: (data: Uint8Array) => Promise<void>,
         onGetText: () => Promise<string>,
-        onGetImage: () => Promise<string>,
+        onGetImage: () => Promise<Uint8Array>,
     }) {
         makeObservable(this)
     }
@@ -18,8 +18,8 @@ export class ClipboardStore {
         return this.callbacks.onWriteText(text)
     }
     
-    writeImageToClipboard(base64: string): Promise<void> {
-        return this.callbacks.onWriteImage(base64)
+    writeImageToClipboard(data: Uint8Array): Promise<void> {
+        return this.callbacks.onWriteImage(data)
     }
 
     getClipboardText() {

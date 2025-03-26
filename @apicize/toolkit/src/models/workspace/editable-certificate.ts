@@ -1,7 +1,8 @@
 import { CertificateType, Certificate } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
-import { computed, observable } from "mobx"
+import { action, computed, observable } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
+import { WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableCertificate extends Editable<Certificate> {
     public readonly entityType = EditableEntityType.Certificate
@@ -11,28 +12,31 @@ export class EditableCertificate extends Editable<Certificate> {
     @observable accessor pfx = ''
     @observable accessor password = ''
 
-    static fromWorkspace(entry: Certificate): EditableCertificate {
-        const result = new EditableCertificate()
-        result.id = entry.id
-        result.name = entry.name ?? ''
 
-        switch (entry.type) {
+    public constructor(certificate: Certificate, workspace: WorkspaceStore) {
+        super(workspace)
+        this.id = certificate.id
+        this.name = certificate.name ?? ''
+
+        switch (certificate.type) {
             case CertificateType.PKCS8_PEM:
-                result.pem = entry.pem
-                result.key = entry.key ?? ''
+                this.pem = certificate.pem
+                this.key = certificate.key ?? ''
                 break
             case CertificateType.PEM:
-                result.pem = entry.pem
+                this.pem = certificate.pem
                 break
             case CertificateType.PKCS12:
-                result.pfx = entry.pfx
-                result.password = entry.password
+                this.pfx = certificate.pfx
+                this.password = certificate.password
                 break
             default:
                 throw new Error('Invalid certificate type')
         }
+    }
 
-        return result
+    static fromWorkspace(entry: Certificate, workspace: WorkspaceStore): EditableCertificate {
+        return new EditableCertificate(entry, workspace)
     }
 
     toWorkspace(): Certificate {
@@ -51,8 +55,34 @@ export class EditableCertificate extends Editable<Certificate> {
         } as unknown as Certificate
     }
 
-    @computed get nameInvalid() {
-        return ((this.name?.length ?? 0) === 0)
+    @action
+    setType(value: CertificateType) {
+        this.type = value
+        this.markAsDirty()
+    }
+
+    @action
+    setPem(value: string) {
+        this.pem = value
+        this.markAsDirty()
+    }
+
+    @action
+    setKey(value: string | undefined) {
+        this.key = value || ''
+        this.markAsDirty()
+    }
+
+    @action
+    setCertificatePfx(value: string) {
+        this.pfx = value
+        this.markAsDirty()
+    }
+
+    @action
+    setPassword(value: string) {
+        this.password = value
+        this.markAsDirty()
     }
 
     @computed get pemInvalid() {

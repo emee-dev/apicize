@@ -1,79 +1,46 @@
-import { ExternalData, ExternalDataSourceType } from "@apicize/lib-typescript"
+import { Selection, SelectedParametersWithData, GetTitle } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable, toJS } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
+import { NO_SELECTION, NO_SELECTION_ID } from "../store"
+import { IndexedEntityManager } from "../indexed-entity-manager"
+import { WorkspaceStore } from "../../contexts/workspace.context"
+import { EditableExternalDataEntry } from "./editable-external-data-entry"
 
-export class EditableExternalData extends Editable<ExternalData> {
+export class EditableExternalData {
+    @observable accessor data = new IndexedEntityManager<EditableExternalDataEntry>(new Map(), [], new Map())
+    public dirty = false;
 
-    public readonly entityType = EditableEntityType.ExternalData
-
-    @observable accessor type: ExternalDataSourceType = ExternalDataSourceType.FileJSON
-    @observable accessor source: string = ''
-
-    static fromWorkspace(entry: ExternalData): EditableExternalData {
-        const result = new EditableExternalData()
-        result.id = entry.id
-        result.name = entry.name ?? ''
-        result.type = entry.type
-        result.source = entry.source
-        return result
+    public constructor(data: IndexedEntityManager<EditableExternalDataEntry>,
+        private readonly workspace: WorkspaceStore) {
+        this.data = data
     }
 
-    toWorkspace(): ExternalData {
-        return {
-            id: this.id,
-            name: this.name,
-            type: this.type,
-            source: this.source
-        }
+    static fromWorkspace(data: IndexedEntityManager<EditableExternalDataEntry>, workspace: WorkspaceStore): EditableExternalData {
+        return new EditableExternalData(data, workspace)
     }
 
-    @action
-    public updateName(value: string) {
-        this.name = value
+    toWorkspace(): IndexedEntityManager<EditableExternalDataEntry> | undefined {
+        return this.data.entities.size > 0
+            ? this.data
+            : undefined
     }
 
-    @action
-    public updateSourceType(value: ExternalDataSourceType) {
-        this.type = value
-    }
-
-    @action
-    public updateSource(value: string) {
-        this.source = value
-    }
-
-    @computed get nameInvalid() {
-        return ((this.name?.length ?? 0) === 0)
-    }
-
-    @computed get sourceError(): string | null {
-        switch (this.type) {
-            case ExternalDataSourceType.JSON: {
-                try {
-                    JSON.parse(this.source)
-                } catch (_) {
-                    return 'Value must ve valid JSON'
-                }
+    @computed get dataInvalid() {
+        let invalid = false
+        for (const d of this.data.values) {
+            if (d.nameInvalid) {
+                invalid = true
             }
-                break
-            case ExternalDataSourceType.FileJSON:
-                if (/^(?!\/\\)(?!.*\.\.)(?!.*\/\/)(?!.*\/\.)[\.\w\/ ]{1,200}\.json$/.exec(this.source) === null) {
-                    return 'Value must be a relative .json file name using forward slashes'
-                }
-                break
-            case ExternalDataSourceType.FileCSV:
-                if (/^(?!\/\\)(?!.*\.\.)(?!.*\/\/)(?!.*\/\.)[\.\w\/ ]{1,200}\.csv$/.exec(this.source) === null) {
-                    return 'Value must be a relative .csv file name using forward slashes'
-                }
-                break
         }
-        return null
+        return invalid
     }
 
     @computed get state() {
-        return this.nameInvalid || this.sourceError
+        return (this.dataInvalid)
             ? EditableState.Warning
             : EditableState.None
     }
+
 }
+

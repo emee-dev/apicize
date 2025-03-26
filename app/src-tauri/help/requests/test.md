@@ -12,4 +12,4 @@ Read the section on [Testing](help:testing) for more information authoring Apici
 
 * [**Running Tests**](help:running-tests)
 * [**Requests**](help:requests)
-* [**Workbooks**](help:workbooks)
+* [**Workspace**](help:home)

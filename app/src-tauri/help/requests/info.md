@@ -18,5 +18,5 @@ For more information about executing tests, see [**Running Tests and Viewing Res
 ### See Also
 
 * [**Requests**](help:requests)
-* [**Workbooks**](help:workbooks)
+* [**Workspace**](help:home)
 * [**Running Tests and Viewing Results**](help:running-tests)
