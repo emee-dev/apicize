@@ -1,5 +1,13 @@
 # Change Log
 
+# 0.17.5
+
+* Fix bug with consecutive executed results display
+
+# 0.17.4
+
+* Persist Navigation text size
+
 # 0.17.3
 
 * Add drag-drop file support for request bodies and test

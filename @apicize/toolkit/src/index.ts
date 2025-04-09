@@ -23,6 +23,7 @@ export { useClipboard, ClipboardContext, ClipboardStore } from './contexts/clipb
 export { useFileOperations, FileOperationsContext, FileOperationsStore, SshFileType } from './contexts/file-operations.context'
 export { usePkce, PkceContext } from './contexts/pkce.context'
 export { useWorkspace, WorkspaceContext, WorkspaceStore } from './contexts/workspace.context'
+export { useWorkspaceSession, WorkspaceSessionContext, WorkspaceSessionProvider } from './contexts/workspace-session.context'
 export { useApicize, ApicizeContext } from './contexts/apicize.context'
 export { useLog, LogContext, LogStore } from './contexts/log.context'
 export { ReqwestEvent, ReqwestEventConnect, ReqwestEventRead, ReqwestEventWrite } from './models/trace';

@@ -70,6 +70,7 @@ fn main() {
                             .to_string_lossy(),
                     )),
                     font_size: 12,
+                    navigation_font_size: 12,
                     color_scheme: ColorScheme::Dark,
                     editor_panels: String::from(""),
                     last_workbook_file_name: None,
@@ -439,7 +440,6 @@ async fn refresh_token(
 fn is_release_mode() -> bool {
     !cfg!(debug_assertions)
 }
-
 
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]

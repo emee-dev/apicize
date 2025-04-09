@@ -4,7 +4,7 @@ import { action, observable } from 'mobx';
 
 export class ApicizeSettings {
     @observable accessor dirty = false
-    
+
     @observable accessor appName = 'Apicize'
     @observable accessor appVersion = ''
 
@@ -22,6 +22,7 @@ export class ApicizeSettings {
         this.workbookDirectory = settings.workbookDirectory
         this.lastWorkbookFileName = settings.lastWorkbookFileName
         this.fontSize = settings.fontSize
+        this.navigationFontSize = settings.navigationFontSize
         this.colorScheme = settings.colorScheme
         this.editorPanels = settings.editorPanels
         this.recentWorkbookFileNames = settings.recentWorkbookFileNames ?? []

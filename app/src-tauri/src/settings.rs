@@ -49,6 +49,10 @@ pub struct ApicizeSettings {
     #[serde(default = "default_font_size")]
     pub font_size: i32,
 
+    /// Font Size
+    #[serde(default = "default_font_size")]
+    pub navigation_font_size: i32,
+
     /// Color scheme for UI app
     #[serde(default = "default_color_scheme")]
     pub color_scheme: ColorScheme,
@@ -108,6 +112,7 @@ impl ApicizeSettings {
                     Self::get_workbooks_directory().to_string_lossy(),
                 )),
                 font_size: 12,
+                navigation_font_size: 12,
                 color_scheme: ColorScheme::Dark,
                 editor_panels: String::from(""),
                 recent_workbook_file_names: None,

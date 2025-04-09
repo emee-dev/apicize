@@ -17,6 +17,7 @@ import { emit } from '@tauri-apps/api/event';
 import { LogProvider } from './providers/log.provider';
 import { CssBaseline } from '@mui/material'
 import { FileDragDropProvider } from './providers/file-dragdrop.provider'
+import { WorkspaceSessionProvider } from '@apicize/toolkit/dist/contexts/workspace-session.context'
 
 // This is defined externally via Tauri main or other boostrap application
 declare var loadedSettings: ApplicationSettings

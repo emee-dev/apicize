@@ -14,8 +14,6 @@ export function ResultResponsePreview(props: { result: ExecutionResult }) {
     const headers = props.result.response?.headers
     const body = props.result.response?.body
 
-    debugger
-
     let extension = ''
     for (const [name, value] of Object.entries(headers ?? {})) {
         if (name.toLowerCase() === 'content-type') {

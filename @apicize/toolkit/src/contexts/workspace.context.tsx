@@ -71,6 +71,7 @@ export class WorkspaceStore {
      * Apicize executions underway or completed (keyed by request ID)
      */
     @observable accessor executions = new Map<string, Execution>()
+    @observable accessor lastExecution: { requestOrGroupId: string } | null = null
 
     @observable accessor workbookFullName = ''
     @observable accessor workbookDisplayName = '(New)'
@@ -1060,6 +1061,8 @@ export class WorkspaceStore {
     @action
     reportExecutionResults(execution: Execution, executionResults: ApicizeResult) {
         execution.running = false
+        this.lastExecution = { requestOrGroupId: execution.requestOrGroupId }
+        
         const previousPanel = execution.panel
 
         const menu: ExecutionMenuItem[] = []
@@ -1251,7 +1254,6 @@ export class WorkspaceStore {
         execution.resultIndex = (isNaN(execution.resultIndex) || execution.resultIndex >= execution.results.length || execution.results.length != oldLength)
             ? 0 : execution.resultIndex
         execution.panel = (previousPanel && success) ? previousPanel : 'Info'
-
     }
 
 

@@ -1,4 +1,4 @@
-import { action, computed, observable } from "mobx"
+import { action, autorun, computed, observable } from "mobx"
 import { EditableEntityType } from "../models/workspace/editable-entity-type"
 import { EditableItem } from "../models/editable"
 import { WorkspaceStore } from "./workspace.context"
@@ -49,7 +49,14 @@ export class WorkspaceSessionStore {
     public constructor(
         public readonly id: string,
         private readonly workspace: WorkspaceStore
-    ) { }
+    ) { 
+        autorun(() => {
+            if (workspace.lastExecution) {
+                console.log(`Clearing result edit sessoins for request ${workspace.lastExecution.requestOrGroupId}`)
+                this.resultEditSessions.delete(workspace.lastExecution.requestOrGroupId)
+            }
+        })
+    }
 
     @action
     setMode(mode: WorkspaceMode) {

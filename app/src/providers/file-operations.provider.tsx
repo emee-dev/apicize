@@ -31,6 +31,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 workbookDirectory: apicize.workbookDirectory,
                 lastWorkbookFileName: apicize.lastWorkbookFileName,
                 fontSize: apicize.fontSize,
+                navigationFontSize: apicize.navigationFontSize,
                 colorScheme: apicize.colorScheme,
                 editorPanels: apicize.editorPanels,
                 recentWorkbookFileNames: apicize.recentWorkbookFileNames.length > 0
