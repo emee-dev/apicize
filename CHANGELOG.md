@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.17.6
+
+* Fix log viewer width
+
 # 0.17.5
 
 * Fix bug with consecutive executed results display

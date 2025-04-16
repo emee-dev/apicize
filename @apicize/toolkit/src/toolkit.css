@@ -354,6 +354,10 @@ pre.log {
   flex-direction: column;
 }
 
+.editor-panel.full-width {
+  max-width: none;
+}
+
 .split-left .editor-panel,
 .split-left .editor-content {
   padding-right: 0;

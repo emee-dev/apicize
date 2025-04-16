@@ -65,7 +65,7 @@ export const LogViewer = observer((props: {
         }).join('\r\n\r\n')
     }
 
-    return <Stack display='flex' direction={'column'} className='editor' position='relative' bottom={0} flexGrow={1}>
+    return <Stack display='flex' direction={'column'} className='editor' position='relative' bottom={0}>
         <Box className='editor-panel-header' flexGrow={0}>
             <EditorTitle icon={<SvgIcon><LogIcon /></SvgIcon>} name='Communication Logs'>
                 <Box>
@@ -83,8 +83,8 @@ export const LogViewer = observer((props: {
                 </Box>
             </EditorTitle>
         </Box>
-        <Box className='editor-panel full-width'>
-            <Stack direction={'column'} spacing={1} className='console' paddingBottom='2em' paddingRight='2em'>
+        <Box className='editor-panel full-width' display='flex' flexGrow={1}>
+            <Stack direction={'column'} spacing={1} className='console' paddingBottom='2em' paddingRight='2em' flexGrow='1'>
                 {log.events.map(renderEvent)}
                 <div ref={bottomRef} />
             </Stack>
