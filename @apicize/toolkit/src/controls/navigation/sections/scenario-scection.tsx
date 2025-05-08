@@ -1,4 +1,4 @@
-import { GetTitle, Persistence } from "@apicize/lib-typescript"
+import { Persistence } from "@apicize/lib-typescript"
 import { ListItemIcon, ListItemText, Menu, MenuItem, SvgIcon, useTheme } from "@mui/material"
 import ScenarioIcon from "../../../icons/scenario-icon"
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
@@ -10,13 +10,10 @@ import { MenuPosition } from "../../../models/menu-position"
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
-import { useWorkspaceSession } from "../../../contexts/workspace-session.context"
+import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position"
 
-export const ScenarioSection = observer((props: {
-    includeHeader: boolean,
-}) => {
+export const ScenarioSection = observer((props: { includeHeader: boolean }) => {
     const workspace = useWorkspace()
-    const session = useWorkspaceSession()
     const feedback = useFeedback()
     const theme = useTheme()
 
@@ -30,35 +27,36 @@ export const ScenarioSection = observer((props: {
         workspace.changeActive(EditableEntityType.Scenario, id)
     }
 
-    const handleAddScenario = (persistence: Persistence, targetScenarioId?: string | null) => {
+    const handleAddScenario = (relativeToId: string, relativePosition: IndexedEntityPosition, cloneFromId: string | null) => {
         closeScenarioMenu()
-        workspace.addScenario(persistence, targetScenarioId)
+        workspace.addScenario(relativeToId, relativePosition, cloneFromId)
     }
 
     const handleSelectHeader = (headerId: string, helpTopic?: string) => {
         // closeAllMenus()
         if (helpTopic) {
-            session.updateExpanded(headerId, true)
-            session.showHelp(helpTopic)
+            workspace.updateExpanded(headerId, true)
+            workspace.showHelp(helpTopic)
         }
     }
 
-    const handleMoveScenario = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
+    const handleMoveScenario = (id: string, relativeToId: string, relativePosition: IndexedEntityPosition) => {
         selectScenario(id)
-        workspace.moveScenario(session.id, id, destinationID, onLowerHalf, isSection)
+        workspace.moveScenario(id, relativeToId, relativePosition)
     }
 
     const handleDupeScenario = () => {
         closeScenarioMenu()
         const id = scenarioMenu?.id
         if (!id) return
-        workspace.copyScenario(id)
+        workspace.addScenario(id, IndexedEntityPosition.After, id)
     }
 
     const showScenarioMenu = (event: React.MouseEvent, persistence: Persistence, id: string) => {
         setScenarioMenu(
             {
                 id,
+                type: EditableEntityType.Scenario,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
                 persistence,
@@ -72,7 +70,7 @@ export const ScenarioSection = observer((props: {
         if (!id) return
         feedback.confirm({
             title: 'Delete Scenario',
-            message: `Are you are you sure you want to delete ${GetTitle(workspace.scenarios.get(id))}?`,
+            message: `Are you are you sure you want to delete ${workspace.getNavigationName(id)}?`,
             okButton: 'Yes',
             cancelButton: 'No',
             defaultToCancel: true
@@ -95,7 +93,7 @@ export const ScenarioSection = observer((props: {
                     left: scenarioMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddScenario(scenarioMenu.persistence, scenarioMenu?.id)}>
+                <MenuItem onClick={(_) => handleAddScenario(scenarioMenu.id, IndexedEntityPosition.After, null)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='scenario'><ScenarioIcon /></SvgIcon>
                     </ListItemIcon>
@@ -125,7 +123,7 @@ export const ScenarioSection = observer((props: {
         iconColor='scenario'
         helpTopic='workspace/scenarios'
         type={EditableEntityType.Scenario}
-        parameters={workspace.scenarios}
+        parameters={workspace.navigation.scenarios}
         onSelect={selectScenario}
         onSelectHeader={handleSelectHeader}
         onAdd={handleAddScenario}

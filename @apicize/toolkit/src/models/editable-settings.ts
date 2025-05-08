@@ -1,8 +1,8 @@
-import { ApplicationSettings } from '@apicize/lib-typescript';
+import { ApicizeSettings } from '@apicize/lib-typescript';
 import { SupportedColorScheme } from '@mui/material';
 import { action, observable } from 'mobx';
 
-export class ApicizeSettings {
+export class EditableSettings {
     @observable accessor dirty = false
 
     @observable accessor appName = 'Apicize'
@@ -18,16 +18,18 @@ export class ApicizeSettings {
     @observable accessor pkceListenerPort = 8080
     @observable accessor alwaysHideNavTree = false
 
-    constructor(settings: ApplicationSettings) {
-        this.workbookDirectory = settings.workbookDirectory
-        this.lastWorkbookFileName = settings.lastWorkbookFileName
-        this.fontSize = settings.fontSize
-        this.navigationFontSize = settings.navigationFontSize
-        this.colorScheme = settings.colorScheme
-        this.editorPanels = settings.editorPanels
-        this.recentWorkbookFileNames = settings.recentWorkbookFileNames ?? []
-        this.pkceListenerPort = settings.pkceListenerPort ?? 8080
-        this.alwaysHideNavTree = settings.alwaysHideNavTree
+    constructor(settings?: ApicizeSettings) {
+        if (settings) {
+            this.workbookDirectory = settings.workbookDirectory
+            this.lastWorkbookFileName = settings.lastWorkbookFileName
+            this.fontSize = settings.fontSize
+            this.navigationFontSize = settings.navigationFontSize
+            this.colorScheme = settings.colorScheme
+            this.editorPanels = settings.editorPanels
+            this.recentWorkbookFileNames = settings.recentWorkbookFileNames?.slice(0, 10) ?? []
+            this.pkceListenerPort = settings.pkceListenerPort ?? 8080
+            this.alwaysHideNavTree = settings.alwaysHideNavTree
+        }
     }
 
     public ctrlKey: string = 'Ctrl'
@@ -67,7 +69,7 @@ export class ApicizeSettings {
     @action
     public setRecentWorkbookFileNames(newRecentWorkbookFileNames: string[]) {
         if (this.recentWorkbookFileNames.join(';') != newRecentWorkbookFileNames.join(';')) {
-            this.recentWorkbookFileNames = newRecentWorkbookFileNames
+            this.recentWorkbookFileNames = newRecentWorkbookFileNames.slice(0, 10)
             this.dirty = true
         }
     }

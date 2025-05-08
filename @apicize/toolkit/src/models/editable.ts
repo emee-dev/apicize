@@ -7,20 +7,11 @@ import { EditableRequestGroup } from "./workspace/editable-request-group"
 import { EditableAuthorization } from "./workspace/editable-authorization"
 import { EditableScenario } from "./workspace/editable-scenario"
 import { EditableCertificate } from "./workspace/editable-certificate"
-import { EditableWarnings } from "./workspace/editable-warnings"
-import { EditableDefaults } from "./workspace/editable-defaults"
 import { WorkspaceStore } from "../contexts/workspace.context"
+import { EditableDefaults } from "./workspace/editable-defaults"
 
-// export interface EditableItem extends Identifiable {
-//     readonly name: string
-//     readonly dirty: boolean
-//     readonly state: EditableState
-
-//     readonly entityType: EditableEntityType
-// }
-
-export type EditableItem = EditableRequest | EditableRequestGroup | EditableScenario | EditableAuthorization
-    | EditableCertificate | EditableProxy
+export type EditableEntity = EditableRequest | EditableRequestGroup | EditableScenario | EditableAuthorization
+    | EditableCertificate | EditableProxy | EditableDefaults
 
 /**
  * Interface to track state of editable entity
@@ -32,18 +23,19 @@ export abstract class Editable<T> {
     abstract accessor state: EditableState
 
     public abstract readonly entityType: EditableEntityType
+    protected abstract onUpdate(): void
 
     constructor(protected workspace: WorkspaceStore) { }
+
+
+    markAsDirty() {
+        this.dirty = true
+    }
 
     @action
     setName(value: string) {
         this.name = value
-        this.markAsDirty()
-    }
-
-    markAsDirty() {
-        this.dirty = true
-        this.workspace.dirty = true
+        this.onUpdate()
     }
 
     @computed

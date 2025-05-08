@@ -10,16 +10,19 @@ interface ExtendedTypographyOptions extends TypographyOptions {
   navigation: React.CSSProperties;
 }
 
-export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
-  const apicize = useApicize()
-
+export const ConfigurableTheme = observer((props: {
+  children?: ReactNode,
+  colorScheme: 'dark' | 'light', 
+  fontSize: number,
+  navigationFontSize: number,
+}) => {
   const palette = createTheme()
 
-  const isDark = apicize.colorScheme === 'dark'
+  const isDark = props.colorScheme === 'dark'
 
   const theme = createTheme({
     palette: {
-      mode: apicize.colorScheme,
+      mode: props.colorScheme,
       navigation: palette.palette.augmentColor({
         color: {
           main: isDark ? '#202020' : '#F0F0F0',
@@ -94,13 +97,13 @@ export const ConfigurableTheme = observer((props: { children?: ReactNode }) => {
       }),
     },
     typography: {
-      fontSize: apicize.fontSize,
+      fontSize: props.fontSize,
       fontFamily: "'Open Sans','sans'",
       code: {
         fontFamily: "'Roboto Mono','monospace'"
       },
       navigation: {
-        fontSize: apicize.navigationFontSize
+        fontSize: props.navigationFontSize
       }
     } as ExtendedTypographyOptions,
     components: {

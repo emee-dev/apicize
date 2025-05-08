@@ -181,7 +181,7 @@ export interface ApicizeHttpRequest {
 export interface ApicizeHttpResponse {
     status: number
     statusText: string
-    headers?: Map<string, string>
+    headers?: { [header: string]: string }
     body?: ApicizeBody,
     oauth2Token?: TokenResult
 }

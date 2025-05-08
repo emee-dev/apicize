@@ -7,7 +7,10 @@ use std::{
     path::{self, Path},
 };
 
-use apicize_lib::{open_data_file, save_data_file, SerializationFailure, SerializationOpenSuccess, SerializationSaveSuccess};
+use apicize_lib::{
+    open_data_file, save_data_file, FileAccessError, SerializationOpenSuccess,
+    SerializationSaveSuccess,
+};
 use dirs::{config_dir, document_dir, home_dir};
 use serde::{Deserialize, Serialize};
 
@@ -62,6 +65,7 @@ pub struct ApicizeSettings {
     pub editor_panels: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+
     /// Recent workbook file names opened in UI
     pub recent_workbook_file_names: Option<Vec<String>>,
 
@@ -99,8 +103,45 @@ impl ApicizeSettings {
         Self::get_settings_directory().join("settings.json")
     }
 
+    /// Update the recently used work book file names and last workbook settings,
+    /// returns True if either changed
+    pub fn update_recent_workbook_file_name(&mut self, file_name: &str) -> bool {
+        let mut changed = false;
+        let cloned_filename = Some(file_name.to_string());
+        if cloned_filename != self.last_workbook_file_name {
+            self.last_workbook_file_name = cloned_filename;
+            changed = true;
+        }
+
+        match self.recent_workbook_file_names.as_mut() {
+            Some(recent) => {
+                match recent.iter().position(|r| r == file_name) {
+                    Some(index) => {
+                        if index != 0 {
+                            recent.remove(index);
+                            recent.insert(0, file_name.to_string());
+                        }
+                    }
+                    None => {
+                        recent.push(file_name.to_string());
+                        changed = true;
+                    }
+                }
+                if changed && recent.len() > 10 {
+                    recent.truncate(10);
+                }
+            }
+            None => {
+                self.recent_workbook_file_names = Some(vec![file_name.to_string()]);
+                changed = true
+            }
+        }
+
+        changed
+    }
+
     /// Open Apicize common environment from the specified name in the default path
-    pub fn open() -> Result<SerializationOpenSuccess<ApicizeSettings>, SerializationFailure> {
+    pub fn open() -> Result<SerializationOpenSuccess<ApicizeSettings>, FileAccessError> {
         let file_name = &Self::get_settings_filename();
         if Path::new(&file_name).is_file() {
             open_data_file::<ApicizeSettings>(&Self::get_settings_filename())
@@ -127,7 +168,7 @@ impl ApicizeSettings {
     }
 
     /// Save Apicize common environment to the specified name in the default path
-    pub fn save(&self) -> Result<SerializationSaveSuccess, SerializationFailure> {
+    pub fn save(&self) -> Result<SerializationSaveSuccess, FileAccessError> {
         let dir = Self::get_settings_directory();
         if !Path::new(&dir).is_dir() {
             if let Err(err) = create_dir_all(&dir) {

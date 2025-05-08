@@ -4,20 +4,20 @@ import * as dialog from '@tauri-apps/plugin-dialog'
 import * as path from '@tauri-apps/api/path'
 import { exists, readFile, readTextFile } from "@tauri-apps/plugin-fs"
 import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useApicize, useFeedback, WorkspaceStore } from "@apicize/toolkit";
-import { GetTitle, ApplicationSettings, Workspace, Persistence } from "@apicize/lib-typescript";
+import { GetTitle, ApicizeSettings, Workspace, Persistence } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
+
 
 /**
  * Implementation of file opeartions via Tauri
  */
-export function FileOperationsProvider({ store: workspaceStore, children }: { store: WorkspaceStore, children?: ReactNode }) {
+export function FileOperationsProvider({ activeSessionId, workspaceStore, children }: { activeSessionId: string, workspaceStore: WorkspaceStore, children?: ReactNode }) {
 
     const EXT = 'apicize';
 
     const feedback = useFeedback()
-    const apicize = useApicize()
+    const apicizeSettings = useApicize()
 
-    const _forceClose = useRef(false)
     const _sshPath = useRef('')
     const _bodyDataPath = useRef('')
 
@@ -27,37 +27,23 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      */
     const saveSettings = async () => {
         try {
-            const settingsToSave: ApplicationSettings = {
-                workbookDirectory: apicize.workbookDirectory,
-                lastWorkbookFileName: apicize.lastWorkbookFileName,
-                fontSize: apicize.fontSize,
-                navigationFontSize: apicize.navigationFontSize,
-                colorScheme: apicize.colorScheme,
-                editorPanels: apicize.editorPanels,
-                recentWorkbookFileNames: apicize.recentWorkbookFileNames.length > 0
-                    ? apicize.recentWorkbookFileNames
+            const settingsToSave: ApicizeSettings = {
+                workbookDirectory: apicizeSettings.workbookDirectory,
+                lastWorkbookFileName: apicizeSettings.lastWorkbookFileName,
+                fontSize: apicizeSettings.fontSize,
+                navigationFontSize: apicizeSettings.navigationFontSize,
+                colorScheme: apicizeSettings.colorScheme,
+                editorPanels: apicizeSettings.editorPanels,
+                recentWorkbookFileNames: apicizeSettings.recentWorkbookFileNames.length > 0
+                    ? apicizeSettings.recentWorkbookFileNames
                     : undefined,
-                pkceListenerPort: apicize.pkceListenerPort,
-                alwaysHideNavTree: apicize.alwaysHideNavTree,
+                pkceListenerPort: apicizeSettings.pkceListenerPort,
+                alwaysHideNavTree: apicizeSettings.alwaysHideNavTree,
             }
-            await core.invoke<ApplicationSettings>('save_settings', { settings: settingsToSave })
+            await core.invoke<ApicizeSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {
             feedback.toast(`Unable to save settings: ${e}`, ToastSeverity.Error)
         }
-    }
-
-    /**
-     * Get the base file name without extension or path
-     * @param fileName 
-     * @returns 
-     */
-    const getDisplayName = async (fileName: string) => {
-        let base = await path.basename(fileName);
-        const i = base.lastIndexOf('.');
-        if (i !== -1) {
-            base = base.substring(0, i);
-        }
-        return base;
     }
 
     /**
@@ -75,7 +61,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
         if (await exists(openSshPath)) {
             _sshPath.current = openSshPath
         } else {
-            _sshPath.current = apicize.workbookDirectory
+            _sshPath.current = apicizeSettings.workbookDirectory
         }
         return _sshPath.current
     }
@@ -91,7 +77,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             }
         }
 
-        const fileName = workspaceStore.workbookFullName
+        const fileName = workspaceStore.fileName
         if (fileName && fileName.length > 0) {
             const base = await path.basename(fileName)
             let i = fileName.indexOf(base)
@@ -100,7 +86,7 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 return _bodyDataPath.current
             }
         }
-        _bodyDataPath.current = apicize.workbookDirectory
+        _bodyDataPath.current = apicizeSettings.workbookDirectory
         return _bodyDataPath.current
     }
 
@@ -108,8 +94,8 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      * Launches a new workspace
      * @returns 
      */
-    const newWorkspace = async () => {
-        if (workspaceStore.dirty) {
+    const newWorkspace = async (openInNewWindow: boolean) => {
+        if (!openInNewWindow && workspaceStore.dirty) {
             if (! await feedback.confirm({
                 title: 'New Workbook',
                 message: 'Are you sure you want to create a new workbook without saving changes?',
@@ -121,65 +107,53 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             }
         }
 
-        const data: Workspace = await core.invoke('new_workspace')
-        workspaceStore.newWorkspace(data)
-        _forceClose.current = false
+        const openInSessionId = openInNewWindow ? undefined : activeSessionId
+        await core.invoke('new_workspace', { openInSessionId })
         feedback.toast('Created New Workbook', ToastSeverity.Success)
     }
 
     /**
      * Loads the specified workbook (if named), otherwise, prompts for workbook
-     * @param fileName 
+     * @param defaultFileName 
      * @param doUpdateSettings 
      * @returns 
      */
-    const openWorkspace = async (fileName?: string) => {
-        if (workspaceStore.dirty) {
-            if (! await feedback.confirm({
-                title: 'Open Workbook',
-                message: 'Are you sure you want to open a workbook without saving changes?',
-                okButton: 'Yes',
-                cancelButton: 'No',
-                defaultToCancel: true
-            })) {
-                return
-            }
-        }
-
-        let openFileName = fileName ?? null
-
-        if ((openFileName?.length ?? 0) === 0) {
-            feedback.setModal(true)
-            openFileName = await dialog.open({
-                multiple: false,
-                title: 'Open Apicize Workbook',
-                defaultPath: apicize.workbookDirectory,
-                directory: false,
-                filters: [{
-                    name: 'Apicize Files',
-                    extensions: [EXT]
-                }]
-            })
-            feedback.setModal(false)
-        }
-
-        if (!openFileName) return
-
+    const openWorkspace = async (openInNewWindow: boolean, defaultFileName?: string) => {
         try {
-            const data: Workspace = await core.invoke('open_workspace', { path: openFileName })
-            const displayName = await getDisplayName(openFileName)
-            workspaceStore.loadWorkspace(data, openFileName, displayName)
-            apicize.lastWorkbookFileName = openFileName
-            apicize.addRecentWorkbookFileName(openFileName)
-            _forceClose.current = false
-            feedback.toast(`Opened ${openFileName}`, ToastSeverity.Success)
-        } catch (e) {
-            apicize.removeRecentWorkbookFileName(openFileName)
-            feedback.toast(`${e}`, ToastSeverity.Error)
-        } finally {
-            if (apicize.dirty) {
-                await saveSettings()
+            if (!openInNewWindow && workspaceStore.dirty) {
+                if (! await feedback.confirm({
+                    title: 'Open Workbook',
+                    message: 'Are you sure you want to open a workbook without saving changes?',
+                    okButton: 'Yes',
+                    cancelButton: 'No',
+                    defaultToCancel: true
+                })) {
+                    return
+                }
             }
+            let fileName = defaultFileName ?? null
+
+            if ((fileName?.length ?? 0) === 0) {
+                feedback.setModal(true)
+                fileName = await dialog.open({
+                    multiple: false,
+                    title: 'Open Apicize Workbook',
+                    defaultPath: apicizeSettings.workbookDirectory,
+                    directory: false,
+                    filters: [{
+                        name: 'Apicize Files',
+                        extensions: [EXT]
+                    }]
+                })
+                feedback.setModal(false)
+            }
+
+            if (!fileName) return
+
+            const openInSessionId = openInNewWindow ? undefined : activeSessionId
+            await core.invoke('open_workspace', { fileName, openInSessionId })
+        } catch (e) {
+            feedback.toastError(e)
         }
     }
 
@@ -189,56 +163,12 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      */
     const saveWorkspace = async () => {
         try {
-            if (!(workspaceStore.workbookFullName && workspaceStore.workbookFullName.length > 0)) {
-                return
-            }
-
-            if (workspaceStore.anyInvalid()) {
-                if (! await feedback.confirm({
-                    title: 'Save Workbook',
-                    message: 'Your workspace has one or more errors, are you sure you want to save?',
-                    okButton: 'Yes',
-                    cancelButton: 'No',
-                    defaultToCancel: true
-                })) {
-                    return
-                }
-            }
-
-            if (workspaceStore.warnOnWorkspaceCreds) {
-                const creds = [
-                    ...workspaceStore.authorizations.getChildren(Persistence.Workbook),
-                    ...workspaceStore.certificates.getChildren(Persistence.Workbook)
-                ];
-                if (creds.length > 0) {
-                    if (! await feedback.confirm({
-                        title: 'Save Workbook',
-                        message: `Your workspace has authorizations or certifiations stored directly in the workbook, which will be included if you share the workbook; are you sure you want to save?\n\n${creds.map(c => GetTitle(c)).join(', ')}`,
-                        okButton: 'Yes',
-                        cancelButton: 'No',
-                        defaultToCancel: true
-                    })) {
-                        return
-                    }
-                    workspaceStore.warnOnWorkspaceCreds = false
-                }
-            }
-
-            const workspaceToSave = workspaceStore.getWorkspace()
-            await core.invoke('save_workspace', { workspace: workspaceToSave, path: workspaceStore.workbookFullName })
-            feedback.toast(`Saved ${workspaceStore.workbookFullName}`, ToastSeverity.Success)
-            const displayName = await getDisplayName(workspaceStore.workbookFullName)
-            workspaceStore.updateSavedLocation(
-                workspaceStore.workbookFullName,
-                displayName
-            )
-            apicize.lastWorkbookFileName = workspaceStore.workbookFullName
-            apicize.addRecentWorkbookFileName(workspaceStore.workbookFullName)
-            if (apicize.dirty) {
-                await saveSettings()
-            }
+            await core.invoke('save_workspace', {
+                sessionId: activeSessionId
+            })
+            feedback.toast('Workbook saved', ToastSeverity.Success)
         } catch (e) {
-            feedback.toast(`${e}`, ToastSeverity.Error)
+            feedback.toastError(e)
         }
     }
 
@@ -248,7 +178,10 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
      */
     const saveWorkbookAs = async () => {
         try {
-            if (workspaceStore.anyInvalid()) {
+            const saveStatus = await core.invoke<WorkspaceSaveStatus>('get_workspace_save_status', {
+                sessionId: activeSessionId
+            })
+            if (saveStatus.anyInvalid) {
                 if (! await feedback.confirm({
                     title: 'Save Workbook',
                     message: 'Your workspace has one or more errors, are you sure you want to save?',
@@ -260,30 +193,23 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 }
             }
 
-            if (workspaceStore.warnOnWorkspaceCreds) {
-                const creds = [
-                    ...workspaceStore.authorizations.getChildren(Persistence.Workbook),
-                    ...workspaceStore.certificates.getChildren(Persistence.Workbook)
-                ];
-                if (creds.length > 0) {
-                    if (! await feedback.confirm({
-                        title: 'Save Workbook',
-                        message: `Your workspace has authorizations or certifiations stored directly in the workbook, which will be included if you share the workbook; are you sure you want to save?\n\n${creds.map(c => GetTitle(c)).join(', ')}`,
-                        okButton: 'Yes',
-                        cancelButton: 'No',
-                        defaultToCancel: true
-                    })) {
-                        return
-                    }
-                    workspaceStore.warnOnWorkspaceCreds = false
+            if (saveStatus.warnOnWorkspaceCreds) {
+                if (! await feedback.confirm({
+                    title: 'Save Workbook',
+                    message: 'Your workspace has authorizations or certifiations stored publicly in the workbook, which will be included if you share the workbook; are you sure you want to save?',
+                    okButton: 'Yes',
+                    cancelButton: 'No',
+                    defaultToCancel: true
+                })) {
+                    return
                 }
             }
 
             feedback.setModal(true)
             let fileName = await dialog.save({
                 title: 'Save Apicize Workbook',
-                defaultPath: ((workspaceStore.workbookFullName?.length ?? 0) > 0)
-                    ? workspaceStore.workbookFullName : apicize.workbookDirectory,
+                defaultPath: saveStatus.fileName.length > 0
+                    ? saveStatus.fileName : apicizeSettings.workbookDirectory,
                 filters: [{
                     name: 'Apicize Files',
                     extensions: [EXT]
@@ -299,22 +225,21 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
                 fileName += `.${EXT}`
             }
 
-            const workspaceToSave = workspaceStore.getWorkspace()
-            await core.invoke('save_workspace', { workspace: workspaceToSave, path: fileName })
-
-            feedback.toast(`Saved ${fileName}`, ToastSeverity.Success)
-            const displayName = await getDisplayName(fileName)
-            workspaceStore.updateSavedLocation(
+            await core.invoke('save_workspace', {
+                sessionId: activeSessionId,
                 fileName,
-                displayName
-            )
-            apicize.lastWorkbookFileName = fileName
-            apicize.addRecentWorkbookFileName(fileName)
-            if (apicize.dirty) {
-                await saveSettings()
-            }
+            })
+            feedback.toast('Workbook saved', ToastSeverity.Success)
         } catch (e) {
-            feedback.toast(`${e}`, ToastSeverity.Error)
+            feedback.toastError(e)
+        }
+    }
+
+    const cloneWorkspace = async () => {
+        try {
+            await core.invoke('clone_workspace', { sessionId: activeSessionId })
+        } catch (e) {
+            feedback.toastError(e)
         }
     }
 
@@ -445,27 +370,16 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             throw new Error(`Help topic "${showTopic}" not found at ${helpFile}`)
         }
     }
-
-    // Open last workspace on load
-    useEffect(() => {
-        (async () => {
-            if (apicize.lastWorkbookFileName) {
-                await openWorkspace(apicize.lastWorkbookFileName)
-            } else {
-                await newWorkspace()
-            }
-        })()
-    })
-
     const fileOpsStore = new FileOperationsStore({
         onNewWorkbook: newWorkspace,
         onOpenWorkbook: openWorkspace,
         onSaveWorkbook: saveWorkspace,
         onSaveWorkbookAs: saveWorkbookAs,
+        onCloneWorkspace: cloneWorkspace,
         onOpenSshFile: openSsshFile,
         onOpenFile: openFile,
         onSaveSettings: saveSettings,
-        onRetrieveHelpTopic: retrieveHelpTopic
+        onRetrieveHelpTopic: retrieveHelpTopic,
     })
 
     return (
@@ -473,4 +387,13 @@ export function FileOperationsProvider({ store: workspaceStore, children }: { st
             {children}
         </FileOperationsContext.Provider>
     )
+}
+
+
+export interface WorkspaceSaveStatus {
+    dirty: boolean
+    warnOnWorkspaceCreds: boolean
+    anyInvalid: boolean
+    fileName: string
+    displayName: string
 }

@@ -6,55 +6,37 @@ import AddIcon from '@mui/icons-material/Add'
 import PrivateIcon from "../../../icons/private-icon"
 import PublicIcon from "../../../icons/public-icon"
 import VaultIcon from "../../../icons/vault-icon"
-import { EditableItem } from "../../../models/editable"
-import { IndexedEntityManager } from "../../../models/indexed-entity-manager"
+import { EditableEntity } from "../../../models/editable"
 import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
 import { OverridableStringUnion } from "@mui/types";
-import { DragPosition, DroppableData } from "../../../models/drag-drop"
+import { DroppableData } from "../../../models/drag-drop"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { NavTreeItem } from "../nav-tree-item"
 import { useDroppable } from "@dnd-kit/core"
 import { observer } from "mobx-react-lite"
-import { useWorkspaceSession } from "../../../contexts/workspace-session.context"
 import { useApicize } from "../../../contexts/apicize.context"
+import { NavigationEntry, ParamNavigationSection } from "../../../models/navigation"
+import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position"
+import { useDragDrop } from "../../../contexts/dragdrop.context"
 
-export function dragPositionToColor(dragPosition: DragPosition) {
-    switch (dragPosition) {
-        case DragPosition.Upper:
-            return "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 25%, rgba(64,64,64,1) 75%);"
-        case DragPosition.Lower:
-            return "linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 25%, rgba(64,64,64,1) 75%);"
-        case DragPosition.Left:
-            return "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 13%, rgba(64,64,64,1) 44%);"
-        case DragPosition.Invalid:
-            return 'rgba(128, 0, 0, 0.5)'
-        default:
-            return 'default'
-    }
-}
-
-const ParameterSubsection = observer(<T extends EditableItem>(props: {
+const ParameterSubsection = observer((props: {
     type: EditableEntityType,
-    parameters: IndexedEntityManager<T>,
+    entries: NavigationEntry[],
     persistence: Persistence,
     icon: JSX.Element,
     label: string,
-    suffix: string,
     onSelect: (id: string) => void,
     onAdd: () => void,
-    onMove: (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => void,
+    onMove: (id: string, relativeToId: string, relativePosition: IndexedEntityPosition) => void,
     onItemMenu: (event: React.MouseEvent, id: string) => void,
     onSelectHeader: (headerId: string, helpTopic?: string) => void
 }) => {
     const settings = useApicize()
-    const session = useWorkspaceSession()
-
-    const dragDrop = {
-        dragPosition: DragPosition.None
-    }
+    const workspace = useWorkspace()
+    const dragDrop = useDragDrop()
 
     const { isOver, setNodeRef: setDropRef } = useDroppable({
-        id: `hdr-${props.type}-${props.suffix}`,
+        id: `hdr-${props.type}-${props.persistence}`,
         data: {
             acceptAppend: true,
             acceptsTypes: [props.type],
@@ -64,14 +46,14 @@ const ParameterSubsection = observer(<T extends EditableItem>(props: {
         } as DroppableData
     })
 
-    const headerId = `hdr-${props.type}-${props.suffix}`
+    const headerId = `hdr-${props.type}-${props.persistence}`
     return <TreeItem
         itemId={headerId}
         key={headerId}
         id={headerId}
         onFocusCapture={e => e.stopPropagation()}
         ref={setDropRef}
-        sx={{ background: isOver ? dragPositionToColor(dragDrop.dragPosition) : 'default', margin: '0 0 0 1.0em', padding: 0 }}
+        sx={{ background: isOver ? dragDrop.toBackgroundColor() : 'default', margin: '0 0 0 1.0em', padding: 0 }}
         label={(
             <Box
                 className='nav-item'
@@ -81,7 +63,7 @@ const ParameterSubsection = observer(<T extends EditableItem>(props: {
                     e.preventDefault()
                     e.stopPropagation()
                     props.onSelectHeader(headerId, 'parameter-storage')
-                    session.updateExpanded(headerId, true)
+                    workspace.updateExpanded(headerId, true)
                 }}
             >
                 {props.icon}
@@ -93,7 +75,7 @@ const ParameterSubsection = observer(<T extends EditableItem>(props: {
                         e.preventDefault()
                         e.stopPropagation()
                         props.onAdd()
-                        session.updateExpanded(headerId, true)
+                        workspace.updateExpanded(headerId, true)
                     }}>
                     <Box className='nav-icon-context'>
                         <AddIcon />
@@ -103,11 +85,12 @@ const ParameterSubsection = observer(<T extends EditableItem>(props: {
         )}
     >
         {
-            props.parameters.getChildren(props.persistence).map((e) =>
+            props.entries.map((e) =>
                 <NavTreeItem
-                    key={e.id}
                     type={props.type}
-                    item={e}
+                    id={e.id}
+                    key={e.id}
+                    title={e.name}
                     depth={2}
                     onSelect={props.onSelect}
                     isDraggable={true}
@@ -121,9 +104,9 @@ const ParameterSubsection = observer(<T extends EditableItem>(props: {
 })
 
 
-export const ParameterSection = observer(<T extends EditableItem>(props: {
+export const ParameterSection = observer(<T extends EditableEntity>(props: {
     type: EditableEntityType,
-    parameters: IndexedEntityManager<T>,
+    parameters: ParamNavigationSection,
     title: string,
     helpTopic: string,
     icon: JSX.Element,
@@ -140,9 +123,9 @@ export const ParameterSection = observer(<T extends EditableItem>(props: {
         | 'success'
         | 'warning',
         SvgIconPropsColorOverrides>,
-    onAdd: (persistence: Persistence) => void,
+    onAdd: (relativeToId: string, relativePosition: IndexedEntityPosition, cloneFromId: string | null) => void,
     onSelect: (id: string) => void,
-    onMove: (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => void,
+    onMove: (id: string, relativeToId: string, relativePosition: IndexedEntityPosition) => void,
     onItemMenu: (e: React.MouseEvent, persistence: Persistence, id: string) => void,
     onSelectHeader: (headerId: string, helpTopic?: string) => void
 }) => {
@@ -152,36 +135,33 @@ export const ParameterSection = observer(<T extends EditableItem>(props: {
             <ParameterSubsection
                 type={props.type}
                 persistence={Persistence.Workbook}
-                parameters={props.parameters}
+                entries={props.parameters.public}
                 icon={<Box className='nav-icon-box' typography='navigation'><SvgIcon className='nav-folder' color='public'><PublicIcon /></SvgIcon></Box>}
                 label="Public"
-                suffix="pub"
                 onSelect={props.onSelect}
-                onAdd={() => props.onAdd(Persistence.Workbook)}
+                onAdd={() => props.onAdd(Persistence.Workbook, IndexedEntityPosition.Under, null)}
                 onMove={props.onMove}
                 onItemMenu={(e, id) => props.onItemMenu(e, Persistence.Workbook, id)}
                 onSelectHeader={props.onSelectHeader} />
             <ParameterSubsection
                 type={props.type}
                 persistence={Persistence.Private}
-                parameters={props.parameters}
+                entries={props.parameters.private}
                 icon={<Box className='nav-icon-box' typography='navigation'><SvgIcon className='nav-folder' color='private'><PrivateIcon /></SvgIcon></Box>}
                 label="Private"
-                suffix="priv"
                 onSelect={props.onSelect}
-                onAdd={() => props.onAdd(Persistence.Private)}
+                onAdd={() => props.onAdd(Persistence.Private, IndexedEntityPosition.Under, null)}
                 onMove={props.onMove}
                 onItemMenu={(e, id) => props.onItemMenu(e, Persistence.Private, id)}
                 onSelectHeader={props.onSelectHeader} />
             <ParameterSubsection
                 type={props.type}
                 persistence={Persistence.Vault}
-                parameters={props.parameters}
+                entries={props.parameters.vault}
                 icon={<Box className='nav-icon-box' typography='navigation'><SvgIcon className='nav-folder' color='vault'><VaultIcon /></SvgIcon></Box>}
                 label="Vault"
-                suffix="vault"
                 onSelect={props.onSelect}
-                onAdd={() => props.onAdd(Persistence.Vault)}
+                onAdd={() => props.onAdd(Persistence.Vault, IndexedEntityPosition.Under, null)}
                 onMove={props.onMove}
                 onItemMenu={(e, id) => props.onItemMenu(e, Persistence.Vault, id)}
                 onSelectHeader={props.onSelectHeader} />

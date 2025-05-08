@@ -1,15 +1,15 @@
 'use client'
 
 import * as core from '@tauri-apps/api/core'
-import { ApicizeSettings, DragDropProvider, FeedbackStore, MainPanel, WorkspaceStore } from '@apicize/toolkit'
-import React from 'react'
+import { ApicizeSettings, DefaultsEvent, DragDropProvider, Entity, EntityType, FeedbackStore, IndexedEntityPosition, LogStore, MainPanel, Navigation, SessionInitialization, SessionSaveState, ToastSeverity, UpdatedNavigationEntry, WorkspaceStore } from '@apicize/toolkit'
+import React, { useEffect, useState } from 'react'
 import "@fontsource/open-sans/latin.css"
 import "@fontsource/roboto-mono/latin.css"
 import { ClipboardProvider } from './providers/clipboard.provider';
 import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
 import { WorkspaceProvider } from './providers/workspace.provider';
-import { ApicizeResult, ApplicationSettings } from '@apicize/lib-typescript';
+import { ExecutionResultSummary, ExecutionStatus, ExternalData, SelectedParametersWithData } from '@apicize/lib-typescript';
 import { ApicizeProvider } from './providers/apicize.provider';
 import { ConfigurableTheme } from './controls/configurable-theme';
 import { PkceProvider } from './providers/pkce.provider';
@@ -17,39 +17,174 @@ import { emit } from '@tauri-apps/api/event';
 import { LogProvider } from './providers/log.provider';
 import { CssBaseline } from '@mui/material'
 import { FileDragDropProvider } from './providers/file-dragdrop.provider'
-import { WorkspaceSessionProvider } from '@apicize/toolkit/dist/contexts/workspace-session.context'
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
+
 
 // This is defined externally via Tauri main or other boostrap application
-declare var loadedSettings: ApplicationSettings
-const settings = new ApicizeSettings(loadedSettings)
+const sessionId = (window as any).__TAURI_INTERNALS__.metadata.currentWindow.label
 
-// const dragDropStore = new DragDropStore()
+const logStore = new LogStore()
 const feedbackStore = new FeedbackStore()
 const workspaceStore = new WorkspaceStore(
+  feedbackStore,
   {
-    onExecuteRequest: async (workspace, requestId, workbookFullName: string) =>
-      core.invoke<ApicizeResult>('run_request', { workspace, requestId, workbookFullName }),
-    onCancelRequest: (requestId) => core.invoke(
-      'cancel_request', { requestId }),
-    onClearToken: (authorizationId) => core.invoke(
+    close: () => core.invoke('close_workspace', {
+      sessionId
+    }),
+    get: (entityType: EntityType, entityId: string) => core.invoke('get', {
+      sessionId,
+      entityType,
+      entityId
+    }),
+    getTitle: (entityType: EntityType, entityId: string) => core.invoke('get_title', {
+      sessionId,
+      entityType,
+      entityId
+    }),
+    getDirty: () => core.invoke('get_dirty', {
+      sessionId,
+    }),
+    list: (entityType: EntityType, requestId?: string) => core.invoke('list', {
+      sessionId,
+      entityType,
+      requestId
+    }),
+    getRequestActiveAuthorization: (requestId: string) => core.invoke('get_request_active_authorization', {
+      sessionId,
+      requestId
+    }),
+    add: (entityType: EntityType, relativeToId: string | null, relativePosition: IndexedEntityPosition | null, cloneFromId: string | null) =>
+      core.invoke<string>('add', {
+        sessionId,
+        entityType,
+        relativeToId,
+        relativePosition,
+        cloneFromId,
+      }),
+    delete: (entityType: EntityType, entityId: string) => core.invoke('delete', {
+      sessionId,
+      entityType,
+      entityId
+    }),
+    update: async (entity: Entity) => core.invoke('update', {
+      sessionId,
+      entity,
+    }),
+    move: async (entityType: EntityType, entityId: string, relativeToId: string, relativePosition: IndexedEntityPosition) => core.invoke('move_entity', {
+      sessionId,
+      entityType,
+      entityId,
+      relativeToId,
+      relativePosition,
+    }),
+    storeToken: (authorizationId, tokenInfo) => core.invoke('store_token', {
+      authorizationId,
+      tokenInfo
+    }),
+    clearToken: (authorizationId) => core.invoke(
       'clear_cached_authorization', { authorizationId }),
-    onInitializePkce: (data: { authorizationId: string }) =>
+    clearAllTokens: () => core.invoke(
+      'clear_all_cached_authorizations'),
+    executeRequest: async (requestId: string, workbookFullName: string, singleRun: boolean) =>
+      core.invoke<ExecutionResultSummary[]>('run_request', { sessionId, requestId, workbookFullName, singleRun }),
+    cancelRequest: (requestId) => core.invoke(
+      'cancel_request', { sessionId, requestId }),
+    getResultDetail: (requestId, index) => core.invoke(
+      'get_result_detail', { sessionId, requestId, index }
+    ),
+    getEntityType: (entityId) => core.invoke(
+      'get_entity_type', { sessionId, entityId }
+    ),
+    findDescendantGroups: (groupId) => core.invoke(
+      'find_descendant_groups', { sessionId, groupId }
+    ),
+
+    initializePkce: (data: { authorizationId: string }) =>
       emit('oauth2-pkce-init', data),
-    onClosePkce: (data: { authorizationId: string }) =>
+    closePkce: (data: { authorizationId: string }) =>
       emit('oauth2-pkce-close', data),
-    onRefreshToken: (data: { authorizationId: string }) =>
+    refreshToken: (data: { authorizationId: string }) =>
       emit('oauth2-refresh-token', data),
   },
 )
 
 export default function Home() {
+
+  const [settings, setSettings] = useState<ApicizeSettings | null>(null)
+
+  useEffect(() => {
+    const w = getCurrentWebviewWindow()
+    // Notification sent for when initialization data is available
+    let unlistenInitialize = w.listen<SessionInitialization>('initialize', (data) => {
+      const info = data.payload
+      setSettings(info.settings)
+      workspaceStore.initialize(info)
+    })
+    // Notification sent on entire navigation tree update
+    let unlistenNavigation = w.listen<Navigation>('navigation', (data) => {
+      workspaceStore.setNavigation(data.payload)
+    })
+    // Notification sent on individual navigation entry update
+    let unlistenNavigationEntry = w.listen<UpdatedNavigationEntry>('navigation_entry', (data) => {
+      workspaceStore.updateNavigationEntry(data.payload)
+    })
+    // Notification sent when the save state changes (file name change, dirty status change)
+    let unlistenSaveState = w.listen<SessionSaveState>('save_state', (data) => {
+      workspaceStore.updateSaveState(data.payload)
+    })
+    // Notification sent when a new session/window is opened or existing closed this session's workspace
+    let unlistenEditorCount = w.listen<number>('editor_count', (data) => {
+      workspaceStore.editorCount = data.payload
+    })
+    // Notification on record changes (not sent to window/session initiating the update)
+    let unlistenUpdate = w.listen<Entity>('update', (data) => {
+      workspaceStore.dirty = true
+      workspaceStore.refreshFromExternalUpdate(data.payload)
+    })
+    // Notification on request execution starts or stops
+    let unlistenExecution = w.listen<ExecutionStatus>('update_execution', (data) => {
+      workspaceStore.updateExecutionStatus(data.payload)
+    })
+    // Notification on settings update
+    let unlistenSettingsUpdate = w.listen<ApicizeSettings>('update_settings', (data) => {
+      setSettings(data.payload)
+    })
+    return () => {
+      unlistenInitialize.then(() => { })
+      unlistenNavigation.then(() => { })
+      unlistenNavigationEntry.then(() => { })
+      unlistenSaveState.then(() => { })
+      unlistenEditorCount.then(() => { })
+      unlistenUpdate.then(() => { })
+      unlistenExecution.then(() => { })
+      unlistenSettingsUpdate.then(() => { })
+    }
+  })
+
+  if (!settings) {
+    core.invoke<SessionInitialization>('initialize_session', {
+      sessionId,
+    }).then((info) => {
+      setSettings(info.settings)
+      workspaceStore.initialize(info)
+    }).catch((e) => {
+      feedbackStore.toast(`${e}`, ToastSeverity.Error)
+    })
+    return <ApicizeProvider settings={new ApicizeSettings()}>
+      <ConfigurableTheme colorScheme='dark' fontSize={12} navigationFontSize={12}>
+        <CssBaseline />
+        <FeedbackProvider store={feedbackStore} />
+      </ConfigurableTheme>
+    </ApicizeProvider>
+  }
+
   return (
-    <ApicizeProvider settings={settings}>
-      <ConfigurableTheme>
+    <LogProvider store={logStore}>
+      <ConfigurableTheme colorScheme={settings.colorScheme} fontSize={settings.fontSize} navigationFontSize={settings.navigationFontSize}>
         <CssBaseline />
         <FeedbackProvider store={feedbackStore}>
-          <FileOperationsProvider store={workspaceStore}>
-            <LogProvider>
+          <ApicizeProvider settings={new ApicizeSettings(settings)}>
+            <FileOperationsProvider activeSessionId={sessionId} workspaceStore={workspaceStore}>
               <WorkspaceProvider store={workspaceStore}>
                 <DragDropProvider>
                   <FileDragDropProvider>
@@ -61,10 +196,10 @@ export default function Home() {
                   </FileDragDropProvider>
                 </DragDropProvider>
               </WorkspaceProvider>
-            </LogProvider>
-          </FileOperationsProvider>
+            </FileOperationsProvider>
+          </ApicizeProvider >
         </FeedbackProvider>
-      </ConfigurableTheme>
-    </ApicizeProvider >
+      </ConfigurableTheme >
+    </LogProvider>
   )
 }

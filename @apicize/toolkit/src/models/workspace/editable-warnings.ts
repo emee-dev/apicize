@@ -1,5 +1,5 @@
 import { action, computed, observable, toJS } from "mobx";
-import { Editable, EditableItem, EditableState } from "../editable";
+import { Editable, EditableEntity, EditableState } from "../editable";
 import { EditableEntityType } from "./editable-entity-type";
 import { GenerateIdentifier } from "../../services/random-identifier-generator";
 

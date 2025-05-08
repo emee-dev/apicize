@@ -1,4 +1,4 @@
-import { GetTitle, Persistence } from "@apicize/lib-typescript"
+import { Persistence } from "@apicize/lib-typescript"
 import { ListItemIcon, ListItemText, Menu, MenuItem, SvgIcon, useTheme } from "@mui/material"
 import ProxyIcon from "../../../icons/proxy-icon"
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
@@ -10,7 +10,7 @@ import { MenuPosition } from "../../../models/menu-position"
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
-import { useWorkspaceSession } from "../../../contexts/workspace-session.context"
+import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position"
 
 export const ProxySection = observer((props: {
     includeHeader: boolean,
@@ -18,7 +18,6 @@ export const ProxySection = observer((props: {
     const workspace = useWorkspace()
     const feedback = useFeedback()
     const theme = useTheme()
-    const session = useWorkspaceSession()
 
     const [proxyMenu, setProxyMenu] = useState<MenuPosition | undefined>(undefined)
 
@@ -30,35 +29,36 @@ export const ProxySection = observer((props: {
         workspace.changeActive(EditableEntityType.Proxy, id)
     }
 
-    const handleAddProxy = (persistence: Persistence, targetProxyId?: string | null) => {
+    const handleAddProxy = (relativeToId: string, relativePosition: IndexedEntityPosition) => {
         closeProxyMenu()
-        workspace.addProxy(persistence, targetProxyId)
+        workspace.addProxy(relativeToId, relativePosition, null)
     }
 
     const handleSelectHeader = (headerId: string, helpTopic?: string) => {
         // closeAllMenus()
         if (helpTopic) {
-            session.updateExpanded(headerId, true)
-            session.showHelp(helpTopic)
+            workspace.updateExpanded(headerId, true)
+            workspace.showHelp(helpTopic)
         }
     }
 
-    const handleMoveProxy = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
+    const handleMoveProxy = (id: string, relativeToId: string, relativePosition: IndexedEntityPosition) => {
         selectProxy(id)
-        workspace.moveProxy(session.id, id, destinationID, onLowerHalf, isSection)
+        workspace.moveProxy(id, relativeToId, relativePosition)
     }
 
     const handleDupeProxy = () => {
         closeProxyMenu()
         const id = proxyMenu?.id
         if (!id) return
-        workspace.copyProxy(id)
+        workspace.addProxy(id, IndexedEntityPosition.After, id)
     }
 
     const showProxyMenu = (event: React.MouseEvent, persistence: Persistence, id: string) => {
         setProxyMenu(
             {
                 id,
+                type: EditableEntityType.Proxy,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
                 persistence,
@@ -72,7 +72,7 @@ export const ProxySection = observer((props: {
         if (!id) return
         feedback.confirm({
             title: 'Delete Proxy',
-            message: `Are you are you sure you want to delete ${GetTitle(workspace.proxies.get(id))}?`,
+            message: `Are you are you sure you want to delete ${workspace.getNavigationName(id)}?`,
             okButton: 'Yes',
             cancelButton: 'No',
             defaultToCancel: true
@@ -95,7 +95,7 @@ export const ProxySection = observer((props: {
                     left: proxyMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddProxy(proxyMenu.persistence, proxyMenu?.id)}>
+                <MenuItem onClick={(_) => handleAddProxy(proxyMenu.id, IndexedEntityPosition.After)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='proxy'><ProxyIcon /></SvgIcon>
                     </ListItemIcon>
@@ -125,7 +125,7 @@ export const ProxySection = observer((props: {
         iconColor='proxy'
         helpTopic='workspace/proxies'
         type={EditableEntityType.Proxy}
-        parameters={workspace.proxies}
+        parameters={workspace.navigation.proxies}
         onSelect={selectProxy}
         onSelectHeader={handleSelectHeader}
         onAdd={handleAddProxy}

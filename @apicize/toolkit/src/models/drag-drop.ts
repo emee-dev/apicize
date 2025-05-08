@@ -1,9 +1,10 @@
 import { Persistence } from "@apicize/lib-typescript"
 import { EditableEntityType } from "./workspace/editable-entity-type"
+import { IndexedEntityPosition } from "./workspace/indexed-entity-position"
 
 export interface DraggableData {
     type: EditableEntityType,
-    move: (destinationID: string | null, onLowerHalf: boolean | null, onLeft: boolean | null) => void
+    move: (relativeToId: string, relativePosition: IndexedEntityPosition) => void
 }
 
 export interface DroppableData {
@@ -13,12 +14,4 @@ export interface DroppableData {
     isHeader: boolean
     depth: number
     persistence?: Persistence
-}
-
-export enum DragPosition {
-    None = 'NONE',
-    Left = 'LEFT',
-    Upper = 'UPPER',
-    Lower = 'LOWER',
-    Invalid = 'INVALID'
 }

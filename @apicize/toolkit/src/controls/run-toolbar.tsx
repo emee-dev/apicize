@@ -19,7 +19,7 @@ export const RunToolbar = observer((props: { sx?: SxProps, requestEntry: Editabl
 
     const requestId = props.requestEntry.id
     const execution = workspace.executions.get(requestId)
-    const running = execution?.running ?? false
+    const running = execution?.isRunning ?? false
 
     const handleRunClick = (singleRun: boolean = false) => async () => {
         try {

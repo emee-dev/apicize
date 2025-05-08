@@ -5,8 +5,7 @@ import BlockIcon from '@mui/icons-material/Block'
 import { observer } from "mobx-react-lite"
 import { useClipboard } from "../../../contexts/clipboard.context"
 import { useWorkspace } from "../../../contexts/workspace.context"
-import { ApicizeError } from "@apicize/lib-typescript"
-import { ExecutionResult } from "../../../models/workspace/execution"
+import { ApicizeError, ExecutionResultSuccess, ExecutionResultSummary } from "@apicize/lib-typescript"
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView"
 import { TreeItem } from "@mui/x-tree-view/TreeItem"
 import React, { useState } from "react"
@@ -14,25 +13,35 @@ import ViewIcon from "../../../icons/view-icon"
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
 import beautify from "js-beautify"
-import { toJS } from "mobx"
-
 
 const ApicizeErrorToString = (error?: ApicizeError): string => {
     const sub = (err?: ApicizeError) => err ? `, ${err.description}${ApicizeErrorToString(err.source)}` : ''
     return error ? `[${error.type}] ${error.description}${sub(error.source)}` : ''
 }
 
-export const ResultInfoViewer = observer((props: { result: ExecutionResult }) => {
-
+export const ResultInfoViewer = observer((props: { requestOrGroupId: string, resultIndex: number, results: ExecutionResultSummary[] }) => {
     const workspace = useWorkspace()
     const theme = useTheme()
     const clipboardCtx = useClipboard()
     const feedback = useFeedback()
 
-    let idx = 0
+    const requestOrGroupId = props.requestOrGroupId
+    const mainResultIndex = props.resultIndex
+    const mainResult = props.results[mainResultIndex]
 
-    let mainResult = props.result
-    let mainRequestOrGroupId = props.result.info.requestOrGroupId
+    let idx = 0
+    let summaries: Map<number, ExecutionResultSummary>
+
+    if (!mainResult) {
+        return null
+    }
+
+    try {
+        summaries = retrieveSummariesForIndex(props.results, mainResultIndex)
+    } catch (e) {
+        feedback.toastError(e)
+        return null
+    }
 
     const fmtMinSec = (value: number, subZero: string | null = null) => {
         if (value === 0 && subZero) {
@@ -45,12 +54,27 @@ export const ResultInfoViewer = observer((props: { result: ExecutionResult }) =>
         return `${m.toLocaleString().padStart(2, '0')}:${s.toString().padStart(2, '0')}${(0.1).toLocaleString()[1]}${value.toString().padEnd(3, '0')}`
     }
 
-    const RenderExecution = (props: { result: ExecutionResult, first?: boolean }) => {
+    const RenderExecution = (props: { childResult: ExecutionResultSummary, first?: boolean }) => {
         // const rowSuffix = props.result.info.rowNumber && props.result.info.rowCount ? ` Row ${props.result.info.rowNumber} of ${props.result.info.rowCount}` : ''
-        const subtitle = props.result.success ? "Completed" : "Failed"
-        const color = props.result.success ? theme.palette.success.main : ((props.result.requestErrorCount ?? 0) > 0 || props.result?.error) ? theme.palette.error.main : theme.palette.warning.main
+        let subtitle: string
+        let color: string
 
-        const isFirst = props.result === mainResult
+        switch (props.childResult.success) {
+            case ExecutionResultSuccess.Error:
+                subtitle = 'Error'
+                color = theme.palette.error.main
+                break
+            case ExecutionResultSuccess.Failure:
+                subtitle = 'Failure'
+                color = theme.palette.warning.main
+                break
+            default:
+                subtitle = 'Success'
+                color = theme.palette.success.main
+                break
+        }
+
+        const isFirst = props.childResult.index === mainResultIndex
         const key = isFirst ? 'first-result' : `tree-${idx++}`
 
         return <TreeItem itemId={key} key={key} label={
@@ -58,43 +82,43 @@ export const ResultInfoViewer = observer((props: { result: ExecutionResult }) =>
                 <Grid2 display='flex' flexDirection='column' alignItems='start' alignContent='center' flexGrow='content'>
                     <Box display='flex' fontSize={props.first ? '1.1rem' : 'inherit'}>
                         <Box sx={{ whiteSpace: 'nowrap' }}>
-                            {props.result.info.title}
+                            {props.childResult.name}
                             <Box component='span' marginLeft='1rem' marginRight='0.5em' sx={{ color }}> ({subtitle}) </Box>
                         </Box>
                     </Box>
                     <Box display='flex' alignContent='start' marginLeft='1.5em' fontSize='0.9em'>
-                        {props.result.executedAt > 0 ? `@${fmtMinSec(props.result.executedAt)}` : '@Start'}{props.result.duration > 0 ? ` for ${props.result.duration.toLocaleString()} ms` : ''}
+                        {props.childResult.executedAt > 0 ? `@${fmtMinSec(props.childResult.executedAt)}` : '@Start'}{props.childResult.duration > 0 ? ` for ${props.childResult.duration.toLocaleString()} ms` : ''}
                     </Box>
                 </Grid2>
                 <Grid2 display='flex' flexBasis='content' alignItems='center' alignContent='start' marginLeft='1.0rem'>
                     <IconButton
                         title="Copy Data to Clipboard"
                         color='primary'
-                        onClick={e => copyToClipboard(e, props.result.info.index)}>
+                        onClick={e => copyToClipboard(e, props.childResult.index)}>
                         <ContentCopyIcon />
                     </IconButton>
                     {
                         isFirst
                             ? <></>
-                            : <Link title='View Details' underline='hover' display='inline-flex' marginLeft='0.5rem' alignItems='center' onClick={e => changeResult(e, props.result.info.index)}><SvgIcon><ViewIcon /></SvgIcon></Link>
+                            : <Link title='View Details' underline='hover' display='inline-flex' marginLeft='0.5rem' alignItems='center' onClick={e => changeResult(e, props.childResult.index)}><SvgIcon><ViewIcon /></SvgIcon></Link>
                     }
                 </Grid2>
             </Grid2 >
         }>
 
-            {(props.result.error)
-                ? (<TestInfo isError={true} text={`${ApicizeErrorToString(props.result.error)}`} />)
+            {(props.childResult.error)
+                ? (<TestInfo isError={true} text={`${ApicizeErrorToString(props.childResult.error)}`} />)
                 : (<></>)}
             {
-                props.result.response
-                    ? (<TestInfo text={`Status: ${props.result.response.status} ${props.result.response.statusText}`} />)
+                props.childResult.status
+                    ? (<TestInfo text={`Status: ${props.childResult.status} ${props.childResult.statusText}`} />)
                     : (<></>)
             }
             {
-                (props.result.tests && props.result.tests.length > 0)
+                (props.childResult.testResults && props.childResult.testResults.length > 0)
                     ? <Box className='test-details'>
                         {
-                            props.result.tests.map(test => (<TestResult
+                            props.childResult.testResults.map(test => (<TestResult
                                 key={`test-${idx++}`}
                                 name={test.testName}
                                 success={test.success}
@@ -105,9 +129,9 @@ export const ResultInfoViewer = observer((props: { result: ExecutionResult }) =>
                     : (<></>)
             }
             {
-                (props.result.info.childIndexes ?? []).map(childIndex => {
-                    const child = workspace.getExecutionResult(mainRequestOrGroupId, childIndex)
-                    return child ? <RenderExecution key={`result-${idx++}`} result={child} /> : null
+                (props.childResult.childIndexes ?? []).map(childIndex => {
+                    const child = summaries.get(childIndex)
+                    return child ? <RenderExecution key={`result-${idx++}`} childResult={child} /> : null
                 })
             }
         </TreeItem >
@@ -196,7 +220,7 @@ export const ResultInfoViewer = observer((props: { result: ExecutionResult }) =>
     const changeResult = (e: React.MouseEvent, index: number) => {
         e.preventDefault()
         e.stopPropagation()
-        workspace.changeResultIndex(props.result.info.requestOrGroupId, index)
+        workspace.getExecution(requestOrGroupId)?.changeResultIndex(index)
 
     }
 
@@ -204,7 +228,7 @@ export const ResultInfoViewer = observer((props: { result: ExecutionResult }) =>
         try {
             e.preventDefault()
             e.stopPropagation()
-            const payload = workspace.getExecutionResultSummary(props.result.info.requestOrGroupId, index)
+            const payload = props.results[index]
             if (payload) {
                 clipboardCtx.writeTextToClipboard(
                     beautify.js_beautify(JSON.stringify(payload), {})
@@ -232,8 +256,40 @@ export const ResultInfoViewer = observer((props: { result: ExecutionResult }) =>
             <SimpleTreeView expandedItems={expanded} onExpandedItemsChange={(_, updated) => {
                 setExpanded(updated)
             }}>
-                <RenderExecution result={mainResult} first={true} />
+                <RenderExecution childResult={mainResult} first={true} />
             </SimpleTreeView>
         </Box>
     </Stack>
 })
+
+function retrieveSummariesForIndex(summaries: ExecutionResultSummary[], index: number) {
+    const results = new Map<number, ExecutionResultSummary>()
+
+    const appendIndex = (indexToAppend: number) => {
+        if (indexToAppend < 0 || indexToAppend >= summaries.length) {
+            throw new Error(`Invalid result index ${indexToAppend}`)
+        }
+        const summary = summaries[indexToAppend]
+        results.set(indexToAppend, summary)
+        return summary
+    }
+
+    const appendChildren = (summary: ExecutionResultSummary) => {
+        if (summary.childIndexes) {
+            for (const childIndex of summary.childIndexes) {
+                if (!results.has(childIndex)) {
+                    const child = appendIndex(childIndex)
+                    appendChildren(child)
+                }
+            }
+        }
+    }
+
+    const main = appendIndex(index)
+    if (main.parentIndex) {
+        appendIndex(main.parentIndex)
+    }
+
+    appendChildren(main)
+    return results
+}

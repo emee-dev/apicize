@@ -78,7 +78,6 @@ export interface BodyRaw {
 
 export type RequestEntry = Request | RequestGroup
 
-
 export interface BaseRequest extends Identifiable, Named, SelectedParameters, Executable {
     url: string
     method?: Method
@@ -93,7 +92,7 @@ export interface BaseRequest extends Identifiable, Named, SelectedParameters, Ex
     referrerPolicy?: ReferrerPolicy
     duplex?: RequestDuplex
     test?: string,
-    warnings?: string[],    
+    warnings?: string[]
 }
 
 export interface Request extends BaseRequest {
@@ -107,5 +106,5 @@ export enum GroupExecution {
 
 export interface RequestGroup extends Identifiable, Named, SelectedParameters, Executable {
     execution: GroupExecution
-    warnings?: string[],
+    warnings?: string[]
 }

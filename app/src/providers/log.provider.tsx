@@ -3,9 +3,7 @@ import React, { useEffect } from "react"
 import { ReactNode } from "react"
 import { listen } from "@tauri-apps/api/event"
 
-export function LogProvider({ children }: { children?: ReactNode }) {
-    const store = new LogStore()
-
+export function LogProvider({ store, children }: { store: LogStore, children?: ReactNode }) {
     useEffect(() => {
         const unlistenLog = listen<ReqwestEvent>('log', (event) => {
             store.addEvent(event.payload)

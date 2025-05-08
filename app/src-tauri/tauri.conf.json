@@ -2,7 +2,7 @@
   "$schema": "../../node_modules/@tauri-apps/cli/config.schema.json",
   "identifier": "apicize",
   "productName": "Apicize",
-  "version": "0.17.6",
+  "version": "0.18.0",
   "app": {
     "security": {
       "csp": null
@@ -15,7 +15,7 @@
         "width": 1300,
         "height": 800,
         "minWidth": 800,
-        "minHeight": 700
+        "minHeight": 740
       }
     ]
   },

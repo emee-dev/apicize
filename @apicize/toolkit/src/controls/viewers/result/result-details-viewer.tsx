@@ -6,19 +6,36 @@ import { observer } from "mobx-react-lite"
 import { useClipboard } from "../../../contexts/clipboard.context"
 import { RichViewer } from "../rich-viewer"
 import { EditorMode } from "../../../models/editor-mode"
-import { ResultEditSessionType } from "../../../contexts/workspace-session.context"
-import { ExecutionResult } from "../../../models/workspace/execution"
+import { ResultEditSessionType } from "../../editors/editor-types"
+import { ExecutionResultDetail, ExecutionResultSummary } from "@apicize/lib-typescript"
+import { useWorkspace } from "../../../contexts/workspace.context"
+import { useFeedback } from "../../../contexts/feedback.context"
+import { useState } from "react"
+import { Execution } from "../../../models/workspace/execution"
 
-export const ResultDetailsViewer = observer((props: { result: ExecutionResult }) => {
+export const ResultDetailsViewer = observer((props: { execution: Execution }) => {
+
+    const workspace = useWorkspace()
+    const feedback = useFeedback()
     const clipboard = useClipboard()
 
-    const result1 = JSON.parse(JSON.stringify(props.result))
-    const result = {
-        ...result1,
-        info: undefined
+    const requestOrGroupId = props.execution.requestOrGroupId
+    const resultIndex = props.execution.resultIndex
+    const updateKey = `${props.execution.requestOrGroupId}-${props.execution.resultIndex}-${props.execution.lastExecuted}`
+
+    const [details, setDetails] = useState<ExecutionResultDetail | null>(null)
+    const [currentUpdateKey, setCurrentUpdateKey] = useState('')
+
+    if (!details || updateKey !== currentUpdateKey) {
+        workspace.getExecutionResultDetail(requestOrGroupId, resultIndex)
+            .then(d => {
+                setDetails(d)
+                setCurrentUpdateKey(updateKey)
+            }).catch(e => feedback.toastError(e))
+        return
     }
 
-    const text = beautify.js_beautify(JSON.stringify(result), {})
+    const text = beautify.js_beautify(JSON.stringify(details), {})
 
     return (
         <Stack sx={{ bottom: 0, overflow: 'hidden', position: 'relative', height: '100%', display: 'flex' }}>
@@ -32,7 +49,7 @@ export const ResultDetailsViewer = observer((props: { result: ExecutionResult })
                     <ContentCopyIcon />
                 </IconButton>
             </Typography>
-            <RichViewer id={props.result.info.requestOrGroupId} index={props.result.info.index} type={ResultEditSessionType.Details} text={text} mode={EditorMode.json} beautify={true} wrap={true} sx={{ width: '100%', height: '100%' }} />
+            <RichViewer id={requestOrGroupId} index={resultIndex} type={ResultEditSessionType.Details} text={text} mode={EditorMode.json} beautify={true} wrap={true} sx={{ width: '100%', height: '100%' }} />
         </Stack>
     )
 })

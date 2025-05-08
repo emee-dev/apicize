@@ -1,35 +1,45 @@
 import { Stack, TextField, SxProps, Grid2, Box, SvgIcon, IconButton, Button, FormControl, MenuItem, Select, InputLabel } from '@mui/material'
 import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';
-import { EditableScenario, EditableVariable } from '../../models/workspace/editable-scenario';
+import { EditableVariable } from '../../models/workspace/editable-scenario';
 import ScenarioIcon from '../../icons/scenario-icon';
 import { GenerateIdentifier } from '../../services/random-identifier-generator';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { VariableSourceType } from '@apicize/lib-typescript';
-import { useWorkspaceSession } from '../../contexts/workspace-session.context';
+import { useWorkspace } from '../../contexts/workspace.context';
 
-export const ScenarioEditor = observer((props: { sx: SxProps, scenario: EditableScenario }) => {
-    const session = useWorkspaceSession()
-    session.nextHelpTopic = 'workspace/scenarios'
+export const ScenarioEditor = observer((props: { sx?: SxProps }) => {
+
+    const workspace = useWorkspace()
+    const activeSelection = workspace.activeSelection
+
+    if (!activeSelection?.scenario) {
+        return null
+    }
+
+    workspace.nextHelpTopic = 'workspace/scenarios'
+    const scenario = activeSelection.scenario
 
     const onAddVariable = () => {
-        props.scenario.variables.push(new EditableVariable(
+        scenario.variables.push(new EditableVariable(
             GenerateIdentifier(),
             '',
             VariableSourceType.Text,
             ''
         ))
+        scenario.notifyVariableUpdates()
     }
 
     const onDeleteVariable = (id: string) => {
-        props.scenario.variables = props.scenario.variables.filter(v => v.id !== id)
+        scenario.variables = scenario.variables.filter(v => v.id !== id)
+        scenario.notifyVariableUpdates()
     }
 
     return (
         <Stack direction='column' className='editor scenario' sx={props.sx}>
             <Box className='editor-panel-header'>
-                <EditorTitle icon={<SvgIcon color='scenario'><ScenarioIcon /></SvgIcon>} name={props.scenario.name.length > 0 ? props.scenario.name : '(Unnamed)'} />
+                <EditorTitle icon={<SvgIcon color='scenario'><ScenarioIcon /></SvgIcon>} name={scenario.name.length > 0 ? scenario.name : '(Unnamed)'} />
             </Box>
             <Box className='editor-panel'>
                 <Stack className='editor-content' direction='column' spacing={3}>
@@ -38,16 +48,17 @@ export const ScenarioEditor = observer((props: { sx: SxProps, scenario: Editable
                         label='Name'
                         aria-label='scenario name'
                         size='small'
-                        value={props.scenario.name}
-                        onChange={e => props.scenario.setName(e.target.value)}
-                        error={props.scenario.nameInvalid}
-                        helperText={props.scenario.nameInvalid ? 'Scenario name is required' : ''}
+                        value={scenario.name}
+                        autoFocus={scenario.name === ''}
+                        onChange={e => scenario.setName(e.target.value)}
+                        error={scenario.nameInvalid}
+                        helperText={scenario.nameInvalid ? 'Scenario name is required' : ''}
                         fullWidth
                     />
                     <Stack direction='column' paddingTop='2em'>
                         <Grid2 container spacing={3}>
                             {
-                                (props.scenario.variables ?? []).map(variable => [
+                                (scenario.variables ?? []).map(variable => [
                                     <Grid2 container rowSpacing={2} spacing={1} size={12} columns={12}>
                                         <Grid2 size={{ md: 3 }}>
                                             <TextField
@@ -58,7 +69,10 @@ export const ScenarioEditor = observer((props: { sx: SxProps, scenario: Editable
                                                 value={variable.name}
                                                 error={variable.nameInvalid}
                                                 helperText={variable.nameInvalid ? 'Variable name is required' : ''}
-                                                onChange={(e) => variable.updateName(e.target.value)}
+                                                onChange={(e) => {
+                                                    variable.updateName(e.target.value)
+                                                    scenario.notifyVariableUpdates()
+                                                }}
                                                 fullWidth
                                             />
                                         </Grid2>
@@ -72,7 +86,10 @@ export const ScenarioEditor = observer((props: { sx: SxProps, scenario: Editable
                                                     arial-label='variable-type'
                                                     size='small'
                                                     value={variable.type}
-                                                    onChange={e => variable.updateSourceType(e.target.value as VariableSourceType)}
+                                                    onChange={e => {
+                                                        variable.updateSourceType(e.target.value as VariableSourceType)
+                                                        scenario.notifyVariableUpdates()
+                                                    }}
                                                 >
                                                     <MenuItem key={`${variable.id}-type-text`} value={VariableSourceType.Text}>Text Value</MenuItem>
                                                     <MenuItem key={`${variable.id}-type-json`} value={VariableSourceType.JSON}>JSON Value</MenuItem>
@@ -94,7 +111,10 @@ export const ScenarioEditor = observer((props: { sx: SxProps, scenario: Editable
                                                 value={variable.value}
                                                 error={variable.valueError !== null}
                                                 helperText={variable.valueError ?? ''}
-                                                onChange={(e) => variable.updateValue(e.target.value)}
+                                                onChange={(e) => {
+                                                    variable.updateValue(e.target.value)
+                                                    scenario.notifyVariableUpdates()
+                                                }}
                                                 fullWidth
                                             />
                                         </Grid2>

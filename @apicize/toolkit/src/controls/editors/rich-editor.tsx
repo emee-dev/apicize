@@ -22,12 +22,12 @@ import theme from 'ace-code/src/theme/gruvbox'
 import { EditorMode } from '../../models/editor-mode'
 import { css_beautify, html_beautify, js_beautify } from 'js-beautify'
 import { useApicize } from '../../contexts/apicize.context'
-import { RequestEditSessionType, useWorkspaceSession } from '../../contexts/workspace-session.context'
+import { RequestEditSessionType } from './editor-types'
+import { useWorkspace } from '../../contexts/workspace.context'
 
 const workerUrl = new URL('./webworker.js', import.meta.url)
 const worker = new Worker(workerUrl)
 const languageProvider = LanguageProvider.create(worker, { functionality: { semanticTokens: true } })
-
 
 // We have to dynamically load search box because of webpack(?)
 ace.config.dynamicModules = {
@@ -79,7 +79,7 @@ export const RichEditor = forwardRef((props: {
     onUpdateValue: (value: string) => void
 }, ref: Ref<RichEditorCommands>) => {
     const apicize = useApicize()
-    const session = useWorkspaceSession()
+    const workspace = useWorkspace()
 
     const editor = useRef<Editor | null>(null)
     const [initialized, setInitialized] = useState(false)
@@ -95,17 +95,22 @@ export const RichEditor = forwardRef((props: {
         beautify() {
             if (editor.current) {
                 const session = editor.current.session
+                let value
                 switch (props.mode) {
                     case EditorMode.js:
                     case EditorMode.json:
-                        session.setValue(js_beautify(session.getValue(), { indent_size: 4 }))
+                        value = js_beautify(session.getValue(), { indent_size: 4 })
                         break
                     case EditorMode.html:
-                        session.setValue(html_beautify(session.getValue(), { indent_size: 4 }))
+                        value = html_beautify(session.getValue(), { indent_size: 4 })
                         break
                     case EditorMode.css:
-                        session.setValue(css_beautify(session.getValue(), { indent_size: 4 }))
+                        value = css_beautify(session.getValue(), { indent_size: 4 })
                         break
+                }
+                if (value) {
+                    session.setValue(value)
+                    props.onUpdateValue(value)
                 }
             }
         }
@@ -113,7 +118,13 @@ export const RichEditor = forwardRef((props: {
 
     // On initial load, set up the editor
     useEffect(() => {
-        if (!initialized) {
+        if (initialized && editor.current) {
+            if (props.value !== editor.current.getValue()) {
+                editor.current.setValue(props.value)
+                editor.current.clearSelection()
+                editor.current.renderer.scrollTo(0, 0)
+            }
+        } else {
             editor.current = ace.edit('editor')
             editor.current.setTheme(theme)
             editor.current.setOption('enableBasicAutocompletion', true);
@@ -157,18 +168,22 @@ export const RichEditor = forwardRef((props: {
 
             languageProvider.registerEditor(editor.current)
 
-            const editSession = session.getRequestEditSession(props.id, props.type)
+            const editSession = workspace.getRequestEditSession(props.id, props.type)
             if (editSession) {
                 editor.current.setSession(editSession)
             } else {
                 updateEditorMode(editor.current, props.mode)
-                editor.current.session.setValue(props.value)
-                session.setRequestEditSession(props.id, props.type, editor.current.getSession())
+                if (editor.current.session.getValue() !== props.value) {
+                    editor.current.session.setValue(props.value)
+                }
+                workspace.setRequestEditSession(props.id, props.type, editor.current.getSession())
             }
 
             editor.current.on('change', (e) => {
-                if (props.onUpdateValue) {
-                    props.onUpdateValue(editor.current?.getValue() ?? '')
+                if (editor.current && editor.current.curOp && (editor.current.curOp as any).command.name) {
+                    if (props.onUpdateValue) {
+                        props.onUpdateValue(editor.current?.getValue() ?? '')
+                    }
                 }
             })
 

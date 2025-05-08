@@ -30,8 +30,8 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
         const unlistenRefreshToken = listen<OAuthPkceInitParams>('oauth2-refresh-token', (event) => {
             refreshToken(event.payload)
         })
-        const unlistenPkceAuthResponse = listen<OAuthPkceAuthParams>('oauth2-pkce-auth-response', (event) => {
-            processOAuth2PkceAuthResponse(event.payload)
+        const unlistenPkceAuthResponse = listen<OAuthPkceAuthParams>('oauth2-pkce-auth-response', async (event) => {
+            await processOAuth2PkceAuthResponse(event.payload)
         })
         const unlistenPkceSuccess = listen<string>('oauth2-pkce-success', (event) => {
             feedback.toast(event.payload, ToastSeverity.Success)
@@ -69,7 +69,7 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
      */
     const launchPkceWindow = async (params: OAuthPkceInitParams) => {
         try {
-            const auth = workspace.authorizations.get(params.authorizationId)?.toWorkspace()
+            const auth = await workspace.getAuthorization(params.authorizationId)
             if (!auth) {
                 throw new Error('Invalid authorization ID')
             }
@@ -129,7 +129,7 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
      * Process the response from PKCE sequence
      * @param response 
      */
-    const processOAuth2PkceAuthResponse = (response: OAuthPkceAuthParams) => {
+    const processOAuth2PkceAuthResponse = async (response: OAuthPkceAuthParams) => {
         let authorizationId: string | null = null
         try {
             let matchAuth: EditableAuthorization | undefined = undefined
@@ -137,7 +137,7 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
             for (const [id, entry] of wip.current) {
                 if (entry.csrfToken === response.state) {
                     authorizationId = id
-                    matchAuth = workspace.authorizations.get(id)
+                    matchAuth = await workspace.getAuthorization(id)
                     matchEntry = entry
                     break
                 }
@@ -145,20 +145,16 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
             if (!(matchAuth && matchEntry)) {
                 throw new Error('OAuth2 response received with invalid CSRF token')
             }
-            core.invoke<OAuthPkceAuthResponse>('retrieve_access_token', {
+            const exchangeResponse = await core.invoke<OAuthPkceAuthResponse>('retrieve_access_token', {
                 tokenUrl: matchAuth.accessTokenUrl,
                 redirectUrl: matchEntry.redirectUrl,
                 code: response.code,
                 clientId: matchAuth.clientId,
                 verifier: matchEntry.verifier
-            }).then((exchangeResponse) => {
-                workspace.updatePkceAuthorization(matchAuth.id, exchangeResponse.accessToken,
-                    exchangeResponse.refreshToken, exchangeResponse.expiration
-                )
-                feedback.toast(`Access token updated`, ToastSeverity.Success)
-            }).catch((e) => {
-                feedback.toast(`${e}`, ToastSeverity.Error)
             })
+            await workspace.updatePkceAuthorization(matchAuth.id, exchangeResponse.accessToken,
+                exchangeResponse.refreshToken, exchangeResponse.expiration)
+            feedback.toast(`Access token updated`, ToastSeverity.Success)
         } catch (e) {
             if (authorizationId) {
                 closePkceWindows({ authorizationId })
@@ -174,7 +170,7 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
      */
     const refreshToken = async (params: OAuthPkceInitParams) => {
         try {
-            const auth = workspace.authorizations.get(params.authorizationId)
+            const auth = await workspace.getAuthorization(params.authorizationId)
             if (!auth) {
                 throw new Error(`Invalid authorization ID ${params.authorizationId}`)
             }
@@ -184,7 +180,7 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
                 refreshToken: auth.refreshToken,
                 clientId: auth.clientId
             })
-            workspace.updatePkceAuthorization(auth.id, refreshResponse.accessToken,
+            await workspace.updatePkceAuthorization(auth.id, refreshResponse.accessToken,
                 refreshResponse.refreshToken, refreshResponse.expiration
             )
             feedback.toast(`Token refreshed`, ToastSeverity.Success)

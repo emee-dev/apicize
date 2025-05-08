@@ -42,15 +42,14 @@ import FolderIcon from '../icons/folder-icon';
 import LogIcon from "../icons/log-icon";
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined'
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
-import SeedIcon from "../icons/seed-icon";
 import PostAddIcon from '@mui/icons-material/PostAdd'
 import FileOpenIcon from '@mui/icons-material/FileOpen'
 import SaveIcon from '@mui/icons-material/Save'
 import SaveAsIcon from '@mui/icons-material/SaveAs'
 
 import { Parent } from 'unist';
-import { useWorkspaceSession } from '../contexts/workspace-session.context';
 import { useApicize } from '../contexts/apicize.context';
+import { useWorkspace } from '../contexts/workspace.context';
 
 // Register `hName`, `hProperties` types, used when turning markdown to HTML:
 /// <reference types="mdast-util-to-hast" />
@@ -59,7 +58,7 @@ import { useApicize } from '../contexts/apicize.context';
 
 export const HelpPanel = observer((props: { sx?: SxProps }) => {
     const apicize = useApicize()
-    const session = useWorkspaceSession()
+    const workspace = useWorkspace()
     const fileOps = useFileOperations()
     const feedback = useFeedback()
 
@@ -286,7 +285,7 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
             if (attrs.href.startsWith('help:')) {
                 const topic = attrs.href.substring(5)
                 attrs = { ...attrs, href: '#' }
-                return <Link {...attrs} onClick={() => session.showHelp(topic)} />
+                return <Link {...attrs} onClick={() => workspace.showHelp(topic)} />
             }
             else if (attrs.href.startsWith('icon:')) {
                 return <DisplaySettingsIcon />
@@ -307,28 +306,28 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
         return (
             <Box className='help-toolbar' marginLeft={marginLeft}>
                 {
-                    session.allowHelpHome
-                        ? <IconButton color='primary' size='medium' aria-label='Home' title='Home' onClick={() => session.showHelp('home')}><HomeIcon fontSize='inherit' /></IconButton>
+                    workspace.allowHelpHome
+                        ? <IconButton color='primary' size='medium' aria-label='Home' title='Home' onClick={() => workspace.showHelp('home')}><HomeIcon fontSize='inherit' /></IconButton>
                         : <></>
                 }
                 {
-                    session.allowHelpBack
-                        ? <IconButton color='primary' size='medium' aria-label='Back' title='Back' onClick={() => session.helpBack()}><ArrowBackIcon fontSize='inherit' /></IconButton>
+                    workspace.allowHelpBack
+                        ? <IconButton color='primary' size='medium' aria-label='Back' title='Back' onClick={() => workspace.helpBack()}><ArrowBackIcon fontSize='inherit' /></IconButton>
                         : <></>
                 }
                 {
-                    session.allowHelpAbout
-                        ? <IconButton color='primary' size='medium' aria-label='About' title='About' onClick={() => session.showHelp('about')}><QuestionMarkIcon fontSize='inherit' /></IconButton>
+                    workspace.allowHelpAbout
+                        ? <IconButton color='primary' size='medium' aria-label='About' title='About' onClick={() => workspace.showHelp('about')}><QuestionMarkIcon fontSize='inherit' /></IconButton>
                         : <></>
                 }
-                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => session.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
             </Box>
         )
     }
 
     // Make sure we do not go through overhead of re-rendering the existing topic
-    if (session.helpTopic !== activeTopic.current) {
-        activeTopic.current = session.helpTopic ?? '';
+    if (workspace.helpTopic !== activeTopic.current) {
+        activeTopic.current = workspace.helpTopic ?? '';
 
         (async () => {
             try {

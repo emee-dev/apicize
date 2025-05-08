@@ -9,16 +9,17 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import { useEffect, useRef } from "react"
 import { useClipboard } from "../../contexts/clipboard.context"
-import { useWorkspaceSession } from "../../contexts/workspace-session.context"
+import { useWorkspace } from "../../contexts/workspace.context"
 
 export const LogViewer = observer((props: {
     sx?: SxProps<Theme>
 }) => {
     const log = useLog()
-    let ctr = 0;
+    const workspace = useWorkspace()
     const clipboard = useClipboard()
-    const session = useWorkspaceSession()
     const bottomRef = useRef<HTMLDivElement | null>(null);
+
+    let ctr = 0;
 
     useEffect(() => {
         if (bottomRef.current) {
@@ -79,7 +80,7 @@ export const LogViewer = observer((props: {
                         <ContentCopyIcon />
                     </IconButton>
                     <IconButton color='primary' size='medium' aria-label='Clear' title='Clear Entries' onClick={() => log.clear()}><ClearAllIcon fontSize='inherit' /></IconButton>
-                    <IconButton color='primary' size='medium' aria-label='Close' title='Close' onClick={() => session.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+                    <IconButton color='primary' size='medium' aria-label='Close' title='Close' onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
                 </Box>
             </EditorTitle>
         </Box>

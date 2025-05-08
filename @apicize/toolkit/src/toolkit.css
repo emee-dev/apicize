@@ -148,6 +148,7 @@ body .light {
 
 textarea,
 pre,
+.code input,
 .ace_text-input,
 .console {
   /* Make react-simple-code-editor work */
@@ -413,4 +414,18 @@ pre.log {
 
 .test-result {
   padding: 0;
+}
+
+.recent-file .filename {
+  margin-right: 0.5em;
+  display: inline-block;
+}
+
+.recent-file svg {
+  margin-right: 0 !important;
+}
+
+.drop-down-menu .MuiPaper-root {
+  opacity: 0.85 !important;
+  margin-top: 1em;
 }

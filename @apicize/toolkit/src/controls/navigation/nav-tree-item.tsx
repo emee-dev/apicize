@@ -1,11 +1,10 @@
-import { GetTitle } from "@apicize/lib-typescript"
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { SvgIconPropsColorOverrides, SvgIcon, IconButton } from "@mui/material"
 import { Box } from "@mui/system"
 import { TreeItem } from "@mui/x-tree-view/TreeItem"
 import { observer } from "mobx-react-lite"
-import { DraggableData, DragPosition, DroppableData } from "../../models/drag-drop"
-import { EditableItem, EditableState } from "../../models/editable"
+import { DraggableData, DroppableData } from "../../models/drag-drop"
+import { EditableState } from "../../models/editable"
 import { EditableEntityType } from "../../models/workspace/editable-entity-type"
 import { OverridableStringUnion } from "@mui/types";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -14,24 +13,10 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { CSS, useCombinedRefs } from '@dnd-kit/utilities';
 import { useState } from "react"
 import { useDragDrop } from "../../contexts/dragdrop.context"
-import { useWorkspaceSession } from "../../contexts/workspace-session.context"
-import { use } from "chai"
 import { useApicize } from "../../contexts/apicize.context"
+import { useWorkspace } from "../../contexts/workspace.context"
+import { IndexedEntityPosition } from "../../models/workspace/indexed-entity-position"
 
-const dragPositionToColor = (dragPosition: DragPosition) => {
-    switch (dragPosition) {
-        case DragPosition.Upper:
-            return "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 25%, rgba(64,64,64,1) 75%);"
-        case DragPosition.Lower:
-            return "linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 25%, rgba(64,64,64,1) 75%);"
-        case DragPosition.Left:
-            return "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 13%, rgba(64,64,64,1) 44%);"
-        case DragPosition.Invalid:
-            return 'rgba(128, 0, 0, 0.5)'
-        default:
-            return 'default'
-    }
-}
 
 const iconFromState = (state: EditableState) => {
     switch (state) {
@@ -46,7 +31,8 @@ const iconFromState = (state: EditableState) => {
 
 export const NavTreeItem = observer((props: {
     type: EditableEntityType,
-    item: EditableItem,
+    id: string,
+    title: string,
     depth: number,
     isDraggable: boolean,
     acceptDropTypes?: EditableEntityType[],
@@ -65,24 +51,24 @@ export const NavTreeItem = observer((props: {
         SvgIconPropsColorOverrides>,
     children?: JSX.Element[],
     onSelect?: (id: string) => void,
-    onMenu?: (event: React.MouseEvent, id: string) => void,
-    onMove?: (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => void
+    onMenu?: (event: React.MouseEvent, id: string, type: EditableEntityType) => void,
+    onMove?: (id: string, relativeToId: string, relativePosition: IndexedEntityPosition) => void
 }) => {
-    const session = useWorkspaceSession()
     const settings = useApicize()
+    const workspace = useWorkspace()
     const dragDrop = useDragDrop()
-    const itemId = `${props.item.entityType}-${props.item.id}`
+    const itemId = `${props.type}-${props.id}`
 
     const [focused, setFocused] = useState<boolean>(false)
 
     const { attributes, listeners, setNodeRef: setDragRef, transform } = props.isDraggable
         ? useDraggable({
-            id: props.item.id,
+            id: props.id,
             data: {
                 type: props.type,
-                move: (destinationID: string, onLowerHalf: boolean, isSection: boolean) => {
+                move: (relativeToId: string, relativePosition: IndexedEntityPosition) => {
                     if (props.onMove) {
-                        props.onMove(`${props.item.id}`, destinationID, onLowerHalf, isSection)
+                        props.onMove(props.id, relativeToId, relativePosition)
                     }
                 }
             } as DraggableData
@@ -96,7 +82,7 @@ export const NavTreeItem = observer((props: {
 
     const { isOver, setNodeRef: setDropRef } = props.acceptDropTypes
         ? useDroppable({
-            id: props.item.id,
+            id: props.id,
             data: {
                 acceptAppend: props.acceptDropAppends === true,
                 acceptReposition: true,
@@ -115,7 +101,7 @@ export const NavTreeItem = observer((props: {
         itemId={itemId}
         {...listeners}
         {...attributes}
-        sx={{ background: isOver ? dragPositionToColor(dragDrop.dragPosition) : 'default', margin: 0, padding: 0 }}
+        sx={{ background: isOver ? dragDrop.toBackgroundColor() : 'default', margin: 0, padding: 0 }}
         onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
@@ -123,8 +109,8 @@ export const NavTreeItem = observer((props: {
         // Add a selected class so that we can mark expandable tree items as selected and have them show up properly
         label={(
             <Box
-                key={`lbl-${props.item.id}`}
-                id={`lbl-${props.item.id}`}
+                key={`lbl-${props.id}`}
+                id={`lbl-${props.id}`}
                 ref={useCombinedRefs(setDragRef, setDropRef)}
                 style={dragStyle}
                 className='nav-item'
@@ -134,7 +120,7 @@ export const NavTreeItem = observer((props: {
                     // Override click behavior to set active item, but not to propogate upward
                     // because we don't want to toggle expansion on anything other than the
                     // lefticon click
-                    session.changeActive(props.item.entityType, props.item.id)
+                    workspace.changeActive(props.type, props.id)
                     e.preventDefault()
                     e.stopPropagation()
                 }}
@@ -158,10 +144,10 @@ export const NavTreeItem = observer((props: {
                     justifyItems='center'
                     display='flex'
                 >
-                    {GetTitle(props.item)}
-                    <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left' typography='navigation'>
+                    {props.title}
+                    {/* <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left' typography='navigation'>
                         {iconFromState(props.item.state)}
-                    </Box>
+                    </Box> */}
                 </Box>
                 {
                     props.onMenu
@@ -175,17 +161,17 @@ export const NavTreeItem = observer((props: {
                             onClick={(e) => {
                                 e.preventDefault()
                                 e.stopPropagation()
-                                if (props.onMenu) props.onMenu(e, props.item.id)
+                                if (props.onMenu) props.onMenu(e, props.id, props.type)
                             }}
                         >
                             <Box className='nav-icon-context'><MoreVertIcon /></Box>
                         </IconButton>
                         : <></>
                 }
-            </Box>
+            </Box >
         )}>
         {
             props.children
         }
-    </TreeItem>
+    </TreeItem >
 })

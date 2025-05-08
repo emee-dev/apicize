@@ -1,0 +1,120 @@
+use std::collections::HashMap;
+
+use apicize_lib::{
+    editing::execution_result_summary::ExecutionResultSummary, WorkbookDefaultParameters,
+};
+use serde::{Deserialize, Serialize};
+
+use crate::{error::ApicizeAppError, settings::ApicizeSettings, workspaces::Navigation};
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Session {
+    pub workspace_id: String,
+    pub settings: ApicizeSettings,
+    pub error: Option<String>,
+}
+
+#[derive(Default)]
+pub struct Sessions {
+    pub sessions: HashMap<String, Session>,
+    pub counter: u64,
+}
+
+impl Sessions {
+    pub fn trace_all_sessions(&self) {
+        log::trace!("*** Sessions ***");
+        for (id, info) in &self.sessions {
+            log::trace!("   ID: {}, Workspace: {}", id, info.workspace_id);
+        }
+    }
+
+    pub fn add_session(&mut self, session: Session) -> String {
+        let session_id = if self.counter == 0 {
+            "main".to_string()
+        } else {
+            format!("main-{}", &self.counter)
+        };
+
+        self.counter += 1;
+        self.sessions.insert(session_id.clone(), session);
+        session_id
+    }
+
+    pub fn remove_session(&mut self, session_id: &str) -> Result<(), ApicizeAppError> {
+        log::trace!("Removing session {}", &session_id);
+        match self.sessions.remove(session_id) {
+            Some(_) => Ok(()),
+            None => Err(ApicizeAppError::InvaliedSession(session_id.into())),
+        }
+    }
+
+    pub fn get_session(&self, session_id: &str) -> Result<&Session, ApicizeAppError> {
+        match self.sessions.get(session_id) {
+            Some(session) => Ok(session),
+            None => Err(ApicizeAppError::InvaliedSession(session_id.into())),
+        }
+    }
+
+    pub fn get_workspace_session_ids(&self, workspace_id: &str) -> Vec<String> {
+        self.sessions
+            .iter()
+            .filter(|(_, s)| s.workspace_id == workspace_id)
+            .map(|(id, _)| id.clone())
+            .collect()
+    }
+
+    pub fn get_workspace_session_count(&self, workspace_id: &str) -> usize {
+        self.sessions
+            .values()
+            .filter(|s| s.workspace_id == workspace_id)
+            .count()
+    }
+
+    pub fn count(&self) -> usize {
+        self.sessions.len()
+    }
+
+    pub fn change_workspace(
+        &mut self,
+        session_id: &str,
+        workspace_id: &str,
+    ) -> Result<(), ApicizeAppError> {
+        match self.sessions.get_mut(session_id) {
+            Some(session) => {
+                session.workspace_id = workspace_id.to_string();
+                Ok(())
+            }
+            None => Err(ApicizeAppError::InvaliedSession(session_id.into())),
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionInitialization {
+    pub workspace_id: String,
+    pub settings: ApicizeSettings,
+    pub error: Option<String>,
+    pub navigation: Navigation,
+    pub result_summaries: HashMap<String, Vec<ExecutionResultSummary>>,
+    pub file_name: String,
+    pub display_name: String,
+    pub dirty: bool,
+    pub editor_count: usize,
+    pub defaults: WorkbookDefaultParameters,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionSaveState {
+    pub file_name: String,
+    pub display_name: String,
+    pub dirty: bool,
+    pub editor_count: usize,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionState {
+    pub dirty: bool,
+}

@@ -5,32 +5,64 @@ import beautify from "js-beautify";
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { EditorMode } from "../../../models/editor-mode";
 import { RichViewer } from "../rich-viewer";
-import { ResultEditSessionType } from "../../../contexts/workspace-session.context";
-import { ExecutionResult } from "../../../models/workspace/execution";
+import { ResultEditSessionType } from "../../editors/editor-types";
+import { ApicizeBody } from "@apicize/lib-typescript";
+import { useState } from "react";
+import { useWorkspace } from "../../../contexts/workspace.context";
+import { useFeedback } from "../../../contexts/feedback.context";
+import { Execution } from "../../../models/workspace/execution";
 
-export function ResultResponsePreview(props: { result: ExecutionResult }) {
+export function ResultResponsePreview(props: { execution: Execution }) {
+
+    const workspace = useWorkspace()
+    const feedback = useFeedback()
     const clipboard = useClipboard()
 
-    const headers = props.result.response?.headers
-    const body = props.result.response?.body
+    const updateKey = `${props.execution.requestOrGroupId}-${props.execution.resultIndex}-${props.execution.lastExecuted}`
 
-    let extension = ''
-    for (const [name, value] of Object.entries(headers ?? {})) {
-        if (name.toLowerCase() === 'content-type') {
-            let i = value.indexOf('/')
-            if (i !== -1) {
-                let j = value.indexOf(';')
-                extension = value.substring(i + 1, j == -1 ? undefined : j)
-            }
-        }
+    const [body, setBody] = useState<ApicizeBody | null>(null)
+    const [extension, setExtension] = useState<string | null>(null)
+    const [headers, setHeaders] = useState<Map<string, string> | null>(null)
+    const [currentUpdateKey, setCurrentUpdateKey] = useState('')
+
+    if (!body || updateKey !== currentUpdateKey) {
+        workspace.getExecutionResultDetail(props.execution.requestOrGroupId, props.execution.resultIndex)
+            .then(details => {
+                setBody((details.entityType === 'request' && details.response?.body)
+                    ? details.response.body
+                    : {
+                        type: 'Text',
+                        data: ''
+                    })
+
+                const headers = details.entityType === 'request' && details.response?.headers
+                    ? new Map(Object.entries(details.response.headers))
+                    : new Map()
+
+                setHeaders(headers)
+                setCurrentUpdateKey(updateKey)
+
+                for (const [name, value] of headers.entries()) {
+                    if (name.toLowerCase() === 'content-type') {
+                        let i = value.indexOf('/')
+                        if (i !== -1) {
+                            let j = value.indexOf(';')
+                            setExtension(value.substring(i + 1, j == -1 ? undefined : j))
+                        }
+                    }
+                }
+
+            }).catch(e => feedback.toastError(e))
+        return
     }
+
 
     let image: Uint8Array = new Uint8Array()
     let text: string = ''
 
     switch (body?.type) {
         case 'Binary':
-            if (KNOWN_IMAGE_EXTENSIONS.indexOf(extension) !== -1 && body.data.length > 0) {
+            if (extension && KNOWN_IMAGE_EXTENSIONS.indexOf(extension) !== -1 && body.data.length > 0) {
                 image = body.data
             }
             break
@@ -60,7 +92,7 @@ export function ResultResponsePreview(props: { result: ExecutionResult }) {
     let hasText = text.length > 0
 
     let viewer
-    if (hasImage) {
+    if (hasImage && extension) {
         viewer = (<ImageViewer data={image} extensionToRender={extension} />)
     } else if (hasText) {
         let mode: EditorMode | undefined
@@ -86,12 +118,13 @@ export function ResultResponsePreview(props: { result: ExecutionResult }) {
         }
 
         viewer = <RichViewer
-            id={props.result.info.requestOrGroupId}
-            index={props.result.info.index}
+            id={props.execution.requestOrGroupId}
+            index={props.execution.resultIndex}
             type={ResultEditSessionType.Preview}
             mode={mode}
             text={text}
             beautify={true}
+            wrap={true}
             sx={{ width: '100%', height: '100%' }}
         />
     } else {

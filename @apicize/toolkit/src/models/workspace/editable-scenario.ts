@@ -3,7 +3,69 @@ import { Editable, EditableState } from "../editable"
 import { action, computed, observable, toJS } from "mobx"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EditableEntityType } from "./editable-entity-type"
-import { WorkspaceStore } from "../../contexts/workspace.context"
+import { EntityScenario, WorkspaceStore } from "../../contexts/workspace.context"
+
+export class EditableScenario extends Editable<Scenario> {
+    public readonly entityType = EditableEntityType.Scenario
+    @observable accessor variables: EditableVariable[] = []
+
+    public constructor(entry: Scenario, workspace: WorkspaceStore) {
+        super(workspace)
+        this.id = entry.id
+        this.name = entry.name ?? ''
+        this.variables = entry.variables?.map(v => new EditableVariable(
+            GenerateIdentifier(),
+            v.name,
+            v.type ?? VariableSourceType.Text,
+            v.value,
+            v.disabled
+        )) ?? []
+    }
+
+    protected onUpdate() {
+        this.markAsDirty()
+        this.workspace.updateScenario({
+            entityType: 'Scenario',
+            id: this.id,
+            name: this.name,
+            variables: this.variables.map(v => v.toWorkspace())
+        })
+    }
+
+    @action
+    setVariables(value: EditableVariable[] | undefined) {
+        this.variables = value || []
+        this.onUpdate()
+    }
+
+    @action
+    notifyVariableUpdates() {
+        this.onUpdate()
+    }
+
+    @action
+    refreshFromExternalUpdate(updatedItem: EntityScenario) {
+        this.name = updatedItem.name ?? ''
+        this.variables = updatedItem.variables?.map(v => new EditableVariable(
+            GenerateIdentifier(),
+            v.name ?? '',
+            v.type ?? VariableSourceType.Text,
+            v.value,
+            v.disabled
+        )) ?? []
+    }
+
+    @computed get nameInvalid() {
+        return ((this.name?.length ?? 0) === 0)
+    }
+
+    @computed get state() {
+        return this.nameInvalid || this.variables.find(v => v.state === EditableState.Warning)
+            ? EditableState.Warning
+            : EditableState.None
+    }
+}
+
 
 export class EditableVariable implements Variable {
 
@@ -80,52 +142,6 @@ export class EditableVariable implements Variable {
 
     @computed get state() {
         return this.nameInvalid || this.valueError
-            ? EditableState.Warning
-            : EditableState.None
-    }
-}
-
-export class EditableScenario extends Editable<Scenario> {
-    public readonly entityType = EditableEntityType.Scenario
-    @observable accessor variables: EditableVariable[] = []
-
-    public constructor(entry: Scenario, workspace: WorkspaceStore) {
-        super(workspace)
-        this.id = entry.id
-        this.name = entry.name ?? ''
-        this.variables = entry.variables?.map(v => new EditableVariable(
-            GenerateIdentifier(),
-            v.name,
-            v.type ?? VariableSourceType.Text,
-            v.value,
-            v.disabled
-        )) ?? []
-    }
-
-    static fromWorkspace(entry: Scenario, workspace: WorkspaceStore): EditableScenario {
-        return new EditableScenario(entry, workspace)
-    }
-
-    toWorkspace(): Scenario {
-        return {
-            id: this.id,
-            name: this.name,
-            variables: this.variables.map(v => v.toWorkspace())
-        }
-    }
-
-    @action
-    setVariables(value: EditableVariable[] | undefined) {
-        this.variables = value || []
-        this.markAsDirty()
-    }
-
-    @computed get nameInvalid() {
-        return ((this.name?.length ?? 0) === 0)
-    }
-
-    @computed get state() {
-        return this.nameInvalid || this.variables.find(v => v.state === EditableState.Warning)
             ? EditableState.Warning
             : EditableState.None
     }

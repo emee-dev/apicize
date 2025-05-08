@@ -17,17 +17,17 @@ import { ScenarioList } from "./navigation/lists/scenario-list";
 import { AuthorizationList } from "./navigation/lists/authorization-list";
 import { CertificateList } from "./navigation/lists/certificate-list";
 import { ProxyList } from "./navigation/lists/proxy-list";
-import { WorkspaceSessionProvider, useWorkspaceSession } from "../contexts/workspace-session.context";
-import { useRef } from "react";
-import { Navigation } from "./navigation/navigation";
+import { NavigationControl } from "./navigation/navigation";
+import { RequestGroupEditor } from "./editors/request-group-editor";
 
 export const MainPanel = observer(() => {
     const workspace = useWorkspace()
 
-    const session = useRef(workspace.addSession())
+    const mode = workspace.mode
+    const activeSelection = workspace.activeSelection
 
-    const Pane = observer(() => {
-        switch (session.current.mode) {
+    const Pane = (() => {
+        switch (mode) {
             case WorkspaceMode.Help:
                 return <HelpPanel sx={{ display: 'block', flexGrow: 1 }} />
             case WorkspaceMode.Settings:
@@ -38,7 +38,7 @@ export const MainPanel = observer(() => {
                 return <WarningsEditor sx={{ display: 'block', flexGrow: 1 }} />
             case WorkspaceMode.Defaults:
             case WorkspaceMode.Seed:
-                return <DefaultsEditor sx={{ display: 'block', flexGrow: 1 }} defaults={workspace.defaults} externalData={workspace.externalData} />
+                return <DefaultsEditor sx={{ display: 'block', flexGrow: 1 }} />
             case WorkspaceMode.RequestList:
                 return <RequestList sx={{ display: 'block', flexGrow: 1 }} />
             case WorkspaceMode.ScenarioList:
@@ -50,29 +50,31 @@ export const MainPanel = observer(() => {
             case WorkspaceMode.ProxyList:
                 return <ProxyList sx={{ display: 'block', flexGrow: 1 }} />
             default:
-                switch (session.current.active?.entityType) {
-                    case EditableEntityType.Request:
-                    case EditableEntityType.Group:
-                        return <RequestEditor sx={{ display: 'block', flexGrow: 1 }} request={session.current.active} />
-                    case EditableEntityType.Scenario:
-                        return <ScenarioEditor sx={{ display: 'block', flexGrow: 1 }} scenario={session.current.active} />
-                    case EditableEntityType.Authorization:
-                        return <AuthorizationEditor sx={{ display: 'block', flexGrow: 1 }} authorization={session.current.active} />
-                    case EditableEntityType.Certificate:
-                        return <CertificateEditor sx={{ display: 'block', flexGrow: 1 }} certificate={session.current.active} />
-                    case EditableEntityType.Proxy:
-                        return <ProxyEditor sx={{ display: 'block', flexGrow: 1 }} proxy={session.current.active} />
-                    default:
-                        return <></>
+                if (activeSelection) {
+                    switch (activeSelection.type) {
+                        case EditableEntityType.Request:
+                            return <RequestEditor sx={{ display: 'block', flexGrow: 1 }} />
+                        case EditableEntityType.Group:
+                            return <RequestGroupEditor sx={{ display: 'block', flexGrow: 1 }} />
+                        case EditableEntityType.Scenario:
+                            return <ScenarioEditor sx={{ display: 'block', flexGrow: 1 }} />
+                        case EditableEntityType.Authorization:
+                            return <AuthorizationEditor sx={{ display: 'block', flexGrow: 1 }} />
+                        case EditableEntityType.Certificate:
+                            return <CertificateEditor sx={{ display: 'block', flexGrow: 1 }} />
+                        case EditableEntityType.Proxy:
+                            return <ProxyEditor sx={{ display: 'block', flexGrow: 1 }} />
+                        default:
+                            return <></>
+                    }
+                } else {
+                    return <></>
                 }
         }
     })
 
-
-    return <WorkspaceSessionProvider navigation={session.current}>
-        <Stack direction='row' sx={{ width: '100%', height: '100vh', display: 'flex', padding: '0' }}>
-            <Navigation />
-            <Pane />
-        </Stack>
-    </WorkspaceSessionProvider >
+    return <Stack direction='row' sx={{ width: '100%', height: '100vh', display: 'flex', padding: '0' }}>
+        <NavigationControl />
+        <Pane />
+    </Stack>
 })

@@ -1,43 +1,45 @@
-import { Stack, TextField, Grid2, FormControl, InputLabel, MenuItem, Select, IconButton, Typography, SxProps, Box, SvgIcon } from '@mui/material'
+import { Stack, TextField, FormControl, InputLabel, MenuItem, Select, IconButton, Typography, SxProps, Box, SvgIcon } from '@mui/material'
 import FileOpenIcon from '@mui/icons-material/FileOpen';
 import { EditorTitle } from '../editor-title';
 import { CertificateType } from '@apicize/lib-typescript';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
-import { base64Decode, base64Encode } from '../../services/apicize-serializer';
-import { EditableCertificate } from '../../models/workspace/editable-certificate';
+import { base64Decode, base64Encode } from '../../services/base64';
 import { observer } from 'mobx-react-lite';
-import { EditableEntityType } from '../../models/workspace/editable-entity-type';
 import { useClipboard } from '../../contexts/clipboard.context';
-import { SshFileType, useFileOperations } from '../../contexts/file-operations.context';
+import { useFileOperations } from '../../contexts/file-operations.context';
 import { ToastSeverity, useFeedback } from '../../contexts/feedback.context';
 import CertificateIcon from '../../icons/certificate-icon';
 import { useWorkspace } from '../../contexts/workspace.context';
-import { useWorkspaceSession } from '../../contexts/workspace-session.context';
+import { SshFileType } from '../../models/workspace/ssh-file-type';
 
-export const CertificateEditor = observer((props: {
-    sx: SxProps,
-    certificate: EditableCertificate
-}) => {
-    const session = useWorkspaceSession()
+export const CertificateEditor = observer((props: { sx: SxProps }) => {
+
+    const workspace = useWorkspace()
+    const activeSelection = workspace.activeSelection
+
+    if (!activeSelection?.certificate) {
+        return null
+    }
+
+    workspace.nextHelpTopic = 'workspace/certificates'
+    const certificate = activeSelection.certificate
+    const feedback = useFeedback()
     const clipboard = useClipboard()
     const fileOps = useFileOperations()
-    const feedback = useFeedback()
-
-    session.nextHelpTopic = 'workspace/certificates'
 
     let pemToView: string = ''
-    if (props.certificate.pem && (props.certificate.pem.length > 0)) {
+    if (certificate.pem && (certificate.pem.length > 0)) {
         try {
-            pemToView = (new TextDecoder('ascii')).decode(base64Decode(props.certificate.pem))
+            pemToView = (new TextDecoder('ascii')).decode(base64Decode(certificate.pem))
         } catch {
             pemToView = '(Invalid)'
         }
     }
 
     let keyToView: string = ''
-    if (props.certificate.key) {
+    if (certificate.key) {
         try {
-            keyToView = (new TextDecoder('ascii')).decode(base64Decode(props.certificate.key))
+            keyToView = (new TextDecoder('ascii')).decode(base64Decode(certificate.key))
         } catch {
             keyToView = '(Invalid)'
         }
@@ -49,11 +51,11 @@ export const CertificateEditor = observer((props: {
             if (text.length > 0) {
                 switch (fileType) {
                     case SshFileType.PEM:
-                        props.certificate.setPem(text)
+                        certificate.setPem(text)
                         feedback.toast('PEM pasted from clipboard', ToastSeverity.Success)
                         break
                     case SshFileType.Key:
-                        props.certificate.setKey(text)
+                        certificate.setKey(text)
                         feedback.toast('Key pasted from clipboard', ToastSeverity.Success)
                         break
                 }
@@ -69,13 +71,13 @@ export const CertificateEditor = observer((props: {
             if (data) {
                 switch (fileType) {
                     case SshFileType.PEM:
-                        props.certificate.setPem(data)
+                        certificate.setPem(data)
                         break
                     case SshFileType.Key:
-                        props.certificate.setKey(data)
+                        certificate.setKey(data)
                         break
                     case SshFileType.PFX:
-                        props.certificate.setCertificatePfx(data)
+                        certificate.setCertificatePfx(data)
                         break
                 }
                 feedback.toast(`${fileType} loaded from file`, ToastSeverity.Success)
@@ -88,7 +90,7 @@ export const CertificateEditor = observer((props: {
     return (
         <Stack className='editor certificate' direction='column' sx={props.sx}>
             <Box className='editor-panel-header'>
-                <EditorTitle icon={<SvgIcon color='certificate'><CertificateIcon /></SvgIcon>} name={props.certificate.name?.length ?? 0 > 0 ? props.certificate.name : '(Unnamed)'} />
+                <EditorTitle icon={<SvgIcon color='certificate'><CertificateIcon /></SvgIcon>} name={certificate.name?.length ?? 0 > 0 ? certificate.name : '(Unnamed)'} />
             </Box>
             <Box className='editor-panel'>
                 <Stack className='editor-content' direction={'column'} spacing={3}>
@@ -96,11 +98,12 @@ export const CertificateEditor = observer((props: {
                         id='cert-name'
                         label='Name'
                         aria-label='name'
-                        error={props.certificate.nameInvalid}
+                        error={certificate.nameInvalid}
+                        autoFocus={certificate.name === ''}
                         size='small'
-                        value={props.certificate.name}
-                        helperText={props.certificate.nameInvalid ? 'Name is required' : ''}
-                        onChange={e => props.certificate.setName(e.target.value)}
+                        value={certificate.name}
+                        helperText={certificate.nameInvalid ? 'Name is required' : ''}
+                        onChange={e => certificate.setName(e.target.value)}
                         fullWidth
                     />
                     <FormControl>
@@ -108,10 +111,10 @@ export const CertificateEditor = observer((props: {
                         <Select
                             labelId='cert-type-label-id'
                             id='cert-type'
-                            value={props.certificate.type}
+                            value={certificate.type}
                             label='Type'
                             size='small'
-                            onChange={e => props.certificate.setType(e.target.value as
+                            onChange={e => certificate.setType(e.target.value as
                                 CertificateType.PEM | CertificateType.PKCS8_PEM | CertificateType.PKCS12)}
                         >
                             <MenuItem value={CertificateType.PKCS8_PEM}>PKCS 8 (PEM)</MenuItem>
@@ -121,7 +124,7 @@ export const CertificateEditor = observer((props: {
                     </FormControl>
                     <Box paddingTop='2em'>
                         {
-                            props.certificate.type === CertificateType.PKCS8_PEM
+                            certificate.type === CertificateType.PKCS8_PEM
                                 ? (
                                     <Stack direction='column' spacing={3}>
                                         <Stack direction={'row'} spacing={3} position='relative'>
@@ -136,7 +139,7 @@ export const CertificateEditor = observer((props: {
                                             id='cert-pem'
                                             label='PEM'
                                             aria-label='pem file contents'
-                                            error={props.certificate.pemInvalid}
+                                            error={certificate.pemInvalid}
                                             multiline
                                             slotProps={{
                                                 input: {
@@ -161,7 +164,7 @@ export const CertificateEditor = observer((props: {
                                             id='cert-key'
                                             label='Certificate Key'
                                             aria-label='certificate key file contents'
-                                            error={props.certificate.keyInvalid}
+                                            error={certificate.keyInvalid}
                                             multiline
                                             slotProps={{
                                                 input: {
@@ -176,7 +179,7 @@ export const CertificateEditor = observer((props: {
                                         />
                                     </Stack>
                                 )
-                                : props.certificate.type === CertificateType.PKCS12 ? (
+                                : certificate.type === CertificateType.PKCS12 ? (
                                     <Stack direction={'column'} spacing={3}>
                                         <Stack direction={'row'} spacing={3} position='relative'>
                                             <Typography variant='h6' component='div'>PFX Certificate</Typography>
@@ -196,7 +199,7 @@ export const CertificateEditor = observer((props: {
                                                     }
                                                 }}
                                                 rows={8}
-                                                value={props.certificate.pfx ? base64Encode(new Uint8Array(Buffer.from(props.certificate.pfx))) : ''}
+                                                value={certificate.pfx ? base64Encode(new Uint8Array(Buffer.from(certificate.pfx))) : ''}
                                                 size='small'
                                                 fullWidth
                                             />
@@ -206,8 +209,8 @@ export const CertificateEditor = observer((props: {
                                             label='Certificate Key'
                                             aria-label='certificate pfx file contents'
                                             className="password"
-                                            value={props.certificate.password}
-                                            onChange={e => props.certificate.setPassword(e.target.value)}
+                                            value={certificate.password}
+                                            onChange={e => certificate.setPassword(e.target.value)}
                                             size='small'
                                             fullWidth
                                         />
@@ -228,7 +231,7 @@ export const CertificateEditor = observer((props: {
                                                 label='PEM'
                                                 aria-label='pem file contents'
                                                 multiline
-                                                error={props.certificate.pemInvalid}
+                                                error={certificate.pemInvalid}
                                                 slotProps={{
                                                     input: {
                                                         readOnly: true,

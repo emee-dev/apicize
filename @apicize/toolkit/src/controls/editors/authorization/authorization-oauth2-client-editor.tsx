@@ -2,18 +2,17 @@ import { Button, FormControl, FormControlLabel, FormLabel, Grid2, InputLabel, Me
 import { observer } from "mobx-react-lite"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { EditableAuthorization } from "../../../models/workspace/editable-authorization"
-import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
 import { DEFAULT_SELECTION_ID, NO_SELECTION, NO_SELECTION_ID } from "../../../models/store"
-import { EntitySelection } from "../../../models/workspace/entity-selection"
 import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
-import { GetTitle } from "@apicize/lib-typescript"
+import { Selection } from "@apicize/lib-typescript"
+import { WorkspaceParameters } from "../../../models/workspace/workspace-parameters"
 
-export const AuthorizationOAuth2ClientEditor = observer((props: { authorization: EditableAuthorization }) => {
+export const AuthorizationOAuth2ClientEditor = observer((props: { authorization: EditableAuthorization, parameters: WorkspaceParameters | null }) => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
 
     let credIndex = 0
-    const itemsFromSelections = (selections: EntitySelection[]) => {
+    const itemsFromSelections = (selections: Selection[]) => {
         return selections.map(s => (
             <MenuItem key={`creds-${credIndex++}`} value={s.id}>{s.name}</MenuItem>
         ))
@@ -28,7 +27,13 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
         }
     }
 
-    return <Grid2 container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
+    const parameters = props.parameters
+    if (!parameters) {
+        workspace.initializeParameterList()
+        return null
+    }
+
+    return parameters ? <Grid2 container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
         <Grid2>
             <TextField
                 id='auth-oauth2-access-token-url'
@@ -116,13 +121,13 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                                 ? undefined
                                 : selectionId == NO_SELECTION_ID
                                     ? NO_SELECTION
-                                    : { id: selectionId, name: GetTitle(workspace.certificates.get(selectionId)) }
+                                    : parameters.authorizations.find(a => a.id === selectionId)
                         )
                     }}
                     size='small'
                     fullWidth
                 >
-                    {itemsFromSelections(workspace.getAuthorizationCertificateList())}
+                    {itemsFromSelections(parameters.certificates)}
                 </Select>
             </FormControl>
             <FormControl>
@@ -139,15 +144,15 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                         props.authorization.setSelectedProxy(
                             selectionId === DEFAULT_SELECTION_ID
                                 ? undefined
-                                : selectionId == NO_SELECTION_ID
+                                : selectionId === NO_SELECTION_ID
                                     ? NO_SELECTION
-                                    : { id: selectionId, name: GetTitle(workspace.proxies.get(selectionId)) }
+                                    : parameters.proxies.find(a => a.id === selectionId)
                         )
                     }}
                     size='small'
                     fullWidth
                 >
-                    {itemsFromSelections(workspace.getAuthorizationProxyList())}
+                    {itemsFromSelections(parameters.proxies)}
                 </Select>
             </FormControl>
         </Grid2>
@@ -161,5 +166,6 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                 Clear Any Cached Token
             </Button>
         </Grid2>
-    </Grid2 >
+    </Grid2>
+        : null
 })

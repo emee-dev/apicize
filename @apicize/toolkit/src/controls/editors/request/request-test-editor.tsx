@@ -3,15 +3,13 @@ import { observer } from "mobx-react-lite";
 import { RichEditor, RichEditorCommands } from '../rich-editor'
 import { useEffect, useRef, useState } from "react";
 import { EditorMode } from "../../../models/editor-mode";
-import { RequestEditSessionType, useWorkspaceSession } from "../../../contexts/workspace-session.context";
 import { useWorkspace } from "../../../contexts/workspace.context";
 import { Box } from "@mui/material";
-import { BodyType } from "@apicize/lib-typescript";
 import { DroppedFile, useFileDragDrop } from "../../../contexts/file-dragdrop.context";
+import { RequestEditSessionType } from "../editor-types";
 
 export const RequestTestEditor = observer((props: { request: EditableRequest }) => {
   const workspace = useWorkspace()
-  const session = useWorkspaceSession()
   const fileDragDrop = useFileDragDrop()
 
   const refCommands = useRef<RichEditorCommands>(null)
@@ -19,7 +17,7 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
   const [isDragging, setIsDragging] = useState(false)
   const [isDragingValid, setIsDraggingValid] = useState(false)
 
-  session.nextHelpTopic = 'requests/test'
+  workspace.nextHelpTopic = 'requests/test'
 
   useEffect(() => {
     const unregisterDragDrop = fileDragDrop.register(refContainer, {
@@ -38,32 +36,32 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
         setIsDragging(false)
         if (!isDragingValid) return
         switch (file.type) {
-          case 'binary':
-            props.request.setBody({
-              type: BodyType.Raw,
-              data: file.data
-            })
-            break
+          // case 'binary':
+          //   props.request.setBody({
+          //     type: BodyType.Raw,
+          //     data: file.data
+          //   })
+          //   break
           case 'text':
-            switch (file.extension) {
-              case 'json':
-                props.request.setBody({
-                  type: BodyType.JSON,
-                  data: file.data
-                })
-                break
-              case 'xml':
-                props.request.setBody({
-                  type: BodyType.XML,
-                  data: file.data
-                })
-                break
-              default:
-                props.request.setBody({
-                  type: BodyType.Text,
-                  data: file.data
-                })
-            }
+            // switch (file.extension) {
+            //   case 'json':
+            //     props.request.setBody({
+            //       type: BodyType.JSON,
+            //       data: file.data
+            //     })
+            //     break
+            //   case 'xml':
+            //     props.request.setBody({
+            //       type: BodyType.XML,
+            //       data: file.data
+            //     })
+            //     break
+            //   default:
+            //     props.request.setBody({
+            //       type: BodyType.Text,
+            //       data: file.data
+            //     })
+            // }
             refCommands.current?.setText(file.data)
             break
         }
@@ -93,8 +91,8 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
       ref={refCommands}
       mode={EditorMode.js}
       onUpdateValue={(text: string) => {
+        workspace.updateEditorSessionText(props.request.id, RequestEditSessionType.Test, text)
         props.request.setTest(text)
-        workspace.updateEditorSessionText(props.request.id, RequestEditSessionType.Test, text, session.id)
       }}
     />
   </Box>

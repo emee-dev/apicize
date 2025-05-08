@@ -1,20 +1,36 @@
 import { DndContext, DragCancelEvent, DragEndEvent, DragMoveEvent, MouseSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { DragPosition, DraggableData, DroppableData } from "../models/drag-drop";
+import { DraggableData, DroppableData } from "../models/drag-drop";
 import { createContext, ReactNode, useContext, useState } from "react";
 import { action, observable, toJS } from "mobx";
-import { useWorkspaceSession } from "./workspace-session.context";
+import { IndexedEntityPosition } from "../models/workspace/indexed-entity-position";
+
+export type DragDropPosition = IndexedEntityPosition | 'INVALID' | null
 
 /**
  * Global store for drag/drop state
  */
 export class DragDropStore {
-    @observable accessor dragPosition = DragPosition.None
+    @observable accessor dragPosition: DragDropPosition = null
 
     @action
-    setDragPosition(newPosition: DragPosition) {
+    setDragPosition(newPosition: DragDropPosition) {
         this.dragPosition = newPosition
     }
 
+    toBackgroundColor() {
+        switch (this.dragPosition) {
+            case IndexedEntityPosition.Before:
+                return "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 25%, rgba(64,64,64,1) 75%);"
+            case IndexedEntityPosition.After:
+                return "linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 25%, rgba(64,64,64,1) 75%);"
+            case IndexedEntityPosition.Under:
+                return "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(128,128,128,1) 13%, rgba(64,64,64,1) 44%);"
+            case 'INVALID':
+                return 'rgba(128, 0, 0, 0.5)'
+            default:
+                return 'default'
+        }
+    }
 }
 
 export const DragDropProvider = ({ children }: { children?: ReactNode }) => {
@@ -31,85 +47,99 @@ export const DragDropProvider = ({ children }: { children?: ReactNode }) => {
     )
 
     const onDragCancel = (e: DragCancelEvent) => {
-        store.setDragPosition(DragPosition.None)
+        store.setDragPosition(null)
+    }
+
+    const positionFromEvent = (e: DragMoveEvent | DragEndEvent): DragDropPosition => {
+        const { activatorEvent, delta, active, over } = e
+        if (!over) return null
+
+        const pointer = activatorEvent as unknown as any
+
+        const activeData = active.data.current as unknown as DraggableData
+        const overData = over.data.current as unknown as DroppableData
+
+        let evtDelta = delta as any
+
+        let x = pointer.x + evtDelta.x
+        let y = pointer.y + evtDelta.y
+
+        let r = e.over?.rect
+
+        if (active.id === over.id) {
+            return 'INVALID'
+        } else if (overData.acceptsTypes.includes(activeData.type)) {
+            if (overData.isHeader) {
+                if (overData.acceptAppend) {
+                    return IndexedEntityPosition.Under
+                }
+            } else if (overData.acceptAppend &&
+                ((!overData.acceptReposition) || x < 72 + (overData.depth + 1) * 16)) {
+                return IndexedEntityPosition.Under
+            } else if (overData.acceptReposition) {
+                if (r) {
+                    return (y > r.top + (r.height / 2))
+                        ? IndexedEntityPosition.After
+                        : IndexedEntityPosition.Before
+                }
+            }
+        }
+
+        return null
     }
 
     const onDragMove = (e: DragMoveEvent) => {
-        const { activatorEvent, delta, active, over } = e
-        if (!over) return
-
-        const pointer = activatorEvent as unknown as any
-
-        const activeData = active.data.current as unknown as DraggableData
-        const overData = over.data.current as unknown as DroppableData
-        let evtDelta = delta as any
-
-        let x = pointer.x + evtDelta.x
-        let y = pointer.y + evtDelta.y
-
-        let r = e.over?.rect
-
-        let position = DragPosition.None
-        if (active.id !== over.id) {
-            if (overData.acceptsTypes.includes(activeData.type)) {
-                if (overData.isHeader) {
-                    if (overData.acceptAppend) {
-                        position = DragPosition.Left
-                    }
-                } else if (overData.acceptAppend &&
-                    ((!overData.acceptReposition) || x < 72 + (overData.depth + 1) * 16)) {
-                    position = DragPosition.Left
-                } else if (overData.acceptReposition) {
-                    if (r) {
-                        position = (y > r.top + (r.height / 2))
-                            ? DragPosition.Lower
-                            : DragPosition.Upper
-                    }
-                }
-            }
-        } else {
-            position = DragPosition.Invalid
-        }
-        store.setDragPosition(position)
+        store.setDragPosition(positionFromEvent(e))
     }
 
     const onDragEnd = (e: DragEndEvent) => {
-        const { activatorEvent, delta, active, over } = e
-        if (!over) return
+
+
+        const { active, over } = e
+        let endingPosition = positionFromEvent(e)
+        if (!over || !active || endingPosition === 'INVALID' || endingPosition === null) {
+            return
+        }
 
         const activeData = active.data.current as unknown as DraggableData
-        const pointer = activatorEvent as unknown as any
         const overData = over.data.current as unknown as DroppableData
-
-        let evtDelta = delta as any
-
-        let x = pointer.x + evtDelta.x
-        let y = pointer.y + evtDelta.y
-
-        let r = e.over?.rect
-
-        let onLowerHalf = false
-        let onSection = false
-
-        if (r) {
-            if (y > r.top + (r.height / 2)) onLowerHalf = true
-            if (x < 72 + overData.depth * 16) onSection = true
-        }
 
         let id = overData.isHeader
             ? (overData.persistence ? overData.persistence : null)
             : over.id.toString()
 
-        if (overData.isHeader && overData.persistence) {
-            onSection = true
-            // session.updateExpanded(over.id.toString(), true)
+
+        if (id) {
+            activeData.move(id, endingPosition)
         }
 
-        if (overData.acceptsTypes.includes(activeData.type)) {
-            activeData.move(id, onLowerHalf, onSection)
-        }
+        // let evtDelta = delta as any
 
-        store.setDragPosition(DragPosition.None)
+        // let x = pointer.x + evtDelta.x
+        // let y = pointer.y + evtDelta.y
+
+        // let r = e.over?.rect
+
+        // let onLowerHalf = false
+        // let onSection = false
+
+        // if (r) {
+        //     if (y > r.top + (r.height / 2)) onLowerHalf = true
+        //     if (x < 72 + overData.depth * 16) onSection = true
+        // }
+
+        // if (overData.isHeader && overData.persistence) {
+        //     onSection = true
+        //     // session.updateExpanded(over.id.toString(), true)
+        // }
+
+        // if (id && overData.acceptsTypes.includes(activeData.type)) {
+        //     const position = overData.isHeader ? IndexedEntityPosition.Under :
+        //         onLowerHalf ? IndexedEntityPosition.After : IndexedEntityPosition.Before
+        //     activeData.move(id, position)
+        // }
+
+        store.setDragPosition(null)
     }
 
     return <DragDropContext.Provider value={store}>

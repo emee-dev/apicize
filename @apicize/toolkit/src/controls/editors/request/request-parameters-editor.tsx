@@ -1,26 +1,35 @@
-import { EntitySelection } from '../../../models/workspace/entity-selection'
 import { MenuItem, FormControl, InputLabel, Select } from '@mui/material'
 import { Stack } from '@mui/material'
 import { DEFAULT_SELECTION_ID } from '../../../models/store'
-import { EditableRequest } from '../../../models/workspace/editable-request'
 import { observer } from 'mobx-react-lite'
 import { useWorkspace } from '../../../contexts/workspace.context'
 import { EditableRequestGroup } from '../../../models/workspace/editable-request-group'
-import { useWorkspaceSession } from '../../../contexts/workspace-session.context'
+import { WorkspaceParameters } from '../../../models/workspace/workspace-parameters'
+import { Selection } from '@apicize/lib-typescript'
+import { EditableRequest } from '../../../models/workspace/editable-request'
 
-export const RequestParametersEditor = observer((props: { requestEntry: EditableRequest | EditableRequestGroup }) => {
+export const RequestParametersEditor = observer((props: {
+    requestOrGroup: EditableRequest | EditableRequestGroup,
+    parameters: WorkspaceParameters | null
+}) => {
     const workspace = useWorkspace()
-    const session = useWorkspaceSession()
-    session.nextHelpTopic = 'requests/parameters'
+    workspace.nextHelpTopic = 'requests/parameters'
+
+    const requestOrGroup = props.requestOrGroup
+    const parameters = props.parameters
+    
+    if (!parameters) {
+        workspace.activeSelection?.initializeParameters()
+        return null
+    }
+
 
     let credIndex = 0
-    const itemsFromSelections = (selections: EntitySelection[]) => {
+    const itemsFromSelections = (selections: Selection[]) => {
         return selections.map(s => (
             <MenuItem key={`creds-${credIndex++}`} value={s.id}>{s.name}</MenuItem>
         ))
     }
-
-    const lists = workspace.getRequestParameterLists(props.requestEntry)
 
     return (
         <Stack spacing={3}>
@@ -31,12 +40,12 @@ export const RequestParametersEditor = observer((props: { requestEntry: Editable
                     aria-labelledby='scenario-label-id'
                     id='cred-scenario'
                     label='Scenario'
-                    value={props.requestEntry.selectedScenario?.id ?? DEFAULT_SELECTION_ID}
-                    onChange={(e) => props.requestEntry.setSelectedScenarioId(e.target.value)}
+                    value={requestOrGroup.selectedScenario?.id ?? DEFAULT_SELECTION_ID}
+                    onChange={(e) => requestOrGroup.setSelectedScenarioId(e.target.value)}
                     fullWidth
                     size='small'
                 >
-                    {itemsFromSelections(lists.scenarios)}
+                    {itemsFromSelections(parameters.scenarios)}
                 </Select>
             </FormControl>
             <FormControl>
@@ -46,12 +55,12 @@ export const RequestParametersEditor = observer((props: { requestEntry: Editable
                     aria-labelledby='auth-label-id'
                     id='cred-auth'
                     label='Authorization'
-                    value={props.requestEntry.selectedAuthorization?.id ?? DEFAULT_SELECTION_ID}
-                    onChange={(e) => props.requestEntry.setSelectedAuthorizationId(e.target.value)}
+                    value={requestOrGroup.selectedAuthorization?.id ?? DEFAULT_SELECTION_ID}
+                    onChange={(e) => requestOrGroup.setSelectedAuthorizationId(e.target.value)}
                     fullWidth
                     size='small'
                 >
-                    {itemsFromSelections(lists.authorizations)}
+                    {itemsFromSelections(parameters.authorizations)}
                 </Select>
             </FormControl>
             <FormControl>
@@ -61,12 +70,12 @@ export const RequestParametersEditor = observer((props: { requestEntry: Editable
                     aria-labelledby='cert-label-id'
                     id='cred-cert'
                     label='Certificate'
-                    value={props.requestEntry.selectedCertificate?.id ?? DEFAULT_SELECTION_ID}
-                    onChange={(e) => props.requestEntry.setSelectedCertificateId(e.target.value)}
+                    value={requestOrGroup.selectedCertificate?.id ?? DEFAULT_SELECTION_ID}
+                    onChange={(e) => requestOrGroup.setSelectedCertificateId(e.target.value)}
                     fullWidth
                     size='small'
                 >
-                    {itemsFromSelections(lists.certificates)}
+                    {itemsFromSelections(parameters.certificates)}
                 </Select>
             </FormControl>
             <FormControl>
@@ -76,12 +85,12 @@ export const RequestParametersEditor = observer((props: { requestEntry: Editable
                     aria-labelledby='proxy-label-id'
                     id='cred-proxy'
                     label='Proxy'
-                    value={props.requestEntry.selectedProxy?.id ?? DEFAULT_SELECTION_ID}
-                    onChange={(e) => props.requestEntry.setSelectedProxyId(e.target.value)}
+                    value={requestOrGroup.selectedProxy?.id ?? DEFAULT_SELECTION_ID}
+                    onChange={(e) => requestOrGroup.setSelectedProxyId(e.target.value)}
                     fullWidth
                     size='small'
                 >
-                    {itemsFromSelections(lists.proxies)}
+                    {itemsFromSelections(parameters.proxies)}
                 </Select>
             </FormControl>
         </Stack>

@@ -1,5 +1,4 @@
 import { Selection } from "./selection";
-import { Variable } from "./variable";
 
 export interface SelectedParameters {
     selectedScenario?: Selection,

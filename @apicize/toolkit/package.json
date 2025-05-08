@@ -1,7 +1,7 @@
 {
   "name": "@apicize/toolkit",
   "private": true,
-  "version": "0.17.6",
+  "version": "0.18.0",
   "description": "UI toolkit for Apicize applications",
   "keywords": [],
   "license": "MIT",
@@ -43,7 +43,7 @@
     "unist-util-visit": "^5.0.0"
   },
   "peerDependencies": {
-    "mobx": "^6.13.6",
+    "mobx": "^6.13.7",
     "mobx-react-lite": "^4.1.0"
   },
   "dependencies": {

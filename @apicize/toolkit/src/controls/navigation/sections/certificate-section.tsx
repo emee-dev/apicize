@@ -1,4 +1,4 @@
-import { GetTitle, Persistence } from "@apicize/lib-typescript"
+import { Persistence } from "@apicize/lib-typescript"
 import { ListItemIcon, ListItemText, Menu, MenuItem, SvgIcon, useTheme } from "@mui/material"
 import CertificateIcon from "../../../icons/certificate-icon"
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
@@ -10,13 +10,10 @@ import { MenuPosition } from "../../../models/menu-position"
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
-import { useWorkspaceSession } from "../../../contexts/workspace-session.context"
+import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position"
 
-export const CertificateSection = observer((props: {
-    includeHeader: boolean,
-}) => {
+export const CertificateSection = observer((props: { includeHeader: boolean }) => {
     const workspace = useWorkspace()
-    const session = useWorkspaceSession()
     const feedback = useFeedback()
     const theme = useTheme()
 
@@ -30,35 +27,36 @@ export const CertificateSection = observer((props: {
         workspace.changeActive(EditableEntityType.Certificate, id)
     }
 
-    const handleAddCertificate = (persistence: Persistence, targetCertificateId?: string | null) => {
+    const handleAddCertificate = (targetCertificateId: string, targetPosition: IndexedEntityPosition) => {
         closeCertificateMenu()
-        workspace.addCertificate(persistence, targetCertificateId)
+        workspace.addCertificate(targetCertificateId, targetPosition, null)
     }
 
     const handleSelectHeader = (headerId: string, helpTopic?: string) => {
         // closeAllMenus()
         if (helpTopic) {
-            session.updateExpanded(headerId, true)
-            session.showHelp(helpTopic)
+            workspace.updateExpanded(headerId, true)
+            workspace.showHelp(helpTopic)
         }
     }
 
-    const handleMoveCertificate = (id: string, destinationID: string | null, onLowerHalf: boolean | null, isSection: boolean | null) => {
+    const handleMoveCertificate = (id: string, relativeToId: string, relativePosition: IndexedEntityPosition) => {
         selectCertificate(id)
-        workspace.moveCertificate(session.id, id, destinationID, onLowerHalf, isSection)
+        workspace.moveCertificate(id, relativeToId, relativePosition)
     }
 
     const handleDupeCertificate = () => {
         closeCertificateMenu()
         const id = certificateMenu?.id
         if (!id) return
-        workspace.copyCertificate(id)
+        workspace.addCertificate(id, IndexedEntityPosition.After, id)
     }
 
     const showCertificateMenu = (event: React.MouseEvent, persistence: Persistence, id: string) => {
         setCertificateMenu(
             {
                 id,
+                type: EditableEntityType.Certificate,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
                 persistence,
@@ -72,7 +70,7 @@ export const CertificateSection = observer((props: {
         if (!id) return
         feedback.confirm({
             title: 'Delete Certificate',
-            message: `Are you are you sure you want to delete ${GetTitle(workspace.certificates.get(id))}?`,
+            message: `Are you are you sure you want to delete ${workspace.getNavigationName(id)}?`,
             okButton: 'Yes',
             cancelButton: 'No',
             defaultToCancel: true
@@ -95,7 +93,7 @@ export const CertificateSection = observer((props: {
                     left: certificateMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddCertificate(certificateMenu.persistence, certificateMenu?.id)}>
+                <MenuItem onClick={(_) => handleAddCertificate(certificateMenu.id, IndexedEntityPosition.After)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='certificate'><CertificateIcon /></SvgIcon>
                     </ListItemIcon>
@@ -125,7 +123,7 @@ export const CertificateSection = observer((props: {
         iconColor='certificate'
         helpTopic='workspace/certificates'
         type={EditableEntityType.Certificate}
-        parameters={workspace.certificates}
+        parameters={workspace.navigation.certificates}
         onSelect={selectCertificate}
         onSelectHeader={handleSelectHeader}
         onAdd={handleAddCertificate}

@@ -1,7 +1,6 @@
 import { Window } from "@tauri-apps/api/window"
 import { useFeedback, useFileOperations, WorkspaceContext, WorkspaceStore } from "@apicize/toolkit";
 import { ReactNode, useEffect, useRef } from "react";
-import { reaction } from 'mobx';
 
 /**
  * Implementation of window management via Tauri
@@ -10,30 +9,17 @@ export function WorkspaceProvider({ store, children }: { store: WorkspaceStore, 
     const feedback = useFeedback()
     const fileOps = useFileOperations()
 
-    // Update window title
-    reaction(
-        () => ({ dirty: store.dirty, displayName: store.workbookDisplayName }),
-        async ({ dirty, displayName }) => {
-            const showDirty = dirty ? ' *' : ''
-            const currentWindow = Window.getCurrent()
-            currentWindow.setTitle(((displayName?.length ?? 0) > 0)
-                ? `Apicize - ${displayName}${showDirty}`
-                : `Apicize (New Workbook)${showDirty}`)
-        }
-    )
-
     const _forceClose = useRef(false);
-
 
     useEffect(() => {
         // Set up close event hook, warn user if "dirty"
         const currentWindow = Window.getCurrent()
         const unlistenClose = currentWindow.onCloseRequested((e) => {
-            if (store.dirty && (!_forceClose.current)) {
+            if (store.dirty && store.editorCount < 2 && (!_forceClose.current)) {
                 e.preventDefault();
                 (async () => {
                     if (await feedback.confirm({
-                        title: 'Close Apicize?',
+                        title: `Close ${store.displayName.length === 0 ? 'New Workspace' : store.displayName}?`,
                         message: 'You have unsaved changes, are you sure you want to close Apicize?',
                         okButton: 'Yes',
                         cancelButton: 'No',
@@ -42,8 +28,16 @@ export function WorkspaceProvider({ store, children }: { store: WorkspaceStore, 
                         _forceClose.current = true
                         store.dirty = false
                         currentWindow.close()
+                        store.close().catch((e) => {
+                            feedback.toastError(e)
+                        })
                     }
                 })()
+            } else {
+                store.close().catch((e) => {
+                    feedback.toastError(e)
+                })
+
             }
         })
 

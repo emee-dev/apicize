@@ -1,15 +1,13 @@
-import { Selection, Body, BodyType, GroupExecution, Method, NameValuePair, Request } from "@apicize/lib-typescript"
-import { Editable, EditableItem, EditableState } from "../editable"
-import { action, computed, get, observable, toJS } from "mobx"
+import { Selection, BodyType, GroupExecution, Method, NameValuePair, Request, RequestGroup, BaseRequest } from "@apicize/lib-typescript"
+import { EditableState } from "../editable"
+import { action, computed, observable, toJS } from "mobx"
 import { EditableNameValuePair } from "./editable-name-value-pair"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EditableEntityType } from "./editable-entity-type"
-import { js_beautify } from 'js-beautify'
-import { WorkspaceStore } from "../../contexts/workspace.context"
-import { base64Encode, base64Decode } from "../../services/apicize-serializer"
-import { DEFAULT_SELECTION_ID, NO_SELECTION_ID, NO_SELECTION } from "../store"
-import { EditableRequestGroup } from "./editable-request-group"
+import { EntityRequest, WorkspaceStore } from "../../contexts/workspace.context"
 import { EditableRequestEntry } from "./editable-request-entry"
+import { RequestDuplex } from "undici-types"
+
 export class EditableRequest extends EditableRequestEntry {
     public readonly entityType = EditableEntityType.Request
 
@@ -20,17 +18,17 @@ export class EditableRequest extends EditableRequestEntry {
     @observable public accessor keepalive = false as boolean | undefined
     @observable public accessor headers: EditableNameValuePair[] = []
     @observable public accessor queryStringParams: EditableNameValuePair[] = []
-    @observable public accessor body: Body = { type: BodyType.None, data: undefined }
-    @observable public accessor redirect = undefined
-    // @observable public accessor integrity = undefined
-    @observable public accessor mode = undefined
-    @observable public accessor referrer = undefined
-    @observable public accessor referrerPolicy = undefined
-    @observable public accessor duplex = undefined
+    // @observable public accessor body: Body = { type: BodyType.None, data: undefined }
     @observable public accessor test = ''
+    @observable public accessor redirect: RequestRedirect | undefined = undefined
+    @observable public accessor mode: RequestMode | undefined = undefined
+    @observable public accessor referrer: string | undefined = undefined
+    @observable public accessor referrerPolicy: ReferrerPolicy | undefined = undefined
+    @observable public accessor duplex: RequestDuplex | undefined = undefined
 
-    public constructor(entry: Request, workspace: WorkspaceStore) {
+    public constructor(entry: BaseRequest, workspace: WorkspaceStore) {
         super(workspace)
+
         this.id = entry.id
         this.name = entry.name ?? ''
 
@@ -68,34 +66,32 @@ export class EditableRequest extends EditableRequestEntry {
             this.url = this.url.substring(0, idxQuery)
         }
 
-        this.body = (entry.body && entry.body.data)
-            ? entry.body
-            : {
-                type: BodyType.None,
-                data: undefined
-            }
-
         this.test = entry.test ?? ''
+
+        this.mode = entry.mode
+        this.referrer = entry.referrer
+        this.referrerPolicy = entry.referrerPolicy
+        this.duplex = entry.duplex
+
         this.warnings = entry.warnings
             ? new Map(entry.warnings.map(w => [GenerateIdentifier(), w]))
             : new Map<string, string>()
     }
 
-    static fromWorkspace(entry: Request, workspace: WorkspaceStore): EditableRequest {
-        return new EditableRequest(entry, workspace)
-    }
+    protected onUpdate() {
+        this.markAsDirty()
 
-    toWorkspace(): Request {
-        const result: Request = {
+        const request: EntityRequest = {
+            entityType: 'Request',
             id: this.id,
             name: this.name,
             url: this.url,
             method: this.method,
             headers: toJS(this.headers),
             queryStringParams: toJS(this.queryStringParams),
-            body: (this.body && this.body.type !== BodyType.None)
-                ? toJS(this.body)
-                : undefined,
+            // body: (this.body && this.body.type !== BodyType.None)
+            //     ? toJS(this.body)
+            //     : undefined,
             test: this.test,
             duplex: this.duplex,
             // integrity: this.integrity,
@@ -109,180 +105,78 @@ export class EditableRequest extends EditableRequestEntry {
             selectedCertificate: this.selectedCertificate,
             selectedProxy: this.selectedProxy,
         }
-
-        if (result.body?.type === BodyType.None) {
-            result.body = undefined
-        }
-
-        if ((result.headers?.length ?? 0) === 0) {
-            delete result.headers
+        if ((request.headers?.length ?? 0) === 0) {
+            delete request.headers
         } else {
-            result.headers?.forEach(h => delete (h as unknown as any).id)
+            request.headers?.forEach(h => delete (h as unknown as any).id)
         }
-        if ((result.queryStringParams?.length ?? 0) === 0) {
-            delete result.queryStringParams
+        if ((request.queryStringParams?.length ?? 0) === 0) {
+            delete request.queryStringParams
         } else {
-            result.queryStringParams?.forEach(p => delete (p as unknown as any).id)
+            request.queryStringParams?.forEach(p => delete (p as unknown as any).id)
         }
-        return result
+
+        this.workspace.updateRequest(request)
     }
 
     @action
     setUrl(value: string) {
         this.url = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setMethod(value: Method) {
         this.method = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setTimeout(value: number) {
         this.timeout = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setQueryStringParams(value: EditableNameValuePair[] | undefined) {
         this.queryStringParams = value ?? []
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setHeaders(value: EditableNameValuePair[] | undefined) {
         this.headers = value ?? []
-        this.markAsDirty()
-    }
-
-    @action
-    setBodyType(value: BodyType | undefined) {
-        let newBody: Body
-        if (this.body && this.body.data) {
-            switch (value) {
-                case BodyType.Raw:
-                    switch (this.body.type) {
-                        case BodyType.Form:
-                            newBody = {
-                                type: BodyType.Raw, data: (new TextEncoder()).encode(
-                                    encodeFormData(this.body.data as EditableNameValuePair[])
-                                )
-                            }
-                            break
-                        case BodyType.XML:
-                        case BodyType.JSON:
-                        case BodyType.Text:
-                            newBody = { type: BodyType.Raw, data: (new TextEncoder()).encode(this.body.data) }
-                            break
-                        case BodyType.Raw:
-                            newBody = { type: BodyType.Raw, data: this.body.data }
-                            break
-                        default:
-                            newBody = {
-                                type: BodyType.Raw, data: new Uint8Array()
-                            }
-                    }
-                    break
-                case BodyType.Form:
-                    switch (this.body.type) {
-                        case BodyType.JSON:
-                        case BodyType.XML:
-                        case BodyType.Text:
-                            newBody = {
-                                type: BodyType.Form,
-                                data: decodeFormData(this.body.data)
-                            }
-                            break
-                        case BodyType.Raw:
-                            newBody = {
-                                type: BodyType.Form,
-                                data: decodeFormData(new TextDecoder().decode(this.body.data))
-                            }
-                            break
-                        case BodyType.Form:
-                            newBody = { type: BodyType.Form, data: this.body.data }
-                            break
-                        default:
-                            newBody = {
-                                type: BodyType.Form, data: []
-                            }
-                            break
-                    }
-                    break
-                case BodyType.JSON:
-                case BodyType.XML:
-                case BodyType.Text:
-                    switch (this.body.type) {
-                        case BodyType.JSON:
-                        case BodyType.XML:
-                        case BodyType.Text:
-                            newBody = { type: value, data: this.body.data }
-                            break
-                        case BodyType.Raw:
-                            newBody = { type: value, data: (new TextDecoder()).decode(this.body.data) }
-                            break
-                        default:
-                            newBody = { type: BodyType.None, data: undefined }
-                            break
-                    }
-                    break
-                case BodyType.None:
-                default:
-                    newBody = {
-                        type: BodyType.None,
-                        data: undefined
-                    }
-
-            }
-        } else {
-            switch (value) {
-                case BodyType.Form:
-                    newBody = {
-                        type: BodyType.Form,
-                        data: []
-                    }
-                    break
-                case BodyType.XML:
-                case BodyType.JSON:
-                case BodyType.Text:
-                    newBody = {
-                        type: value,
-                        data: ''
-                    }
-                    break
-                case BodyType.None:
-                default:
-                    newBody = {
-                        type: BodyType.None,
-                        data: undefined
-                    }
-                    break
-            }
-
-        }
-
-        this.body = newBody
-        this.markAsDirty()
-    }
-
-    @action
-    setBody(body: Body) {
-        this.body = body
-        this.markAsDirty()
-    }
-
-    @action
-    setBodyData(value: string | EditableNameValuePair[]) {
-        this.body.data = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setTest(value: string | undefined) {
         this.test = value ?? ''
-        this.markAsDirty()
+        this.onUpdate()
+    }
+
+    @action
+    refreshFromExternalUpdate(entity: EntityRequest) {
+        this.name = entity.name ?? ''
+        this.url = entity.url
+        this.method = entity.method
+        this.timeout = entity.timeout
+        this.keepalive = entity.keepalive
+        this.mode = entity.mode
+        this.runs = entity.runs
+        this.multiRunExecution = entity.multiRunExecution
+        this.headers = entity.headers?.map((h) => ({ id: GenerateIdentifier(), ...h })) ?? []
+        this.queryStringParams = entity.queryStringParams?.map((q) => ({ id: GenerateIdentifier(), ...q })) ?? []
+        this.redirect = entity.redirect
+        this.referrer = entity.referrer
+        this.referrerPolicy = entity.referrerPolicy
+        this.duplex = entity.duplex
+        this.test = entity.test ?? ''
+        this.selectedScenario = entity.selectedScenario
+        this.selectedAuthorization = entity.selectedAuthorization
+        this.selectedCertificate = entity.selectedCertificate
+        this.selectedProxy = entity.selectedProxy
+        this.warnings = entity.warnings
     }
 
     @computed get urlInvalid() {
@@ -297,34 +191,34 @@ export class EditableRequest extends EditableRequestEntry {
     }
 }
 
+/**
+ * This is all request information, excluding the request body
+ */
+export interface RequestInfo {
+    id: string
+    name: string
+    url: string
+    method: Method
+    timeout: number
+    keepalive?: boolean
+    mode?: RequestMode
+    runs: number
+    multiRunExecution: GroupExecution
+    headers?: NameValuePair[]
+    queryStringParams?: NameValuePair[]
+    redirect?: RequestRedirect
+    referrer?: string
+    referrerPolicy?: ReferrerPolicy
+    duplex?: RequestDuplex
+    test?: string,
+    selectedScenario?: Selection,
+    selectedAuthorization?: Selection,
+    selectedCertificate?: Selection,
+    selectedProxy?: Selection,
+    warnings?: Map<string, string>
+}
 
-const encodeFormData = (data: EditableNameValuePair[]) =>
-    (data.length === 0)
-        ? ''
-        : data.map(nv =>
-            `${encodeURIComponent(nv.name)}=${encodeURIComponent(nv.value)}`
-        ).join('&')
-
-const decodeFormData = (bodyData: string | number[] | undefined) => {
-    let data: string | undefined;
-    if (bodyData instanceof Array) {
-        const buffer = Uint8Array.from(bodyData)
-        data = (new TextDecoder()).decode(buffer)
-    } else {
-        data = bodyData
-    }
-    if (data && data.length > 0) {
-        const parts = data.split('&')
-        return parts.map(p => {
-            const id = GenerateIdentifier()
-            const nv = p.split('=')
-            if (nv.length == 1) {
-                return { id, name: decodeURIComponent(nv[0]), value: "" } as EditableNameValuePair
-            } else {
-                return { id, name: decodeURIComponent(nv[0]), value: decodeURIComponent(nv[1]) } as EditableNameValuePair
-            }
-        })
-    } else {
-        return []
-    }
+export interface RequestEntryInfo {
+    request?: RequestInfo
+    group?: RequestGroup
 }

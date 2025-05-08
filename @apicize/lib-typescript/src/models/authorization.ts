@@ -50,13 +50,10 @@ export interface OAuth2PkceAuthorization extends Identifiable, Named {
     type: AuthorizationType.OAuth2Pkce
     authorizeUrl: string
     accessTokenUrl: string
-    refreshTokenurl?: string
+    refreshTokenUrl?: string
     clientId: string
     scope: string
     audience: string
-    token?: string
-    refreshToken?: string
-    expiration?: number
     sendCredentialsInBody?: boolean
 }
 

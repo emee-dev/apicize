@@ -3,25 +3,27 @@ import { AuthorizationType } from '@apicize/lib-typescript';
 import { EditorTitle } from '../editor-title';
 import { EditableAuthorization } from '../../models/workspace/editable-authorization';
 import { observer } from 'mobx-react-lite';
-import { useWorkspace } from '../../contexts/workspace.context';
 import { AuthorizationApiKeyEditor } from './authorization/authorization-apikey-editor';
 import { AuthorizationBasicEditor } from './authorization/authorization-basic-editor';
 import { AuthorizationOAuth2ClientEditor } from './authorization/authorization-oauth2-client-editor';
 import { AuthorizationOAuth2PkceEditor } from './authorization/authorization-oauth2-pkce-editor';
 import AuthIcon from '../../icons/auth-icon';
-import { useWorkspaceSession } from '../../contexts/workspace-session.context';
+import { useWorkspace } from '../../contexts/workspace.context';
 
-export const AuthorizationEditor = observer((props: {
-    sx: SxProps,
-    authorization: EditableAuthorization
-}) => {
-    const session = useWorkspaceSession()
-    session.nextHelpTopic = 'workspace/authorizations'
+export const AuthorizationEditor = observer((props: { sx: SxProps }) => {
+    const workspace = useWorkspace()
+    workspace.nextHelpTopic = 'workspace/authorizations'
+    const activeSelection = workspace.activeSelection
+
+    if (!activeSelection?.authorization) {
+        return null
+    }
+    const authorization = activeSelection.authorization
 
     return (
         <Stack className='editor authorization' direction={'column'} sx={props.sx}>
             <Box className='editor-panel-header'>
-                <EditorTitle icon={<SvgIcon color='authorization'><AuthIcon /></SvgIcon>} name={props.authorization.name} />
+                <EditorTitle icon={<SvgIcon color='authorization'><AuthIcon /></SvgIcon>} name={authorization.name} />
             </Box>
             <Box className='editor-panel'>
                 <Grid2 container className='editor-content' direction={'column'} spacing={3}>
@@ -31,10 +33,11 @@ export const AuthorizationEditor = observer((props: {
                             label='Name'
                             aria-label='authorization name'
                             size='small'
-                            value={props.authorization.name}
-                            error={props.authorization.nameInvalid}
-                            helperText={props.authorization.nameInvalid ? 'Name is required' : ''}
-                            onChange={e => props.authorization.setName(e.target.value)}
+                            autoFocus={authorization.name === ''}
+                            value={authorization.name}
+                            error={authorization.nameInvalid}
+                            helperText={authorization.nameInvalid ? 'Name is required' : ''}
+                            onChange={e => authorization.setName(e.target.value)}
                             fullWidth
                         />
                     </Grid2>
@@ -46,10 +49,10 @@ export const AuthorizationEditor = observer((props: {
                                     labelId='auth-type-label-id'
                                     aria-label='authorization type'
                                     id='auth-type'
-                                    value={props.authorization.type}
+                                    value={authorization.type}
                                     label='Type'
                                     size='small'
-                                    onChange={e => props.authorization.setType(e.target.value as AuthorizationType)}
+                                    onChange={e => authorization.setType(e.target.value as AuthorizationType)}
                                 >
                                     <MenuItem value={AuthorizationType.Basic}>Basic Authentication</MenuItem>
                                     <MenuItem value={AuthorizationType.ApiKey}>API Key Authentication</MenuItem>
@@ -61,14 +64,14 @@ export const AuthorizationEditor = observer((props: {
                     </Grid2>
                     <Grid2 marginTop='24px'>
                         {
-                            props.authorization.type === AuthorizationType.ApiKey ?
-                                <AuthorizationApiKeyEditor authorization={props.authorization} />
-                                : props.authorization.type === AuthorizationType.Basic
-                                    ? <AuthorizationBasicEditor authorization={props.authorization} />
-                                    : props.authorization.type === AuthorizationType.OAuth2Client
-                                        ? <AuthorizationOAuth2ClientEditor authorization={props.authorization} />
-                                        : props.authorization.type === AuthorizationType.OAuth2Pkce
-                                            ? <AuthorizationOAuth2PkceEditor authorization={props.authorization} />
+                            authorization.type === AuthorizationType.ApiKey ?
+                                <AuthorizationApiKeyEditor authorization={authorization} />
+                                : authorization.type === AuthorizationType.Basic
+                                    ? <AuthorizationBasicEditor authorization={authorization} />
+                                    : authorization.type === AuthorizationType.OAuth2Client
+                                        ? <AuthorizationOAuth2ClientEditor authorization={authorization} parameters={workspace.activeParameters} />
+                                        : authorization.type === AuthorizationType.OAuth2Pkce
+                                            ? <AuthorizationOAuth2PkceEditor authorization={authorization} />
                                             : null
                         }
                     </Grid2>

@@ -1,102 +1,48 @@
 import { observer } from "mobx-react-lite"
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import FileOpenIcon from '@mui/icons-material/FileOpen'
-import PostAddIcon from '@mui/icons-material/PostAdd'
-import SaveIcon from '@mui/icons-material/Save'
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import SaveAsIcon from '@mui/icons-material/SaveAs'
-import HelpIcon from '@mui/icons-material/Help'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import SettingsIcon from '@mui/icons-material/Settings';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
 import { TreeItem } from '@mui/x-tree-view/TreeItem'
-import { Box, IconButton, MenuItem, Stack, SvgIcon, ToggleButton, ToggleButtonGroup } from '@mui/material'
-import React, { useEffect } from 'react'
+import { Box, Stack, SvgIcon, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { useEffect, useState } from 'react'
 import { EditableState } from "../../models/editable";
 import { EditableEntityType } from "../../models/workspace/editable-entity-type";
-import { useFileOperations } from "../../contexts/file-operations.context";
 import { useWorkspace, WorkspaceMode } from "../../contexts/workspace.context";
-import { ToastSeverity, useFeedback } from "../../contexts/feedback.context";
 import DefaultsIcon from "../../icons/defaults-icon";
-import LogIcon from "../../icons/log-icon";
-import { DropdownMenu } from "./dropdown-menu";
 import { ScenarioSection } from "./sections/scenario-scection";
 import { AuthorizationSection } from "./sections/authorization-section";
 import { CertificateSection } from "./sections/certificate-section";
 import { ProxySection } from "./sections/proxy-section";
 import { RequestSection } from "./sections/request-section";
 import useWindowSize from "../../window-size";
-import { NarrowNavigation } from "./narrow-navigation";
-import { useWorkspaceSession } from "../../contexts/workspace-session.context";
 import { useApicize } from "../../contexts/apicize.context";
+import { NavFileOpsMenu } from "./nav-file-ops-menu"
+import AuthIcon from "../../icons/auth-icon"
+import CertificateIcon from "../../icons/certificate-icon"
+import RequestIcon from "../../icons/request-icon"
+import ScenarioIcon from "../../icons/scenario-icon"
+import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
+import { NavOpsMenu } from "./nav-ops-menu"
 
 const PREFERRED_WIDTH = 1200
 
-export const Navigation = observer(() => {
+export const NavigationControl = observer(() => {
 
     const apicize = useApicize()
     const workspace = useWorkspace()
-    const session = useWorkspaceSession()
     const windowSize = useWindowSize()
-    const fileOps = useFileOperations()
-    const feedback = useFeedback()
 
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
-
-    const fileMenuOpen = Boolean(anchorEl);
-    const handleFileMenuClick = () => {
-        const target = document.getElementById('file-menu-button')
-        setAnchorEl(target);
-        document.getElementById('nav-file-0')?.focus()
-    };
-    const handleFileOpen = (fileName: string) => {
-        setAnchorEl(null);
-        fileOps.openWorkbook(fileName)
-    }
-    const handleFileMenuClose = () => {
-        setAnchorEl(null);
-    };
-
-    window.onkeydown = ((e) => {
-        if (e.ctrlKey) {
-            switch (e.key) {
-                case 'Enter':
-                    (async () => {
-                        try {
-                            if (!(session.active && (session.active.entityType === EditableEntityType.Request || session.active.entityType === EditableEntityType.Group))) {
-                                return
-                            }
-                            await workspace.executeRequest(session.active.id, !e.shiftKey)
-                        } catch (e) {
-                            let msg1 = `${e}`
-                            feedback.toast(msg1, msg1 == 'Cancelled' ? ToastSeverity.Warning : ToastSeverity.Error)
-                        }
-                    })()
-                    break
-                case 'n':
-                    fileOps.newWorkbook()
-                    break
-                // case 'O':
-                //     TODO - need to work on making recent file drop down keyboard-friendly
-                //     handleFileMenuClick()
-                //     break
-                case 'o':
-                    if (e.shiftKey) {
-                        handleFileMenuClick()
-                    } else {
-                        fileOps.openWorkbook()
-                    }
-                    break
-                case 's':
-                    if (e.shiftKey) {
-                        fileOps.saveWorkbookAs()
-                    } else {
-                        fileOps.saveWorkbook()
-                    }
-                    break
-            }
+    useEffect(() => {
+        // If window size returns to non-narrow state, and there is a list displayed, go back to "normal"
+        if (windowSize.width >= PREFERRED_WIDTH && [WorkspaceMode.RequestList, WorkspaceMode.ScenarioList, WorkspaceMode.AuthorizationList,
+        WorkspaceMode.CertificateList, WorkspaceMode.ProxyList].includes(workspace.mode)) {
+            workspace.setMode(WorkspaceMode.Normal)
         }
-    })
+    }, [windowSize])
+
+    const toggleMode = (mode: WorkspaceMode) => {
+        workspace.setMode((workspace.mode === mode) ? WorkspaceMode.Normal : mode)
+    }
 
     const iconFromState = (state: EditableState) => {
         switch (state) {
@@ -109,82 +55,50 @@ export const Navigation = observer(() => {
         }
     }
 
-
-    useEffect(() => {
-        // If window size returns to non-narrow state, and there is a list displayed, go back to "normal"
-        if (windowSize.width >= PREFERRED_WIDTH && [WorkspaceMode.RequestList, WorkspaceMode.ScenarioList, WorkspaceMode.AuthorizationList,
-        WorkspaceMode.CertificateList, WorkspaceMode.ProxyList].includes(session.mode)) {
-            workspace.setMode(WorkspaceMode.Normal)
-        }
-    }, [windowSize])
-
-
     return (apicize.alwaysHideNavTree || windowSize.width < PREFERRED_WIDTH)
-        ? <NarrowNavigation />
-        : <Stack bgcolor='session.main' direction='column' useFlexGap gap='0.2em' className='nav-selection-pane'  typography='navigation'>
-            <Stack direction='row' bgcolor='toolbar.main' padding='0.5em 1em 0.5em 0.5em' minWidth='22em' className='nav-toolbar' fontSize='inherit' typography='navigation'>
-                <Stack direction='row' useFlexGap gap='0.2em' typography='navigation'>
-                    <IconButton aria-label='new' title={`New Workbook (${apicize.ctrlKey} + N)`} onClick={() => fileOps.newWorkbook()} sx={{fontSize: 'inherit'}}>
-                        <PostAddIcon />
-                    </IconButton>
-                    <IconButton aria-label='open' sx={{ fontSize: apicize.navigationFontSize }} title={`Open Workbook (${apicize.ctrlKey} + O)`} onClick={() => fileOps.openWorkbook(undefined, true)}>
-                        <FileOpenIcon />
-                    </IconButton>
-                    {
-                        apicize.recentWorkbookFileNames.length > 1
-                            ? <IconButton
-                                id='file-menu-button'
-                                title='Open Recent Workbook'
-                                sx={{ padding: 0, minWidth: '1em', width: '1em', marginLeft: '-0.3em' }}
-                                onClick={handleFileMenuClick}
-                            ><KeyboardArrowDownIcon />
-                            </IconButton>
-                            : null
-                    }
-                    {
-                        apicize.recentWorkbookFileNames.length > 1
-                            ? <DropdownMenu
-                                id="file-menu"
-                                autoFocus
-                                slotProps={{
-                                    list: {
-                                        'aria-labelledby': 'file-menu-button',
-                                    }
-                                }}
-                                anchorEl={anchorEl}
-                                open={fileMenuOpen}
-                                onClose={handleFileMenuClose}
-                            >
-                                {
-                                    apicize.recentWorkbookFileNames.map((f, idx) => (
-                                        <MenuItem autoFocus={idx == 0} key={`nav-file-${idx}`} onClick={() => handleFileOpen(f)} disableRipple>
-                                            {`${idx + 1}) ${f}`}
-                                        </MenuItem>
-                                    ))
-                                }
-                            </DropdownMenu>
-                            : null
-                    }
-                    <IconButton aria-label='save' sx={{ fontSize: apicize.navigationFontSize }} title={`Save Workbook (${apicize.ctrlKey} + S)`} disabled={workspace.workbookFullName.length == 0} onClick={() => fileOps.saveWorkbook()}>
-                        <SaveIcon />
-                    </IconButton>
-                    <IconButton aria-label='save-as' sx={{ fontSize: apicize.navigationFontSize }} title={`Save Workbook As (${apicize.ctrlKey} + Shift + S)`} onClick={() => fileOps.saveWorkbookAs()}>
-                        <SaveAsIcon />
-                    </IconButton>
-                </Stack>
-                <ToggleButtonGroup orientation="horizontal" value={session.mode} sx={{ display: 'flex', alignSelf: 'flex-end', marginLeft: 'auto', alignContent: 'right', gap: '0.2em', paddingLeft: '2em' }}>
-                    <ToggleButton title='Settings' value={WorkspaceMode.Settings} sx={{ border: 'none', fontSize: apicize.navigationFontSize, padding: '8px', paddingInline: '8px', paddingBlock: '8px' }} onClick={() => workspace.setMode(WorkspaceMode.Settings)}>
-                        <SettingsIcon />
+        ? <Box className='navigation-narrow' display='flex'>
+            <Stack direction='column' sx={{ flexGrow: 1 }} className='nav-selection-pane' typography='navigation'>
+                <ToggleButtonGroup orientation="vertical" value={workspace.mode}>
+                    <ToggleButton title='Requests and Groups' value={WorkspaceMode.RequestList} onClick={() => toggleMode(WorkspaceMode.RequestList)}>
+                        <SvgIcon color='request'>
+                            <RequestIcon />
+                        </SvgIcon>
                     </ToggleButton>
-                    <ToggleButton title='Communication Logs' value={WorkspaceMode.Console} sx={{ border: 'none', fontSize: apicize.navigationFontSize, padding: '8px', paddingInline: '8px', paddingBlock: '8px' }} onClick={() => { workspace.setMode(WorkspaceMode.Console) }}>
-                        <SvgIcon><LogIcon /></SvgIcon>
+                    <ToggleButton title='Scenarios' value={WorkspaceMode.ScenarioList} onClick={() => toggleMode(WorkspaceMode.ScenarioList)}>
+                        <SvgIcon color='scenario'>
+                            <ScenarioIcon />
+                        </SvgIcon>
                     </ToggleButton>
-                    <ToggleButton title='Help' value={WorkspaceMode.Help} sx={{ border: 'none', fontSize: apicize.navigationFontSize, padding: '8px', paddingInline: '8px', paddingBlock: '8px' }} onClick={() => { session.showNextHelpTopic() }}>
-                        <SvgIcon><HelpIcon /></SvgIcon>
+                    <ToggleButton title='Authorizations' value={WorkspaceMode.AuthorizationList} onClick={() => toggleMode(WorkspaceMode.AuthorizationList)}>
+                        <SvgIcon color='authorization'>
+                            <AuthIcon />
+                        </SvgIcon>
+                    </ToggleButton>
+                    <ToggleButton title='Certificates' value={WorkspaceMode.CertificateList} onClick={() => toggleMode(WorkspaceMode.CertificateList)}>
+                        <SvgIcon color='certificate'>
+                            <CertificateIcon />
+                        </SvgIcon>
+                    </ToggleButton>
+                    <ToggleButton title='Proxies' value={WorkspaceMode.ProxyList} onClick={() => toggleMode(WorkspaceMode.ProxyList)}>
+                        <SvgIcon color='proxy'>
+                            <AirlineStopsIcon />
+                        </SvgIcon>
+                    </ToggleButton>
+                    <ToggleButton title='Defaults' value={WorkspaceMode.Defaults} onClick={() => toggleMode(WorkspaceMode.Defaults)}>+
+                        <SvgIcon color='defaults'>
+                            <DefaultsIcon />
+                        </SvgIcon>
                     </ToggleButton>
                 </ToggleButtonGroup>
+                <NavFileOpsMenu orientation='vertical' sx={{ marginTop: '5em' }} />
             </Stack>
-
+            <NavOpsMenu orientation='vertical' sx={{ display: 'flex', alignSelf: 'flex-end', marginLeft: 'auto', alignContent: 'right', gap: '0.2em' }} />
+        </Box>
+        : <Stack bgcolor='workspace.main' direction='column' useFlexGap gap='0.2em' className='nav-selection-pane' typography='navigation'>
+            <Stack direction='row' bgcolor='toolbar.main' padding='0.5em 1em 0.5em 0.5em' minWidth='22em' className='nav-toolbar' fontSize='inherit' typography='navigation'>
+                <NavFileOpsMenu orientation='horizontal' sx={{ display: 'flex', typography: 'navigation' }} />
+                <NavOpsMenu orientation='horizontal' sx={{ display: 'flex', alignSelf: 'flex-end', marginLeft: 'auto', alignContent: 'right', gap: '0.2em', paddingLeft: '2em' }} />
+            </Stack>
             <SimpleTreeView
                 id='navigation'
                 key='navigation'
@@ -193,11 +107,11 @@ export const Navigation = observer(() => {
                 // defaultExpandIcon={<ChevronRightIcon />}
                 sx={{ paddingRight: '0.8em' }}
                 expansionTrigger='iconContainer'
-                expandedItems={session.expandedItems}
-                selectedItems={session.activeId}
+                expandedItems={workspace.expandedItems}
+                selectedItems={workspace.activeSelection ? `${workspace.activeSelection.type}-${workspace.activeSelection.id}` : null}
                 multiSelect={false}
                 onItemExpansionToggle={(_, itemId, isExpanded) => {
-                    session.updateExpanded(itemId, isExpanded)
+                    workspace.updateExpanded(itemId, isExpanded)
                 }}
                 onSelectedItemsChange={(_, itemId) => {
                     if (itemId) {
@@ -209,12 +123,12 @@ export const Navigation = observer(() => {
                                 const type = itemId.substring(0, i) as EditableEntityType
                                 if (type !== EditableEntityType.Header) {
                                     const id = itemId.substring(i + 1)
-                                    session.changeActive(type, id)
+                                    workspace.changeActive(type, id)
                                 }
                             }
                         }
                     } else {
-                        session.clearAllActive()
+                        workspace.clearActive()
                     }
                 }}
                 className='navigation-tree'
@@ -238,7 +152,7 @@ export const Navigation = observer(() => {
                                         Warnings
                                     </Box>
                                 </Box>
-                            )} onClick={() => session.changeActive(EditableEntityType.Warnings, '')} />
+                            )} onClick={() => workspace.changeActive(EditableEntityType.Warnings, '')} />
                         : null
                 }
 
@@ -262,7 +176,7 @@ export const Navigation = observer(() => {
                                 Defaults
                             </Box>
                             <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
-                                {iconFromState(workspace.defaultsState)}
+                                {/* {iconFromState(workspace.defaultsState)} */}
                             </Box>
                         </Box>
                     )} />

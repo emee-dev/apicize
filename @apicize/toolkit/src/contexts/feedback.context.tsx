@@ -29,6 +29,13 @@ export class FeedbackStore {
     }
 
     @action
+    toastError(error: unknown) {
+        this.toastMessage = `${error}`
+        this.toastSeverity = ToastSeverity.Error
+        this.toastOpen = true
+    }
+
+    @action
     closeToast() {
         this.toastOpen = false
     }

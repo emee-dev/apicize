@@ -1,17 +1,16 @@
-import { ExternalDataEntry, ExternalDataSourceType } from "@apicize/lib-typescript"
+import { ExternalData, ExternalDataSourceType } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable, toJS } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
 import { WorkspaceStore } from "../../contexts/workspace.context"
 
-export class EditableExternalDataEntry extends Editable<ExternalDataEntry> {
-
+export class EditableExternalDataEntry extends Editable<ExternalData> {
     public readonly entityType = EditableEntityType.ExternalData
 
     @observable accessor type: ExternalDataSourceType = ExternalDataSourceType.FileJSON
     @observable accessor source: string = ''
 
-    public constructor(entry: ExternalDataEntry, workspace: WorkspaceStore) {
+    public constructor(entry: ExternalData, workspace: WorkspaceStore) {
         super(workspace)
         this.id = entry.id
         this.name = entry.name ?? ''
@@ -19,28 +18,34 @@ export class EditableExternalDataEntry extends Editable<ExternalDataEntry> {
         this.source = entry.source
     }
 
-    static fromWorkspace(entry: ExternalDataEntry, workspace: WorkspaceStore): EditableExternalDataEntry {
-        return new EditableExternalDataEntry(entry, workspace)
-    }
-
-    toWorkspace(): ExternalDataEntry {
-        return {
+    protected onUpdate() {
+        this.markAsDirty()
+        this.workspace.updateData({
+            entityType: 'Data',
             id: this.id,
             name: this.name,
             type: this.type,
             source: this.source
-        }
+        })
     }
+
+    @action
+    refreshFromExternalUpdate(updatedItem: ExternalData) {
+        this.name = updatedItem.name ?? ''
+        this.type = updatedItem.type
+        this.source = updatedItem.source ?? ''
+    }
+
     @action
     public setSourceType(value: ExternalDataSourceType) {
         this.type = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     public setSource(value: string) {
         this.source = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @computed get sourceError(): string | null {

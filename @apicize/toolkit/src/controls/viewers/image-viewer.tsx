@@ -1,5 +1,5 @@
 import { Box } from "@mui/material"
-import { base64Encode } from "../../services/apicize-serializer"
+import { base64Encode } from "../../services/base64"
 
 export const KNOWN_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'bmp', 'tif', 'tiff']
 

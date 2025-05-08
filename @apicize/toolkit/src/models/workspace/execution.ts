@@ -1,147 +1,52 @@
-import { ApicizeBody, ApicizeError, ApicizeExecution, ApicizeExecutionSummary, ApicizeExecutionType, ApicizeGroup, ApicizeGroupRun, ApicizeRequest, ApicizeHttpResponse, ApicizeTestResult, JsonValue, ApicizeHttpRequest } from "@apicize/lib-typescript";
+import { ApicizeExecutionType, ApicizeGroup, ApicizeGroupRun, ApicizeRequest, ApicizeResult, ExecutionResultSummary } from "@apicize/lib-typescript";
 import { OverridableStringUnion } from '@mui/types'
 import { SvgIconPropsColorOverrides } from "@mui/material"
-import { exec } from "child_process";
-
-export interface ExecutionMenuItem {
-     index: number
-     title: string
-     level: number
-}
+import { action, makeObservable, observable, toJS } from "mobx";
 
 export type ExecutionData = ApicizeGroup | ApicizeGroupRun | ApicizeRequest | ApicizeExecutionType
 
-export interface ExecutionResultInfo {
-     requestOrGroupId: string,
-     index: number,
-     title: string
-     parentIndex?: number
-     childIndexes?: number[]
-     runNumber?: number
-     runCount?: number
-     rowNumber?: number
-     rowCount?: number
-}
+export class Execution {
+     public accessor requestOrGroupId: string
+     @observable public accessor isRunning = false
+     @observable public accessor resultIndex = NaN
+     @observable public accessor panel = 'Info'
+     @observable public accessor hasResults = false
+     @observable public accessor lastExecuted = 0
+     @observable public accessor results: ExecutionResultSummary[] = []
 
-export interface ExecutionResult {
-     info: ExecutionResultInfo
+     public constructor(requestOrGroupId: string) {
+          this.requestOrGroupId = requestOrGroupId
+     }
 
-     executedAt: number
-     duration: number
+     @action
+     public startExecution() {
+          this.isRunning = true
+          this.lastExecuted = Date.now()
+     }
 
-     request?: ApicizeHttpRequest
-     response?: ApicizeHttpResponse
+     @action
+     public completeExecution(summaries: ExecutionResultSummary[]) {
+          this.isRunning = false
+          this.lastExecuted = Date.now()
+          this.results = summaries
 
-     inputVariables?: Map<String, JsonValue>,
-     data?: Map<String, JsonValue>[],
-     outputVariables?: Map<String, JsonValue>,
+          // Check index bounds
+          let oldLength = summaries.length
+          this.resultIndex = (isNaN(this.resultIndex) || this.resultIndex >= summaries.length || summaries.length != oldLength)
+               ? 0 : this.resultIndex
+          this.hasResults = (this.results?.length ?? 0) > 0
+     }
 
-     tests?: ApicizeTestResult[]
-     error?: ApicizeError,
+     @action
+     public stopExecution() {
+          this.isRunning = false
+          this.lastExecuted = Date.now()
+     }
 
-     success: boolean
-     requestSuccessCount?: number
-     requestFailureCount?: number
-     requestErrorCount?: number
-     testPassCount: number
-     testFailCount: number
-}
-
-export interface ExecutionResultSummary {
-     title: string
-     runNumber?: number
-     rowNumber?: number
-
-     executedAt: number
-     duration: number
-
-     request?: ApicizeHttpRequest
-     response?: ApicizeHttpResponse
-
-     data?: Map<String, JsonValue>[],
-     variables?: Map<String, JsonValue>,
-     outputVariables?: Map<String, JsonValue>,
-
-     tests?: ExecutionResultSummaryTest[]
-     error?: ApicizeError,
-
-     success: boolean
-     requestSuccessCount?: number
-     requestFailureCount?: number
-     requestErrorCount?: number
-     testPassCount: number
-     testFailCount: number
-
-     children?: ExecutionResultSummary[]
-}
-
-export interface ExecutionResultSummaryTest {
-     testName: string
-     success: boolean,
-     error?: string
-     logs?: string[]
-}
-
-export interface Execution {
-     requestOrGroupId: string
-     running: boolean
-     panel: string
-     resultIndex: number
-     resultMenu: ExecutionMenuItem[]
-     results: ExecutionResult[]
-}
-
-export function executionResultFromSummary(info: ExecutionResultInfo, summary: ApicizeExecutionSummary) {
-     return structuredClone({
-          info,
-          executedAt: summary.executedAt,
-          duration: summary.duration,
-          success: summary.success,
-          requestSuccessCount: summary.requestSuccessCount,
-          requestFailureCount: summary.requestFailureCount,
-          requestErrorCount: summary.requestErrorCount,
-          testPassCount: summary.testPassCount,
-          testFailCount: summary.testFailCount
-     })
-}
-
-export function executionResultFromRequest(info: ExecutionResultInfo, request: ApicizeRequest, execution?: ApicizeExecution): ExecutionResult {
-     return structuredClone({
-          info,
-          executedAt: request.executedAt,
-          duration: request.duration,
-          request: execution?.request,
-          response: execution?.response,
-          inputVariables: execution?.inputVariables,
-          data: execution?.data,
-          outputVariables: execution?.outputVariables,
-          tests: execution?.tests,
-          error: execution?.error,
-          success: request.success,
-          requestSuccessCount: request.requestSuccessCount,
-          requestFailureCount: request.requestFailureCount,
-          requestErrorCount: request.requestErrorCount,
-          testPassCount: request.testPassCount,
-          testFailCount: request.testFailCount
-     })
-}
-
-export function executionResultFromExecution(info: ExecutionResultInfo, execution: ApicizeExecution): ExecutionResult {
-     return structuredClone({
-          info,
-          executedAt: execution.executedAt,
-          duration: execution.duration,
-          request: execution?.request,
-          response: execution?.response,
-          inputVariables: execution?.inputVariables,
-          data: execution?.data,
-          outputVariables: execution?.outputVariables,
-          tests: execution?.tests,
-          error: execution?.error,
-          success: execution.success,
-          testPassCount: execution.testPassCount,
-          testFailCount: execution.testFailCount
-     })
+     @action
+     public changeResultIndex(resultIndex: number) {
+          this.resultIndex = resultIndex
+     }
 }
 
 export type InfoColorType = OverridableStringUnion<
@@ -154,4 +59,6 @@ export type InfoColorType = OverridableStringUnion<
      | 'vault',
      SvgIconPropsColorOverrides>
 
+
+export { ApicizeResult };
 

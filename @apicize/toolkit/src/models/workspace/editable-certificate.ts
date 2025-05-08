@@ -2,10 +2,11 @@ import { CertificateType, Certificate } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable } from "mobx"
 import { EditableEntityType } from "./editable-entity-type"
-import { WorkspaceStore } from "../../contexts/workspace.context"
+import { EntityCertificate, WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableCertificate extends Editable<Certificate> {
     public readonly entityType = EditableEntityType.Certificate
+
     @observable accessor type = CertificateType.PKCS8_PEM
     @observable accessor pem = ''
     @observable accessor key = ''
@@ -35,54 +36,88 @@ export class EditableCertificate extends Editable<Certificate> {
         }
     }
 
-    static fromWorkspace(entry: Certificate, workspace: WorkspaceStore): EditableCertificate {
-        return new EditableCertificate(entry, workspace)
-    }
+    protected onUpdate() {
+        this.markAsDirty()
+        let result: EntityCertificate
 
-    toWorkspace(): Certificate {
-        return {
-            id: this.id,
-            name: this.name,
-            type: this.type,
-            pem: this.type === CertificateType.PKCS8_PEM || this.type === CertificateType.PEM
-                ? this.pem : undefined,
-            key: this.type === CertificateType.PKCS8_PEM
-                ? this.key : undefined,
-            pfx: this.type === CertificateType.PKCS12
-                ? this.pfx : undefined,
-            password: this.type === CertificateType.PKCS12
-                ? this.password : undefined
-        } as unknown as Certificate
+        switch (this.type) {
+            case CertificateType.PKCS8_PEM:
+                result = {
+                    entityType: 'Certificate',
+                    type: this.type,
+                    id: this.id,
+                    pem: this.pem,
+                    key: this.key
+                }
+                break
+            case CertificateType.PEM:
+                result = {
+                    entityType: 'Certificate',
+                    type: this.type,
+                    id: this.id,
+                    pem: this.pem,
+                }
+                break
+            case CertificateType.PKCS12:
+                result = {
+                    entityType: 'Certificate',
+                    type: this.type,
+                    id: this.id,
+                    pfx: this.pfx,
+                    password: this.password,
+                }
+                break
+        }
+
+        this.workspace.updateCertificate(result)
     }
 
     @action
     setType(value: CertificateType) {
         this.type = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setPem(value: string) {
         this.pem = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setKey(value: string | undefined) {
         this.key = value || ''
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setCertificatePfx(value: string) {
         this.pfx = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setPassword(value: string) {
         this.password = value
-        this.markAsDirty()
+        this.onUpdate()
+    }
+
+    @action
+    refreshFromExternalUpdate(updatedItem: EntityCertificate) {
+        this.name = updatedItem.name ?? ''
+        switch (updatedItem.type) {
+            case CertificateType.PEM:
+                this.pem = updatedItem.pem
+                break
+            case CertificateType.PKCS8_PEM:
+                this.pem = updatedItem.pem
+                this.key = updatedItem.key ?? ''
+                break
+            case CertificateType.PKCS12:
+                this.pfx = updatedItem.pfx
+                this.password = updatedItem.password
+                break
+        }
     }
 
     @computed get pemInvalid() {

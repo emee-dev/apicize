@@ -1,7 +1,7 @@
 /**
  * Format of application settings
  */
-export interface ApplicationSettings {
+export interface ApicizeSettings {
     workbookDirectory: string
     lastWorkbookFileName?: string
     fontSize: number

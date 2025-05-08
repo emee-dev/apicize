@@ -1,15 +1,16 @@
 import {
-    ApiKeyAuthorization, Authorization, AuthorizationType,
-    BasicAuthorization, OAuth2ClientAuthorization, Selection,
-    OAuth2PkceAuthorization} from "@apicize/lib-typescript"
+    Authorization, AuthorizationType,
+    Selection
+} from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable } from "mobx"
 import { NO_SELECTION } from "../store"
 import { EditableEntityType } from "./editable-entity-type"
-import { WorkspaceStore } from "../../contexts/workspace.context"
+import { EntityAuthorization, WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableAuthorization extends Editable<Authorization> {
     public readonly entityType = EditableEntityType.Authorization
+
     @observable accessor type: AuthorizationType = AuthorizationType.Basic
     // API Key
     @observable accessor header: string = ''
@@ -61,7 +62,7 @@ export class EditableAuthorization extends Editable<Authorization> {
                 this.authorizeUrl = authorization.authorizeUrl
                 this.accessTokenUrl = authorization.accessTokenUrl
                 this.clientId = authorization.clientId
-                this.sendCredentialsInBody = authorization.sendCredentialsInBody === true
+                this.sendCredentialsInBody = authorization.sendCredentialsInBody === false
                 this.scope = authorization.scope
                 this.audience = authorization.audience
                 break
@@ -72,31 +73,37 @@ export class EditableAuthorization extends Editable<Authorization> {
         return this
     }
 
+    protected onUpdate() {
+        this.markAsDirty()
 
-    static fromWorkspace(entry: Authorization, workspace: WorkspaceStore): EditableAuthorization {
-        return new EditableAuthorization(entry, workspace)
-    }
-
-    toWorkspace(): Authorization {
-        let result: Authorization
+        let result: EntityAuthorization
         switch (this.type) {
             case AuthorizationType.ApiKey:
                 result = {
+                    entityType: 'Authorization',
                     type: AuthorizationType.ApiKey,
+                    id: this.id,
+                    name: this.name ?? '',
                     header: this.header,
                     value: this.value
-                } as ApiKeyAuthorization
+                }
                 break
             case AuthorizationType.Basic:
                 result = {
+                    entityType: 'Authorization',
                     type: AuthorizationType.Basic,
+                    id: this.id,
+                    name: this.name ?? '',
                     username: this.username,
                     password: this.password
-                } as BasicAuthorization
+                }
                 break
             case AuthorizationType.OAuth2Client:
                 result = {
+                    entityType: 'Authorization',
                     type: AuthorizationType.OAuth2Client,
+                    id: this.id,
+                    name: this.name ?? '',
                     accessTokenUrl: this.accessTokenUrl,
                     clientId: this.clientId,
                     clientSecret: this.clientSecret,
@@ -105,113 +112,143 @@ export class EditableAuthorization extends Editable<Authorization> {
                     audience: this.audience,
                     selectedCertificate: this.selectedCertificate ?? NO_SELECTION,
                     selectedProxy: this.selectedProxy ?? NO_SELECTION
-                } as OAuth2ClientAuthorization
+                }
                 break
             case AuthorizationType.OAuth2Pkce:
                 result = {
+                    entityType: 'Authorization',
                     type: AuthorizationType.OAuth2Pkce,
+                    id: this.id,
+                    name: this.name ?? '',
                     authorizeUrl: this.authorizeUrl,
                     accessTokenUrl: this.accessTokenUrl,
                     clientId: this.clientId,
                     sendCredentialsInBody: this.sendCredentialsInBody,
                     scope: this.scope,
                     audience: this.audience,
-                    token: this.accessToken,
-                    refreshToken: this.refreshToken,
-                    expiration: this.expiration,
-                } as OAuth2PkceAuthorization
+                }
                 break
             default:
                 throw new Error('Invalid authorization type')
         }
-
-        result.id = this.id
-        result.name = this.name ?? ''
-        return result
+        this.workspace.updateAuthorization(result)
     }
 
     @action
     setType(value: AuthorizationType) {
         this.type = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setUsername(value: string) {
         this.username = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setPassword(value: string) {
         this.password = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setAccessTokenUrl(value: string) {
         this.accessTokenUrl = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setUrl(value: string) {
         this.authorizeUrl = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setClientId(value: string) {
         this.clientId = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setClientSecret(value: string) {
         this.clientSecret = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setCredentialsInBody(value: boolean) {
         this.sendCredentialsInBody = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setScope(value: string) {
         this.scope = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setAudience(value: string) {
         this.audience = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setSelectedCertificate(selection: Selection | undefined) {
         this.selectedCertificate = selection
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setSelectedProxy(selection: Selection | undefined) {
         this.selectedProxy = selection
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setHeader(value: string) {
         this.header = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setValue(value: string) {
         this.value = value
-        this.markAsDirty()
+        this.onUpdate()
+    }
+
+    @action
+    refreshFromExternalUpdate(updatedItem: EntityAuthorization) {
+        this.name = updatedItem.name ?? ''
+        switch (updatedItem.type) {
+            case AuthorizationType.ApiKey:
+                this.header = updatedItem.header
+                this.value = updatedItem.value
+                break
+            case AuthorizationType.Basic:
+                this.username = updatedItem.username
+                this.password = updatedItem.password
+                break
+            case AuthorizationType.OAuth2Client:
+                this.accessTokenUrl = updatedItem.accessTokenUrl
+                this.clientId = updatedItem.clientId
+                this.clientSecret = updatedItem.clientSecret
+                this.audience = updatedItem.audience
+                this.scope = updatedItem.scope
+                this.sendCredentialsInBody = updatedItem.sendCredentialsInBody ?? true
+                this.selectedCertificate = updatedItem.selectedCertificate
+                this.selectedProxy = updatedItem.selectedProxy
+                break
+            case AuthorizationType.OAuth2Pkce:
+                this.authorizeUrl = updatedItem.authorizeUrl
+                this.accessTokenUrl = updatedItem.accessTokenUrl
+                this.clientId = updatedItem.clientId
+                this.scope = updatedItem.scope
+                this.audience = updatedItem.audience
+                this.sendCredentialsInBody = updatedItem.sendCredentialsInBody ?? true
+                break
+        }
     }
 
     @computed get headerInvalid() {

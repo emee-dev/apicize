@@ -1,76 +1,38 @@
 import { createContext, useContext } from "react";
+import { SshFileType } from "../models/workspace/ssh-file-type";
 
 export class FileOperationsStore {
+    public readonly newWorkbook: (openInNewWindow: boolean) => Promise<void>
+    public readonly openWorkbook: (openInNewWindow: boolean, fileName?: string, doUpdateSettings?: boolean) => Promise<void>
+    public readonly saveWorkbook: () => Promise<void>
+    public readonly saveWorkbookAs: () => Promise<void>
+    public readonly cloneWorkspace: () => Promise<void>
+    public readonly openSshFile: (fileType: SshFileType) => Promise<string | null>
+    public readonly openFile: () => Promise<Uint8Array | null>
+    public readonly saveSettings: () => Promise<void>
+    public readonly retrieveHelpTopic: (showTopic: string) => Promise<string>
+
+
     constructor(private readonly callbacks: {
-        onNewWorkbook: () => Promise<void>,
-        onOpenWorkbook: (fileName?: string, doUpdateSettings?: boolean) => Promise<void>,
+        onNewWorkbook: (openInNewWindow: boolean) => Promise<void>,
+        onOpenWorkbook: (openInNewWindow: boolean, fileName?: string, doUpdateSettings?: boolean) => Promise<void>,
         onSaveWorkbook: () => Promise<void>,
         onSaveWorkbookAs: () => Promise<void>,
+        onCloneWorkspace: () => Promise<void>,
         onOpenSshFile: (fileType: SshFileType) => Promise<string | null>,
         onOpenFile: () => Promise<Uint8Array | null>,
         onSaveSettings: () => Promise<void>,
         onRetrieveHelpTopic: (showTopic: string) => Promise<string>,
     }) {
-    }
-
-    /**
-     * Load a new workbook into workspace
-     */
-    newWorkbook() {
-        return this.callbacks.onNewWorkbook()
-    }
-
-    /**
-     * Open workbook into workspace
-     */
-    openWorkbook(fileName?: string, doUpdateSettings?: boolean) {
-        return this.callbacks.onOpenWorkbook(fileName, doUpdateSettings)
-    }
-
-    /**
-     * Save workspace's workbook under existing file name
-     */
-    saveWorkbook() {
-        return this.callbacks.onSaveWorkbook()
-    }
-
-    /**
-     * Save workspace's workbook after prompting for file name
-     */
-    saveWorkbookAs() {
-        return this.callbacks.onSaveWorkbookAs()
-    }
-
-    /**
-     * Open a SSH file and retrieve its contents
-     * @returns Base64 encoded file contents or null if file not selected
-     */
-    openSshFile(fileType: SshFileType) {
-        return this.callbacks.onOpenSshFile(fileType)
-    }
-
-    /**
-     * Open a file and retrieve its contents
-     * @returns Base64 encoded file contents or null if file not selected
-     */
-    openFile() {
-        return this.callbacks.onOpenFile()
-    }
-
-    /**
-     * Save workspace's workbook after prompting for file name
-     */
-    saveSettings() {
-        return this.callbacks.onSaveSettings()
-    }
-
-    /**
-     * Retrieve the specified help topic text
-     * @param showTopic 
-     * @returns 
-     */
-    retrieveHelpTopic(showTopic: string): Promise<string> {
-        return this.callbacks.onRetrieveHelpTopic(showTopic)
+        this.newWorkbook = callbacks.onNewWorkbook
+        this.openWorkbook = callbacks.onOpenWorkbook
+        this.saveWorkbook = callbacks.onSaveWorkbook
+        this.saveWorkbookAs = callbacks.onSaveWorkbookAs
+        this.cloneWorkspace = callbacks.onCloneWorkspace
+        this.openSshFile = callbacks.onOpenSshFile
+        this.openFile = callbacks.onOpenFile
+        this.saveSettings = callbacks.onSaveSettings
+        this.retrieveHelpTopic = callbacks.onRetrieveHelpTopic
     }
 }
 
@@ -84,8 +46,3 @@ export function useFileOperations() {
     return context;
 }
 
-export enum SshFileType {
-    PEM = 'PEM',
-    Key = 'Key',
-    PFX = 'PFX',
-}

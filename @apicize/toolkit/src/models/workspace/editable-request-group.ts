@@ -1,9 +1,8 @@
 import { RequestGroup, GroupExecution } from "@apicize/lib-typescript"
 import { observable, computed, action } from "mobx"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
-import { EditableState } from "../editable"
 import { EditableEntityType } from "./editable-entity-type"
-import { WorkspaceStore } from "../../contexts/workspace.context"
+import { EntityGroup, WorkspaceStore } from "../../contexts/workspace.context"
 import { EditableRequestEntry } from "./editable-request-entry"
 
 export class EditableRequestGroup extends EditableRequestEntry {
@@ -31,12 +30,10 @@ export class EditableRequestGroup extends EditableRequestEntry {
             : new Map<string, string>()
     }
 
-    static fromWorkspace(entry: RequestGroup, workspace: WorkspaceStore): EditableRequestGroup {
-        return new EditableRequestGroup(entry, workspace)
-    }
-
-    toWorkspace(): RequestGroup {
-        return {
+    protected onUpdate() {
+        this.markAsDirty()
+        this.workspace.updateGroup({
+            entityType: 'Group',
             id: this.id,
             name: this.name,
             runs: this.runs,
@@ -46,13 +43,26 @@ export class EditableRequestGroup extends EditableRequestEntry {
             selectedAuthorization: this.selectedAuthorization ?? undefined,
             selectedCertificate: this.selectedCertificate ?? undefined,
             selectedProxy: this.selectedProxy ?? undefined,
-            selectedData: this.selectedData ?? undefined,
-        } as RequestGroup
+            // selectedData: this.selectedData ?? undefined,
+        })
     }
 
     @action
     setGroupExecution(value: GroupExecution) {
         this.execution = value
-        this.markAsDirty()
+        this.onUpdate()
     }
+
+    @action
+    refreshFromExternalUpdate(entity: EntityGroup) {
+        this.name = entity.name ?? ''
+        this.runs = entity.runs
+        this.execution = entity.execution
+        this.multiRunExecution = entity.multiRunExecution
+        this.selectedScenario = entity.selectedScenario
+        this.selectedAuthorization = entity.selectedAuthorization
+        this.selectedCertificate = entity.selectedCertificate
+        this.selectedProxy = entity.selectedProxy
+    }
+
 }

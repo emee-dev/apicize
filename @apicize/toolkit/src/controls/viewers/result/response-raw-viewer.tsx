@@ -3,14 +3,38 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useClipboard } from "../../../contexts/clipboard.context";
 import { RichViewer } from "../rich-viewer";
 import { EditorMode } from "../../../models/editor-mode";
-import { ResultEditSessionType } from "../../../contexts/workspace-session.context";
-import { base64Encode } from "../../../services/apicize-serializer";
-import { ExecutionResult } from "../../../models/workspace/execution";
+import { base64Encode } from "../../../services/base64";
+import { ResultEditSessionType } from "../../editors/editor-types";
+import { useWorkspace } from "../../../contexts/workspace.context";
+import { useFeedback } from "../../../contexts/feedback.context";
+import { ApicizeBody } from "@apicize/lib-typescript";
+import { useState } from "react";
+import { Execution } from "../../../models/workspace/execution";
 
-export function ResultRawPreview(props: { result: ExecutionResult }) {
+export function ResultRawPreview(props: { execution: Execution }) {
+
+    const workspace = useWorkspace()
+    const feedback = useFeedback()
     const clipboard = useClipboard()
 
-    const body = props.result.response?.body
+    const updateKey = `${props.execution.requestOrGroupId}-${props.execution.resultIndex}-${props.execution.lastExecuted}`
+
+    const [body, setBody] = useState<ApicizeBody | null>(null)
+    const [currentUpdateKey, setCurrentUpdateKey] = useState('')
+
+    if (!body || updateKey !== currentUpdateKey) {
+        workspace.getExecutionResultDetail(props.execution.requestOrGroupId, props.execution.resultIndex)
+            .then(details => {
+                setBody((details.entityType === 'request' && details.response?.body)
+                    ? details.response.body
+                    : {
+                        type: 'Text',
+                        data: ''
+                    })
+                setCurrentUpdateKey(updateKey)
+            }).catch(e => feedback.toastError(e))
+        return
+    }
 
     let isBinary: boolean
     let text: string
@@ -61,11 +85,11 @@ export function ResultRawPreview(props: { result: ExecutionResult }) {
                     ? (
                         <>
                             <Typography aria-label="base64 response data" variant='h3' sx={{ marginTop: 0 }} component='div'>Base 64</Typography>
-                            <RichViewer id={props.result.info.requestOrGroupId} index={props.result.info.index} type={ResultEditSessionType.Base64} text={text} wrap={true} mode={EditorMode.txt} sx={{ width: '100%', height: '100%' }} />
+                            <RichViewer id={props.execution.requestOrGroupId} index={props.execution.resultIndex} type={ResultEditSessionType.Base64} text={text} wrap={true} mode={EditorMode.txt} sx={{ width: '100%', height: '100%' }} />
                         </>
                     )
                     : (
-                        <RichViewer id={props.result.info.requestOrGroupId} index={props.result.info.index} type={ResultEditSessionType.Raw} text={text} mode={EditorMode.txt} wrap={true} sx={{ width: '100%', height: '100%' }} />
+                        <RichViewer id={props.execution.requestOrGroupId} index={props.execution.resultIndex} type={ResultEditSessionType.Raw} text={text} mode={EditorMode.txt} wrap={true} sx={{ width: '100%', height: '100%' }} />
                     )
             }
         </Stack>

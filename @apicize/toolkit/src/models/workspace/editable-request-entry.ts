@@ -1,7 +1,6 @@
 import { Selection, GroupExecution, Request, RequestGroup, GetTitle } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable } from "mobx"
-import { WorkspaceStore } from "../../contexts/workspace.context"
 import { DEFAULT_SELECTION_ID, NO_SELECTION_ID, NO_SELECTION } from "../store"
 export abstract class EditableRequestEntry extends Editable<Request | RequestGroup> {
     @observable accessor runs = 0
@@ -15,20 +14,16 @@ export abstract class EditableRequestEntry extends Editable<Request | RequestGro
 
     @observable accessor warnings: Map<string, string> | undefined = undefined
 
-    public constructor(workspace: WorkspaceStore) {
-        super(workspace)
-    }
-
     @action
     setRuns(value: number) {
         this.runs = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
     setMultiRunExecution(value: GroupExecution) {
         this.multiRunExecution = value
-        this.markAsDirty()
+        this.onUpdate()
     }
 
     @action
@@ -37,17 +32,18 @@ export abstract class EditableRequestEntry extends Editable<Request | RequestGro
             ? undefined
             : entityId == NO_SELECTION_ID
                 ? NO_SELECTION
-                : { id: entityId, name: GetTitle(this.workspace.scenarios.get(entityId)) }
-        this.markAsDirty()
+                : { id: entityId, name: this.workspace.getNavigationName(entityId) }
+        this.onUpdate()
     }
 
+    @action
     setSelectedAuthorizationId(entityId: string) {
         this.selectedAuthorization = entityId === DEFAULT_SELECTION_ID
             ? undefined
             : entityId == NO_SELECTION_ID
                 ? NO_SELECTION
-                : { id: entityId, name: GetTitle(this.workspace.authorizations.get(entityId)) }
-        this.markAsDirty()
+                : { id: entityId, name: this.workspace.getNavigationName(entityId) }
+        this.onUpdate()
     }
 
     @action
@@ -56,8 +52,8 @@ export abstract class EditableRequestEntry extends Editable<Request | RequestGro
             ? undefined
             : entityId == NO_SELECTION_ID
                 ? NO_SELECTION
-                : { id: entityId, name: GetTitle(this.workspace.certificates.get(entityId)) }
-        this.markAsDirty()
+                : { id: entityId, name: this.workspace.getNavigationName(entityId) }
+        this.onUpdate()
     }
 
     @action
@@ -66,8 +62,8 @@ export abstract class EditableRequestEntry extends Editable<Request | RequestGro
             ? undefined
             : entityId == NO_SELECTION_ID
                 ? NO_SELECTION
-                : { id: entityId, name: GetTitle(this.workspace.proxies.get(entityId)) }
-        this.markAsDirty()
+                : { id: entityId, name: this.workspace.getNavigationName(entityId) }
+        this.onUpdate()
     }
 
     @computed get nameInvalid() {

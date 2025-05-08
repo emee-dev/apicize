@@ -7,16 +7,15 @@ import { EditorTitle } from '../editor-title';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { useWorkspaceSession } from '../../contexts/workspace-session.context';
 import { useApicize } from '../../contexts/apicize.context';
 
 export const SettingsEditor = observer((props: { sx?: SxProps }) => {
     const apicize = useApicize()
-    const session = useWorkspaceSession()
+    const workspace = useWorkspace()
     const feedback = useFeedback()
     const fileOps = useFileOperations()
 
-    session.nextHelpTopic = 'settings/display'
+    workspace.nextHelpTopic = 'settings/display'
 
     let saveCtr = 0
     const checkSave = (ctr: number) => {
@@ -56,7 +55,7 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
     return <Stack direction={'column'} className='editor' sx={props.sx}>
         <Box className='editor-panel-header'>
             <EditorTitle icon={<SvgIcon><SettingsIcon /></SvgIcon>} name='Settings'>
-                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => session.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
             </EditorTitle>
         </Box>
         <Box className='editor-panel'>

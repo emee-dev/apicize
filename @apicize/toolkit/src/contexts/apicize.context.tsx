@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react'
-import { ApicizeSettings } from '../models/settings';
+import { EditableSettings } from '../models/editable-settings';
 
-export const ApicizeContext = createContext<ApicizeSettings | null>(null)
+export const ApicizeContext = createContext<EditableSettings | null>(null)
 
 export function useApicize() {
     const context = useContext(ApicizeContext);

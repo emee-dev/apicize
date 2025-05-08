@@ -4,19 +4,22 @@ import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';
 import { EditableProxy } from '../../models/workspace/editable-proxy';
 import { useWorkspace } from '../../contexts/workspace.context';
-import { useWorkspaceSession } from '../../contexts/workspace-session.context';
 
-export const ProxyEditor = observer((props: {
-    sx?: SxProps
-    proxy: EditableProxy
-}) => {
-    const session = useWorkspaceSession()
-    session.nextHelpTopic = 'proxies'
+export const ProxyEditor = observer((props: { sx?: SxProps }) => {
+    const workspace = useWorkspace()
+    const activeSelection = workspace.activeSelection
+
+    if (!activeSelection?.proxy) {
+        return null
+    }
+
+    workspace.nextHelpTopic = 'proxies'
+    const proxy = activeSelection.proxy
 
     return (
         <Stack direction='column' className='editor proxy' sx={props.sx}>
             <Box className='editor-panel-header'>
-                <EditorTitle icon={<AirlineStopsIcon color='proxy' />} name={props.proxy.name.length > 0 ? props.proxy.name : '(Unnamed)'} />
+                <EditorTitle icon={<AirlineStopsIcon color='proxy' />} name={proxy.name.length > 0 ? proxy.name : '(Unnamed)'} />
             </Box>
             <Box className='editor-panel'>
                 <Grid2 container className='editor-content' direction={'column'} spacing={3}>
@@ -26,12 +29,13 @@ export const ProxyEditor = observer((props: {
                             label='Name'
                             aria-label='proxy name'
                             size='small'
-                            value={props.proxy.name}
+                            value={proxy.name}
+                            autoFocus={proxy.name === ''}
                             onChange={e => {
-                                props.proxy.setName(e.target.value)
+                                proxy.setName(e.target.value)
                             }}
-                            error={props.proxy.nameInvalid}
-                            helperText={props.proxy.nameInvalid ? 'Proxy name is required' : ''}
+                            error={proxy.nameInvalid}
+                            helperText={proxy.nameInvalid ? 'Proxy name is required' : ''}
                             fullWidth
                         />
                     </Grid2>
@@ -41,12 +45,12 @@ export const ProxyEditor = observer((props: {
                             label='URL'
                             aria-label='proxy url'
                             size='small'
-                            value={props.proxy.url}
+                            value={proxy.url}
                             onChange={e => {
-                                props.proxy.setUrl(e.target.value)
+                                proxy.setUrl(e.target.value)
                             }}
-                            error={props.proxy.urlInvalid}
-                            helperText={props.proxy.urlInvalid ? 'URL must include http/https/socks5 protocol prefix and address' : ''}
+                            error={proxy.urlInvalid}
+                            helperText={proxy.urlInvalid ? 'URL must include http/https/socks5 protocol prefix and address' : ''}
                             fullWidth
                         />
                     </Grid2>

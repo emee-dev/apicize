@@ -20,9 +20,9 @@ import theme from 'ace-code/src/theme/gruvbox'
 import { css_beautify, html_beautify, js_beautify } from 'js-beautify'
 import { EditorMode } from '../../models/editor-mode'
 import { useApicize } from '../../contexts/apicize.context'
-import { useWorkspace } from '../../contexts/workspace.context'
-import { ResultEditSessionType, useWorkspaceSession } from '../../contexts/workspace-session.context'
 import { observer } from 'mobx-react-lite'
+import { ResultEditSessionType } from '../editors/editor-types'
+import { useWorkspace } from '../../contexts/workspace.context'
 
 // We have to dynamically load search box because of webpack(?)
 ace.config.dynamicModules = {
@@ -68,7 +68,7 @@ export const RichViewer = observer((props: {
     wrap?: boolean,
 }) => {
     const apicize = useApicize()
-    const session = useWorkspaceSession()
+    const workspace = useWorkspace()
     const viewer = useRef<Editor | null>(null)
 
     const [initialized, setInitialized] = useState(false)
@@ -116,14 +116,15 @@ export const RichViewer = observer((props: {
             setInitialized(true)
         }
 
-        const editSession = session.getResultEditSession(props.id, props.index, props.type)
+        const editSession = workspace.getResultEditSession(props.id, props.index, props.type)
         if (viewer.current) {
             if (editSession) {
                 viewer.current.setSession(editSession)
+                viewer.current.session.setValue(props.text)
             } else {
                 updateEditorMode(viewer.current, props.mode)
                 viewer.current.session.setValue(props.text)
-                session.setResultEditSession(props.id, props.index, props.type, viewer.current.getSession())
+                workspace.setResultEditSession(props.id, props.index, props.type, viewer.current.getSession())
             }
         }
     }, [text])

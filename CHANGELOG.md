@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.18.0
+
+* Multi-window
+* Refactor workspace management to Rust
+
 # 0.17.6
 
 * Fix log viewer width
