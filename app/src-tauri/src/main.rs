@@ -354,6 +354,7 @@ async fn initialize_session(
         settings: session.settings,
         error: session.error,
         navigation: info.navigation.clone(),
+        executing_request_ids: info.executing_request_ids.clone(),
         result_summaries: info.result_summaries.clone(),
         file_name: info.file_name.clone(),
         display_name: info.display_name.clone(),
@@ -408,6 +409,7 @@ async fn new_workspace(
                     settings: settings.clone(),
                     error: None,
                     navigation: info.navigation.clone(),
+                    executing_request_ids: info.executing_request_ids.clone(),
                     result_summaries: info.result_summaries.clone(),
                     file_name: info.file_name.clone(),
                     display_name: info.display_name.clone(),
@@ -546,6 +548,7 @@ async fn open_workspace(
                     settings: settings.clone(),
                     error: None,
                     navigation: info.navigation.clone(),
+                    executing_request_ids: info.executing_request_ids.clone(),
                     result_summaries: info.result_summaries.clone(),
                     file_name: info.file_name.clone(),
                     display_name: info.display_name.clone(),
@@ -845,21 +848,20 @@ async fn run_request(
     sessions_state: State<'_, SessionsState>,
     workspaces_state: State<'_, WorkspacesState>,
     session_id: &str,
-    request_id: &str,
+    request_or_group_id: &str,
     workbook_full_name: String,
     single_run: bool,
 ) -> Result<Vec<ExecutionResultSummary>, ApicizeAppError> {
     let workspace_id: String;
-    let cloned_workspace: Workspace;
     let runner: Arc<TestRunnerContext>;
-    let other_sessions: Option<Vec<String>>;
+    let mut other_sessions: Option<Vec<String>>;
 
     let cancellation = CancellationToken::new();
     {
         cancellation_tokens()
             .lock()
             .unwrap()
-            .insert(request_id.to_owned(), cancellation.clone());
+            .insert(request_or_group_id.to_owned(), cancellation.clone());
     }
 
     let allowed_data_path: Option<PathBuf> = if workbook_full_name.is_empty() {
@@ -877,14 +879,21 @@ async fn run_request(
     {
         let sessions = sessions_state.sessions.read().await;
         let session = sessions.get_session(session_id)?;
-        let workspaces = workspaces_state.workspaces.read().await;
         workspace_id = session.workspace_id.to_string();
-        cloned_workspace = workspaces.get_workspace(&workspace_id)?.clone();
+
+        let cloned_workspace: Workspace;
+        {
+            let mut workspaces = workspaces_state.workspaces.write().await;
+            let info = workspaces.get_workspace_info_mut(&workspace_id)?;
+            info.executing_request_ids
+                .insert(request_or_group_id.to_string());
+            cloned_workspace = info.workspace.clone();
+        }
 
         other_sessions = get_workspace_sessions(&workspace_id, &sessions, Some(session_id));
         if let Some(other_session_ids) = &other_sessions {
             let status = ExecutionStatus {
-                request_or_group_id: request_id.to_string(),
+                request_or_group_id: request_or_group_id.to_string(),
                 running: true,
                 results: None,
             };
@@ -903,25 +912,32 @@ async fn run_request(
         ));
     }
 
-    let response = runner.run(&[request_id.to_string()]).await;
-    cancellation_tokens().lock().unwrap().remove(request_id);
+    let response = runner.run(&[request_or_group_id.to_string()]).await;
+    cancellation_tokens()
+        .lock()
+        .unwrap()
+        .remove(request_or_group_id);
 
     {
+        let sessions = sessions_state.sessions.read().await;
         let mut workspaces = workspaces_state.workspaces.write().await;
         let info = workspaces.get_workspace_info_mut(&workspace_id)?;
 
+        other_sessions = get_workspace_sessions(&workspace_id, &sessions, Some(session_id));
+
         match response {
             Ok(result) => {
-                let (summaries, details) = result.assemble_results(request_id);
+                let (summaries, details) = result.assemble_results(request_or_group_id);
 
                 info.result_summaries
-                    .insert(request_id.to_string(), summaries.clone());
+                    .insert(request_or_group_id.to_string(), summaries.clone());
 
-                info.result_details.insert(request_id.to_string(), details);
+                info.result_details
+                    .insert(request_or_group_id.to_string(), details);
 
                 if let Some(other_session_ids) = &other_sessions {
                     let status = ExecutionStatus {
-                        request_or_group_id: request_id.to_string(),
+                        request_or_group_id: request_or_group_id.to_string(),
                         running: false,
                         results: Some(summaries.clone()),
                     };
@@ -931,12 +947,13 @@ async fn run_request(
                     }
                 }
 
+                info.executing_request_ids.remove(request_or_group_id);
                 Ok(summaries)
             }
             Err(err) => {
                 if let Some(other_session_ids) = &other_sessions {
                     let status = ExecutionStatus {
-                        request_or_group_id: request_id.to_string(),
+                        request_or_group_id: request_or_group_id.to_string(),
                         running: false,
                         results: None,
                     };
@@ -945,6 +962,7 @@ async fn run_request(
                             .unwrap();
                     }
                 }
+                info.executing_request_ids.remove(request_or_group_id);
                 Err(ApicizeAppError::ApicizeError(err))
             }
         }

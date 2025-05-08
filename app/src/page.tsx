@@ -85,8 +85,8 @@ const workspaceStore = new WorkspaceStore(
       'clear_cached_authorization', { authorizationId }),
     clearAllTokens: () => core.invoke(
       'clear_all_cached_authorizations'),
-    executeRequest: async (requestId: string, workbookFullName: string, singleRun: boolean) =>
-      core.invoke<ExecutionResultSummary[]>('run_request', { sessionId, requestId, workbookFullName, singleRun }),
+    executeRequest: async (requestOrGroupId: string, workbookFullName: string, singleRun: boolean) =>
+      core.invoke<ExecutionResultSummary[]>('run_request', { sessionId, requestOrGroupId, workbookFullName, singleRun }),
     cancelRequest: (requestId) => core.invoke(
       'cancel_request', { sessionId, requestId }),
     getResultDetail: (requestId, index) => core.invoke(

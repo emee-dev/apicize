@@ -133,6 +133,8 @@ pub struct WorkspaceInfo {
     pub workspace: Workspace,
     /// Activation tree
     pub navigation: Navigation,
+    /// Indicator which requests have executions running
+    pub executing_request_ids: HashSet<String>,
     /// Execution summary results (if any)
     pub result_summaries: HashMap<String, Vec<ExecutionResultSummary>>,
     /// Execution detail results (if any)
@@ -346,6 +348,7 @@ impl Workspaces {
             warn_on_workspace_creds: true,
             workspace,
             navigation,
+            executing_request_ids: HashSet::new(),
             result_summaries: HashMap::new(),
             result_details: HashMap::new(),
             file_name: file_name.to_string(),

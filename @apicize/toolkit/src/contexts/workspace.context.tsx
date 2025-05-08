@@ -178,10 +178,14 @@ export class WorkspaceStore {
         this.requestEditSessions.clear()
         this.resultEditSessions.clear()
 
+        for (const requestOrGroupId of initialization.executingRequestIds) {
+            const execution = this.getExecution(requestOrGroupId)
+            execution.isRunning = true
+        }
+
         for (const [requestOrGroupId, results] of Object.entries(initialization.resultSummaries)) {
-            const execution = new Execution(requestOrGroupId)
+            const execution = this.getExecution(requestOrGroupId)
             execution.completeExecution(results)
-            this.executions.set(requestOrGroupId, execution)
         }
 
         this.expandedItems = initialization.expandedItems ?? ['hdr-r']
@@ -1463,6 +1467,7 @@ export interface SessionInitialization {
     settings: EditableSettings
     workspaceId: string
     navigation: Navigation
+    executingRequestIds: string[],
     resultSummaries: { [resultOrGroupId: string]: ExecutionResultSummary[] },
     dirty: boolean
     editorCount: number

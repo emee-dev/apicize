@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use apicize_lib::{
     editing::execution_result_summary::ExecutionResultSummary, WorkbookDefaultParameters,
@@ -96,6 +96,7 @@ pub struct SessionInitialization {
     pub settings: ApicizeSettings,
     pub error: Option<String>,
     pub navigation: Navigation,
+    pub executing_request_ids: HashSet<String>,
     pub result_summaries: HashMap<String, Vec<ExecutionResultSummary>>,
     pub file_name: String,
     pub display_name: String,
