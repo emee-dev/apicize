@@ -4,9 +4,9 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
 import { TreeItem } from '@mui/x-tree-view/TreeItem'
 import { Box, Stack, SvgIcon, ToggleButton, ToggleButtonGroup } from '@mui/material'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { EditableState } from "../../models/editable";
-import { EditableEntityType } from "../../models/workspace/editable-entity-type";
+import { EntityType } from "../../models/workspace/entity-type";
 import { useWorkspace, WorkspaceMode } from "../../contexts/workspace.context";
 import DefaultsIcon from "../../icons/defaults-icon";
 import { ScenarioSection } from "./sections/scenario-scection";
@@ -118,14 +118,14 @@ export const NavigationControl = observer(() => {
                         if (itemId === 'defaults') {
                             workspace.setMode(WorkspaceMode.Defaults)
                         } else {
-                            const i = itemId.indexOf('-')
-                            if (i !== -1) {
-                                const type = itemId.substring(0, i) as EditableEntityType
-                                if (type !== EditableEntityType.Header) {
-                                    const id = itemId.substring(i + 1)
-                                    workspace.changeActive(type, id)
-                                }
-                            }
+                            // const i = itemId.indexOf('-')
+                            // if (i !== -1) {
+                            //     const type = parseInt(itemId.substring(0, i)) as EntityType
+                            //     if (type !== EntityType.Header) {
+                            //         const id = itemId.substring(i + 1)
+                            //         workspace.changeActive(type, id)
+                            //     }
+                            // }
                         }
                     } else {
                         workspace.clearActive()
@@ -152,7 +152,7 @@ export const NavigationControl = observer(() => {
                                         Warnings
                                     </Box>
                                 </Box>
-                            )} onClick={() => workspace.changeActive(EditableEntityType.Warnings, '')} />
+                            )} onClick={() => workspace.changeActive(EntityType.Warnings, '')} />
                         : null
                 }
 

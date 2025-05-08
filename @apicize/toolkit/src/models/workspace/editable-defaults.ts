@@ -1,8 +1,7 @@
 import { Selection, SelectedParametersWithData, GetTitle } from "@apicize/lib-typescript"
 import { action, makeObservable, observable, toJS } from "mobx"
 import { NO_SELECTION, NO_SELECTION_ID } from "../store"
-import { EntityDefaults, EntityType, WorkspaceStore } from "../../contexts/workspace.context"
-import { EditableEntityType } from "./editable-entity-type"
+import { EntityDefaults, WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableDefaults implements SelectedParametersWithData {
     @observable accessor selectedScenario: Selection = NO_SELECTION

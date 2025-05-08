@@ -6,7 +6,7 @@ import RequestIcon from "../../../icons/request-icon"
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
+import { EntityType } from "../../../models/workspace/entity-type"
 import { NavTreeItem } from "../nav-tree-item"
 import { Persistence } from "@apicize/lib-typescript"
 import { MenuPosition } from "../../../models/menu-position"
@@ -35,7 +35,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
         setRequestMenu(undefined)
     }
 
-    const handleShowRequestsMenu = (event: React.MouseEvent, id: string, type: EditableEntityType) => {
+    const handleShowRequestsMenu = (event: React.MouseEvent, id: string, type: EntityType) => {
         setRequestsMenu(
             {
                 id,
@@ -47,7 +47,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
         )
     }
 
-    const showRequestMenu = (event: React.MouseEvent, id: string, type: EditableEntityType) => {
+    const showRequestMenu = (event: React.MouseEvent, id: string, type: EntityType) => {
         setRequestMenu(
             {
                 id,
@@ -78,17 +78,17 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
         workspace.addGroup(targetRequestId, targetPosition, null)
     }
 
-    const handleDeleteRequest = (id: string, type: EditableEntityType) => {
+    const handleDeleteRequest = (id: string, type: EntityType) => {
         closeRequestMenu()
         closeRequestsMenu()
 
         if (id) {
             let tname: string
             switch (type) {
-                case EditableEntityType.Request:
+                case EntityType.Request:
                     tname = 'Request'
                     break
-                case EditableEntityType.Group:
+                case EntityType.Group:
                     tname = 'Group'
                     break
                 default:
@@ -103,10 +103,10 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
             }).then((result) => {
                 if (result) {
                     switch (type) {
-                        case EditableEntityType.Request:
+                        case EntityType.Request:
                             workspace.deleteRequest(id)
                             break
-                        case EditableEntityType.Group:
+                        case EntityType.Group:
                             workspace.deleteGroup(id)
                             break
                     }
@@ -120,15 +120,15 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
         workspace.moveRequest(id, relativeToId, relativePosition)
     }
 
-    const handleDupeRequest = (id: string, type: EditableEntityType) => {
+    const handleDupeRequest = (id: string, type: EntityType) => {
         closeRequestMenu()
         closeRequestsMenu()
         if (id) {
             switch (type) {
-                case EditableEntityType.Request:
+                case EntityType.Request:
                     workspace.addRequest(id, IndexedEntityPosition.After, id)
                     break
-                case EditableEntityType.Group:
+                case EntityType.Group:
                     workspace.addGroup(id, IndexedEntityPosition.After, id)
                     break
             }
@@ -136,7 +136,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
     }
 
     const selectRequestOrGroup = (id: string) => {
-        workspace.changeActive(EditableEntityType.Request, id)
+        workspace.changeActive(EntityType.Request, id)
     }
 
     function RequestsMenu() {
@@ -176,7 +176,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
         let positionType: IndexedEntityPosition
         let action: string
 
-        if (requestMenu.type === EditableEntityType.Group) {
+        if (requestMenu.type === EntityType.Group) {
             positionType = IndexedEntityPosition.Under
             action = 'Add'
         } else {
@@ -184,7 +184,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
             action = 'Insert'
         }
 
-        
+
         return <Menu
             id='req-menu'
             open={requestMenu !== undefined}
@@ -237,8 +237,8 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
                 key={entry.id}
                 title={entry.name}
                 depth={depth}
-                type={EditableEntityType.Group}
-                acceptDropTypes={[EditableEntityType.Request, EditableEntityType.Group]}
+                type={EntityType.Group}
+                acceptDropTypes={[EntityType.Request, EntityType.Group]}
                 acceptDropAppends={true}
                 onSelect={selectRequestOrGroup}
                 onMenu={showRequestMenu}
@@ -255,8 +255,8 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
                 key={entry.id}
                 title={entry.name}
                 depth={depth}
-                type={EditableEntityType.Request}
-                acceptDropTypes={[EditableEntityType.Request, EditableEntityType.Group]}
+                type={EntityType.Request}
+                acceptDropTypes={[EntityType.Request, EntityType.Group]}
                 onSelect={selectRequestOrGroup}
                 onMenu={showRequestMenu}
                 onMove={handleMoveRequest}
@@ -269,7 +269,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
     //     data: {
     //         acceptAppend: true,
     //         acceptReposition: false,
-    //         acceptsTypes: [EditableEntityType.Request, EditableEntityType.Group],
+    //         acceptsTypes: [EntityType.Request, EntityType.Group],
     //         depth: 0,
     //         isHeader: true,
     //     } as DroppableData
@@ -323,7 +323,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
                     <IconButton sx={{ flexGrow: 0, margin: 0, padding: 0, visibility: focused ? 'normal' : 'hidden', fontSize: settings.navigationFontSize }} onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        handleShowRequestsMenu(e, 'menu-requests', EditableEntityType.Group)
+                        handleShowRequestsMenu(e, 'menu-requests', EntityType.Group)
                     }}>
                         <Box className='nav-icon-context'><MoreVertIcon /></Box>
                     </IconButton>

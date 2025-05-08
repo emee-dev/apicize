@@ -7,7 +7,7 @@ import PrivateIcon from "../../../icons/private-icon"
 import PublicIcon from "../../../icons/public-icon"
 import VaultIcon from "../../../icons/vault-icon"
 import { EditableEntity } from "../../../models/editable"
-import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
+import { EntityType } from "../../../models/workspace/entity-type"
 import { OverridableStringUnion } from "@mui/types";
 import { DroppableData } from "../../../models/drag-drop"
 import { useWorkspace } from "../../../contexts/workspace.context"
@@ -20,7 +20,7 @@ import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-
 import { useDragDrop } from "../../../contexts/dragdrop.context"
 
 const ParameterSubsection = observer((props: {
-    type: EditableEntityType,
+    type: EntityType,
     entries: NavigationEntry[],
     persistence: Persistence,
     icon: JSX.Element,
@@ -105,7 +105,7 @@ const ParameterSubsection = observer((props: {
 
 
 export const ParameterSection = observer(<T extends EditableEntity>(props: {
-    type: EditableEntityType,
+    type: EntityType,
     parameters: ParamNavigationSection,
     title: string,
     helpTopic: string,

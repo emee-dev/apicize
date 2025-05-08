@@ -2,7 +2,7 @@ import { Alert, Button, FormControl, FormControlLabel, FormLabel, Grid2, Radio, 
 import { observer } from "mobx-react-lite"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { EditableAuthorization } from "../../../models/workspace/editable-authorization"
-import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
+import { EntityType } from "../../../models/workspace/entity-type"
 import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
 
 export const AuthorizationOAuth2PkceEditor = observer((props: { authorization: EditableAuthorization }) => {

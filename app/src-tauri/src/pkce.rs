@@ -198,7 +198,7 @@ async fn init_pkce_server(
                     ),
                 )
                 .unwrap();
-            println!(
+            eprintln!(
                 "Unable to start server at http://127.0.0.1:{}, {}",
                 port, err
             );

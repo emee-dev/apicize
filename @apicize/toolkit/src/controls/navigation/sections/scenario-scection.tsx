@@ -2,7 +2,7 @@ import { Persistence } from "@apicize/lib-typescript"
 import { ListItemIcon, ListItemText, Menu, MenuItem, SvgIcon, useTheme } from "@mui/material"
 import ScenarioIcon from "../../../icons/scenario-icon"
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
-import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
+import { EntityType } from "../../../models/workspace/entity-type"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { useState } from "react"
 import { ParameterSection } from "./parameter-section"
@@ -24,7 +24,7 @@ export const ScenarioSection = observer((props: { includeHeader: boolean }) => {
     }
 
     const selectScenario = (id: string) => {
-        workspace.changeActive(EditableEntityType.Scenario, id)
+        workspace.changeActive(EntityType.Scenario, id)
     }
 
     const handleAddScenario = (relativeToId: string, relativePosition: IndexedEntityPosition, cloneFromId: string | null) => {
@@ -56,7 +56,7 @@ export const ScenarioSection = observer((props: { includeHeader: boolean }) => {
         setScenarioMenu(
             {
                 id,
-                type: EditableEntityType.Scenario,
+                type: EntityType.Scenario,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
                 persistence,
@@ -122,7 +122,7 @@ export const ScenarioSection = observer((props: { includeHeader: boolean }) => {
         contextMenu={<ScenarioMenu />}
         iconColor='scenario'
         helpTopic='workspace/scenarios'
-        type={EditableEntityType.Scenario}
+        type={EntityType.Scenario}
         parameters={workspace.navigation.scenarios}
         onSelect={selectScenario}
         onSelectHeader={handleSelectHeader}

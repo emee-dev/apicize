@@ -5,7 +5,7 @@ import { TreeItem } from "@mui/x-tree-view/TreeItem"
 import { observer } from "mobx-react-lite"
 import { DraggableData, DroppableData } from "../../models/drag-drop"
 import { EditableState } from "../../models/editable"
-import { EditableEntityType } from "../../models/workspace/editable-entity-type"
+import { EntityType } from "../../models/workspace/entity-type"
 import { OverridableStringUnion } from "@mui/types";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -30,12 +30,12 @@ const iconFromState = (state: EditableState) => {
 }
 
 export const NavTreeItem = observer((props: {
-    type: EditableEntityType,
+    type: EntityType,
     id: string,
     title: string,
     depth: number,
     isDraggable: boolean,
-    acceptDropTypes?: EditableEntityType[],
+    acceptDropTypes?: EntityType[],
     acceptDropAppends?: boolean,
     icon?: JSX.Element,
     iconColor?: OverridableStringUnion<
@@ -51,7 +51,7 @@ export const NavTreeItem = observer((props: {
         SvgIconPropsColorOverrides>,
     children?: JSX.Element[],
     onSelect?: (id: string) => void,
-    onMenu?: (event: React.MouseEvent, id: string, type: EditableEntityType) => void,
+    onMenu?: (event: React.MouseEvent, id: string, type: EntityType) => void,
     onMove?: (id: string, relativeToId: string, relativePosition: IndexedEntityPosition) => void
 }) => {
     const settings = useApicize()

@@ -1605,6 +1605,8 @@ pub enum EntityType {
     Proxy = 8,
     Data = 9,
     Parameters = 10,
+    Defaults = 11,
+    Warnings = 12,
 }
 
 impl Display for EntityType {
@@ -1620,6 +1622,8 @@ impl Display for EntityType {
             EntityType::Proxy => "Proxy",
             EntityType::Data => "Data",
             EntityType::Parameters => "Parameters",
+            EntityType::Defaults => "Defaults",
+            EntityType::Warnings => "Warnings",
         };
         write!(f, "{}", desc)
     }

@@ -26,7 +26,7 @@ use dragdrop::DroppedFile;
 use error::ApicizeAppError;
 use pkce::{OAuth2PkceInfo, OAuth2PkceRequest, OAuth2PkceService};
 use serde::{Deserialize, Serialize};
-use sessions::{Session, SessionInitialization, SessionSaveState, Sessions};
+use sessions::{Session, SessionInitialization, SessionSaveState, SessionStartupState, Sessions};
 use settings::{ApicizeSettings, ColorScheme};
 use std::{
     collections::HashMap,
@@ -38,7 +38,6 @@ use std::{
 };
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use tauri_plugin_clipboard::Clipboard;
-use tauri_plugin_log::{Target, TargetKind};
 use tokio_util::sync::CancellationToken;
 use trace::ReqwestLogger;
 use workspaces::{
@@ -208,6 +207,7 @@ fn main() {
             let session_id = sessions.add_session(Session {
                 workspace_id: workspace_id.clone(),
                 settings: settings.clone(),
+                startup_state: None,
                 error: session_error,
             });
 
@@ -259,19 +259,20 @@ fn main() {
         .plugin(tauri_plugin_clipboard::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(
-            tauri_plugin_log::Builder::new()
-                .level(log::LevelFilter::Warn)
-                // .level_for("apicize", log::LevelFilter::Trace)
-                // .level_for("apicize::workspaces", log::LevelFilter::Trace)
-                // .level_for("apicize::sessions", log::LevelFilter::Trace)
-                .targets([
-                    Target::new(TargetKind::Stdout),
-                    // Target::new(TargetKind::LogDir { file_name: None }),
-                    // Target::new(TargetKind::Webview),                ])
-                ])
-                .build(),
-        )
+        // .plugin(
+        //     tauri_plugin_log::Builder::new()
+        //         .level(log::LevelFilter::Warn)
+        //         .level_for("reqwest", log::LevelFilter::Trace)
+        //         // .level_for("apicize", log::LevelFilter::Trace)
+        //         // .level_for("apicize::workspaces", log::LevelFilter::Trace)
+        //         // .level_for("apicize::sessions", log::LevelFilter::Trace)
+        //         .targets([
+        //             Target::new(TargetKind::Stdout),
+        //             // Target::new(TargetKind::LogDir { file_name: None }),
+        //             // Target::new(TargetKind::Webview),                ])
+        //         ])
+        //         .build(),
+        // )
         // .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             app.webview_windows()
@@ -345,14 +346,16 @@ async fn initialize_session(
 ) -> Result<SessionInitialization, ApicizeAppError> {
     let sessions = session_state.sessions.read().await;
     let workspaces = workspaces_state.workspaces.read().await;
-    let session = sessions.get_session(session_id)?.clone();
+    let session = sessions.get_session(session_id)?;
     let editor_count = sessions.get_workspace_session_count(&session.workspace_id);
     let info = workspaces.get_workspace_info(&session.workspace_id)?;
 
-    Ok(SessionInitialization {
-        workspace_id: session.workspace_id,
-        settings: session.settings,
-        error: session.error,
+    let startup_state = session.startup_state.as_ref();
+
+    let init = SessionInitialization {
+        workspace_id: session.workspace_id.clone(),
+        settings: session.settings.clone(),
+        error: session.error.clone(),
         navigation: info.navigation.clone(),
         executing_request_ids: info.executing_request_ids.clone(),
         result_summaries: info.result_summaries.clone(),
@@ -361,7 +364,14 @@ async fn initialize_session(
         dirty: info.dirty,
         editor_count,
         defaults: info.workspace.defaults.clone(),
-    })
+        expanded_items: startup_state.and_then(|s| s.expanded_items.clone()),
+        mode: session.startup_state.as_ref().and_then(|s| s.mode.clone()),
+        active_id: startup_state.and_then(|s| s.active_id.clone()),
+        active_type: startup_state.and_then(|s| s.active_type.clone()),
+        help_topic: startup_state.and_then(|s| s.help_topic.clone()),
+    };
+
+    Ok(init)
 }
 
 #[tauri::command]
@@ -416,6 +426,11 @@ async fn new_workspace(
                     editor_count: 1,
                     dirty: false,
                     defaults: WorkbookDefaultParameters::default(),
+                    expanded_items: None,
+                    mode: None,
+                    active_type: None,
+                    active_id: None,
+                    help_topic: None,
                 },
             )
             .unwrap();
@@ -441,6 +456,7 @@ async fn new_workspace(
             let active_session_id = sessions.add_session(Session {
                 workspace_id: workspace_id.clone(),
                 settings: settings.clone(),
+                startup_state: None,
                 error: None,
             });
 
@@ -555,6 +571,11 @@ async fn open_workspace(
                     dirty: info.dirty,
                     editor_count,
                     defaults: info.workspace.defaults.clone(),
+                    expanded_items: None,
+                    mode: None,
+                    active_type: None,
+                    active_id: None,
+                    help_topic: None,
                 },
             )
             .unwrap();
@@ -570,6 +591,7 @@ async fn open_workspace(
             let active_session_id = sessions.add_session(Session {
                 workspace_id: workspace_id.clone(),
                 settings: settings.clone(),
+                startup_state: None,
                 error: None,
             });
 
@@ -729,10 +751,10 @@ async fn clone_workspace(
     workspaces_state: State<'_, WorkspacesState>,
     settings_state: State<'_, SettingsState>,
     session_id: &str,
+    startup_state: Option<SessionStartupState>,
 ) -> Result<(), ApicizeAppError> {
     let workspaces = workspaces_state.workspaces.read().await;
     let mut sessions = sessions_state.sessions.write().await;
-
     let session = sessions.get_session(session_id)?;
     let workspace_id = session.workspace_id.clone();
     let info = workspaces.get_workspace_info(&workspace_id)?;
@@ -742,6 +764,7 @@ async fn clone_workspace(
     let active_session_id = sessions.add_session(Session {
         workspace_id: workspace_id.clone(),
         settings: settings.clone(),
+        startup_state,
         error: None,
     });
 
@@ -1436,8 +1459,8 @@ async fn delete(
             dispatch_data_list_notification(
                 &app,
                 &sessions,
-                &workspace_id,
-                workspaces.list_data(&workspace_id)?,
+                workspace_id,
+                workspaces.list_data(workspace_id)?,
             );
             Ok(())
         }
@@ -1556,7 +1579,7 @@ fn dispatch_data_list_notification(
     workspace_id: &str,
     data: Vec<ExternalData>,
 ) {
-    if let Some(session_ids) = get_workspace_sessions(workspace_id, &sessions, None) {
+    if let Some(session_ids) = get_workspace_sessions(workspace_id, sessions, None) {
         let event = Entity::DataList { list: data };
         for send_to_session_id in session_ids {
             app.emit_to(send_to_session_id, "update", &event).unwrap();

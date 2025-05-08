@@ -10,7 +10,7 @@ import { SettingsEditor } from "./editors/settings-editor";
 import { DefaultsEditor } from "./editors/defaults-editor";
 import { WarningsEditor } from "./editors/warnings-editor";
 import { useWorkspace, WorkspaceMode } from "../contexts/workspace.context";
-import { EditableEntityType } from "../models/workspace/editable-entity-type";
+import { EntityType } from "../models/workspace/entity-type";
 import { LogViewer } from "./viewers/log-viewer";
 import { RequestList } from "./navigation/lists/request-list";
 import { ScenarioList } from "./navigation/lists/scenario-list";
@@ -52,17 +52,17 @@ export const MainPanel = observer(() => {
             default:
                 if (activeSelection) {
                     switch (activeSelection.type) {
-                        case EditableEntityType.Request:
+                        case EntityType.Request:
                             return <RequestEditor sx={{ display: 'block', flexGrow: 1 }} />
-                        case EditableEntityType.Group:
+                        case EntityType.Group:
                             return <RequestGroupEditor sx={{ display: 'block', flexGrow: 1 }} />
-                        case EditableEntityType.Scenario:
+                        case EntityType.Scenario:
                             return <ScenarioEditor sx={{ display: 'block', flexGrow: 1 }} />
-                        case EditableEntityType.Authorization:
+                        case EntityType.Authorization:
                             return <AuthorizationEditor sx={{ display: 'block', flexGrow: 1 }} />
-                        case EditableEntityType.Certificate:
+                        case EntityType.Certificate:
                             return <CertificateEditor sx={{ display: 'block', flexGrow: 1 }} />
-                        case EditableEntityType.Proxy:
+                        case EntityType.Proxy:
                             return <ProxyEditor sx={{ display: 'block', flexGrow: 1 }} />
                         default:
                             return <></>

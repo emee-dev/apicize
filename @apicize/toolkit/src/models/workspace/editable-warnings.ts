@@ -1,6 +1,6 @@
 import { action, computed, observable, toJS } from "mobx";
 import { Editable, EditableEntity, EditableState } from "../editable";
-import { EditableEntityType } from "./editable-entity-type";
+import { EntityType } from "./entity-type";
 import { GenerateIdentifier } from "../../services/random-identifier-generator";
 
 export class EditableWarnings {
@@ -9,7 +9,7 @@ export class EditableWarnings {
     public readonly id = 'Warnings'
     public readonly name = 'Warnings'
     public readonly state = EditableState.None;
-    @observable accessor entityType = EditableEntityType.Warnings;
+    @observable accessor entityType = EntityType.Warnings;
     @observable accessor entries = new Map<string, string>()
 
     @action

@@ -5,7 +5,7 @@ use crate::workspaces::EntityType;
 
 #[derive(Error, Debug)]
 pub enum ApicizeAppError {
-    #[error("apicize error")]
+    #[error(transparent)]
     ApicizeError(#[from] ApicizeError),
 
     #[error("file access error")]

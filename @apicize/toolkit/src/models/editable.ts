@@ -1,6 +1,6 @@
 import { Identifiable } from "@apicize/lib-typescript"
 import { action, computed, observable } from "mobx"
-import { EditableEntityType } from "./workspace/editable-entity-type"
+import { EntityType } from "./workspace/entity-type"
 import { EditableProxy } from "./workspace/editable-proxy"
 import { EditableRequest } from "./workspace/editable-request"
 import { EditableRequestGroup } from "./workspace/editable-request-group"
@@ -22,7 +22,7 @@ export abstract class Editable<T> {
     @observable accessor dirty: boolean = false
     abstract accessor state: EditableState
 
-    public abstract readonly entityType: EditableEntityType
+    public abstract readonly entityType: EntityType
     protected abstract onUpdate(): void
 
     constructor(protected workspace: WorkspaceStore) { }

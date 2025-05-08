@@ -5,13 +5,28 @@ use apicize_lib::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{error::ApicizeAppError, settings::ApicizeSettings, workspaces::Navigation};
+use crate::{
+    error::ApicizeAppError,
+    settings::ApicizeSettings,
+    workspaces::{EntityType, Navigation},
+};
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionStartupState {
+    pub expanded_items: Option<Vec<String>>,
+    pub active_type: Option<EntityType>,
+    pub active_id: Option<String>,
+    pub mode: Option<u32>,
+    pub help_topic: Option<String>,
+}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Session {
     pub workspace_id: String,
     pub settings: ApicizeSettings,
     pub error: Option<String>,
+    pub startup_state: Option<SessionStartupState>,
 }
 
 #[derive(Default)]
@@ -103,6 +118,11 @@ pub struct SessionInitialization {
     pub dirty: bool,
     pub editor_count: usize,
     pub defaults: WorkbookDefaultParameters,
+    pub expanded_items: Option<Vec<String>>,
+    pub active_type: Option<EntityType>,
+    pub active_id: Option<String>,
+    pub mode: Option<u32>,
+    pub help_topic: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]

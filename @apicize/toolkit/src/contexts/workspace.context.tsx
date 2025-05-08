@@ -28,7 +28,7 @@ import {
     ExecutionStatus,
     ExecutionResultDetail,
 } from "@apicize/lib-typescript"
-import { EditableEntityType } from "../models/workspace/editable-entity-type"
+import { EntityType } from "../models/workspace/entity-type"
 import { createContext, useContext } from "react"
 import { EditableDefaults } from "../models/workspace/editable-defaults"
 import { EditableWarnings } from "../models/workspace/editable-warnings"
@@ -177,6 +177,7 @@ export class WorkspaceStore {
         this.nextHelpTopic = null
         this.requestEditSessions.clear()
         this.resultEditSessions.clear()
+        this.helpTopic = initialization.helpTopic ?? null
 
         for (const requestOrGroupId of initialization.executingRequestIds) {
             const execution = this.getExecution(requestOrGroupId)
@@ -189,6 +190,7 @@ export class WorkspaceStore {
         }
 
         this.expandedItems = initialization.expandedItems ?? ['hdr-r']
+        this.mode = initialization.mode ?? WorkspaceMode.Normal
         this.activeSelection = (initialization.activeType && initialization.activeId)
             ? new ActiveSelection(initialization.activeId, initialization.activeType, this, this.feedback)
             : null
@@ -239,12 +241,12 @@ export class WorkspaceStore {
     // }
 
     @action
-    changeActive(type: EditableEntityType, id: string) {
+    changeActive(type: EntityType, id: string) {
         this.setMode(WorkspaceMode.Normal)
-        const performExpand = type === EditableEntityType.Group && this.activeSelection?.id !== id
+        const performExpand = type === EntityType.Group && this.activeSelection?.id !== id
         this.activeSelection = new ActiveSelection(id, type, this, this.feedback)
         if (performExpand) {
-            this.updateExpanded(`g-${id}`, true)
+            this.updateExpanded(`${type}-${id}`, true)
         }
     }
 
@@ -254,7 +256,7 @@ export class WorkspaceStore {
     }
 
     @action
-    clearActiveConditionally(type: EditableEntityType, id: string) {
+    clearActiveConditionally(type: EntityType, id: string) {
         if (this.activeSelection && this.activeSelection.type === type && this.activeSelection.id === id) {
             this.activeSelection = null
         }
@@ -527,7 +529,7 @@ export class WorkspaceStore {
                 if (relativeToId && relativePosition === IndexedEntityPosition.Under) {
                     this.updateExpanded(`g-${relativeToId}`, true)
                 }
-                this.changeActive(EditableEntityType.Request, id)
+                this.changeActive(EntityType.Request, id)
             })
             .catch(e => this.feedback.toastError(e))
     }
@@ -535,7 +537,7 @@ export class WorkspaceStore {
     @action
     deleteRequest(id: string) {
         this.callbacks.delete(EntityType.Request, id)
-            .then(() => this.clearActiveConditionally(EditableEntityType.Request, id))
+            .then(() => this.clearActiveConditionally(EntityType.Request, id))
             .catch(e => this.feedback.toastError(e))
     }
 
@@ -580,7 +582,7 @@ export class WorkspaceStore {
                 if (relativeToId && relativePosition === IndexedEntityPosition.Under) {
                     this.updateExpanded(`g-${relativeToId}`, true)
                 }
-                this.changeActive(EditableEntityType.Group, id)
+                this.changeActive(EntityType.Group, id)
             })
             .catch(e => this.feedback.toastError(e))
     }
@@ -614,14 +616,14 @@ export class WorkspaceStore {
             relativeToId,
             relativePosition,
             cloneFromId)
-            .then(id => this.changeActive(EditableEntityType.Scenario, id))
+            .then(id => this.changeActive(EntityType.Scenario, id))
             .catch(e => this.feedback.toastError(e))
     }
 
     @action
     deleteScenario(id: string) {
         this.callbacks.delete(EntityType.Scenario, id)
-            .then(() => this.clearActiveConditionally(EditableEntityType.Scenario, id))
+            .then(() => this.clearActiveConditionally(EntityType.Scenario, id))
             .catch(e => this.feedback.toastError(e))
     }
 
@@ -629,7 +631,7 @@ export class WorkspaceStore {
     moveScenario(scenarioId: string, relativeToId: string, relativePosition: IndexedEntityPosition) {
         this.callbacks.move(EntityType.Scenario, scenarioId, relativeToId, relativePosition)
             .then(parentIds => {
-                this.updateExpanded(parentIds.map(parentId => `hdr-${EditableEntityType.Scenario}-${parentId}`), true)
+                this.updateExpanded(parentIds.map(parentId => `hdr-${EntityType.Scenario}-${parentId}`), true)
             })
             .catch(e => this.feedback.toastError(e))
     }
@@ -659,14 +661,14 @@ export class WorkspaceStore {
             relativeToId,
             relativePosition,
             cloneFromId)
-            .then(id => this.changeActive(EditableEntityType.Authorization, id))
+            .then(id => this.changeActive(EntityType.Authorization, id))
             .catch(e => this.feedback.toastError(e))
     }
 
     @action
     deleteAuthorization(id: string) {
         this.callbacks.delete(EntityType.Authorization, id)
-            .then(() => this.clearActiveConditionally(EditableEntityType.Authorization, id))
+            .then(() => this.clearActiveConditionally(EntityType.Authorization, id))
             .catch(e => this.feedback.toastError(e))
     }
 
@@ -674,7 +676,7 @@ export class WorkspaceStore {
     moveAuthorization(authorizationId: string, relativeToId: string, relativePosition: IndexedEntityPosition) {
         this.callbacks.move(EntityType.Authorization, authorizationId, relativeToId, relativePosition)
             .then(parentIds => {
-                this.updateExpanded(parentIds.map(parentId => `hdr-${EditableEntityType.Authorization}-${parentId}`), true)
+                this.updateExpanded(parentIds.map(parentId => `hdr-${EntityType.Authorization}-${parentId}`), true)
             })
             .catch(e => this.feedback.toastError(e))
     }
@@ -705,14 +707,14 @@ export class WorkspaceStore {
             relativePosition,
             cloneFromId
         )
-            .then(id => this.changeActive(EditableEntityType.Certificate, id))
+            .then(id => this.changeActive(EntityType.Certificate, id))
             .catch(e => this.feedback.toastError(e))
     }
 
     @action
     deleteCertificate(id: string) {
         this.callbacks.delete(EntityType.Certificate, id)
-            .then(() => this.clearActiveConditionally(EditableEntityType.Certificate, id))
+            .then(() => this.clearActiveConditionally(EntityType.Certificate, id))
             .catch(e => this.feedback.toastError(e))
     }
 
@@ -720,7 +722,7 @@ export class WorkspaceStore {
     moveCertificate(certifiateId: string, relativeToId: string, relativePosition: IndexedEntityPosition) {
         this.callbacks.move(EntityType.Certificate, certifiateId, relativeToId, relativePosition)
             .then(parentIds => {
-                this.updateExpanded(parentIds.map(parentId => `hdr-${EditableEntityType.Certificate}-${parentId}`), true)
+                this.updateExpanded(parentIds.map(parentId => `hdr-${EntityType.Certificate}-${parentId}`), true)
             })
             .catch(e => this.feedback.toastError(e))
     }
@@ -750,14 +752,14 @@ export class WorkspaceStore {
             relativeToId,
             relativePosition,
             cloneFromId)
-            .then(id => this.changeActive(EditableEntityType.Proxy, id))
+            .then(id => this.changeActive(EntityType.Proxy, id))
             .catch(e => this.feedback.toastError(e))
     }
 
     @action
     async deleteProxy(id: string) {
         this.callbacks.delete(EntityType.Proxy, id)
-            .then(() => this.clearActiveConditionally(EditableEntityType.Proxy, id))
+            .then(() => this.clearActiveConditionally(EntityType.Proxy, id))
             .catch(e => this.feedback.toastError(e))
     }
 
@@ -765,7 +767,7 @@ export class WorkspaceStore {
     moveProxy(proxyId: string, relativeToId: string, relativePosition: IndexedEntityPosition) {
         this.callbacks.move(EntityType.Proxy, proxyId, relativeToId, relativePosition)
             .then(parentIds => {
-                this.updateExpanded(parentIds.map(parentId => `hdr-${EditableEntityType.Proxy}-${parentId}`), true)
+                this.updateExpanded(parentIds.map(parentId => `hdr-${EntityType.Proxy}-${parentId}`), true)
             })
             .catch(e => this.feedback.toastError(e))
     }
@@ -949,7 +951,7 @@ export class WorkspaceStore {
         }
 
         let executingSelection = (this.activeSelection
-            && (this.activeSelection.type === EditableEntityType.Request || this.activeSelection.type === EditableEntityType.Group)
+            && (this.activeSelection.type === EntityType.Request || this.activeSelection.type === EntityType.Group)
             && (this.activeSelection.id === requestOrGroupId))
             ? this.activeSelection
             : null
@@ -1220,13 +1222,13 @@ export class ActiveSelection {
 
     public constructor(
         public readonly id: string,
-        public readonly type: EditableEntityType,
+        public readonly type: EntityType,
         private readonly workspace: WorkspaceStore,
         private readonly feedback: FeedbackStore,
     ) {
         makeObservable(this)
         switch (type) {
-            case EditableEntityType.Request:
+            case EntityType.Request:
                 workspace.getRequest(id)
                     .then((request) => {
                         runInAction(() => {
@@ -1235,7 +1237,7 @@ export class ActiveSelection {
                     })
                     .catch(e => feedback.toastError(e))
                 break
-            case EditableEntityType.Group:
+            case EntityType.Group:
                 workspace.getRequestGroup(id)
                     .then((group) => {
                         runInAction(() => {
@@ -1244,28 +1246,28 @@ export class ActiveSelection {
                     })
                     .catch(e => feedback.toastError(e))
                 break
-            case EditableEntityType.Scenario:
+            case EntityType.Scenario:
                 workspace.getScenario(id)
                     .then(result => runInAction(() => {
                         this.scenario = result
                     }))
                     .catch(e => feedback.toastError(e))
                 break
-            case EditableEntityType.Authorization:
+            case EntityType.Authorization:
                 workspace.getAuthorization(id)
                     .then(result => runInAction(() => {
                         this.authorization = result
                     }))
                     .catch(e => feedback.toastError(e))
                 break
-            case EditableEntityType.Certificate:
+            case EntityType.Certificate:
                 workspace.getCertificate(id)
                     .then(result => runInAction(() => {
                         this.certificate = result
                     }))
                     .catch(e => feedback.toastError(e))
                 break
-            case EditableEntityType.Proxy:
+            case EntityType.Proxy:
                 workspace.getProxy(id)
                     .then(result => runInAction(() => {
                         this.proxy = result
@@ -1317,7 +1319,7 @@ export class ActiveSelection {
 
     @action
     public initializeBody() {
-        if (this.type === EditableEntityType.Request) {
+        if (this.type === EntityType.Request) {
             this.workspace.getRequestBody(this.id)
                 .then(result => runInAction(() => {
                     this.requestBody = result
@@ -1329,8 +1331,8 @@ export class ActiveSelection {
     @action
     public initializeParameters() {
         switch (this.type) {
-            case EditableEntityType.Request:
-            case EditableEntityType.Group:
+            case EntityType.Request:
+            case EntityType.Group:
                 this.workspace.getRequestParameterList(this.id)
                     .then(result => runInAction(() => {
                         this.parameters = result
@@ -1339,20 +1341,6 @@ export class ActiveSelection {
                 break
         }
     }
-}
-
-export enum EntityType {
-    RequestEntry = 1,
-    Request = 2,
-    Group = 3,
-    Body = 4,
-    Scenario = 5,
-    Authorization = 6,
-    Certificate = 7,
-    Proxy = 8,
-    Data = 9,
-    Parameters = 10,
-    Defaults = 11,
 }
 
 export type Entity = EntityRequestEntry | EntityRequest | EntityGroup | EntityBody |
@@ -1477,8 +1465,10 @@ export interface SessionInitialization {
     displayName: string
 
     expandedItems?: string[]
-    activeType?: EditableEntityType
+    mode?: WorkspaceMode
+    activeType?: EntityType
     activeId?: string
+    helpTopic?: string
 
     error: string | undefined
 }
@@ -1493,6 +1483,6 @@ export interface SessionSaveState {
 
 export interface WorkspaceCloneState {
     expandedItems?: string[]
-    activeType?: EditableEntityType
+    activeType?: EntityType
     activeId?: string
 }

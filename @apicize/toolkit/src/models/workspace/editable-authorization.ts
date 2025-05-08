@@ -5,11 +5,11 @@ import {
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable } from "mobx"
 import { NO_SELECTION } from "../store"
-import { EditableEntityType } from "./editable-entity-type"
+import { EntityType } from "./entity-type"
 import { EntityAuthorization, WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableAuthorization extends Editable<Authorization> {
-    public readonly entityType = EditableEntityType.Authorization
+    public readonly entityType = EntityType.Authorization
 
     @observable accessor type: AuthorizationType = AuthorizationType.Basic
     // API Key

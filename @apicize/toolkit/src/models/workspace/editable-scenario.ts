@@ -2,11 +2,11 @@ import { Scenario, Variable, VariableSourceType } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable, toJS } from "mobx"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
-import { EditableEntityType } from "./editable-entity-type"
+import { EntityType } from "./entity-type"
 import { EntityScenario, WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableScenario extends Editable<Scenario> {
-    public readonly entityType = EditableEntityType.Scenario
+    public readonly entityType = EntityType.Scenario
     @observable accessor variables: EditableVariable[] = []
 
     public constructor(entry: Scenario, workspace: WorkspaceStore) {

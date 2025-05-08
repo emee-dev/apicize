@@ -1,11 +1,11 @@
 import { CertificateType, Certificate } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable } from "mobx"
-import { EditableEntityType } from "./editable-entity-type"
+import { EntityType } from "./entity-type"
 import { EntityCertificate, WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableCertificate extends Editable<Certificate> {
-    public readonly entityType = EditableEntityType.Certificate
+    public readonly entityType = EntityType.Certificate
 
     @observable accessor type = CertificateType.PKCS8_PEM
     @observable accessor pem = ''

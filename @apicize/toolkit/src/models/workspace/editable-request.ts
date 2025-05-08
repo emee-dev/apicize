@@ -3,13 +3,13 @@ import { EditableState } from "../editable"
 import { action, computed, observable, toJS } from "mobx"
 import { EditableNameValuePair } from "./editable-name-value-pair"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
-import { EditableEntityType } from "./editable-entity-type"
+import { EntityType } from "./entity-type"
 import { EntityRequest, WorkspaceStore } from "../../contexts/workspace.context"
 import { EditableRequestEntry } from "./editable-request-entry"
 import { RequestDuplex } from "undici-types"
 
 export class EditableRequest extends EditableRequestEntry {
-    public readonly entityType = EditableEntityType.Request
+    public readonly entityType = EntityType.Request
 
     @observable public accessor url = ''
 

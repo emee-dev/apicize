@@ -2,7 +2,7 @@ import { Persistence } from "@apicize/lib-typescript"
 import { ListItemIcon, ListItemText, Menu, MenuItem, SvgIcon, useTheme } from "@mui/material"
 import ProxyIcon from "../../../icons/proxy-icon"
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
-import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
+import { EntityType } from "../../../models/workspace/entity-type"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { useState } from "react"
 import { ParameterSection } from "./parameter-section"
@@ -26,7 +26,7 @@ export const ProxySection = observer((props: {
     }
 
     const selectProxy = (id: string) => {
-        workspace.changeActive(EditableEntityType.Proxy, id)
+        workspace.changeActive(EntityType.Proxy, id)
     }
 
     const handleAddProxy = (relativeToId: string, relativePosition: IndexedEntityPosition) => {
@@ -58,7 +58,7 @@ export const ProxySection = observer((props: {
         setProxyMenu(
             {
                 id,
-                type: EditableEntityType.Proxy,
+                type: EntityType.Proxy,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
                 persistence,
@@ -124,7 +124,7 @@ export const ProxySection = observer((props: {
         contextMenu={<ProxyMenu />}
         iconColor='proxy'
         helpTopic='workspace/proxies'
-        type={EditableEntityType.Proxy}
+        type={EntityType.Proxy}
         parameters={workspace.navigation.proxies}
         onSelect={selectProxy}
         onSelectHeader={handleSelectHeader}

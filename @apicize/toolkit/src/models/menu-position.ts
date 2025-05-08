@@ -1,9 +1,9 @@
 import { Persistence } from "@apicize/lib-typescript"
-import { EditableEntityType } from "./workspace/editable-entity-type"
+import { EntityType } from "./workspace/entity-type"
 
 export interface MenuPosition {
     id: string
-    type: EditableEntityType
+    type: EntityType
     mouseX: number
     mouseY: number
     persistence: Persistence

@@ -5,7 +5,7 @@ import { useFileOperations } from "../../contexts/file-operations.context";
 import { useWorkspace } from "../../contexts/workspace.context";
 import { IconButton, MenuItem } from "@mui/material";
 import { Stack, Box, ResponsiveStyleValue, SxProps } from "@mui/system";
-import { EditableEntityType } from "../../models/workspace/editable-entity-type";
+import { EntityType } from "../../models/workspace/entity-type";
 import { DropdownMenu } from "./dropdown-menu";
 import PostAddIcon from '@mui/icons-material/PostAdd'
 import FileOpenIcon from '@mui/icons-material/FileOpen'
@@ -53,7 +53,7 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
         if (e.ctrlKey) {
             switch (e.key) {
                 case 'Enter':
-                    if (!(workspace.activeSelection && (workspace.activeSelection.type === EditableEntityType.Request || workspace.activeSelection.type === EditableEntityType.Group))) {
+                    if (!(workspace.activeSelection && (workspace.activeSelection.type === EntityType.Request || workspace.activeSelection.type === EntityType.Group))) {
                         return
                     }
                     workspace.executeRequest(workspace.activeSelection.id, !e.shiftKey)

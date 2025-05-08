@@ -1,11 +1,11 @@
 import { ExternalData, ExternalDataSourceType } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable, toJS } from "mobx"
-import { EditableEntityType } from "./editable-entity-type"
+import { EntityType } from "./entity-type"
 import { WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableExternalDataEntry extends Editable<ExternalData> {
-    public readonly entityType = EditableEntityType.ExternalData
+    public readonly entityType = EntityType.Data
 
     @observable accessor type: ExternalDataSourceType = ExternalDataSourceType.FileJSON
     @observable accessor source: string = ''

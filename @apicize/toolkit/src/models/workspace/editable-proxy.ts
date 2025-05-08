@@ -1,11 +1,11 @@
 import { Proxy } from "@apicize/lib-typescript"
 import { Editable, EditableState } from "../editable"
 import { action, computed, observable } from "mobx"
-import { EditableEntityType } from "./editable-entity-type"
+import { EntityType } from "./entity-type"
 import { EntityProxy, WorkspaceStore } from "../../contexts/workspace.context"
 
 export class EditableProxy extends Editable<Proxy> {
-    public readonly entityType = EditableEntityType.Proxy
+    public readonly entityType = EntityType.Proxy
     @observable accessor url = ''
 
     public constructor(entry: Proxy, workspace: WorkspaceStore) {

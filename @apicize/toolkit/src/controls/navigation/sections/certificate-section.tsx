@@ -2,7 +2,7 @@ import { Persistence } from "@apicize/lib-typescript"
 import { ListItemIcon, ListItemText, Menu, MenuItem, SvgIcon, useTheme } from "@mui/material"
 import CertificateIcon from "../../../icons/certificate-icon"
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
-import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
+import { EntityType } from "../../../models/workspace/entity-type"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { useState } from "react"
 import { ParameterSection } from "./parameter-section"
@@ -24,7 +24,7 @@ export const CertificateSection = observer((props: { includeHeader: boolean }) =
     }
 
     const selectCertificate = (id: string) => {
-        workspace.changeActive(EditableEntityType.Certificate, id)
+        workspace.changeActive(EntityType.Certificate, id)
     }
 
     const handleAddCertificate = (targetCertificateId: string, targetPosition: IndexedEntityPosition) => {
@@ -56,7 +56,7 @@ export const CertificateSection = observer((props: { includeHeader: boolean }) =
         setCertificateMenu(
             {
                 id,
-                type: EditableEntityType.Certificate,
+                type: EntityType.Certificate,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
                 persistence,
@@ -122,7 +122,7 @@ export const CertificateSection = observer((props: { includeHeader: boolean }) =
         contextMenu={<CertificateMenu />}
         iconColor='certificate'
         helpTopic='workspace/certificates'
-        type={EditableEntityType.Certificate}
+        type={EntityType.Certificate}
         parameters={workspace.navigation.certificates}
         onSelect={selectCertificate}
         onSelectHeader={handleSelectHeader}

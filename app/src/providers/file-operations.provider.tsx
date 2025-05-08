@@ -237,7 +237,20 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
 
     const cloneWorkspace = async () => {
         try {
-            await core.invoke('clone_workspace', { sessionId: activeSessionId })
+            workspaceStore.expandedItems
+            workspaceStore.activeSelection?.id
+            workspaceStore.activeSelection?.type
+
+            await core.invoke('clone_workspace', {
+                sessionId: activeSessionId,
+                startupState: {
+                    expandedItems: workspaceStore.expandedItems,
+                    mode: workspaceStore.mode,
+                    activeId: workspaceStore.activeSelection?.id,
+                    activeType: workspaceStore.activeSelection?.type,
+                    helpTopic: workspaceStore.helpTopic,
+                }
+            })
         } catch (e) {
             feedback.toastError(e)
         }

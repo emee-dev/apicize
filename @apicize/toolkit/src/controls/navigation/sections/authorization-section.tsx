@@ -2,7 +2,7 @@ import { Persistence } from "@apicize/lib-typescript"
 import { ListItemIcon, ListItemText, Menu, MenuItem, SvgIcon, useTheme } from "@mui/material"
 import AuthorizationIcon from "../../../icons/auth-icon";
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
-import { EditableEntityType } from "../../../models/workspace/editable-entity-type"
+import { EntityType } from "../../../models/workspace/entity-type"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { useState } from "react"
 import { ParameterSection } from "./parameter-section"
@@ -24,7 +24,7 @@ export const AuthorizationSection = observer((props: { includeHeader: boolean })
     }
 
     const selectAuthorization = (id: string) => {
-        workspace.changeActive(EditableEntityType.Authorization, id)
+        workspace.changeActive(EntityType.Authorization, id)
     }
 
     const handleAddAuthorization = (targetAuthorizationId: string, targetPosition: IndexedEntityPosition) => {
@@ -56,7 +56,7 @@ export const AuthorizationSection = observer((props: { includeHeader: boolean })
         setAuthorizationMenu(
             {
                 id,
-                type: EditableEntityType.Authorization,
+                type: EntityType.Authorization,
                 mouseX: event.clientX - 1,
                 mouseY: event.clientY - 6,
                 persistence,
@@ -122,7 +122,7 @@ export const AuthorizationSection = observer((props: { includeHeader: boolean })
         contextMenu={<AuthorizationMenu />}
         iconColor='authorization'
         helpTopic='workspace/authorizations'
-        type={EditableEntityType.Authorization}
+        type={EntityType.Authorization}
         parameters={workspace.navigation.authorizations}
         onSelect={selectAuthorization}
         onSelectHeader={handleSelectHeader}

@@ -19,7 +19,7 @@ import { ResultsPanel, useWorkspace } from "../../contexts/workspace.context";
 // import { MAX_TEXT_RENDER_LENGTH } from "./text-viewer";
 import RequestIcon from "../../icons/request-icon";
 import { ExecutionResultSuccess } from "@apicize/lib-typescript";
-import { EditableEntityType } from '../../models/workspace/editable-entity-type';
+import { EntityType } from '../../models/workspace/entity-type';
 
 export const MAX_TEXT_RENDER_LENGTH = 64 * 1024 * 1024
 
@@ -32,7 +32,7 @@ export const ResultsViewer = observer((props: {
 
     const activeSelection = workspace.activeSelection
     if (!(activeSelection &&
-        (activeSelection.type === EditableEntityType.Request || activeSelection.type === EditableEntityType.Group)
+        (activeSelection.type === EntityType.Request || activeSelection.type === EntityType.Group)
     )) {
         return null
     }

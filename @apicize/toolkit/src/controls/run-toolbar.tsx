@@ -3,7 +3,7 @@ import { SxProps } from "@mui/material";
 import { observer } from "mobx-react-lite";
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined'
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
-import { EditableEntityType } from "../models/workspace/editable-entity-type";
+import { EntityType } from "../models/workspace/entity-type";
 import { useWorkspace, WorkspaceMode } from "../contexts/workspace.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 import BlockIcon from '@mui/icons-material/Block';
@@ -39,7 +39,7 @@ export const RunToolbar = observer((props: { sx?: SxProps, requestEntry: Editabl
         }
     }
 
-    const label = props.requestEntry.entityType === EditableEntityType.Group ? 'group' : 'request'
+    const label = props.requestEntry.entityType === EntityType.Group ? 'group' : 'request'
 
     let runDisplay: string
     let multiDisplay: string

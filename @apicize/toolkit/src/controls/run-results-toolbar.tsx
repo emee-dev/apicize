@@ -7,7 +7,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import { Execution } from "../models/workspace/execution";
 import { ExecutionResultSummary } from "@apicize/lib-typescript";
-import { EditableEntityType } from "../models/workspace/editable-entity-type";
+import { EntityType } from "../models/workspace/entity-type";
 
 export const RunResultsToolbar = observer((props: {
     className?: string,
@@ -18,7 +18,7 @@ export const RunResultsToolbar = observer((props: {
 
     const activeSelection = workspace.activeSelection
     if (!(activeSelection &&
-        (activeSelection.type === EditableEntityType.Request || activeSelection?.type === EditableEntityType.Group)
+        (activeSelection.type === EntityType.Request || activeSelection?.type === EntityType.Group)
     )) {
         return null
     }

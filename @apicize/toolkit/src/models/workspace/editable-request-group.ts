@@ -1,12 +1,12 @@
 import { RequestGroup, GroupExecution } from "@apicize/lib-typescript"
 import { observable, computed, action } from "mobx"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
-import { EditableEntityType } from "./editable-entity-type"
+import { EntityType } from "./entity-type"
 import { EntityGroup, WorkspaceStore } from "../../contexts/workspace.context"
 import { EditableRequestEntry } from "./editable-request-entry"
 
 export class EditableRequestGroup extends EditableRequestEntry {
-    public readonly entityType = EditableEntityType.Group
+    public readonly entityType = EntityType.Group
 
     @observable public accessor execution = GroupExecution.Sequential
 
