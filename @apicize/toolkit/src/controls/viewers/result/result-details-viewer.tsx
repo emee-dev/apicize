@@ -12,6 +12,7 @@ import { useWorkspace } from "../../../contexts/workspace.context"
 import { useFeedback } from "../../../contexts/feedback.context"
 import { useState } from "react"
 import { Execution } from "../../../models/workspace/execution"
+import { base64Encode } from "../../../services/base64"
 
 export const ResultDetailsViewer = observer((props: { execution: Execution }) => {
 
@@ -29,11 +30,21 @@ export const ResultDetailsViewer = observer((props: { execution: Execution }) =>
     if (!details || updateKey !== currentUpdateKey) {
         workspace.getExecutionResultDetail(requestOrGroupId, resultIndex)
             .then(d => {
-                setDetails(d)
+                if (d.entityType === 'request' && d.request?.body?.type === 'Binary') {
+                    //@ts-expect-error
+                    d.request.body.data = base64Encode(d.request.body.data)
+                    if (d.response?.body?.type === 'Binary') {
+                        //@ts-expect-error
+                        d.response.body.data = base64Encode(d.request.body.data)
+                    }
+                }
+                setDetails({ ...d, entityType: undefined } as unknown as ExecutionResultDetail)
                 setCurrentUpdateKey(updateKey)
             }).catch(e => feedback.toastError(e))
         return
     }
+
+
 
     const text = beautify.js_beautify(JSON.stringify(details), {})
 

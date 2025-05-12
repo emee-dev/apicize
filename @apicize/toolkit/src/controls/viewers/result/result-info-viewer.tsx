@@ -233,7 +233,10 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                 clipboardCtx.writeTextToClipboard(
                     beautify.js_beautify(JSON.stringify(payload), {})
                 )
-                feedback.toast('Data copied to clipboard', ToastSeverity.Success)
+                    .then(() =>
+                        feedback.toast('Data copied to clipboard', ToastSeverity.Success)
+                    )
+                    .catch(e => feedback.toastError(e))
             }
         } catch (e) {
             feedback.toast(`${e}`, ToastSeverity.Error)

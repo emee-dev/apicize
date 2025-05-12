@@ -58,6 +58,17 @@ pub enum RequestEntryInfo {
     Group { group: RequestGroup },
 }
 
+
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RequestHeaderInfo {
+    /// Unique identifier (required to keep track of dispatches and test executions)
+    pub id: String,
+    /// HTTP headers
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub headers: Option<Vec<NameValuePair>>,
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestBodyInfo {
@@ -65,8 +76,6 @@ pub struct RequestBodyInfo {
     pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub body: Option<RequestBody>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub headers: Option<Vec<NameValuePair>>,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
@@ -91,9 +100,6 @@ pub struct RequestInfo {
     pub runs: usize,
     /// Execution of multiple runs
     pub multi_run_execution: ExecutionConcurrency,
-    /// HTTP headers
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub headers: Option<Vec<NameValuePair>>,
     /// HTTP query string parameters
     #[serde(skip_serializing_if = "Option::is_none")]
     pub query_string_params: Option<Vec<NameValuePair>>,
@@ -154,6 +160,29 @@ pub struct WorkspaceSaveStatus {
     pub file_name: String,
     /// Display name
     pub display_name: String,
+}
+
+impl RequestInfo {
+    fn from_ref(request: &Request) -> Self {
+        RequestInfo {
+            id: request.id.clone(),
+            name: request.name.clone(),
+            url: request.url.clone(),
+            method: request.method.clone(),
+            timeout: request.timeout,
+            keep_alive: request.keep_alive,
+            runs: request.runs,
+            multi_run_execution: request.multi_run_execution.clone(),
+            query_string_params: request.query_string_params.clone(),
+            test: request.test.clone(),
+            selected_scenario: request.selected_scenario.clone(),
+            selected_authorization: request.selected_authorization.clone(),
+            selected_certificate: request.selected_certificate.clone(),
+            selected_proxy: request.selected_proxy.clone(),
+            selected_data: request.selected_data.clone(),
+            warnings: request.warnings.clone(),
+        }
+    }
 }
 
 impl ParamNavigationSection {
@@ -445,25 +474,7 @@ impl Workspaces {
         match workspace.requests.entities.get(request_id) {
             Some(entry) => match entry {
                 RequestEntry::Request(request) => Ok(RequestEntryInfo::Request {
-                    request: RequestInfo {
-                        id: request.id.clone(),
-                        name: request.name.clone(),
-                        url: request.url.clone(),
-                        method: request.method.clone(),
-                        timeout: request.timeout,
-                        keep_alive: request.keep_alive,
-                        runs: request.runs,
-                        multi_run_execution: request.multi_run_execution.clone(),
-                        headers: request.headers.clone(),
-                        query_string_params: request.query_string_params.clone(),
-                        test: request.test.clone(),
-                        selected_scenario: request.selected_scenario.clone(),
-                        selected_authorization: request.selected_authorization.clone(),
-                        selected_certificate: request.selected_certificate.clone(),
-                        selected_proxy: request.selected_proxy.clone(),
-                        selected_data: request.selected_data.clone(),
-                        warnings: request.warnings.clone(),
-                    },
+                    request: RequestInfo::from_ref(request),
                 }),
                 RequestEntry::Group(group) => Ok(RequestEntryInfo::Group {
                     group: group.clone(),
@@ -648,7 +659,6 @@ impl Workspaces {
                     existing_request.test = request.test;
                     existing_request.url = request.url;
                     existing_request.method = request.method;
-                    existing_request.headers = request.headers;
                     existing_request.query_string_params = request.query_string_params;
                     existing_request.timeout = request.timeout;
                     existing_request.keep_alive = request.keep_alive;
@@ -709,6 +719,24 @@ impl Workspaces {
         }
     }
 
+    pub fn get_request_headers(
+        &self,
+        workspace_id: &str,
+        request_id: &str,
+    ) -> Result<RequestHeaderInfo, ApicizeAppError> {
+        let workspace = self.get_workspace(workspace_id)?;
+        match workspace.requests.entities.get(request_id) {
+            Some(s) => match s {
+                RequestEntry::Request(request) => Ok(RequestHeaderInfo {
+                    id: request.id.clone(),
+                    headers: request.headers.clone(),
+                }),
+                RequestEntry::Group(_) => Err(ApicizeAppError::InvalidRequest(request_id.into())),
+            },
+            None => Err(ApicizeAppError::InvalidRequest(request_id.into())),
+        }
+    }
+
     pub fn get_request_body(
         &self,
         workspace_id: &str,
@@ -720,7 +748,6 @@ impl Workspaces {
                 RequestEntry::Request(request) => Ok(RequestBodyInfo {
                     id: request.id.clone(),
                     body: request.body.clone(),
-                    headers: request.headers.clone(),
                 }),
                 RequestEntry::Group(_) => Err(ApicizeAppError::InvalidRequest(request_id.into())),
             },
@@ -768,11 +795,35 @@ impl Workspaces {
         Ok(result)
     }
 
+    /// Update request headers and return reference to request info so it can be resent
+    pub fn update_request_headers(
+        &mut self,
+        workspace_id: &str,
+        header_info: RequestHeaderInfo,
+    ) -> Result<RequestInfo, ApicizeAppError> {
+        match self.workspaces.get_mut(workspace_id) {
+            Some(info) => {
+                info.dirty = true;
+                let id = &header_info.id;
+                if let Some(RequestEntry::Request(existing_request)) =
+                    info.workspace.requests.entities.get_mut(id)
+                {
+                    existing_request.headers = header_info.headers;
+                    Ok(RequestInfo::from_ref(existing_request))
+                } else {
+                    Err(ApicizeAppError::InvalidRequest(header_info.id))
+                }
+            }
+            None => Err(ApicizeAppError::InvalidWorkspace(workspace_id.into())),
+        }
+    }
+
+    /// Update request body and return reference to request info so it can be resent
     pub fn update_request_body(
         &mut self,
         workspace_id: &str,
         body_info: RequestBodyInfo,
-    ) -> Result<(), ApicizeAppError> {
+    ) -> Result<RequestInfo, ApicizeAppError> {
         match self.workspaces.get_mut(workspace_id) {
             Some(info) => {
                 info.dirty = true;
@@ -780,9 +831,10 @@ impl Workspaces {
                 if let Some(RequestEntry::Request(existing_request)) =
                     info.workspace.requests.entities.get_mut(id)
                 {
-                    existing_request.body = body_info.body;
-                    existing_request.headers = body_info.headers;
-                    Ok(())
+                    if body_info.body.is_some() {
+                        existing_request.body = body_info.body;
+                    }
+                    Ok(RequestInfo::from_ref(existing_request))
                 } else {
                     Err(ApicizeAppError::InvalidRequest(body_info.id))
                 }
@@ -1599,14 +1651,15 @@ pub enum EntityType {
     Request = 2,
     Group = 3,
     Body = 4,
-    Scenario = 5,
-    Authorization = 6,
-    Certificate = 7,
-    Proxy = 8,
-    Data = 9,
-    Parameters = 10,
-    Defaults = 11,
-    Warnings = 12,
+    Headers = 5,
+    Scenario = 6,
+    Authorization = 7,
+    Certificate = 8,
+    Proxy = 9,
+    Data = 10,
+    Parameters = 11,
+    Defaults = 12,
+    Warnings = 13,
 }
 
 impl Display for EntityType {
@@ -1615,6 +1668,7 @@ impl Display for EntityType {
             EntityType::RequestEntry => "RequestEntry",
             EntityType::Request => "Request",
             EntityType::Group => "Group",
+            EntityType::Headers => "Headers",
             EntityType::Body => "Body",
             EntityType::Scenario => "Scenario",
             EntityType::Authorization => "Authorization",
@@ -1636,6 +1690,7 @@ pub enum Entity {
     Request(RequestInfo),
     Group(RequestGroup),
     Body(RequestBodyInfo),
+    Headers(RequestHeaderInfo),
     Scenario(Scenario),
     Authorization(Authorization),
     Certificate(Certificate),

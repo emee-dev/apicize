@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.18.1
+
+* Include updated lib to prioritize scenario and data variables over previous run results
+* Fix move group
+* Fix body update header
+
 # 0.18.0
 
 * Multi-window

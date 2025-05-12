@@ -192,7 +192,7 @@ export const RichEditor = forwardRef((props: {
             setInitialized(true)
         }
 
-    }, [props.value])
+    }, [props.value, props.mode])
 
     useEffect(() => {
         if (editor.current) {

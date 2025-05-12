@@ -118,10 +118,10 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
 
                     <Box flexGrow={1} className={panelsClass}>
                         {usePanel === 'Info' ? <RequestInfoEditor request={request} />
-                            : usePanel === 'Headers' ? <RequestHeadersEditor request={request} />
+                            : usePanel === 'Headers' ? <RequestHeadersEditor headers={activeSelection.requestHeaders} />
                                 : usePanel === 'Query String' ? <RequestQueryStringEditor request={request} />
 
-                                    : usePanel === 'Body' ? <RequestBodyEditor body={activeSelection.requestBody} />
+                                    : usePanel === 'Body' ? <RequestBodyEditor body={activeSelection.requestBody} headers={activeSelection.requestHeaders} />
                                         : usePanel === 'Test' ? <RequestTestEditor request={request} />
                                             : usePanel === 'Parameters' ? <RequestParametersEditor requestOrGroup={request} parameters={activeSelection.parameters} />
                                                 // : usePanel === 'Warnings' ? <RequestWarningsEditor requestOrGroupId={request.id} />

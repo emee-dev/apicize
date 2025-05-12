@@ -25,7 +25,7 @@ export interface ExecutionResultDetailRequest {
     duration: number,
 
     /// Variables assigned to the request
-    inputVariables?: Map<string, JsonValue>,
+    variables?: Map<string, JsonValue>,
 
     /// Row data assigned to the request
     data?: Map<string, JsonValue>,

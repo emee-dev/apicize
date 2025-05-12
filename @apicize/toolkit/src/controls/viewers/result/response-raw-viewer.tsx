@@ -29,7 +29,7 @@ export function ResultRawPreview(props: { execution: Execution }) {
                     ? details.response.body
                     : {
                         type: 'Text',
-                        data: ''
+                        text: ''
                     })
                 setCurrentUpdateKey(updateKey)
             }).catch(e => feedback.toastError(e))
@@ -43,19 +43,10 @@ export function ResultRawPreview(props: { execution: Execution }) {
             isBinary = true
             text = base64Encode(body.data)
             break
-        case 'Text':
-            isBinary = false
-            text = body.data
-            break
-        case 'JSON':
+        default:
             isBinary = false
             text = body.text
             break
-        default:
-            isBinary = false
-            text = ''
-            break
-
     }
     const hasData = text.length > 0
 
@@ -72,7 +63,7 @@ export function ResultRawPreview(props: { execution: Execution }) {
                             if (body?.type === 'Binary') {
                                 clipboard.writeImageToClipboard(body.data)
                             } else if (body?.type === 'Text') {
-                                clipboard.writeTextToClipboard(body.data)
+                                clipboard.writeTextToClipboard(body.text)
                             }
                         }}>
                         <ContentCopyIcon />

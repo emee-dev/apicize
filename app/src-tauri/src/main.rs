@@ -365,7 +365,7 @@ async fn initialize_session(
         editor_count,
         defaults: info.workspace.defaults.clone(),
         expanded_items: startup_state.and_then(|s| s.expanded_items.clone()),
-        mode: session.startup_state.as_ref().and_then(|s| s.mode.clone()),
+        mode: session.startup_state.as_ref().and_then(|s| s.mode),
         active_id: startup_state.and_then(|s| s.active_id.clone()),
         active_type: startup_state.and_then(|s| s.active_type.clone()),
         help_topic: startup_state.and_then(|s| s.help_topic.clone()),
@@ -1202,6 +1202,9 @@ async fn get(
         EntityType::RequestEntry => {
             Entity::RequestEntry(workspaces.get_request_entry(&session.workspace_id, entity_id)?)
         }
+        EntityType::Headers => {
+            Entity::Headers(workspaces.get_request_headers(&session.workspace_id, entity_id)?)
+        }
         EntityType::Body => {
             Entity::Body(workspaces.get_request_body(&session.workspace_id, entity_id)?)
         }
@@ -1368,12 +1371,21 @@ async fn update(
         None
     };
 
+    let mut extra_event: Option<Entity> = None;
+
     // Perform updates and, when applicable, navigation updates
     let result = match entity {
         Entity::Request(request) => workspaces.update_request(&session.workspace_id, request),
         Entity::Group(group) => workspaces.update_group(&session.workspace_id, group),
-        Entity::Body(body) => {
-            workspaces.update_request_body(&session.workspace_id, body)?;
+        Entity::Headers(header_info) => {
+            let request_info =
+                workspaces.update_request_headers(&session.workspace_id, header_info)?;
+            extra_event = Some(Entity::Request(request_info));
+            Ok(None)
+        }
+        Entity::Body(body_info) => {
+            let request_info = workspaces.update_request_body(&session.workspace_id, body_info)?;
+            extra_event = Some(Entity::Request(request_info));
             Ok(None)
         }
         Entity::Scenario(scenario) => workspaces.update_scenario(&session.workspace_id, scenario),
@@ -1421,6 +1433,10 @@ async fn update(
             for other_session_id in other_session_ids {
                 app.emit_to(&other_session_id, "update", &event_to_send)
                     .unwrap();
+                if let Some(extra_event_to_send) = &extra_event {
+                    app.emit_to(&other_session_id, "update", extra_event_to_send)
+                        .unwrap();
+                }
             }
         }
     }

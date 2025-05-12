@@ -43,6 +43,8 @@ import { RequestEditSessionType, ResultEditSessionType } from "../controls/edito
 import { FeedbackStore, ToastSeverity } from "./feedback.context"
 import { EditableSettings } from "../models/editable-settings"
 import { IndexedEntityPosition } from "../models/workspace/indexed-entity-position"
+import { EditableRequestHeaders } from "../models/workspace/editable-request-headers"
+import { GenerateIdentifier } from "../services/random-identifier-generator"
 
 export type ResultsPanel = 'Info' | 'Headers' | 'Preview' | 'Text' | 'Details'
 
@@ -268,6 +270,7 @@ export class WorkspaceStore {
             case 'Request':
             case 'Group':
             case 'Body':
+            case 'Headers':
             case 'Scenario':
             case 'Authorization':
             case 'Certificate':
@@ -496,6 +499,14 @@ export class WorkspaceStore {
         return this.callbacks.getTitle(EntityType.RequestEntry, id)
     }
 
+    async getRequestHeaders(id: string) {
+        const result = await this.callbacks.get(EntityType.Headers, id)
+        if (result.entityType == 'Headers') {
+            return new EditableRequestHeaders(result, this)
+        }
+        throw new Error(`Entity is not a request body ${id} (${result.entityType})`)
+    }
+
     async getRequestBody(id: string) {
         const result = await this.callbacks.get(EntityType.Body, id)
         if (result.entityType == 'Body') {
@@ -513,6 +524,29 @@ export class WorkspaceStore {
     updateGroup(group: EntityGroup) {
         this.callbacks.update(group).catch((e) => {
             this.feedback.toastError(e)
+        })
+    }
+
+    updateHeaders(headers: EntityHeaders) {
+        this.callbacks.update(headers).catch((e) => {
+            this.feedback.toastError(e)
+        }).finally(() => {
+            runInAction(() => {
+                if (this.activeSelection && this.activeSelection.type === EntityType.Request && this.activeSelection.id === headers.id) {
+                    // todo:  trigger check of body headers
+                    // const requestHeaders = this.activeSelection.request?.headers?.sort((a, b) => a.name.localeCompare(b.name)) ?? []
+                    // const bodyHeaders = this.activeSelection.requestBody?.headers?.sort((a, b) => a.name.localeCompare(b.name)) ?? []
+
+                    // let sameHeaders = requestHeaders.length === bodyHeaders.length &&
+                    //     requestHeaders.every((hdr, idx) => {
+                    //         const other = bodyHeaders[idx]
+                    //         return hdr.name === other.name && hdr.value === other.value
+                    //     })
+                    // if (!sameHeaders) {
+                    //     this.changeActive(EntityType.Request, body.id)
+                    // }
+                }
+            })
         })
     }
 
@@ -594,7 +628,11 @@ export class WorkspaceStore {
 
     @action
     moveGroup(groupId: string, relativeToId: string, relativePosition: IndexedEntityPosition) {
-        return this.callbacks.move(EntityType.Group, groupId, relativeToId, relativePosition)
+        this.callbacks.move(EntityType.Group, groupId, relativeToId, relativePosition)
+            .then(parentIds => {
+                this.updateExpanded(parentIds.map(pid => `g-${pid}`), true)
+            })
+            .catch(e => this.feedback.toastError(e))
     }
 
     async getScenario(id: string) {
@@ -1213,6 +1251,7 @@ export class ActiveSelection {
     @observable public accessor request: EditableRequest | null = null
     @observable public accessor group: EditableRequestGroup | null = null
     @observable public accessor requestBody: EditableRequestBody | null = null
+    @observable public accessor requestHeaders: EditableRequestHeaders | null = null
     @observable public accessor scenario: EditableScenario | null = null
     @observable public accessor authorization: EditableAuthorization | null = null
     @observable public accessor certificate: EditableCertificate | null = null
@@ -1289,6 +1328,11 @@ export class ActiveSelection {
                     this.group.refreshFromExternalUpdate(updatedItem)
                 }
                 break
+            case "Headers":
+                if (this.request && this.request.id == updatedItem.id && this.requestHeaders) {
+                    this.requestHeaders.refreshFromExternalUpdate(updatedItem)
+                }
+                break
             case "Body":
                 if (this.request && this.request.id == updatedItem.id && this.requestBody) {
                     this.requestBody.refreshFromExternalUpdate(updatedItem)
@@ -1329,6 +1373,17 @@ export class ActiveSelection {
     }
 
     @action
+    public initializeHeaders() {
+        if (this.type === EntityType.Request) {
+            this.workspace.getRequestHeaders(this.id)
+                .then(result => runInAction(() => {
+                    this.requestHeaders = result
+                }))
+                .catch(e => this.feedback.toastError(e))
+        }
+    }
+
+    @action
     public initializeParameters() {
         switch (this.type) {
             case EntityType.Request:
@@ -1343,8 +1398,8 @@ export class ActiveSelection {
     }
 }
 
-export type Entity = EntityRequestEntry | EntityRequest | EntityGroup | EntityBody |
-    EntityScenario | EntityAuthorization | EntityCertificate | EntityProxy |
+export type Entity = EntityRequestEntry | EntityRequest | EntityGroup | EntityHeaders |
+    EntityBody | EntityScenario | EntityAuthorization | EntityCertificate | EntityProxy |
     EntityData | EntityDataList | EntityDefaults
 
 export interface EntityRequestEntry {
@@ -1361,11 +1416,16 @@ export interface EntityGroup extends RequestGroup {
     entityType: 'Group'
 }
 
+export interface EntityHeaders {
+    entityType: 'Headers'
+    id: string
+    headers?: NameValuePair[]
+}
+
 export interface EntityBody {
     entityType: 'Body'
     id: string
-    body: Body | undefined
-    headers?: NameValuePair[]
+    body?: Body
 }
 
 export interface EntityScenario extends Scenario {

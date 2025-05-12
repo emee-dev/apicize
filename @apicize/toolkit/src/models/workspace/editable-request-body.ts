@@ -10,13 +10,11 @@ export class EditableRequestBody extends Editable<Body> {
     public readonly state = EditableState.None
 
     @observable public accessor type: BodyType = BodyType.None
-    @observable public accessor headers: NameValuePair[] = []
     @observable public accessor data: string | NameValuePair[] | Uint8Array | undefined = undefined
 
     public constructor(info: RequestBodyInfo, workspace: WorkspaceStore) {
         super(workspace)
         this.id = info.id
-        this.headers = info.headers ?? []
         if (info.body && info.body.data) {
             this.type = info.body.type
             this.data = info.body.data
@@ -32,19 +30,11 @@ export class EditableRequestBody extends Editable<Body> {
         this.workspace.updateBody({
             entityType: 'Body',
             id: this.id,
-            body: (this.type !== BodyType.None && this.data)
-                ? {
-                    type: this.type,
-                    data: this.data
-                } as Body
-                : undefined
+            body: {
+                type: this.type,
+                data: this.data
+            } as Body
         })
-    }
-
-    @action
-    setHeaders(value: NameValuePair[] | undefined) {
-        this.headers = value ?? []
-        this.onUpdate()
     }
 
     @action
@@ -178,7 +168,6 @@ export class EditableRequestBody extends Editable<Body> {
                     break
             }
         }
-        this.headers = updatedItem.headers ?? []
     }
 }
 
@@ -216,5 +205,4 @@ const decodeFormData = (bodyData: string | number[] | undefined) => {
 export interface RequestBodyInfo {
     id: string
     body?: Body
-    headers?: NameValuePair[]
 }

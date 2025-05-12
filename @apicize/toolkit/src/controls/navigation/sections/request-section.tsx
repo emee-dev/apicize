@@ -116,8 +116,13 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
     }
 
     const handleMoveRequest = (id: string, relativeToId: string, relativePosition: IndexedEntityPosition) => {
-        selectRequestOrGroup(id)
+        workspace.changeActive(EntityType.Request, id)
         workspace.moveRequest(id, relativeToId, relativePosition)
+    }
+
+    const handleMoveRequestGroup = (id: string, relativeToId: string, relativePosition: IndexedEntityPosition) => {
+        workspace.changeActive(EntityType.Group, id)
+        workspace.moveGroup(id, relativeToId, relativePosition)
     }
 
     const handleDupeRequest = (id: string, type: EntityType) => {
@@ -133,10 +138,6 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
                     break
             }
         }
-    }
-
-    const selectRequestOrGroup = (id: string) => {
-        workspace.changeActive(EntityType.Request, id)
     }
 
     function RequestsMenu() {
@@ -240,9 +241,9 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
                 type={EntityType.Group}
                 acceptDropTypes={[EntityType.Request, EntityType.Group]}
                 acceptDropAppends={true}
-                onSelect={selectRequestOrGroup}
+                onSelect={() => workspace.changeActive(EntityType.Group, entry.id)}
                 onMenu={showRequestMenu}
-                onMove={handleMoveRequest}
+                onMove={handleMoveRequestGroup}
                 isDraggable={true}
                 icon={<FolderIcon />}
                 iconColor="folder"
@@ -257,7 +258,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
                 depth={depth}
                 type={EntityType.Request}
                 acceptDropTypes={[EntityType.Request, EntityType.Group]}
-                onSelect={selectRequestOrGroup}
+                onSelect={() => workspace.changeActive(EntityType.Request, entry.id)}
                 onMenu={showRequestMenu}
                 onMove={handleMoveRequest}
                 isDraggable={true}

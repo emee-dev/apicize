@@ -22,7 +22,6 @@ export function ResultResponsePreview(props: { execution: Execution }) {
 
     const [body, setBody] = useState<ApicizeBody | null>(null)
     const [extension, setExtension] = useState<string | null>(null)
-    const [headers, setHeaders] = useState<Map<string, string> | null>(null)
     const [currentUpdateKey, setCurrentUpdateKey] = useState('')
 
     if (!body || updateKey !== currentUpdateKey) {
@@ -32,14 +31,13 @@ export function ResultResponsePreview(props: { execution: Execution }) {
                     ? details.response.body
                     : {
                         type: 'Text',
-                        data: ''
+                        text: ''
                     })
 
                 const headers = details.entityType === 'request' && details.response?.headers
                     ? new Map(Object.entries(details.response.headers))
                     : new Map()
 
-                setHeaders(headers)
                 setCurrentUpdateKey(updateKey)
 
                 for (const [name, value] of headers.entries()) {
@@ -56,11 +54,10 @@ export function ResultResponsePreview(props: { execution: Execution }) {
         return
     }
 
-
     let image: Uint8Array = new Uint8Array()
     let text: string = ''
 
-    switch (body?.type) {
+    switch (body.type) {
         case 'Binary':
             if (extension && KNOWN_IMAGE_EXTENSIONS.indexOf(extension) !== -1 && body.data.length > 0) {
                 image = body.data
@@ -69,22 +66,22 @@ export function ResultResponsePreview(props: { execution: Execution }) {
         case 'JSON':
             text = beautify.js_beautify(JSON.stringify(body.data), {})
             break
-        case 'Text':
+        default:
             switch (extension) {
                 case 'html':
-                    text = beautify.html_beautify(body.data, {})
+                    text = beautify.html_beautify(body.text, {})
                     break
                 case 'css':
-                    text = beautify.css_beautify(body.data, {})
+                    text = beautify.css_beautify(body.text, {})
                     break
                 case 'js':
-                    text = beautify.js_beautify(body.data, {})
+                    text = beautify.js_beautify(body.text, {})
                     break
                 case 'json':
-                    text = beautify.js_beautify(body.data, {})
+                    text = beautify.js_beautify(body.text, {})
                     break
                 default:
-                    text = body.data
+                    text = body.text
             }
     }
 

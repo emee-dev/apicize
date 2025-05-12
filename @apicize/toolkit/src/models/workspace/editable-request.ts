@@ -16,7 +16,7 @@ export class EditableRequest extends EditableRequestEntry {
     @observable public accessor method = Method.Get
     @observable public accessor timeout = 30000
     @observable public accessor keepalive = false as boolean | undefined
-    @observable public accessor headers: EditableNameValuePair[] = []
+    // @observable public accessor headers: EditableNameValuePair[] = []
     @observable public accessor queryStringParams: EditableNameValuePair[] = []
     // @observable public accessor body: Body = { type: BodyType.None, data: undefined }
     @observable public accessor test = ''
@@ -44,10 +44,10 @@ export class EditableRequest extends EditableRequestEntry {
         this.method = entry.method ?? Method.Get
         this.timeout = entry.timeout ?? 30000
         this.keepalive = entry.keepalive
-        this.headers = entry.headers?.map(h => ({
-            id: GenerateIdentifier(),
-            ...h
-        })) ?? []
+        // this.headers = entry.headers?.map(h => ({
+        //     id: GenerateIdentifier(),
+        //     ...h
+        // })) ?? []
         this.queryStringParams = entry.queryStringParams?.map(q => ({
             id: GenerateIdentifier(),
             ...q
@@ -78,7 +78,7 @@ export class EditableRequest extends EditableRequestEntry {
             : new Map<string, string>()
     }
 
-    protected onUpdate() {
+    public onUpdate() {
         this.markAsDirty()
 
         const request: EntityRequest = {
@@ -87,7 +87,7 @@ export class EditableRequest extends EditableRequestEntry {
             name: this.name,
             url: this.url,
             method: this.method,
-            headers: toJS(this.headers),
+            // headers: toJS(this.headers),
             queryStringParams: toJS(this.queryStringParams),
             // body: (this.body && this.body.type !== BodyType.None)
             //     ? toJS(this.body)
@@ -143,11 +143,11 @@ export class EditableRequest extends EditableRequestEntry {
         this.onUpdate()
     }
 
-    @action
-    setHeaders(value: EditableNameValuePair[] | undefined) {
-        this.headers = value ?? []
-        this.onUpdate()
-    }
+    // @action
+    // setHeaders(value: EditableNameValuePair[] | undefined) {
+    //     this.headers = value ?? []
+    //     this.onUpdate()
+    // }
 
     @action
     setTest(value: string | undefined) {
@@ -165,7 +165,7 @@ export class EditableRequest extends EditableRequestEntry {
         this.mode = entity.mode
         this.runs = entity.runs
         this.multiRunExecution = entity.multiRunExecution
-        this.headers = entity.headers?.map((h) => ({ id: GenerateIdentifier(), ...h })) ?? []
+        // this.headers = entity.headers?.map((h) => ({ id: GenerateIdentifier(), ...h })) ?? []
         this.queryStringParams = entity.queryStringParams?.map((q) => ({ id: GenerateIdentifier(), ...q })) ?? []
         this.redirect = entity.redirect
         this.referrer = entity.referrer

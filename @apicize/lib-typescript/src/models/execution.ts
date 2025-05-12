@@ -139,7 +139,7 @@ export interface ApicizeExecution {
     duration: number
 
     data?: Map<string, JsonValue>[]
-    inputVariables?: Map<string, JsonValue>
+    variables?: Map<string, JsonValue>
     outputVariables?: Map<string, JsonValue>
 
     request?: ApicizeHttpRequest
@@ -154,11 +154,23 @@ export interface ApicizeExecution {
 
 export interface ApicizeBodyText {
     type: 'Text'
-    data: string
+    text: string
 }
 
 export interface ApicizeBodyJSON {
     type: 'JSON'
+    data: object
+    text: string
+}
+
+export interface ApicizeBodyForm {
+    type: 'Form'
+    data: { [name: string]: string }
+    text: string
+}
+
+export interface ApicizeBodyXML {
+    type: 'XML'
     data: object
     text: string
 }
@@ -168,7 +180,7 @@ export interface ApicizeBodyBinary {
     data: Uint8Array
 }
 
-export type ApicizeBody = ApicizeBodyText | ApicizeBodyJSON | ApicizeBodyBinary
+export type ApicizeBody = ApicizeBodyText | ApicizeBodyJSON | ApicizeBodyJSON | ApicizeBodyForm | ApicizeBodyBinary
 
 export interface ApicizeHttpRequest {
     url: string,

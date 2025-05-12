@@ -110,6 +110,7 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
         <IconButton
             id='file-new-menu-button'
             title='New Workspace'
+            size="large"
             sx={{ padding: 0, minWidth: '1em', width: '1em', marginLeft: '-0.3em', alignSelf: alignDropBtnSelf, alignItems: alignDropBtnItems }}
             onClick={handleNewFileMenuClick}
         ><KeyboardArrowDownIcon />
@@ -129,7 +130,11 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
             </MenuItem>
         </DropdownMenu>
 
-        <IconButton aria-label='open' sx={{ fontSize: apicize.navigationFontSize, marginTop: buttonSpacing }} title={`Open Workbook (${apicize.ctrlKey} + O)`} onClick={() => fileOps.openWorkbook(false, undefined, true)}>
+        <IconButton size="large"
+            aria-label='open'
+            sx={{ fontSize: apicize.navigationFontSize, marginTop: buttonSpacing }}
+            title={`Open Workbook (${apicize.ctrlKey} + O)`}
+            onClick={() => fileOps.openWorkbook(false, undefined, true)}>
             <FileOpenIcon />
         </IconButton>
         {
