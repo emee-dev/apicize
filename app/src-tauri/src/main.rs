@@ -318,6 +318,7 @@ fn main() {
             update,
             delete,
             move_entity,
+            // list_logs,
             get_entity_type,
             find_descendant_groups,
         ])
@@ -1564,6 +1565,13 @@ async fn move_entity(
 
     Ok(results)
 }
+
+// #[tauri::command]
+// fn list_logs(app: AppHandle) -> Vec<ReqwestEvent> {
+//     // let logger = REQWEST_LOGGER.get_or_init(|| ReqwestLogger::new(app.clone()));
+//     // logger.logs.read().to_vec()
+//     vec![]
+// }
 
 #[tauri::command]
 async fn get_entity_type(

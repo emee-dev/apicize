@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.19.1
+
+* Small visual fixes on navigation, results viewer and comm log
+
 # 0.19.0
 
 * Return test results as a hierarchy of scenarios/behaviors

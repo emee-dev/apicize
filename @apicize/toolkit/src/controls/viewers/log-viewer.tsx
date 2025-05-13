@@ -7,9 +7,10 @@ import LogIcon from "../../icons/log-icon"
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
-import { useEffect, useRef } from "react"
+import { useRef } from "react"
 import { useClipboard } from "../../contexts/clipboard.context"
 import { useWorkspace } from "../../contexts/workspace.context"
+import { reaction } from "mobx"
 
 export const LogViewer = observer((props: {
     sx?: SxProps<Theme>
@@ -19,19 +20,23 @@ export const LogViewer = observer((props: {
     const clipboard = useClipboard()
     const bottomRef = useRef<HTMLDivElement | null>(null);
 
-    let ctr = 0;
+    let ctr = 0
 
-    useEffect(() => {
-        if (bottomRef.current) {
-            bottomRef.current.scrollIntoView();
+    // useEffect(() => {
+    //     log.checkInitialized(workspace)
+    //         .catch(e => feedback.toastError(e))
+    // }, [])
+
+    reaction(
+        () => log.events.length,
+        (_) => {
+            bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [log.events]);
-
+    )
 
     const nextCtr = () => {
-        let newCtr = ctr + 1
-        ctr = newCtr
-        return newCtr
+        ctr += 1
+        ctr
     }
 
     const renderEvent = (e: ReqwestEvent) => {
@@ -66,7 +71,7 @@ export const LogViewer = observer((props: {
         }).join('\r\n\r\n')
     }
 
-    return <Stack display='flex' direction={'column'} className='editor' position='relative' bottom={0}>
+    return <Stack display='flex' direction='column' className='log-panel'>
         <Box className='editor-panel-header' flexGrow={0}>
             <EditorTitle icon={<SvgIcon><LogIcon /></SvgIcon>} name='Communication Logs'>
                 <Box>
@@ -84,7 +89,7 @@ export const LogViewer = observer((props: {
                 </Box>
             </EditorTitle>
         </Box>
-        <Box className='editor-panel full-width' display='flex' flexGrow={1}>
+        <Box className='editor-panel' display='flex' flexGrow={1} bottom={0} position='relative' maxWidth='None'>
             <Stack direction={'column'} spacing={1} className='console' paddingBottom='2em' paddingRight='2em' flexGrow='1'>
                 {log.events.map(renderEvent)}
                 <div ref={bottomRef} />

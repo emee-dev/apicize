@@ -1,7 +1,7 @@
 'use client'
 
 import * as core from '@tauri-apps/api/core'
-import { ApicizeSettings, DefaultsEvent, DragDropProvider, Entity, EntityType, FeedbackStore, IndexedEntityPosition, LogStore, MainPanel, Navigation, SessionInitialization, SessionSaveState, ToastSeverity, UpdatedNavigationEntry, WorkspaceStore } from '@apicize/toolkit'
+import { ApicizeSettings, DefaultsEvent, DragDropProvider, Entity, EntityType, FeedbackStore, IndexedEntityPosition, LogStore, MainPanel, Navigation, ReqwestEvent, SessionInitialization, SessionSaveState, ToastSeverity, UpdatedNavigationEntry, WorkspaceStore } from '@apicize/toolkit'
 import React, { useEffect, useState } from 'react'
 import "@fontsource/open-sans/latin.css"
 import "@fontsource/roboto-mono/latin.css"
@@ -23,8 +23,9 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 // This is defined externally via Tauri main or other boostrap application
 const sessionId = (window as any).__TAURI_INTERNALS__.metadata.currentWindow.label
 
-const logStore = new LogStore()
 const feedbackStore = new FeedbackStore()
+const logStore = new LogStore()
+
 const workspaceStore = new WorkspaceStore(
   feedbackStore,
   {
@@ -77,6 +78,7 @@ const workspaceStore = new WorkspaceStore(
       relativeToId,
       relativePosition,
     }),
+    // listLogs: () => core.invoke('list_logs'),
     storeToken: (authorizationId, tokenInfo) => core.invoke('store_token', {
       authorizationId,
       tokenInfo
@@ -149,6 +151,7 @@ export default function Home() {
     let unlistenSettingsUpdate = w.listen<ApicizeSettings>('update_settings', (data) => {
       setSettings(data.payload)
     })
+    // let unlistenListLogs = w.listen<ReqwestEvent[]>('list_logs', workspaceStore.listLogs)
     return () => {
       unlistenInitialize.then(() => { })
       unlistenNavigation.then(() => { })
@@ -158,6 +161,7 @@ export default function Home() {
       unlistenUpdate.then(() => { })
       unlistenExecution.then(() => { })
       unlistenSettingsUpdate.then(() => { })
+      // unlistenListLogs.then(() => { })
     }
   })
 

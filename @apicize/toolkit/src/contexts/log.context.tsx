@@ -1,9 +1,19 @@
-import { action, observable } from "mobx"
+import { action, observable, runInAction } from "mobx"
 import { ReqwestEvent } from "../models/trace"
 import { createContext, useContext } from "react"
+import { WorkspaceStore } from "./workspace.context"
+import { FeedbackStore } from "./feedback.context"
 
 export class LogStore {
+    private initialized = false
     @observable accessor events: ReqwestEvent[] = []
+
+    // async checkInitialized(workspace: WorkspaceStore) {
+    //     if (!this.initialized) {
+    //         this.initialized = true
+    //         this.events = await workspace.listLogs()
+    //     }
+    // }
 
     @action
     addEvent(event: ReqwestEvent) {

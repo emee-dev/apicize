@@ -45,6 +45,7 @@ import { EditableSettings } from "../models/editable-settings"
 import { IndexedEntityPosition } from "../models/workspace/indexed-entity-position"
 import { EditableRequestHeaders } from "../models/workspace/editable-request-headers"
 import { GenerateIdentifier } from "../services/random-identifier-generator"
+import { ReqwestEvent } from "../models/trace"
 
 export type ResultsPanel = 'Info' | 'Headers' | 'Preview' | 'Text' | 'Details'
 
@@ -125,6 +126,7 @@ export class WorkspaceStore {
             update: (entity: Entity) => Promise<void>,
             delete: (entityType: EntityType, entityId: string) => Promise<void>,
             move: (entity: EntityType, entityId: string, relativeToId: string, relativePosition: IndexedEntityPosition) => Promise<string[]>,
+            // listLogs: () => Promise<ReqwestEvent[]>,
             getRequestActiveAuthorization: (id: string) => Promise<Authorization | undefined>,
             storeToken: (authorizationId: string, tokenInfo: CachedTokenInfo) => Promise<void>,
             clearToken: (authorizationId: string) => Promise<void>,
@@ -159,7 +161,6 @@ export class WorkspaceStore {
 
     @action
     initialize(initialization: SessionInitialization) {
-        console.log('Initialzing')
         this.pkceTokens.clear()
         this.cachedExecutionDetail = null
         this.defaults = new EditableDefaults(initialization.defaults, this)
@@ -1234,6 +1235,10 @@ export class WorkspaceStore {
             this.resultEditSessions.set(requestOrGroupId, new Map([[index, new Map([[type, session]])]]))
         }
     }
+
+    // public listLogs(): Promise<ReqwestEvent[]> {
+    //     return this.listLogs()
+    // }
 }
 
 export const WorkspaceContext = createContext<WorkspaceStore | null>(null)

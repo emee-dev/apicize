@@ -85,7 +85,7 @@ export const ResultsViewer = observer((props: {
         infoColor = 'error'
     }
 
-    return <Stack direction={'row'} sx={props.sx} className={props.className}>
+    return <Stack direction='row' sx={props.sx} className={props.className}>
         <ToggleButtonGroup
             className='button-column'
             orientation='vertical'

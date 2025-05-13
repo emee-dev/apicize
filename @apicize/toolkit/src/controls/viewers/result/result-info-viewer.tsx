@@ -192,8 +192,8 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                         {
                             (behavior.logs ?? []).map((log) => (
                                 <Box className='test-result' key={`result-${idx++}`}>
-                                    <Stack direction='row' key={`result-${idx++}`}>
-                                        <pre className='log' key={`result-${idx++}`}>{log}</pre>
+                                    <Stack direction='column' key={`result-${idx++}`}>
+                                        <pre className='results' key={`result-${idx++}`}>{log}</pre>
                                     </Stack>
                                 </Box>
                             ))

@@ -97,7 +97,7 @@ export const NavigationControl = observer(() => {
         : <Stack bgcolor='workspace.main' direction='column' useFlexGap gap='0.2em' className='nav-selection-pane' typography='navigation'>
             <Stack direction='row' bgcolor='toolbar.main' padding='0.5em 1em 0.5em 0.5em' minWidth='22em' className='nav-toolbar' fontSize='inherit' typography='navigation'>
                 <NavFileOpsMenu orientation='horizontal' sx={{ display: 'flex', typography: 'navigation' }} />
-                <NavOpsMenu orientation='horizontal' sx={{ display: 'flex', alignSelf: 'flex-end', marginLeft: 'auto', alignContent: 'right', gap: '0.2em', paddingLeft: '2em' }} />
+                <NavOpsMenu orientation='horizontal' sx={{ display: 'flex', marginLeft: 'auto', alignContent: 'right', gap: '0.2em', paddingLeft: '2em' }} />
             </Stack>
             <SimpleTreeView
                 id='navigation'
