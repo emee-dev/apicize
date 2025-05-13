@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.19.0
+
+* Return test results as a hierarchy of scenarios/behaviors
+
 # 0.18.1
 
 * Include updated lib to prioritize scenario and data variables over previous run results

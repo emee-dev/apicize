@@ -73,8 +73,9 @@ export const RequestGroupEditor = observer((props: { sx?: SxProps }) => {
             return apicize.editorPanels
         },
         setItem: (_: string, value: string) => {
-            if (apicize.editorPanels != value) {
+            if (apicize.editorPanels !== value) {
                 lastResize = Date.now()
+                apicize.editorPanels = value
                 saveIfSettled()
             }
         }

@@ -206,11 +206,26 @@ export interface TokenResult {
     proxy?: string
 }
 
-export interface ApicizeTestResult {
-    testName: string[]
+export type ApicizeTestResult = ApicizeTestScenario | ApicizeTestBehavior
+
+export interface ApicizeTestScenario {
+    type: 'Scenario'
+    name: string
+    success: boolean,
+    children: ApicizeTestResult[]
+    testCount: number
+    testFailCount: number
+}
+
+
+export interface ApicizeTestBehavior {
+    type: 'Behavior'
+    name: string
     success: boolean,
     error?: string
     logs?: string[]
+    testCount: number
+    testFailCount: number
 }
 
 export interface ApicizeError {

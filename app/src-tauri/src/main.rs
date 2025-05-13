@@ -499,7 +499,8 @@ async fn open_workspace(
     let mut workspaces = workspaces_state.workspaces.write().await;
     let mut sessions = sessions_state.sessions.write().await;
 
-    let mut existing_workspace: Option<(String, String)> =
+    // Check to see if the workspace is already open
+    let mut workspace: Option<(String, String)> =
         workspaces.workspaces.iter().find_map(|(id, info)| {
             if !info.file_name.is_empty() && file_name.eq(&info.file_name) {
                 Some((id.clone(), info.file_name.clone()))
@@ -508,24 +509,22 @@ async fn open_workspace(
             }
         });
 
-    // If the session we're opening in is the last session for a workbook,
-    // close and re-open the workbook which provides "restore from file" functionality
-    if open_in_session_id.is_some() {
-        if let Some((workspace_id, _)) = &existing_workspace {
-            if let Some(my_session_id) = &open_in_session_id {
-                let workspace_session_ids = sessions.get_workspace_session_ids(workspace_id);
-                if workspace_session_ids.len() == 1
-                    && Some(my_session_id) == workspace_session_ids.first()
-                {
-                    workspaces.remove_workspace(workspace_id);
-                    existing_workspace = None
-                }
+    // If the session we're opening has the last reference to its workspace,
+    // then close that workspace
+    let mut remove_old_workspace: Option<String> = None;
+    if let Some(session_id) = &open_in_session_id {
+        if let Ok(session) = sessions.get_session(session_id) {
+            let workspace_session_count =
+                sessions.get_workspace_session_count(&session.workspace_id);
+            if workspace_session_count == 1 {
+                remove_old_workspace = Some(session.workspace_id.clone());
+                workspace = None;
             }
         }
     }
 
-    if existing_workspace.is_none() {
-        existing_workspace = match Workspace::open(&PathBuf::from(&file_name)) {
+    if workspace.is_none() {
+        workspace = match Workspace::open(&PathBuf::from(&file_name)) {
             Ok(workspace) => Some(workspaces.add_workspace(workspace, &file_name)),
             Err(err) => {
                 return Err(ApicizeAppError::FileAccessError(err));
@@ -533,7 +532,11 @@ async fn open_workspace(
         };
     }
 
-    let (workspace_id, display_name) = existing_workspace.unwrap();
+    if let Some(old_workspace_id) = remove_old_workspace {
+        workspaces.remove_workspace(&old_workspace_id);
+    }
+
+    let (workspace_id, display_name) = workspace.unwrap();
 
     clear_all_oauth2_tokens().await;
 

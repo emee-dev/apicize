@@ -159,14 +159,16 @@ export class WorkspaceStore {
 
     @action
     initialize(initialization: SessionInitialization) {
+        console.log('Initialzing')
         this.pkceTokens.clear()
+        this.cachedExecutionDetail = null
         this.defaults = new EditableDefaults(initialization.defaults, this)
         this.fileName = initialization.fileName
         this.displayName = initialization.displayName
         this.dirty = initialization.dirty
         this.editorCount = initialization.editorCount
         this.navigation = initialization.navigation
-        this.executions.clear
+        this.executions.clear()
         this.updateIndexedNames()
         this.warnings.clear()
         this.warnOnWorkspaceCreds = true

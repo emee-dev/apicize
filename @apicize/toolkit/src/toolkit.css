@@ -400,11 +400,6 @@ pre.log {
   padding: 3em 1em 1em 1em;
 }
 
-.results-info .MuiTreeItem-content {
-  min-height: 2em;
-  font-size: 1.0rem;
-}
-
 .nav-selection-pane button {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
@@ -412,8 +407,31 @@ pre.log {
   border-top-right-radius: 0;
 }
 
+.test-result-section:first-child {
+  margin-top: 0 !important;
+}
+
+.test-result-section {
+  margin: 1rem 0rem 1.5rem 0.5rem;
+}
+
 .test-result {
   padding: 0;
+  line-height: 1;
+  display: flex;
+  margin-top: 0.5rem;
+}
+
+.test-result.behavior:not(:first-child) {
+  margin-top: 0;
+}
+
+.test-result-icon {
+  width: 2.0rem;
+  display: flex;
+  flex-flow: column;
+  align-items: left;
+  justify-content: center;
 }
 
 .recent-file .filename {
@@ -428,4 +446,8 @@ pre.log {
 .drop-down-menu .MuiPaper-root {
   opacity: 0.85 !important;
   margin-top: 1em;
+}
+
+.test-details {
+  padding-left: 1.5rem;
 }
