@@ -5,8 +5,6 @@ import { useWorkspace } from "../contexts/workspace.context";
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
-import { Execution } from "../models/workspace/execution";
-import { ExecutionResultSummary } from "@apicize/lib-typescript";
 import { EntityType } from "../models/workspace/entity-type";
 
 export const RunResultsToolbar = observer((props: {
@@ -41,7 +39,7 @@ export const RunResultsToolbar = observer((props: {
         execution.changeResultIndex(index)
     }
 
-    return <Stack direction='row' className={props.className} sx={props.sx} paddingTop='0.25em' paddingBottom='1.5em' display='flex' justifyContent='center'>
+    return <Stack direction='row' className={props.className} sx={props.sx} maxWidth='None' paddingTop='0.25em' paddingBottom='1.5em' display='flex' justifyContent='center'>
         {
             length > 1
                 ? <FormControl>

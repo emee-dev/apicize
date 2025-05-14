@@ -1,4 +1,4 @@
-import { action, autorun, computed, makeObservable, observable, runInAction, toJS } from "mobx"
+import { action, computed, makeObservable, observable, runInAction } from "mobx"
 import { Execution } from "../models/workspace/execution"
 import { EditableRequest, RequestInfo } from "../models/workspace/editable-request"
 import { EditableRequestGroup } from "../models/workspace/editable-request-group"
@@ -44,7 +44,6 @@ import { FeedbackStore, ToastSeverity } from "./feedback.context"
 import { EditableSettings } from "../models/editable-settings"
 import { IndexedEntityPosition } from "../models/workspace/indexed-entity-position"
 import { EditableRequestHeaders } from "../models/workspace/editable-request-headers"
-import { GenerateIdentifier } from "../services/random-identifier-generator"
 import { ReqwestEvent } from "../models/trace"
 
 export type ResultsPanel = 'Info' | 'Headers' | 'Preview' | 'Text' | 'Details'
@@ -126,7 +125,8 @@ export class WorkspaceStore {
             update: (entity: Entity) => Promise<void>,
             delete: (entityType: EntityType, entityId: string) => Promise<void>,
             move: (entity: EntityType, entityId: string, relativeToId: string, relativePosition: IndexedEntityPosition) => Promise<string[]>,
-            // listLogs: () => Promise<ReqwestEvent[]>,
+            listLogs: () => Promise<ReqwestEvent[]>,
+            clearLogs: () => Promise<void>,
             getRequestActiveAuthorization: (id: string) => Promise<Authorization | undefined>,
             storeToken: (authorizationId: string, tokenInfo: CachedTokenInfo) => Promise<void>,
             clearToken: (authorizationId: string) => Promise<void>,
@@ -194,8 +194,10 @@ export class WorkspaceStore {
             execution.completeExecution(results)
         }
 
-        this.expandedItems = initialization.expandedItems ?? ['hdr-r']
+        this.expandedItems = initialization.expandedItems ?? (this.navigation.requests.length > 0 ? ['hdr-r'] : [])
         this.mode = initialization.mode ?? WorkspaceMode.Normal
+        console.log(`Initialization active type: ${initialization.activeType} - ${initialization.activeId}`)
+
         this.activeSelection = (initialization.activeType && initialization.activeId)
             ? new ActiveSelection(initialization.activeId, initialization.activeType, this, this.feedback)
             : null
@@ -1236,9 +1238,14 @@ export class WorkspaceStore {
         }
     }
 
-    // public listLogs(): Promise<ReqwestEvent[]> {
-    //     return this.listLogs()
-    // }
+    public listLogs(): Promise<ReqwestEvent[]> {
+        return this.callbacks.listLogs()
+    }
+
+    public clearLogs(): Promise<void> {
+        return this.callbacks.clearLogs()
+    }
+
 }
 
 export const WorkspaceContext = createContext<WorkspaceStore | null>(null)

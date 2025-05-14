@@ -11,7 +11,7 @@ use crate::{
     workspaces::{EntityType, Navigation},
 };
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionStartupState {
     pub expanded_items: Option<Vec<String>>,
@@ -24,7 +24,6 @@ pub struct SessionStartupState {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Session {
     pub workspace_id: String,
-    pub settings: ApicizeSettings,
     pub error: Option<String>,
     pub startup_state: Option<SessionStartupState>,
 }
@@ -93,11 +92,12 @@ impl Sessions {
         &mut self,
         session_id: &str,
         workspace_id: &str,
-    ) -> Result<(), ApicizeAppError> {
+    ) -> Result<&mut Session, ApicizeAppError> {
         match self.sessions.get_mut(session_id) {
             Some(session) => {
                 session.workspace_id = workspace_id.to_string();
-                Ok(())
+                session.startup_state = None;
+                Ok(session)
             }
             None => Err(ApicizeAppError::InvaliedSession(session_id.into())),
         }

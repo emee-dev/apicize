@@ -18,4 +18,8 @@ export interface ReqwestEventWrite {
     data: string
 }
 
-export type ReqwestEvent = ReqwestEventConnect | ReqwestEventRead | ReqwestEventWrite
+export interface ReqwestClear {
+    event: 'Clear'
+}
+
+export type ReqwestEvent = ReqwestEventConnect | ReqwestEventRead | ReqwestEventWrite | ReqwestClear

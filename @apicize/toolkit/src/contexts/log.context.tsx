@@ -2,31 +2,39 @@ import { action, observable, runInAction } from "mobx"
 import { ReqwestEvent } from "../models/trace"
 import { createContext, useContext } from "react"
 import { WorkspaceStore } from "./workspace.context"
-import { FeedbackStore } from "./feedback.context"
 
 export class LogStore {
-    private initialized = false
+    @observable accessor initialized = false
     @observable accessor events: ReqwestEvent[] = []
-
-    // async checkInitialized(workspace: WorkspaceStore) {
-    //     if (!this.initialized) {
-    //         this.initialized = true
-    //         this.events = await workspace.listLogs()
-    //     }
-    // }
+    @observable accessor follow = true
 
     @action
-    addEvent(event: ReqwestEvent) {
-        if (this.events.length > 100) {
-            this.events = [...this.events.slice(0, 99), event]
-        } else {
-            this.events.push(event)
+    async checkInitialized(workspace: WorkspaceStore) {
+        if (!this.initialized) {
+            const new_events = await workspace.listLogs()
+            this.initialized = true
+            runInAction(() => {
+                this.events = new_events
+            })
         }
     }
 
     @action
-    clear() {
-        this.events = []
+    addEvent(event: ReqwestEvent) {
+        if (this.initialized) {
+            if (event.event === 'Clear') {
+                this.events = []
+            } else if (this.events.length > 100) {
+                this.events = [...this.events.slice(0, 99), event]
+            } else {
+                this.events.push(event)
+            }
+        }
+    }
+
+    @action
+    setFollow(value: boolean) {
+        this.follow = value
     }
 }
 

@@ -55,6 +55,9 @@ pub enum ApicizeAppError {
 
     #[error("unspecified error")]
     UnspecifiedError,
+
+    #[error("concurrency_error '{0}'")]
+    ConcurrencyError(String),
 }
 
 impl serde::Serialize for ApicizeAppError {

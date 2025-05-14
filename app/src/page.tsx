@@ -19,7 +19,6 @@ import { CssBaseline } from '@mui/material'
 import { FileDragDropProvider } from './providers/file-dragdrop.provider'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 
-
 // This is defined externally via Tauri main or other boostrap application
 const sessionId = (window as any).__TAURI_INTERNALS__.metadata.currentWindow.label
 
@@ -78,7 +77,8 @@ const workspaceStore = new WorkspaceStore(
       relativeToId,
       relativePosition,
     }),
-    // listLogs: () => core.invoke('list_logs'),
+    listLogs: () => core.invoke('list_logs'),
+    clearLogs: () => core.invoke('clear_logs'),
     storeToken: (authorizationId, tokenInfo) => core.invoke('store_token', {
       authorizationId,
       tokenInfo
@@ -117,10 +117,9 @@ export default function Home() {
   useEffect(() => {
     const w = getCurrentWebviewWindow()
     // Notification sent for when initialization data is available
-    let unlistenInitialize = w.listen<SessionInitialization>('initialize', (data) => {
-      const info = data.payload
-      setSettings(info.settings)
-      workspaceStore.initialize(info)
+    let unlistenInitialize = w.listen<SessionInitialization>('initialize', () => {
+      // Clear settings to trigger a reload
+      setSettings(null)
     })
     // Notification sent on entire navigation tree update
     let unlistenNavigation = w.listen<Navigation>('navigation', (data) => {
@@ -149,9 +148,12 @@ export default function Home() {
     })
     // Notification on settings update
     let unlistenSettingsUpdate = w.listen<ApicizeSettings>('update_settings', (data) => {
+      console.log('update settings', data.payload)
       setSettings(data.payload)
     })
-    // let unlistenListLogs = w.listen<ReqwestEvent[]>('list_logs', workspaceStore.listLogs)
+    let unlistenListLogs = w.listen<ReqwestEvent[]>('list_logs', () => {
+      workspaceStore.listLogs()
+    })
     return () => {
       unlistenInitialize.then(() => { })
       unlistenNavigation.then(() => { })
@@ -161,15 +163,17 @@ export default function Home() {
       unlistenUpdate.then(() => { })
       unlistenExecution.then(() => { })
       unlistenSettingsUpdate.then(() => { })
-      // unlistenListLogs.then(() => { })
+      unlistenListLogs.then(() => { })
     }
-  })
+  }, [settings])
 
   if (!settings) {
+    console.log('calling initialize_session')
     core.invoke<SessionInitialization>('initialize_session', {
       sessionId,
     }).then((info) => {
       setSettings(info.settings)
+      console.log('initialize result', info)
       workspaceStore.initialize(info)
     }).catch((e) => {
       feedbackStore.toast(`${e}`, ToastSeverity.Error)

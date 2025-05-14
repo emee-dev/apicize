@@ -13,7 +13,6 @@ import SaveIcon from '@mui/icons-material/Save'
 import SaveAsIcon from '@mui/icons-material/SaveAs'
 import OpenInBrowserIcon from '@mui/icons-material/OpenInBrowser'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import { Property } from "csstype";
 
 export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'horizontal' | 'vertical' }) => {
     const apicize = useApicize()
@@ -88,18 +87,21 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
     let alignDropBtnItems: ResponsiveStyleValue<'begin' | 'end'>
     let firstPanelTPad: string
     let buttonSpacing: string | undefined
+    let iconPadding: string
 
     if (props.orientation == 'horizontal') {
         direction = 'row'
         firstPanelTPad = 'None'
         alignDropBtnSelf = 'begin'
         alignDropBtnItems = 'end'
+        iconPadding = '0 0.75em 0 0.75em'
     } else {
         direction = 'column'
         firstPanelTPad = '10em'
         alignDropBtnSelf = 'end'
         buttonSpacing = '1em'
         alignDropBtnItems = 'begin'
+        iconPadding = '0'
     }
 
     return <Stack direction={direction} sx={props.sx}>
@@ -111,7 +113,7 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
             id='file-new-menu-button'
             title='New Workspace'
             size="large"
-            sx={{ padding: 0, minWidth: '1em', width: '1em', marginLeft: '-0.3em', alignSelf: alignDropBtnSelf, alignItems: alignDropBtnItems }}
+            sx={{ padding: iconPadding, minWidth: '1em', width: '1em', marginLeft: '-0.3em', alignSelf: alignDropBtnSelf, alignItems: alignDropBtnItems }}
             onClick={handleNewFileMenuClick}
         ><KeyboardArrowDownIcon />
         </IconButton>
@@ -142,7 +144,7 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
                 ? <IconButton
                     id='file-open-menu-button'
                     title='Open Recent Workbook'
-                    sx={{ padding: 0, minWidth: '1em', width: '1em', marginLeft: '-0.3em', alignSelf: alignDropBtnSelf, alignItems: alignDropBtnItems }}
+                    sx={{ padding: iconPadding, minWidth: '1em', width: '1em', marginLeft: '-0.3em', alignSelf: alignDropBtnSelf, alignItems: alignDropBtnItems }}
                     onClick={handleOpenFileMenuClick}
                 ><KeyboardArrowDownIcon />
                 </IconButton>

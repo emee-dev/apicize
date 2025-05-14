@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.19.2
+
+* Clean up some formatting bugs
+* Retain communications log in new windows
+* Refactor/tune window initialization and startup
+
 # 0.19.1
 
 * Small visual fixes on navigation, results viewer and comm log

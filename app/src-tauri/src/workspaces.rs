@@ -18,7 +18,7 @@ use std::{
 };
 use uuid::Uuid;
 
-use crate::error::ApicizeAppError;
+use crate::{error::ApicizeAppError, sessions::SessionStartupState};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct NavigationHierarchicalEntry {
@@ -57,7 +57,6 @@ pub enum RequestEntryInfo {
     Request { request: RequestInfo },
     Group { group: RequestGroup },
 }
-
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -357,7 +356,12 @@ impl Workspaces {
     }
 
     /// Add workspace, return workspace ID and display name
-    pub fn add_workspace(&mut self, workspace: Workspace, file_name: &str) -> (String, String) {
+    pub fn add_workspace(
+        &mut self,
+        workspace: Workspace,
+        file_name: &str,
+        is_new: bool,
+    ) -> OpenWorkspaceResult {
         let workspace_id = Uuid::new_v4().to_string();
         let navigation = Navigation::new(&workspace);
 
@@ -370,22 +374,57 @@ impl Workspaces {
                 .to_string_lossy()
                 .to_string()
         };
-        let result = display_name.clone();
 
-        let info = WorkspaceInfo {
-            dirty: false,
-            warn_on_workspace_creds: true,
-            workspace,
-            navigation,
-            executing_request_ids: HashSet::new(),
-            result_summaries: HashMap::new(),
-            result_details: HashMap::new(),
-            file_name: file_name.to_string(),
-            display_name,
-        };
+        self.workspaces.insert(
+            workspace_id.clone(),
+            WorkspaceInfo {
+                dirty: false,
+                warn_on_workspace_creds: true,
+                workspace,
+                navigation,
+                executing_request_ids: HashSet::new(),
+                result_summaries: HashMap::new(),
+                result_details: HashMap::new(),
+                file_name: file_name.to_string(),
+                display_name: display_name.clone(),
+            },
+        );
 
-        self.workspaces.insert(workspace_id.to_string(), info);
-        (workspace_id, result)
+        if is_new {
+            let mut request = Request::default();
+            let request_id = request.id.clone();
+            request.name = "New Request".to_string();
+
+            let info = self.workspaces.get_mut(&workspace_id).unwrap();
+            info.workspace
+                .requests
+                .add_entity(RequestEntry::Request(request), None, None)
+                .unwrap();
+
+            info.navigation.requests.push(NavigationHierarchicalEntry {
+                id: request_id.clone(),
+                name: "New Request".to_string(),
+                children: None,
+            });
+
+            OpenWorkspaceResult {
+                workspace_id,
+                display_name,
+                startup_state: SessionStartupState {
+                    expanded_items: None,
+                    active_type: Some(EntityType::Request),
+                    active_id: Some(request_id),
+                    mode: Some(0),
+                    help_topic: None,
+                },
+            }
+        } else {
+            OpenWorkspaceResult {
+                workspace_id,
+                display_name,
+                startup_state: SessionStartupState::default(),
+            }
+        }
     }
 
     pub fn remove_workspace(&mut self, workspace_id: &str) {
@@ -1715,4 +1754,10 @@ pub struct WorkspaceParameters {
     pub certificates: Vec<Selection>,
     pub proxies: Vec<Selection>,
     pub data: Vec<Selection>,
+}
+
+pub struct OpenWorkspaceResult {
+    pub workspace_id: String,
+    pub display_name: String,
+    pub startup_state: SessionStartupState,
 }

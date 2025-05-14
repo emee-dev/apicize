@@ -19,8 +19,7 @@ use apicize_lib::{
         clear_all_oauth2_tokens, clear_oauth2_token, store_oauth2_token, CachedTokenInfo,
         PkceTokenResult,
     },
-    ApicizeRunner, Authorization, ExternalData, TestRunnerContext, Warnings,
-    WorkbookDefaultParameters, Workspace,
+    ApicizeRunner, Authorization, ExternalData, TestRunnerContext, Warnings, Workspace,
 };
 use dragdrop::DroppedFile;
 use error::ApicizeAppError;
@@ -39,9 +38,10 @@ use std::{
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use tauri_plugin_clipboard::Clipboard;
 use tokio_util::sync::CancellationToken;
-use trace::ReqwestLogger;
+use trace::{ReqwestEvent, ReqwestLogger};
 use workspaces::{
-    Entities, Entity, EntityType, Navigation, WorkspaceInfo, WorkspaceSaveStatus, Workspaces,
+    Entities, Entity, EntityType, Navigation, OpenWorkspaceResult, WorkspaceInfo,
+    WorkspaceSaveStatus, Workspaces,
 };
 
 use tauri::async_runtime::RwLock;
@@ -84,7 +84,8 @@ fn copy_files(source: &Path, destination: &Path) -> io::Result<()> {
     Ok(())
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let settings = if let Ok(loaded_settings) = ApicizeSettings::open() {
@@ -152,17 +153,22 @@ fn main() {
                 load_workbook = settings.last_workbook_file_name.clone();
             }
 
+            let is_new: bool;
             let (workspace, file_name) = match load_workbook {
                 Some(workbook_filename) => match exists(&workbook_filename) {
                     Ok(found) => {
                         if found {
                             match Workspace::open(&PathBuf::from(&workbook_filename)) {
-                                Ok(w) => (w, workbook_filename),
+                                Ok(w) => {
+                                    is_new = false;
+                                    (w, workbook_filename)
+                                }
                                 Err(err) => {
                                     session_error = Some(format!(
                                         "Unable to load workboook {}: {}",
                                         &workbook_filename, err.error,
                                     ));
+                                    is_new = true;
                                     (
                                         Workspace::new().expect("Error creating new workspace"),
                                         "".to_string(),
@@ -174,6 +180,7 @@ fn main() {
                                 session_error =
                                     Some(format!("Workboook {} not found", &workbook_filename));
                             }
+                            is_new = true;
                             (
                                 Workspace::new().expect("Error creating new workspace"),
                                 "".to_string(),
@@ -181,6 +188,7 @@ fn main() {
                         }
                     }
                     Err(err) => {
+                        is_new = true;
                         session_error = Some(format!("{}", err));
                         (
                             Workspace::new().expect("Error creating new workspace"),
@@ -188,32 +196,34 @@ fn main() {
                         )
                     }
                 },
-                None => (
-                    Workspace::new().expect("Error creating new workspace"),
-                    "".to_string(),
-                ),
+                None => {
+                    is_new = true;
+                    (
+                        Workspace::new().expect("Error creating new workspace"),
+                        "".to_string(),
+                    )
+                }
             };
 
             // Set up the workspace store with the initially loaded workspace
             let mut workspaces = Workspaces::default();
 
-            let (workspace_id, display_name) = workspaces.add_workspace(workspace, &file_name);
+            let result = workspaces.add_workspace(workspace, &file_name, is_new);
 
             let main_window = app.get_webview_window("main").unwrap();
-            set_window_title(&main_window, &display_name, false);
+            set_window_title(&main_window, &result.display_name, false);
 
             // Set up the session store and initial session
             let mut sessions = Sessions::default();
             let session_id = sessions.add_session(Session {
-                workspace_id: workspace_id.clone(),
-                settings: settings.clone(),
-                startup_state: None,
+                workspace_id: result.workspace_id.clone(),
+                startup_state: Some(result.startup_state),
                 error: session_error,
             });
 
             log::trace!(
                 "Opened workspace {} in session {}",
-                &workspace_id,
+                &result.workspace_id,
                 &session_id
             );
 
@@ -221,17 +231,15 @@ fn main() {
             sessions.trace_all_sessions();
 
             // Initialize log hook to monitor Reqwest activity
-            let _ = log::set_logger(
-                REQWEST_LOGGER.get_or_init(|| ReqwestLogger::new(app.handle().clone())),
-            );
-            log::set_max_level(log::LevelFilter::Trace);
+            let reqwest_logger = REQWEST_LOGGER.get_or_init(|| {
+                let handle = tokio::runtime::Handle::current();
+                let _ = handle.enter();
+                ReqwestLogger::new(app.handle().clone())
+            });
 
-            // main_window
-            //     .eval(&format!(
-            //         "let loadedSettings={};",
-            //         serde_json::to_string(&settings).unwrap()
-            //     ))
-            //     .unwrap();
+            let _ = log::set_logger(reqwest_logger);
+
+            log::set_max_level(log::LevelFilter::Trace);
 
             // Set up sessions
             app.manage(SessionsState {
@@ -318,7 +326,8 @@ fn main() {
             update,
             delete,
             move_entity,
-            // list_logs,
+            list_logs,
+            clear_logs,
             get_entity_type,
             find_descendant_groups,
         ])
@@ -343,10 +352,12 @@ fn set_window_title(window: &WebviewWindow, display_name: &str, dirty: bool) {
 async fn initialize_session(
     session_state: State<'_, SessionsState>,
     workspaces_state: State<'_, WorkspacesState>,
+    settings_state: State<'_, SettingsState>,
     session_id: &str,
 ) -> Result<SessionInitialization, ApicizeAppError> {
     let sessions = session_state.sessions.read().await;
     let workspaces = workspaces_state.workspaces.read().await;
+    let settings = settings_state.settings.read().await;
     let session = sessions.get_session(session_id)?;
     let editor_count = sessions.get_workspace_session_count(&session.workspace_id);
     let info = workspaces.get_workspace_info(&session.workspace_id)?;
@@ -355,7 +366,7 @@ async fn initialize_session(
 
     let init = SessionInitialization {
         workspace_id: session.workspace_id.clone(),
-        settings: session.settings.clone(),
+        settings: settings.clone(),
         error: session.error.clone(),
         navigation: info.navigation.clone(),
         executing_request_ids: info.executing_request_ids.clone(),
@@ -380,20 +391,19 @@ async fn new_workspace(
     app: AppHandle,
     sessions_state: State<'_, SessionsState>,
     workspaces_state: State<'_, WorkspacesState>,
-    settings_state: State<'_, SettingsState>,
     open_in_session_id: Option<String>,
 ) -> Result<(), ApicizeAppError> {
     let mut workspaces = workspaces_state.workspaces.write().await;
     let mut sessions = sessions_state.sessions.write().await;
-    let settings = settings_state.settings.read().await;
 
     let workspace = Workspace::new()?;
-    let (workspace_id, display_name) = workspaces.add_workspace(workspace, "");
+    let result = workspaces.add_workspace(workspace, "", true);
 
     clear_all_oauth2_tokens().await;
 
-    // Set up the session store and initial session
+    let initialize_session_id: String;
 
+    // Set up the session store and initial session
     match open_in_session_id {
         Some(active_session_id) => {
             let old_workspace_id = sessions
@@ -403,41 +413,15 @@ async fn new_workspace(
 
             log::trace!(
                 "New workspace {} in existing session {}",
-                &workspace_id,
+                &result.workspace_id,
                 &active_session_id
             );
 
-            workspaces.trace_all_workspaces();
-            sessions.trace_all_sessions();
-
-            sessions.change_workspace(&active_session_id, &workspace_id)?;
-            let info = workspaces.get_workspace_info(&workspace_id)?;
-            app.emit_to(
-                &active_session_id,
-                "initialize",
-                SessionInitialization {
-                    workspace_id,
-                    settings: settings.clone(),
-                    error: None,
-                    navigation: info.navigation.clone(),
-                    executing_request_ids: info.executing_request_ids.clone(),
-                    result_summaries: info.result_summaries.clone(),
-                    file_name: info.file_name.clone(),
-                    display_name: info.display_name.clone(),
-                    editor_count: 1,
-                    dirty: false,
-                    defaults: WorkbookDefaultParameters::default(),
-                    expanded_items: None,
-                    mode: None,
-                    active_type: None,
-                    active_id: None,
-                    help_topic: None,
-                },
-            )
-            .unwrap();
+            let session = sessions.change_workspace(&active_session_id, &result.workspace_id)?;
+            session.startup_state = Some(result.startup_state);
 
             let window = app.get_webview_window(&active_session_id).unwrap();
-            set_window_title(&window, &display_name, false);
+            set_window_title(&window, &result.display_name, false);
 
             log::trace!(
                 "Session count for workspace {} is {}",
@@ -450,25 +434,20 @@ async fn new_workspace(
                 log::trace!("Closed workspace {}", &old_workspace_id);
             }
 
-            workspaces.trace_all_workspaces();
-            sessions.trace_all_sessions();
+            initialize_session_id = active_session_id.clone();
         }
         None => {
             let active_session_id = sessions.add_session(Session {
-                workspace_id: workspace_id.clone(),
-                settings: settings.clone(),
-                startup_state: None,
+                workspace_id: result.workspace_id.clone(),
+                startup_state: Some(result.startup_state),
                 error: None,
             });
 
             log::trace!(
                 "New workspace {} in new session {}",
-                &workspace_id,
+                &result.workspace_id,
                 &active_session_id
             );
-
-            workspaces.trace_all_workspaces();
-            sessions.trace_all_sessions();
 
             let webview_url = tauri::WebviewUrl::App("index.html".into());
             let window = tauri::WebviewWindowBuilder::new(
@@ -480,10 +459,18 @@ async fn new_workspace(
             .build()
             .unwrap();
 
-            set_window_title(&window, &display_name, false);
+            set_window_title(&window, &result.display_name, false);
             window.set_focus().unwrap();
+
+            initialize_session_id = active_session_id.clone();
         }
     }
+
+    workspaces.trace_all_workspaces();
+    sessions.trace_all_sessions();
+
+    app.emit_to(initialize_session_id, "initialize", ())
+        .unwrap();
 
     Ok(())
 }
@@ -501,10 +488,14 @@ async fn open_workspace(
     let mut sessions = sessions_state.sessions.write().await;
 
     // Check to see if the workspace is already open
-    let mut workspace: Option<(String, String)> =
+    let mut result: Option<OpenWorkspaceResult> =
         workspaces.workspaces.iter().find_map(|(id, info)| {
             if !info.file_name.is_empty() && file_name.eq(&info.file_name) {
-                Some((id.clone(), info.file_name.clone()))
+                Some(OpenWorkspaceResult {
+                    workspace_id: id.clone(),
+                    display_name: info.file_name.clone(),
+                    startup_state: SessionStartupState::default(),
+                })
             } else {
                 None
             }
@@ -519,37 +510,38 @@ async fn open_workspace(
                 sessions.get_workspace_session_count(&session.workspace_id);
             if workspace_session_count == 1 {
                 remove_old_workspace = Some(session.workspace_id.clone());
-                workspace = None;
+                result = None;
             }
         }
     }
 
-    if workspace.is_none() {
-        workspace = match Workspace::open(&PathBuf::from(&file_name)) {
-            Ok(workspace) => Some(workspaces.add_workspace(workspace, &file_name)),
+    let state = match result {
+        Some(r) => r,
+        None => match Workspace::open(&PathBuf::from(&file_name)) {
+            Ok(workspace) => workspaces.add_workspace(workspace, &file_name, false),
             Err(err) => {
                 return Err(ApicizeAppError::FileAccessError(err));
             }
-        };
-    }
+        },
+    };
 
     if let Some(old_workspace_id) = remove_old_workspace {
         workspaces.remove_workspace(&old_workspace_id);
     }
 
-    let (workspace_id, display_name) = workspace.unwrap();
-
     clear_all_oauth2_tokens().await;
 
     let mut settings = settings_state.settings.write().await;
 
-    let info = workspaces.get_workspace_info_mut(&workspace_id)?;
+    let info = workspaces.get_workspace_info_mut(&state.workspace_id)?;
+
+    let initialize_session_id: String;
 
     match open_in_session_id {
         Some(active_session_id) => {
             log::trace!(
                 "Opening workspace {} in existing session {}",
-                &workspace_id,
+                &state.workspace_id,
                 &active_session_id
             );
 
@@ -558,50 +550,27 @@ async fn open_workspace(
                 .workspace_id
                 .clone();
 
-            sessions.change_workspace(&active_session_id, &workspace_id)?;
-            let editor_count = sessions.get_workspace_session_count(&workspace_id);
-            app.emit_to(
-                &active_session_id,
-                "initialize",
-                SessionInitialization {
-                    workspace_id: workspace_id.clone(),
-                    settings: settings.clone(),
-                    error: None,
-                    navigation: info.navigation.clone(),
-                    executing_request_ids: info.executing_request_ids.clone(),
-                    result_summaries: info.result_summaries.clone(),
-                    file_name: info.file_name.clone(),
-                    display_name: info.display_name.clone(),
-                    dirty: info.dirty,
-                    editor_count,
-                    defaults: info.workspace.defaults.clone(),
-                    expanded_items: None,
-                    mode: None,
-                    active_type: None,
-                    active_id: None,
-                    help_topic: None,
-                },
-            )
-            .unwrap();
+            sessions.change_workspace(&active_session_id, &state.workspace_id)?;
 
             let window = app.get_webview_window(&active_session_id).unwrap();
-            set_window_title(&window, &display_name, false);
+            set_window_title(&window, &state.display_name, info.dirty);
 
             if sessions.get_workspace_session_count(&old_workspace_id) == 0 {
                 workspaces.remove_workspace(&old_workspace_id);
             }
+
+            initialize_session_id = active_session_id.clone();
         }
         None => {
             let active_session_id = sessions.add_session(Session {
-                workspace_id: workspace_id.clone(),
-                settings: settings.clone(),
+                workspace_id: state.workspace_id.clone(),
                 startup_state: None,
                 error: None,
             });
 
             log::trace!(
                 "Opening workspace {} in new session {}",
-                &workspace_id,
+                &state.workspace_id,
                 &active_session_id
             );
 
@@ -615,8 +584,10 @@ async fn open_workspace(
             .build()
             .unwrap();
 
-            set_window_title(&window, &display_name, info.dirty);
+            set_window_title(&window, &state.display_name, info.dirty);
             window.set_focus().unwrap();
+
+            initialize_session_id = active_session_id.clone();
         }
     }
 
@@ -625,11 +596,14 @@ async fn open_workspace(
         app.emit("update_settings", settings.clone()).unwrap();
     }
 
-    let info1 = workspaces.get_workspace_info(&workspace_id)?;
-    dispatch_save_state(&app, &sessions, &workspace_id, info1, false);
+    let info1 = workspaces.get_workspace_info(&state.workspace_id)?;
+    dispatch_save_state(&app, &sessions, &state.workspace_id, info1, false);
 
     workspaces.trace_all_workspaces();
     sessions.trace_all_sessions();
+
+    app.emit_to(initialize_session_id, "initialize", ())
+        .unwrap();
 
     Ok(())
 }
@@ -753,7 +727,6 @@ async fn clone_workspace(
     app: AppHandle,
     sessions_state: State<'_, SessionsState>,
     workspaces_state: State<'_, WorkspacesState>,
-    settings_state: State<'_, SettingsState>,
     session_id: &str,
     startup_state: Option<SessionStartupState>,
 ) -> Result<(), ApicizeAppError> {
@@ -763,11 +736,8 @@ async fn clone_workspace(
     let workspace_id = session.workspace_id.clone();
     let info = workspaces.get_workspace_info(&workspace_id)?;
 
-    let settings = settings_state.settings.read().await;
-
     let active_session_id = sessions.add_session(Session {
         workspace_id: workspace_id.clone(),
-        settings: settings.clone(),
         startup_state,
         error: None,
     });
@@ -1566,12 +1536,25 @@ async fn move_entity(
     Ok(results)
 }
 
-// #[tauri::command]
-// fn list_logs(app: AppHandle) -> Vec<ReqwestEvent> {
-//     // let logger = REQWEST_LOGGER.get_or_init(|| ReqwestLogger::new(app.clone()));
-//     // logger.logs.read().to_vec()
-//     vec![]
-// }
+#[tauri::command]
+async fn list_logs() -> Result<Vec<ReqwestEvent>, ApicizeAppError> {
+    match REQWEST_LOGGER.get() {
+        Some(logger) => logger.get_logs(),
+        None => Err(ApicizeAppError::ConcurrencyError(
+            "Unable to access Reqwest logger".to_string(),
+        )),
+    }
+}
+
+#[tauri::command]
+async fn clear_logs() -> Result<(), ApicizeAppError> {
+    match REQWEST_LOGGER.get() {
+        Some(logger) => logger.clear_logs(),
+        None => Err(ApicizeAppError::ConcurrencyError(
+            "Unable to access Reqwest logger".to_string(),
+        )),
+    }
+}
 
 #[tauri::command]
 async fn get_entity_type(
