@@ -196,11 +196,14 @@ export class WorkspaceStore {
 
         this.expandedItems = initialization.expandedItems ?? (this.navigation.requests.length > 0 ? ['hdr-r'] : [])
         this.mode = initialization.mode ?? WorkspaceMode.Normal
-        console.log(`Initialization active type: ${initialization.activeType} - ${initialization.activeId}`)
 
         this.activeSelection = (initialization.activeType && initialization.activeId)
             ? new ActiveSelection(initialization.activeId, initialization.activeType, this, this.feedback)
             : null
+
+        if (initialization.error) {
+            this.feedback.toast(initialization.error, ToastSeverity.Error)
+        }
     }
 
     @action
@@ -826,6 +829,12 @@ export class WorkspaceStore {
         this.defaults = new EditableDefaults(defaults, this)
         this.callbacks.update({ entityType: 'Defaults', ...defaults }).catch((e) => {
             this.feedback.toastError(e)
+        }).finally(() => {
+            runInAction(() => {
+                if (this.activeSelection?.type === EntityType.Request) {
+                    this.activeSelection.parameters = null
+                }
+            })
         })
     }
 
@@ -1518,11 +1527,6 @@ export interface UpdatedNavigationEntry {
     id: string
     name: string
     entityType: EntityType
-}
-
-export interface DefaultsEvent {
-    defaults: SelectedParametersWithData,
-    data: ExternalData[],
 }
 
 export interface SessionInitialization {

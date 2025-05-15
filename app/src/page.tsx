@@ -1,7 +1,7 @@
 'use client'
 
 import * as core from '@tauri-apps/api/core'
-import { ApicizeSettings, DefaultsEvent, DragDropProvider, Entity, EntityType, FeedbackStore, IndexedEntityPosition, LogStore, MainPanel, Navigation, ReqwestEvent, SessionInitialization, SessionSaveState, ToastSeverity, UpdatedNavigationEntry, WorkspaceStore } from '@apicize/toolkit'
+import { ApicizeSettings, DragDropProvider, Entity, EntityType, FeedbackStore, IndexedEntityPosition, LogStore, MainPanel, Navigation, ReqwestEvent, SessionInitialization, SessionSaveState, ToastSeverity, UpdatedNavigationEntry, WorkspaceStore } from '@apicize/toolkit'
 import React, { useEffect, useState } from 'react'
 import "@fontsource/open-sans/latin.css"
 import "@fontsource/roboto-mono/latin.css"
@@ -148,7 +148,6 @@ export default function Home() {
     })
     // Notification on settings update
     let unlistenSettingsUpdate = w.listen<ApicizeSettings>('update_settings', (data) => {
-      console.log('update settings', data.payload)
       setSettings(data.payload)
     })
     let unlistenListLogs = w.listen<ReqwestEvent[]>('list_logs', () => {
@@ -168,12 +167,10 @@ export default function Home() {
   }, [settings])
 
   if (!settings) {
-    console.log('calling initialize_session')
     core.invoke<SessionInitialization>('initialize_session', {
       sessionId,
     }).then((info) => {
       setSettings(info.settings)
-      console.log('initialize result', info)
       workspaceStore.initialize(info)
     }).catch((e) => {
       feedbackStore.toast(`${e}`, ToastSeverity.Error)

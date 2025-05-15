@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.19.3
+
+* Show window only when ready to be displayed
+* Consolidate new/open window routines
+* Update request defaults when workspace defaults are changed
+
 # 0.19.2
 
 * Clean up some formatting bugs

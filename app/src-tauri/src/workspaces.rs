@@ -349,9 +349,9 @@ pub struct Workspaces {
 
 impl Workspaces {
     pub fn trace_all_workspaces(&self) {
-        log::trace!("*** Workspaces ***");
+        println!("*** Workspaces ***");
         for (id, info) in &self.workspaces {
-            log::trace!("   ID: {}, Name: {}", id, info.display_name);
+            println!("   ID: {}, Name: {}", id, info.display_name);
         }
     }
 
@@ -416,6 +416,7 @@ impl Workspaces {
                     active_id: Some(request_id),
                     mode: Some(0),
                     help_topic: None,
+                    error: None,
                 },
             }
         } else {

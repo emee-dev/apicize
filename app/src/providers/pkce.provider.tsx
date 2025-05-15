@@ -33,8 +33,8 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
         const unlistenPkceAuthResponse = listen<OAuthPkceAuthParams>('oauth2-pkce-auth-response', async (event) => {
             await processOAuth2PkceAuthResponse(event.payload)
         })
-        const unlistenPkceSuccess = listen<string>('oauth2-pkce-success', (event) => {
-            feedback.toast(event.payload, ToastSeverity.Success)
+        const unlistenPkceSuccess = listen<string>('oauth2-pkce-success', (_event) => {
+            // feedback.toast(event.payload, ToastSeverity.Success)
         });
 
         const unlistenPkceError = listen<string>('oauth2-pkce-error', (event) => {

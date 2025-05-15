@@ -19,12 +19,12 @@ pub struct SessionStartupState {
     pub active_id: Option<String>,
     pub mode: Option<u32>,
     pub help_topic: Option<String>,
+    pub error: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Session {
     pub workspace_id: String,
-    pub error: Option<String>,
     pub startup_state: Option<SessionStartupState>,
 }
 
@@ -36,9 +36,9 @@ pub struct Sessions {
 
 impl Sessions {
     pub fn trace_all_sessions(&self) {
-        log::trace!("*** Sessions ***");
+        println!("*** Sessions ***");
         for (id, info) in &self.sessions {
-            log::trace!("   ID: {}, Workspace: {}", id, info.workspace_id);
+            println!("   ID: {}, Workspace: {}", id, info.workspace_id);
         }
     }
 

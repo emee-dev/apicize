@@ -35,7 +35,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex, OnceLock},
 };
-use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_clipboard::Clipboard;
 use tokio_util::sync::CancellationToken;
 use trace::{ReqwestEvent, ReqwestLogger};
@@ -88,7 +88,27 @@ fn copy_files(source: &Path, destination: &Path) -> io::Result<()> {
 async fn main() {
     tauri::Builder::default()
         .setup(|app| {
-            let settings = if let Ok(loaded_settings) = ApicizeSettings::open() {
+            // When first loading, we either:
+            // 1. Load the named workbook if passed in as an argument
+            // 2. Load the last workbook file name if stored in settings
+            // 3. Open a new workbook
+
+            let mut load_workbook: Option<String> = None;
+
+            let args: Vec<String> = env::args().collect();
+            if args.len() > 1 {
+                if let Some(file_argument) = args.get(1) {
+                    if let Ok(true) = fs::exists(file_argument) {
+                        load_workbook = Some(file_argument.to_string());
+                    }
+                }
+            }
+
+            let mut settings = if let Ok(loaded_settings) = ApicizeSettings::open() {
+                if load_workbook.is_none() {
+                    load_workbook = loaded_settings.data.last_workbook_file_name.clone()
+                }
+
                 loaded_settings.data
             } else {
                 // If unable to load settings, try and put into place some sensible defaults
@@ -111,6 +131,7 @@ async fn main() {
                 }
             };
 
+            // Copy demo files from resources if we do not have settings saved
             if settings.last_workbook_file_name.is_none() {
                 // If we have not loaded a workbook before, copy the demo
                 if let Some(workbook_directory) = &settings.workbook_directory {
@@ -130,105 +151,9 @@ async fn main() {
                 }
             }
 
-            // When first loading, we either:
-            // 1. Load the named workbook if passed in as an argument
-            // 2. Load the last workbook file name if stored in settings
-            // 3. Open a new workbook
-
-            let mut load_workbook: Option<String> = None;
-            let mut show_workbook_error = false;
-            let mut session_error: Option<String> = None;
-
-            let args: Vec<String> = env::args().collect();
-            if args.len() > 1 {
-                if let Some(file_argument) = args.get(1) {
-                    if let Ok(true) = fs::exists(file_argument) {
-                        load_workbook = Some(file_argument.to_owned());
-                        show_workbook_error = true;
-                    }
-                }
-            }
-
-            if load_workbook.is_none() {
-                load_workbook = settings.last_workbook_file_name.clone();
-            }
-
-            let is_new: bool;
-            let (workspace, file_name) = match load_workbook {
-                Some(workbook_filename) => match exists(&workbook_filename) {
-                    Ok(found) => {
-                        if found {
-                            match Workspace::open(&PathBuf::from(&workbook_filename)) {
-                                Ok(w) => {
-                                    is_new = false;
-                                    (w, workbook_filename)
-                                }
-                                Err(err) => {
-                                    session_error = Some(format!(
-                                        "Unable to load workboook {}: {}",
-                                        &workbook_filename, err.error,
-                                    ));
-                                    is_new = true;
-                                    (
-                                        Workspace::new().expect("Error creating new workspace"),
-                                        "".to_string(),
-                                    )
-                                }
-                            }
-                        } else {
-                            if show_workbook_error {
-                                session_error =
-                                    Some(format!("Workboook {} not found", &workbook_filename));
-                            }
-                            is_new = true;
-                            (
-                                Workspace::new().expect("Error creating new workspace"),
-                                "".to_string(),
-                            )
-                        }
-                    }
-                    Err(err) => {
-                        is_new = true;
-                        session_error = Some(format!("{}", err));
-                        (
-                            Workspace::new().expect("Error creating new workspace"),
-                            "".to_string(),
-                        )
-                    }
-                },
-                None => {
-                    is_new = true;
-                    (
-                        Workspace::new().expect("Error creating new workspace"),
-                        "".to_string(),
-                    )
-                }
-            };
-
             // Set up the workspace store with the initially loaded workspace
             let mut workspaces = Workspaces::default();
-
-            let result = workspaces.add_workspace(workspace, &file_name, is_new);
-
-            let main_window = app.get_webview_window("main").unwrap();
-            set_window_title(&main_window, &result.display_name, false);
-
-            // Set up the session store and initial session
             let mut sessions = Sessions::default();
-            let session_id = sessions.add_session(Session {
-                workspace_id: result.workspace_id.clone(),
-                startup_state: Some(result.startup_state),
-                error: session_error,
-            });
-
-            log::trace!(
-                "Opened workspace {} in session {}",
-                &result.workspace_id,
-                &session_id
-            );
-
-            workspaces.trace_all_workspaces();
-            sessions.trace_all_sessions();
 
             // Initialize log hook to monitor Reqwest activity
             let reqwest_logger = REQWEST_LOGGER.get_or_init(|| {
@@ -240,6 +165,17 @@ async fn main() {
             let _ = log::set_logger(reqwest_logger);
 
             log::set_max_level(log::LevelFilter::Trace);
+
+            create_workspace(
+                app.handle().clone(),
+                &mut sessions,
+                &mut workspaces,
+                &mut settings,
+                None,
+                load_workbook,
+                true,
+            )
+            .unwrap();
 
             // Set up sessions
             app.manage(SessionsState {
@@ -283,13 +219,24 @@ async fn main() {
         // )
         // .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            app.webview_windows()
-                .iter()
-                .next()
-                .unwrap()
-                .1
-                .set_focus()
-                .unwrap()
+            tokio::task::block_in_place(|| {
+                tauri::async_runtime::block_on(new_workspace(
+                    app.clone(),
+                    app.state::<SessionsState>(),
+                    app.state::<WorkspacesState>(),
+                    app.state::<SettingsState>(),
+                    None,
+                ))
+            })
+            .unwrap();
+
+            // app.webview_windows()
+            //     .iter()
+            //     .next()
+            //     .unwrap()
+            //     .1
+            //     .set_focus()
+            //     .unwrap()
         }))
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
@@ -335,8 +282,8 @@ async fn main() {
         .expect("error running Apicize");
 }
 
-fn set_window_title(window: &WebviewWindow, display_name: &str, dirty: bool) {
-    let title = format!(
+fn format_window_title(display_name: &str, dirty: bool) -> String {
+    format!(
         "{} - Apicize {}",
         if display_name.is_empty() {
             "(New)"
@@ -344,12 +291,12 @@ fn set_window_title(window: &WebviewWindow, display_name: &str, dirty: bool) {
             display_name
         },
         if dirty { "*" } else { "" }
-    );
-    window.set_title(&title).unwrap();
+    )
 }
 
 #[tauri::command]
 async fn initialize_session(
+    app: AppHandle,
     session_state: State<'_, SessionsState>,
     workspaces_state: State<'_, WorkspacesState>,
     settings_state: State<'_, SettingsState>,
@@ -367,7 +314,6 @@ async fn initialize_session(
     let init = SessionInitialization {
         workspace_id: session.workspace_id.clone(),
         settings: settings.clone(),
-        error: session.error.clone(),
         navigation: info.navigation.clone(),
         executing_request_ids: info.executing_request_ids.clone(),
         result_summaries: info.result_summaries.clone(),
@@ -376,6 +322,7 @@ async fn initialize_session(
         dirty: info.dirty,
         editor_count,
         defaults: info.workspace.defaults.clone(),
+        error: startup_state.and_then(|s| s.error.clone()),
         expanded_items: startup_state.and_then(|s| s.expanded_items.clone()),
         mode: session.startup_state.as_ref().and_then(|s| s.mode),
         active_id: startup_state.and_then(|s| s.active_id.clone()),
@@ -383,71 +330,124 @@ async fn initialize_session(
         help_topic: startup_state.and_then(|s| s.help_topic.clone()),
     };
 
+    if let Some(window) = app.get_webview_window(session_id) {
+        window.show().unwrap();
+        window.set_focus().unwrap();
+    }
+
     Ok(init)
 }
 
-#[tauri::command]
-async fn new_workspace(
+fn create_workspace(
     app: AppHandle,
-    sessions_state: State<'_, SessionsState>,
-    workspaces_state: State<'_, WorkspacesState>,
+    sessions: &mut Sessions,
+    workspaces: &mut Workspaces,
+    settings: &mut ApicizeSettings,
     open_in_session_id: Option<String>,
+    open_existing_file_name: Option<String>,
+    create_new_if_error: bool,
 ) -> Result<(), ApicizeAppError> {
-    let mut workspaces = workspaces_state.workspaces.write().await;
-    let mut sessions = sessions_state.sessions.write().await;
+    let mut save_recent_file_name: Option<String> = None;
 
-    let workspace = Workspace::new()?;
-    let result = workspaces.add_workspace(workspace, "", true);
+    // If the session contains the only instance of the workspace that is open,
+    // flag it to close if we are able to create/open its replacement
+    let mut remove_old_workspace: Option<String> = match &open_in_session_id {
+        Some(session_id) => {
+            if let Ok(session) = sessions.get_session(session_id) {
+                let workspace_session_count =
+                    sessions.get_workspace_session_count(&session.workspace_id);
+                if workspace_session_count == 1 {
+                    Some(session.workspace_id.clone())
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        }
+        None => None,
+    };
 
-    clear_all_oauth2_tokens().await;
+    let workspace_result: OpenWorkspaceResult = match open_existing_file_name {
+        Some(file_name) => {
+            // Check to see if the file is already open in a workspace, and if we want to reuse it
+            let mut use_existing_workspace: Option<OpenWorkspaceResult> =
+                workspaces.workspaces.iter().find_map(|(id, info)| {
+                    if !info.file_name.is_empty() && file_name.eq(&info.file_name) {
+                        Some(OpenWorkspaceResult {
+                            workspace_id: id.clone(),
+                            display_name: info.file_name.clone(),
+                            startup_state: SessionStartupState::default(),
+                        })
+                    } else {
+                        None
+                    }
+                });
 
-    let initialize_session_id: String;
-
-    // Set up the session store and initial session
-    match open_in_session_id {
-        Some(active_session_id) => {
-            let old_workspace_id = sessions
-                .get_session(&active_session_id)?
-                .workspace_id
-                .clone();
-
-            log::trace!(
-                "New workspace {} in existing session {}",
-                &result.workspace_id,
-                &active_session_id
-            );
-
-            let session = sessions.change_workspace(&active_session_id, &result.workspace_id)?;
-            session.startup_state = Some(result.startup_state);
-
-            let window = app.get_webview_window(&active_session_id).unwrap();
-            set_window_title(&window, &result.display_name, false);
-
-            log::trace!(
-                "Session count for workspace {} is {}",
-                &old_workspace_id,
-                sessions.get_workspace_session_count(&old_workspace_id)
-            );
-
-            if sessions.get_workspace_session_count(&old_workspace_id) == 0 {
-                workspaces.remove_workspace(&old_workspace_id);
-                log::trace!("Closed workspace {}", &old_workspace_id);
+            // If we are opening in an existing session, and that session has this workbook open,
+            // then we are going to reload the workbook
+            if let Some(w) = &use_existing_workspace {
+                if let Some(other_session_id) = &open_in_session_id {
+                    if w.workspace_id.as_str() == other_session_id {
+                        remove_old_workspace = Some(w.workspace_id.clone());
+                        use_existing_workspace = None;
+                    }
+                }
             }
 
-            initialize_session_id = active_session_id.clone();
+            // Attempt to open the workspace
+            let open_result = match use_existing_workspace {
+                Some(r) => Ok(r),
+                None => match Workspace::open(&PathBuf::from(&file_name)) {
+                    Ok(workspace) => {
+                        let result = workspaces.add_workspace(workspace, &file_name, false);
+                        save_recent_file_name = Some(file_name.to_string());
+                        Ok(result)
+                    }
+                    Err(err) => {
+                        if create_new_if_error {
+                            let workspace = Workspace::new()?;
+                            let mut result = workspaces.add_workspace(workspace, "", true);
+                            result.startup_state.error = Some(format!(
+                                "Unable to load workboook {}: {}",
+                                &file_name, err.error,
+                            ));
+                            Ok(result)
+                        } else {
+                            Err(ApicizeAppError::FileAccessError(err))
+                        }
+                    }
+                },
+            }?;
+
+            Ok::<OpenWorkspaceResult, ApicizeAppError>(open_result)
+        }
+        None => {
+            let workspace = Workspace::new()?;
+            Ok(workspaces.add_workspace(workspace, "", true))
+        }
+    }?;
+
+    // clear_all_oauth2_tokens().await;
+
+    let info = workspaces.get_workspace_info_mut(&workspace_result.workspace_id)?;
+
+    let initialize_session_id = match &open_in_session_id {
+        Some(active_session_id) => {
+            sessions.change_workspace(active_session_id, &workspace_result.workspace_id)?;
+
+            let window = app.get_webview_window(active_session_id).unwrap();
+            window
+                .set_title(format_window_title(&workspace_result.display_name, info.dirty).as_str())
+                .unwrap();
+
+            active_session_id.clone()
         }
         None => {
             let active_session_id = sessions.add_session(Session {
-                workspace_id: result.workspace_id.clone(),
-                startup_state: Some(result.startup_state),
-                error: None,
+                workspace_id: workspace_result.workspace_id.clone(),
+                startup_state: Some(workspace_result.startup_state),
             });
-
-            log::trace!(
-                "New workspace {} in new session {}",
-                &result.workspace_id,
-                &active_session_id
-            );
 
             let webview_url = tauri::WebviewUrl::App("index.html".into());
             let window = tauri::WebviewWindowBuilder::new(
@@ -455,24 +455,114 @@ async fn new_workspace(
                 active_session_id.clone(),
                 webview_url.clone(),
             )
-            .title(active_session_id.clone())
+            .visible(false)
+            .title(format_window_title(&workspace_result.display_name, info.dirty).as_str())
             .build()
             .unwrap();
 
-            set_window_title(&window, &result.display_name, false);
-            window.set_focus().unwrap();
+            window.hide().unwrap();
 
-            initialize_session_id = active_session_id.clone();
+            active_session_id
         }
+    };
+
+    if let Some(file_name) = save_recent_file_name {
+        settings.update_recent_workbook_file_name(&file_name);
+        settings.save()?;
+        app.emit("update_settings", settings.clone()).unwrap();
     }
 
-    workspaces.trace_all_workspaces();
-    sessions.trace_all_sessions();
+    let info1 = workspaces.get_workspace_info(&workspace_result.workspace_id)?;
+    dispatch_save_state(
+        &app,
+        sessions,
+        &workspace_result.workspace_id,
+        info1,
+        false,
+    );
 
-    app.emit_to(initialize_session_id, "initialize", ())
-        .unwrap();
+    // Remove the session's old workspace if we don't need it anymore
+    if let Some(old_workspace_id) = remove_old_workspace {
+        workspaces.remove_workspace(&old_workspace_id);
+    }
+
+    if !is_release_mode() {
+        workspaces.trace_all_workspaces();
+        sessions.trace_all_sessions();
+    }
+
+    if open_in_session_id.is_some() {
+        app.emit_to(initialize_session_id, "initialize", ())
+            .unwrap();
+    }
 
     Ok(())
+}
+
+#[tauri::command]
+async fn clone_workspace(
+    app: AppHandle,
+    sessions_state: State<'_, SessionsState>,
+    workspaces_state: State<'_, WorkspacesState>,
+    session_id: &str,
+    startup_state: Option<SessionStartupState>,
+) -> Result<(), ApicizeAppError> {
+    let workspaces = workspaces_state.workspaces.read().await;
+    let mut sessions = sessions_state.sessions.write().await;
+    let session = sessions.get_session(session_id)?;
+    let workspace_id = session.workspace_id.clone();
+    let info = workspaces.get_workspace_info(&workspace_id)?;
+
+    let active_session_id = sessions.add_session(Session {
+        workspace_id: workspace_id.clone(),
+        startup_state,
+    });
+
+    if !is_release_mode() {
+        log::trace!(
+            "Cloning workspace {} in session {}",
+            &workspace_id,
+            &active_session_id
+        );
+
+        workspaces.trace_all_workspaces();
+        sessions.trace_all_sessions();
+    }
+
+    let webview_url = tauri::WebviewUrl::App("index.html".into());
+    let window =
+        tauri::WebviewWindowBuilder::new(&app, active_session_id.clone(), webview_url.clone())
+            .visible(false)
+            .title(format_window_title(&info.display_name, info.dirty).as_str())
+            .build()
+            .unwrap();
+
+    window.hide().unwrap();
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn new_workspace(
+    app: AppHandle,
+    sessions_state: State<'_, SessionsState>,
+    workspaces_state: State<'_, WorkspacesState>,
+    settings_state: State<'_, SettingsState>,
+    open_in_session_id: Option<String>,
+) -> Result<(), ApicizeAppError> {
+    let sessions = &mut sessions_state.sessions.write().await;
+    let workspaces = &mut workspaces_state.workspaces.write().await;
+    let settings = &mut settings_state.settings.write().await;
+
+    create_workspace(
+        app,
+        sessions,
+        workspaces,
+        settings,
+        open_in_session_id,
+        None,
+        false,
+    )
 }
 
 #[tauri::command]
@@ -484,128 +574,19 @@ async fn open_workspace(
     file_name: String,
     open_in_session_id: Option<String>,
 ) -> Result<(), ApicizeAppError> {
-    let mut workspaces = workspaces_state.workspaces.write().await;
-    let mut sessions = sessions_state.sessions.write().await;
+    let sessions = &mut sessions_state.sessions.write().await;
+    let workspaces = &mut workspaces_state.workspaces.write().await;
+    let settings = &mut settings_state.settings.write().await;
 
-    // Check to see if the workspace is already open
-    let mut result: Option<OpenWorkspaceResult> =
-        workspaces.workspaces.iter().find_map(|(id, info)| {
-            if !info.file_name.is_empty() && file_name.eq(&info.file_name) {
-                Some(OpenWorkspaceResult {
-                    workspace_id: id.clone(),
-                    display_name: info.file_name.clone(),
-                    startup_state: SessionStartupState::default(),
-                })
-            } else {
-                None
-            }
-        });
-
-    // If the session we're opening has the last reference to its workspace,
-    // then close that workspace
-    let mut remove_old_workspace: Option<String> = None;
-    if let Some(session_id) = &open_in_session_id {
-        if let Ok(session) = sessions.get_session(session_id) {
-            let workspace_session_count =
-                sessions.get_workspace_session_count(&session.workspace_id);
-            if workspace_session_count == 1 {
-                remove_old_workspace = Some(session.workspace_id.clone());
-                result = None;
-            }
-        }
-    }
-
-    let state = match result {
-        Some(r) => r,
-        None => match Workspace::open(&PathBuf::from(&file_name)) {
-            Ok(workspace) => workspaces.add_workspace(workspace, &file_name, false),
-            Err(err) => {
-                return Err(ApicizeAppError::FileAccessError(err));
-            }
-        },
-    };
-
-    if let Some(old_workspace_id) = remove_old_workspace {
-        workspaces.remove_workspace(&old_workspace_id);
-    }
-
-    clear_all_oauth2_tokens().await;
-
-    let mut settings = settings_state.settings.write().await;
-
-    let info = workspaces.get_workspace_info_mut(&state.workspace_id)?;
-
-    let initialize_session_id: String;
-
-    match open_in_session_id {
-        Some(active_session_id) => {
-            log::trace!(
-                "Opening workspace {} in existing session {}",
-                &state.workspace_id,
-                &active_session_id
-            );
-
-            let old_workspace_id = sessions
-                .get_session(&active_session_id)?
-                .workspace_id
-                .clone();
-
-            sessions.change_workspace(&active_session_id, &state.workspace_id)?;
-
-            let window = app.get_webview_window(&active_session_id).unwrap();
-            set_window_title(&window, &state.display_name, info.dirty);
-
-            if sessions.get_workspace_session_count(&old_workspace_id) == 0 {
-                workspaces.remove_workspace(&old_workspace_id);
-            }
-
-            initialize_session_id = active_session_id.clone();
-        }
-        None => {
-            let active_session_id = sessions.add_session(Session {
-                workspace_id: state.workspace_id.clone(),
-                startup_state: None,
-                error: None,
-            });
-
-            log::trace!(
-                "Opening workspace {} in new session {}",
-                &state.workspace_id,
-                &active_session_id
-            );
-
-            let webview_url = tauri::WebviewUrl::App("index.html".into());
-            let window = tauri::WebviewWindowBuilder::new(
-                &app,
-                active_session_id.clone(),
-                webview_url.clone(),
-            )
-            .title(active_session_id.clone())
-            .build()
-            .unwrap();
-
-            set_window_title(&window, &state.display_name, info.dirty);
-            window.set_focus().unwrap();
-
-            initialize_session_id = active_session_id.clone();
-        }
-    }
-
-    if settings.update_recent_workbook_file_name(&file_name) {
-        settings.save()?;
-        app.emit("update_settings", settings.clone()).unwrap();
-    }
-
-    let info1 = workspaces.get_workspace_info(&state.workspace_id)?;
-    dispatch_save_state(&app, &sessions, &state.workspace_id, info1, false);
-
-    workspaces.trace_all_workspaces();
-    sessions.trace_all_sessions();
-
-    app.emit_to(initialize_session_id, "initialize", ())
-        .unwrap();
-
-    Ok(())
+    create_workspace(
+        app,
+        sessions,
+        workspaces,
+        settings,
+        open_in_session_id,
+        Some(file_name),
+        false,
+    )
 }
 
 #[tauri::command]
@@ -681,7 +662,8 @@ fn dispatch_save_state(
                     .unwrap();
             }
             if let Some(w) = app.get_webview_window(&session_id) {
-                set_window_title(&w, &info.display_name, info.dirty);
+                w.set_title(format_window_title(&info.display_name, info.dirty).as_str())
+                    .unwrap();
             }
         }
     }
@@ -698,12 +680,6 @@ async fn close_workspace(
     let session = sessions.get_session(session_id)?;
     let workspace_id = session.workspace_id.clone();
 
-    log::trace!(
-        "Closing session {} (workspace {})",
-        &session_id,
-        &workspace_id
-    );
-
     sessions.remove_session(session_id)?;
 
     let editor_count = sessions.get_workspace_session_count(&workspace_id);
@@ -716,50 +692,10 @@ async fn close_workspace(
     let info = workspaces.get_workspace_info(&workspace_id)?;
     dispatch_save_state(&app, &sessions, &workspace_id, info, false);
 
-    workspaces.trace_all_workspaces();
-    sessions.trace_all_sessions();
-
-    Ok(())
-}
-
-#[tauri::command]
-async fn clone_workspace(
-    app: AppHandle,
-    sessions_state: State<'_, SessionsState>,
-    workspaces_state: State<'_, WorkspacesState>,
-    session_id: &str,
-    startup_state: Option<SessionStartupState>,
-) -> Result<(), ApicizeAppError> {
-    let workspaces = workspaces_state.workspaces.read().await;
-    let mut sessions = sessions_state.sessions.write().await;
-    let session = sessions.get_session(session_id)?;
-    let workspace_id = session.workspace_id.clone();
-    let info = workspaces.get_workspace_info(&workspace_id)?;
-
-    let active_session_id = sessions.add_session(Session {
-        workspace_id: workspace_id.clone(),
-        startup_state,
-        error: None,
-    });
-
-    log::trace!(
-        "Cloning workspace {} in session {}",
-        &workspace_id,
-        &active_session_id
-    );
-
-    workspaces.trace_all_workspaces();
-    sessions.trace_all_sessions();
-
-    let webview_url = tauri::WebviewUrl::App("index.html".into());
-    let window =
-        tauri::WebviewWindowBuilder::new(&app, active_session_id.clone(), webview_url.clone())
-            .title(active_session_id.clone())
-            .build()
-            .unwrap();
-
-    set_window_title(&window, &info.display_name, info.dirty);
-    window.set_focus().unwrap();
+    if !is_release_mode() {
+        workspaces.trace_all_workspaces();
+        sessions.trace_all_sessions();
+    }
 
     Ok(())
 }
@@ -1395,7 +1331,8 @@ async fn update(
             }
             app.emit_to(&session_id, "dirty", true).unwrap();
             if let Some(w) = app.get_webview_window(&session_id) {
-                set_window_title(&w, display_name, true);
+                w.set_title(format_window_title(display_name, true).as_str())
+                    .unwrap();
             }
         }
     }
