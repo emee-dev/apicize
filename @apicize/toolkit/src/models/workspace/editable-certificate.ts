@@ -46,6 +46,7 @@ export class EditableCertificate extends Editable<Certificate> {
                     entityType: 'Certificate',
                     type: this.type,
                     id: this.id,
+                    name: this.name,
                     pem: this.pem,
                     key: this.key
                 }
@@ -55,6 +56,7 @@ export class EditableCertificate extends Editable<Certificate> {
                     entityType: 'Certificate',
                     type: this.type,
                     id: this.id,
+                    name: this.name,
                     pem: this.pem,
                 }
                 break
@@ -63,6 +65,7 @@ export class EditableCertificate extends Editable<Certificate> {
                     entityType: 'Certificate',
                     type: this.type,
                     id: this.id,
+                    name: this.name,
                     pfx: this.pfx,
                     password: this.password,
                 }

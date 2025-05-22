@@ -1,6 +1,6 @@
 import { ApicizeSettings } from '@apicize/lib-typescript';
 import { SupportedColorScheme } from '@mui/material';
-import { action, observable } from 'mobx';
+import { action, computed, observable } from 'mobx';
 
 export class EditableSettings {
     @observable accessor dirty = false
@@ -17,6 +17,7 @@ export class EditableSettings {
     @observable accessor recentWorkbookFileNames: string[] = []
     @observable accessor pkceListenerPort = 8080
     @observable accessor alwaysHideNavTree = false
+    @observable accessor showDiagnosticInfo = false
 
     constructor(settings?: ApicizeSettings) {
         if (settings) {
@@ -29,6 +30,7 @@ export class EditableSettings {
             this.recentWorkbookFileNames = settings.recentWorkbookFileNames?.slice(0, 10) ?? []
             this.pkceListenerPort = settings.pkceListenerPort ?? 8080
             this.alwaysHideNavTree = settings.alwaysHideNavTree
+            this.showDiagnosticInfo = settings.showDiagnosticInfo
         }
     }
 
@@ -134,9 +136,17 @@ export class EditableSettings {
             this.dirty = false
         }
     }
+
     @action
     public setEditorPanels(value: string) {
         this.editorPanels = value
+    }
+
+
+    @action
+    public setShowDiagnosticInfo(value: boolean) {
+        this.showDiagnosticInfo = value
+        this.dirty = false
     }
 
     @action
@@ -145,5 +155,7 @@ export class EditableSettings {
         this.colorScheme = 'dark'
         this.editorPanels = ''
         this.pkceListenerPort = 8080
+        this.alwaysHideNavTree = false
+        this.showDiagnosticInfo = false
     }
 }

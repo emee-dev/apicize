@@ -138,18 +138,25 @@ export interface ApicizeExecution {
     executedAt: number
     duration: number
 
-    data?: Map<string, JsonValue>[]
-    variables?: Map<string, JsonValue>
+    name: string
+
+    testContext: ApicizeExecutionTestContext,
     outputVariables?: Map<string, JsonValue>
 
-    request?: ApicizeHttpRequest
-    response?: ApicizeHttpResponse
     tests?: ApicizeTestResult[]
     error?: ApicizeError
 
     success: boolean
     testPassCount: number
     testFailCount: number
+}
+
+export interface ApicizeExecutionTestContext {
+    request?: ApicizeHttpRequest
+    response?: ApicizeHttpResponse
+    merged?: Map<string, JsonValue>
+    variables?: Map<string, JsonValue>
+    data?: Map<string, JsonValue>
 }
 
 export interface ApicizeBodyText {

@@ -4,25 +4,27 @@ import { DEFAULT_SELECTION_ID } from '../../../models/store'
 import { observer } from 'mobx-react-lite'
 import { useWorkspace } from '../../../contexts/workspace.context'
 import { EditableRequestGroup } from '../../../models/workspace/editable-request-group'
-import { WorkspaceParameters } from '../../../models/workspace/workspace-parameters'
 import { Selection } from '@apicize/lib-typescript'
 import { EditableRequest } from '../../../models/workspace/editable-request'
+import { useFeedback } from '../../../contexts/feedback.context'
+import { reaction } from 'mobx'
 
 export const RequestParametersEditor = observer((props: {
     requestOrGroup: EditableRequest | EditableRequestGroup,
-    parameters: WorkspaceParameters | null
 }) => {
     const workspace = useWorkspace()
+    const feedback = useFeedback()
     workspace.nextHelpTopic = 'requests/parameters'
 
     const requestOrGroup = props.requestOrGroup
-    const parameters = props.parameters
-    
-    if (!parameters) {
-        workspace.activeSelection?.initializeParameters()
+
+    if (!requestOrGroup.parameters) {
+        workspace.getRequestParameterList(requestOrGroup.id)
+            .then(p => requestOrGroup.setParameters(p))
+            .catch(e => feedback.toastError(e))
+
         return null
     }
-
 
     let credIndex = 0
     const itemsFromSelections = (selections: Selection[]) => {
@@ -45,7 +47,7 @@ export const RequestParametersEditor = observer((props: {
                     fullWidth
                     size='small'
                 >
-                    {itemsFromSelections(parameters.scenarios)}
+                    {itemsFromSelections(requestOrGroup.parameters.scenarios)}
                 </Select>
             </FormControl>
             <FormControl>
@@ -60,7 +62,7 @@ export const RequestParametersEditor = observer((props: {
                     fullWidth
                     size='small'
                 >
-                    {itemsFromSelections(parameters.authorizations)}
+                    {itemsFromSelections(requestOrGroup.parameters.authorizations)}
                 </Select>
             </FormControl>
             <FormControl>
@@ -75,7 +77,7 @@ export const RequestParametersEditor = observer((props: {
                     fullWidth
                     size='small'
                 >
-                    {itemsFromSelections(parameters.certificates)}
+                    {itemsFromSelections(requestOrGroup.parameters.certificates)}
                 </Select>
             </FormControl>
             <FormControl>
@@ -90,7 +92,22 @@ export const RequestParametersEditor = observer((props: {
                     fullWidth
                     size='small'
                 >
-                    {itemsFromSelections(parameters.proxies)}
+                    {itemsFromSelections(requestOrGroup.parameters.proxies)}
+                </Select>
+            </FormControl>
+            <FormControl>
+                <InputLabel id='proxy-data-id'>Seed Data</InputLabel>
+                <Select
+                    labelId='proxy-data'
+                    aria-labelledby='proxy-data-id'
+                    id='cred-data'
+                    label='Seed Data'
+                    value={requestOrGroup.selectedData?.id ?? DEFAULT_SELECTION_ID}
+                    onChange={(e) => requestOrGroup.setSelectedDataId(e.target.value)}
+                    fullWidth
+                    size='small'
+                >
+                    {itemsFromSelections(requestOrGroup.parameters.data)}
                 </Select>
             </FormControl>
         </Stack>

@@ -36,6 +36,8 @@ export const RequestGroupInfoEditor = observer((props: {
         }
     }
 
+    let times = group.runs == 1 ? 'one time' : `${group.runs} times`    
+
     return (
         <Grid2 container direction='column' spacing={3} sx={props.sx}>
             <Grid2>
@@ -71,7 +73,7 @@ export const RequestGroupInfoEditor = observer((props: {
                         value={group.runs}
                         onChange={e => group.setRuns(parseInt(e.target.value))}
                     />
-                    <ToggleButton value='Run' title={`Run selected group ${group.runs} times`} disabled={running} onClick={handleRunClick()} size='small'>
+                    <ToggleButton value='Run' title={`Run selected group ${times}`} disabled={running} onClick={handleRunClick()} size='small'>
                         <PlayCircleFilledIcon color={running ? 'disabled' : 'success'} />
                     </ToggleButton>
                 </Grid2>

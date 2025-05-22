@@ -27,6 +27,7 @@ import {
     ExecutionResultSummary,
     ExecutionStatus,
     ExecutionResultDetail,
+    ExternalDataSourceType,
 } from "@apicize/lib-typescript"
 import { EntityType } from "../models/workspace/entity-type"
 import { createContext, useContext } from "react"
@@ -45,6 +46,7 @@ import { EditableSettings } from "../models/editable-settings"
 import { IndexedEntityPosition } from "../models/workspace/indexed-entity-position"
 import { EditableRequestHeaders } from "../models/workspace/editable-request-headers"
 import { ReqwestEvent } from "../models/trace"
+import { NO_SELECTION } from "../models/store"
 
 export type ResultsPanel = 'Info' | 'Headers' | 'Preview' | 'Text' | 'Details'
 
@@ -54,7 +56,6 @@ export enum WorkspaceMode {
     Settings,
     Defaults,
     Warnings,
-    Seed,
     Console,
     RequestList,
     ScenarioList,
@@ -128,6 +129,7 @@ export class WorkspaceStore {
             listLogs: () => Promise<ReqwestEvent[]>,
             clearLogs: () => Promise<void>,
             getRequestActiveAuthorization: (id: string) => Promise<Authorization | undefined>,
+            getRequestActiveData: (id: string) => Promise<ExternalData | undefined>,
             storeToken: (authorizationId: string, tokenInfo: CachedTokenInfo) => Promise<void>,
             clearToken: (authorizationId: string) => Promise<void>,
             clearAllTokens: () => Promise<void>,
@@ -274,6 +276,7 @@ export class WorkspaceStore {
 
     @action
     refreshFromExternalUpdate(updatedItem: Entity) {
+        let forceRequestRefresh = false
         switch (updatedItem.entityType) {
             case 'Request':
             case 'Group':
@@ -287,13 +290,28 @@ export class WorkspaceStore {
                 break
             case 'Defaults':
                 this.defaults.refreshFromExternalUpdate(updatedItem)
+                forceRequestRefresh = true
                 break
             case 'DataList':
                 this.setDataList(updatedItem.list)
+                forceRequestRefresh = true
                 break
             case 'Data':
                 this.setData(updatedItem)
+                forceRequestRefresh = true
                 break
+        }
+
+        if (forceRequestRefresh) {
+            // If we are looking at a request and have externally updated data, refresh the request
+            // in case the data referred to is now invalid 
+            switch (this.activeSelection?.type) {
+                case EntityType.Request:
+                case EntityType.Group:
+                case EntityType.RequestEntry:
+                    this.changeActive(this.activeSelection.type, this.activeSelection.id)
+                    break
+            }
         }
     }
 
@@ -609,6 +627,9 @@ export class WorkspaceStore {
         return this.callbacks.getRequestActiveAuthorization(request.id)
     }
 
+    getRequestActiveData(request: EditableRequestEntry) {
+        return this.callbacks.getRequestActiveData(request.id)
+    }
     async getRequestParameterList(requestOrGroupId: string): Promise<WorkspaceParameters> {
         const results = await this.callbacks.list(EntityType.Parameters, requestOrGroupId)
         if (results.entityType !== 'Parameters') {
@@ -831,8 +852,12 @@ export class WorkspaceStore {
             this.feedback.toastError(e)
         }).finally(() => {
             runInAction(() => {
-                if (this.activeSelection?.type === EntityType.Request) {
-                    this.activeSelection.parameters = null
+                switch (this.activeSelection?.type) {
+                    case EntityType.Request:
+                    case EntityType.Group:
+                    case EntityType.RequestEntry:
+                        this.activeSelection.parameters = null
+                        break
                 }
             })
         })
@@ -888,6 +913,10 @@ export class WorkspaceStore {
         }
     }
 
+    getDataList() {
+        return this.callbacks.list(EntityType.Data)
+    }
+
     /**
      * Initialize the data list
      * @returns 
@@ -921,7 +950,6 @@ export class WorkspaceStore {
             .catch(e => this.feedback.toastError(e))
     }
 
-
     @action
     getExecution(requestOrGroupId: string) {
         let execution = this.executions.get(requestOrGroupId)
@@ -953,22 +981,6 @@ export class WorkspaceStore {
         return detail
     }
 
-    private static normalizeResultNames(results: ExecutionResultSummary[]) {
-        for (const result of results) {
-            const parts = [
-                result.name?.length > 0 ? result.name : '(Unnamed)'
-            ]
-            if (result.rowCount) {
-                parts.push(`Row ${result.rowNumber} of ${result.rowCount}`)
-            }
-            if (result.runCount) {
-                parts.push(`Run ${result.runNumber} of ${result.runCount}`)
-            }
-
-            result.name = parts.join(', ')
-        }
-    }
-
     @action
     updateExecutionStatus(status: ExecutionStatus) {
         const execution = this.getExecution(status.requestOrGroupId)
@@ -981,7 +993,6 @@ export class WorkspaceStore {
                 execution.startExecution()
             }
         } else {
-            WorkspaceStore.normalizeResultNames(status.results ?? [])
             this.cachedExecutionDetail = null
             if (status.results) {
                 execution.completeExecution(status.results)
@@ -1045,8 +1056,6 @@ export class WorkspaceStore {
 
             this.resultEditSessions.delete(requestOrGroupId)
             this.cachedExecutionDetail = null
-
-            WorkspaceStore.normalizeResultNames(executionResults)
             execution.completeExecution(executionResults)
         } catch (e) {
             const msg1 = `${e}`

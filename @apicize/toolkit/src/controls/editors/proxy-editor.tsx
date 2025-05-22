@@ -2,10 +2,11 @@ import { Stack, TextField, SxProps, Grid2, Box } from '@mui/material'
 import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';
-import { EditableProxy } from '../../models/workspace/editable-proxy';
 import { useWorkspace } from '../../contexts/workspace.context';
+import { useApicize } from '../../contexts/apicize.context';
 
 export const ProxyEditor = observer((props: { sx?: SxProps }) => {
+    const apicize = useApicize()
     const workspace = useWorkspace()
     const activeSelection = workspace.activeSelection
 
@@ -19,7 +20,11 @@ export const ProxyEditor = observer((props: { sx?: SxProps }) => {
     return (
         <Stack direction='column' className='editor proxy' sx={props.sx}>
             <Box className='editor-panel-header'>
-                <EditorTitle icon={<AirlineStopsIcon color='proxy' />} name={proxy.name.length > 0 ? proxy.name : '(Unnamed)'} />
+                <EditorTitle
+                    icon={<AirlineStopsIcon color='proxy' />}
+                    name={proxy.name.length > 0 ? proxy.name : '(Unnamed)'}
+                    diag={apicize.showDiagnosticInfo ? proxy.id : undefined}
+                />
             </Box>
             <Box className='editor-panel'>
                 <Grid2 container className='editor-content' direction={'column'} spacing={3}>

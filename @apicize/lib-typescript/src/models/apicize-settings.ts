@@ -11,4 +11,5 @@ export interface ApicizeSettings {
     recentWorkbookFileNames?: string[]
     pkceListenerPort: number | undefined
     alwaysHideNavTree: boolean
+    showDiagnosticInfo: boolean
 }

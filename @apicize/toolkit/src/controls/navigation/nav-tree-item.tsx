@@ -173,5 +173,5 @@ export const NavTreeItem = observer((props: {
         {
             props.children
         }
-    </TreeItem >
+    </TreeItem>
 })

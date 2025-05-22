@@ -11,9 +11,10 @@ import { ToastSeverity, useFeedback } from '../../contexts/feedback.context';
 import CertificateIcon from '../../icons/certificate-icon';
 import { useWorkspace } from '../../contexts/workspace.context';
 import { SshFileType } from '../../models/workspace/ssh-file-type';
+import { useApicize } from '../../contexts/apicize.context';
 
 export const CertificateEditor = observer((props: { sx: SxProps }) => {
-
+    const apicize = useApicize()
     const workspace = useWorkspace()
     const activeSelection = workspace.activeSelection
 
@@ -90,7 +91,11 @@ export const CertificateEditor = observer((props: { sx: SxProps }) => {
     return (
         <Stack className='editor certificate' direction='column' sx={props.sx}>
             <Box className='editor-panel-header'>
-                <EditorTitle icon={<SvgIcon color='certificate'><CertificateIcon /></SvgIcon>} name={certificate.name?.length ?? 0 > 0 ? certificate.name : '(Unnamed)'} />
+                <EditorTitle
+                    icon={<SvgIcon color='certificate'><CertificateIcon /></SvgIcon>}
+                    name={certificate.name?.length ?? 0 > 0 ? certificate.name : '(Unnamed)'}
+                    diag={apicize.showDiagnosticInfo ? certificate.id : undefined}
+                />
             </Box>
             <Box className='editor-panel'>
                 <Stack className='editor-content' direction={'column'} spacing={3}>

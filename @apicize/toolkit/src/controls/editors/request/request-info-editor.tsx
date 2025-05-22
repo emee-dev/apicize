@@ -30,6 +30,8 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
         }
     }
 
+    let times = request.runs == 1 ? 'one time' : `${request.runs} times`
+
     return (
         <Grid2 container direction='column' spacing={3}>
             <Grid2>
@@ -113,7 +115,7 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                         value={request.runs}
                         onChange={e => request.setRuns(parseInt(e.target.value))}
                     />
-                    <ToggleButton value='Run' title={`Run selected request ${request.runs} times`} disabled={running} size='small' onClick={handleRunClick()}>
+                    <ToggleButton value='Run' title={`Run selected request ${times}`} disabled={running} size='small' onClick={handleRunClick()}>
                         <PlayCircleFilledIcon color={running ? 'disabled' : 'success'} />
                     </ToggleButton>
                 </Grid2>

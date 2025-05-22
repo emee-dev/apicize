@@ -1,4 +1,4 @@
-import { ApicizeError, ApicizeHttpRequest, ApicizeHttpResponse, ApicizeTestResult, JsonValue } from "../execution"
+import { ApicizeError, ApicizeExecutionTestContext, ApicizeHttpRequest, ApicizeHttpResponse, ApicizeTestResult, JsonValue } from "../execution"
 import { ExecutionResultSuccess } from "./execution-result-success"
 
 export type ExecutionResultDetail = ExecutionResultDetailRequest | ExecutionResultDetailGroup
@@ -25,19 +25,10 @@ export interface ExecutionResultDetailRequest {
     duration: number,
 
     /// Variables assigned to the request
-    variables?: Map<string, JsonValue>,
-
-    /// Row data assigned to the request
-    data?: Map<string, JsonValue>,
+    testContext: ApicizeExecutionTestContext,
 
     /// Variables to update at the end of the request
     outputVariables?: Map<string, JsonValue>,
-
-    /// Request sent to server
-    request?: ApicizeHttpRequest,
-
-    /// Response received from server (if any)
-    response?: ApicizeHttpResponse,
 
     /// Test results (if executed)
     tests?: ApicizeTestResult[],
@@ -86,8 +77,13 @@ export interface ExecutionResultDetailGroup {
     /// Duration of execution (milliseconds)
     duration: number,
 
-    /// Variables to update at the end of the grou's requests
-    outputVariables?: Map<string, JsonValue>,
+    dataContext: {
+        /// Variables to sent with the groups' requests
+        variables?: Map<string, JsonValue>,
+
+        /// Data row used to populate variables (if applicable)
+        data?: Map<string, JsonValue>,
+    }
 
     /// Indicates level of call success
     success: ExecutionResultSuccess

@@ -35,7 +35,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex, OnceLock},
 };
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, State};
 use tauri_plugin_clipboard::Clipboard;
 use tokio_util::sync::CancellationToken;
 use trace::{ReqwestEvent, ReqwestLogger};
@@ -128,11 +128,14 @@ async fn main() {
                     recent_workbook_file_names: None,
                     pkce_listener_port: 8080,
                     always_hide_nav_tree: false,
+                    show_diagnostic_info: false,
                 }
             };
 
             // Copy demo files from resources if we do not have settings saved
-            if settings.last_workbook_file_name.is_none() {
+            let is_new_install = settings.last_workbook_file_name.is_none();
+
+            if is_new_install {
                 // If we have not loaded a workbook before, copy the demo
                 if let Some(workbook_directory) = &settings.workbook_directory {
                     if let Ok(resources) = &app.path().resource_dir() {
@@ -147,6 +150,14 @@ async fn main() {
                                 err
                             );
                         }
+
+                        load_workbook = Some(
+                            dest_demo_directory
+                                .join("demo.apicize")
+                                .as_os_str()
+                                .to_string_lossy()
+                                .to_string(),
+                        );
                     }
                 }
             }
@@ -171,8 +182,9 @@ async fn main() {
                 &mut sessions,
                 &mut workspaces,
                 &mut settings,
-                None,
                 load_workbook,
+                true,
+                None,
                 true,
             )
             .unwrap();
@@ -226,6 +238,7 @@ async fn main() {
                     app.state::<WorkspacesState>(),
                     app.state::<SettingsState>(),
                     None,
+                    true,
                 ))
             })
             .unwrap();
@@ -268,6 +281,7 @@ async fn main() {
             get_title,
             get_dirty,
             get_request_active_authorization,
+            get_request_active_data,
             list,
             add,
             update,
@@ -338,40 +352,50 @@ async fn initialize_session(
     Ok(init)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn create_workspace(
     app: AppHandle,
     sessions: &mut Sessions,
     workspaces: &mut Workspaces,
     settings: &mut ApicizeSettings,
-    open_in_session_id: Option<String>,
     open_existing_file_name: Option<String>,
     create_new_if_error: bool,
+    current_session_id: Option<String>,
+    open_in_new_session: bool,
 ) -> Result<(), ApicizeAppError> {
     let mut save_recent_file_name: Option<String> = None;
 
     // If the session contains the only instance of the workspace that is open,
     // flag it to close if we are able to create/open its replacement
-    let mut remove_old_workspace: Option<String> = match &open_in_session_id {
-        Some(session_id) => {
-            if let Ok(session) = sessions.get_session(session_id) {
-                let workspace_session_count =
-                    sessions.get_workspace_session_count(&session.workspace_id);
-                if workspace_session_count == 1 {
-                    Some(session.workspace_id.clone())
+    let mut force_reopen = false;
+    let mut remove_old_workspace: Option<String> = if open_in_new_session {
+        None
+    } else {
+        match &current_session_id {
+            Some(session_id) => {
+                if let Ok(session) = sessions.get_session(session_id) {
+                    let workspace_session_count =
+                        sessions.get_workspace_session_count(&session.workspace_id);
+                    if workspace_session_count == 1 {
+                        force_reopen = true;
+                        Some(session.workspace_id.clone())
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
-            } else {
-                None
             }
+            None => None,
         }
-        None => None,
     };
 
     let workspace_result: OpenWorkspaceResult = match open_existing_file_name {
         Some(file_name) => {
             // Check to see if the file is already open in a workspace, and if we want to reuse it
-            let mut use_existing_workspace: Option<OpenWorkspaceResult> =
+            let mut use_existing_workspace: Option<OpenWorkspaceResult> = if force_reopen {
+                None
+            } else {
                 workspaces.workspaces.iter().find_map(|(id, info)| {
                     if !info.file_name.is_empty() && file_name.eq(&info.file_name) {
                         Some(OpenWorkspaceResult {
@@ -382,15 +406,18 @@ fn create_workspace(
                     } else {
                         None
                     }
-                });
+                })
+            };
 
             // If we are opening in an existing session, and that session has this workbook open,
             // then we are going to reload the workbook
-            if let Some(w) = &use_existing_workspace {
-                if let Some(other_session_id) = &open_in_session_id {
-                    if w.workspace_id.as_str() == other_session_id {
-                        remove_old_workspace = Some(w.workspace_id.clone());
-                        use_existing_workspace = None;
+            if !open_in_new_session {
+                if let Some(w) = &use_existing_workspace {
+                    if let Some(other_session_id) = &current_session_id {
+                        if w.workspace_id.as_str() == other_session_id {
+                            remove_old_workspace = Some(w.workspace_id.clone());
+                            use_existing_workspace = None;
+                        }
                     }
                 }
             }
@@ -432,38 +459,46 @@ fn create_workspace(
 
     let info = workspaces.get_workspace_info_mut(&workspace_result.workspace_id)?;
 
-    let initialize_session_id = match &open_in_session_id {
-        Some(active_session_id) => {
-            sessions.change_workspace(active_session_id, &workspace_result.workspace_id)?;
+    let open_in_session_id = if let (Some(active_session_id), false) =
+        (current_session_id.as_ref(), open_in_new_session)
+    {
+        sessions.change_workspace(active_session_id, &workspace_result.workspace_id)?;
 
-            let window = app.get_webview_window(active_session_id).unwrap();
-            window
-                .set_title(format_window_title(&workspace_result.display_name, info.dirty).as_str())
-                .unwrap();
-
-            active_session_id.clone()
-        }
-        None => {
-            let active_session_id = sessions.add_session(Session {
-                workspace_id: workspace_result.workspace_id.clone(),
-                startup_state: Some(workspace_result.startup_state),
-            });
-
-            let webview_url = tauri::WebviewUrl::App("index.html".into());
-            let window = tauri::WebviewWindowBuilder::new(
-                &app,
-                active_session_id.clone(),
-                webview_url.clone(),
-            )
-            .visible(false)
-            .title(format_window_title(&workspace_result.display_name, info.dirty).as_str())
-            .build()
+        let window = app.get_webview_window(active_session_id).unwrap();
+        window
+            .set_title(format_window_title(&workspace_result.display_name, info.dirty).as_str())
             .unwrap();
 
-            window.hide().unwrap();
+        active_session_id.to_string()
+    } else {
+        let active_session_id = sessions.add_session(Session {
+            workspace_id: workspace_result.workspace_id.clone(),
+            startup_state: Some(workspace_result.startup_state),
+        });
 
-            active_session_id
+        let (size, pos, maxed) = get_new_window_size_and_position(&app, &current_session_id);
+
+        let webview_url = tauri::WebviewUrl::App("index.html".into());
+        let window =
+            tauri::WebviewWindowBuilder::new(&app, active_session_id.clone(), webview_url.clone())
+                .visible(false)
+                .title(format_window_title(&workspace_result.display_name, info.dirty).as_str())
+                .maximized(maxed.is_some_and(|m| m))
+                .build()
+                .unwrap();
+
+        if let Some(sz) = size {
+            window.set_size(sz).unwrap();
         }
+
+        if let Some(p) = pos {
+            println!("Position should be {}, {}", p.x, p.y);
+            window.set_position(p).unwrap();
+        }
+
+        window.hide().unwrap();
+
+        active_session_id
     };
 
     if let Some(file_name) = save_recent_file_name {
@@ -473,16 +508,13 @@ fn create_workspace(
     }
 
     let info1 = workspaces.get_workspace_info(&workspace_result.workspace_id)?;
-    dispatch_save_state(
-        &app,
-        sessions,
-        &workspace_result.workspace_id,
-        info1,
-        false,
-    );
+    dispatch_save_state(&app, sessions, &workspace_result.workspace_id, info1, false);
 
     // Remove the session's old workspace if we don't need it anymore
     if let Some(old_workspace_id) = remove_old_workspace {
+        if !is_release_mode() {
+            println!("Removing workspace {}", &old_workspace_id);
+        }
         workspaces.remove_workspace(&old_workspace_id);
     }
 
@@ -491,12 +523,43 @@ fn create_workspace(
         sessions.trace_all_sessions();
     }
 
-    if open_in_session_id.is_some() {
-        app.emit_to(initialize_session_id, "initialize", ())
-            .unwrap();
+    if !open_in_new_session {
+        app.emit_to(&open_in_session_id, "initialize", ()).unwrap();
     }
 
     Ok(())
+}
+
+fn get_new_window_size_and_position(
+    app: &AppHandle,
+    session_id: &Option<String>,
+) -> (
+    Option<PhysicalSize<u32>>,
+    Option<PhysicalPosition<i32>>,
+    Option<bool>,
+) {
+    let mut size: Option<PhysicalSize<u32>> = None;
+    let mut pos: Option<PhysicalPosition<i32>> = None;
+    let mut maxed: Option<bool> = None;
+
+    if let Some(id) = &session_id {
+        if let Some(w) = app.get_webview_window(id) {
+            if let Ok(mut p) = w.outer_position() {
+                p.x += 64;
+                p.y += 64;
+                pos = Some(p);
+            }
+            if let Ok(b) = w.is_maximized() {
+                maxed = Some(b);
+                if let Ok(s) = w.inner_size() {
+                    size = Some(s);
+                }
+            } else if let Ok(s) = w.outer_size() {
+                size = Some(s);
+            }
+        }
+    }
+    (size, pos, maxed)
 }
 
 #[tauri::command]
@@ -504,12 +567,12 @@ async fn clone_workspace(
     app: AppHandle,
     sessions_state: State<'_, SessionsState>,
     workspaces_state: State<'_, WorkspacesState>,
-    session_id: &str,
+    session_id: String,
     startup_state: Option<SessionStartupState>,
 ) -> Result<(), ApicizeAppError> {
     let workspaces = workspaces_state.workspaces.read().await;
     let mut sessions = sessions_state.sessions.write().await;
-    let session = sessions.get_session(session_id)?;
+    let session = sessions.get_session(&session_id)?;
     let workspace_id = session.workspace_id.clone();
     let info = workspaces.get_workspace_info(&workspace_id)?;
 
@@ -529,6 +592,7 @@ async fn clone_workspace(
         sessions.trace_all_sessions();
     }
 
+    let (size, pos, maxed) = get_new_window_size_and_position(&app, &Some(session_id));
     let webview_url = tauri::WebviewUrl::App("index.html".into());
     let window =
         tauri::WebviewWindowBuilder::new(&app, active_session_id.clone(), webview_url.clone())
@@ -537,8 +601,19 @@ async fn clone_workspace(
             .build()
             .unwrap();
 
-    window.hide().unwrap();
+    if let Some(p) = pos {
+        window.set_position(p).unwrap();
+    }
 
+    if let Some(sz) = size {
+        window.set_size(sz).unwrap();
+    }
+
+    if let Some(true) = maxed {
+        window.maximize().unwrap();
+    }
+
+    window.hide().unwrap();
     Ok(())
 }
 
@@ -548,7 +623,8 @@ async fn new_workspace(
     sessions_state: State<'_, SessionsState>,
     workspaces_state: State<'_, WorkspacesState>,
     settings_state: State<'_, SettingsState>,
-    open_in_session_id: Option<String>,
+    current_session_id: Option<String>,
+    open_in_new_session: bool,
 ) -> Result<(), ApicizeAppError> {
     let sessions = &mut sessions_state.sessions.write().await;
     let workspaces = &mut workspaces_state.workspaces.write().await;
@@ -559,9 +635,10 @@ async fn new_workspace(
         sessions,
         workspaces,
         settings,
-        open_in_session_id,
         None,
-        false,
+        true,
+        current_session_id,
+        open_in_new_session,
     )
 }
 
@@ -572,7 +649,8 @@ async fn open_workspace(
     workspaces_state: State<'_, WorkspacesState>,
     settings_state: State<'_, SettingsState>,
     file_name: String,
-    open_in_session_id: Option<String>,
+    session_id: Option<String>,
+    open_in_new_session: bool,
 ) -> Result<(), ApicizeAppError> {
     let sessions = &mut sessions_state.sessions.write().await;
     let workspaces = &mut workspaces_state.workspaces.write().await;
@@ -583,9 +661,10 @@ async fn open_workspace(
         sessions,
         workspaces,
         settings,
-        open_in_session_id,
         Some(file_name),
         false,
+        session_id,
+        open_in_new_session,
     )
 }
 
@@ -839,13 +918,13 @@ async fn run_request(
         runner = Arc::new(TestRunnerContext::new(
             cloned_workspace,
             Some(cancellation),
-            if single_run { Some(1) } else { None },
+            single_run,
             &allowed_data_path,
             true, // enable detailed trace capture to get read/write data
         ));
     }
 
-    let response = runner.run(&[request_or_group_id.to_string()]).await;
+    let responses = runner.run(vec![request_or_group_id.to_string()]).await;
     cancellation_tokens()
         .lock()
         .unwrap()
@@ -858,9 +937,9 @@ async fn run_request(
 
         other_sessions = get_workspace_sessions(&workspace_id, &sessions, Some(session_id));
 
-        match response {
-            Ok(result) => {
-                let (summaries, details) = result.assemble_results(request_or_group_id);
+        match responses.into_iter().next() {
+            Some(Ok(result)) => {
+                let (summaries, details) = result.assemble_results();
 
                 info.result_summaries
                     .insert(request_or_group_id.to_string(), summaries.clone());
@@ -883,7 +962,7 @@ async fn run_request(
                 info.executing_request_ids.remove(request_or_group_id);
                 Ok(summaries)
             }
-            Err(err) => {
+            Some(Err(err)) => {
                 if let Some(other_session_ids) = &other_sessions {
                     let status = ExecutionStatus {
                         request_or_group_id: request_or_group_id.to_string(),
@@ -898,6 +977,7 @@ async fn run_request(
                 info.executing_request_ids.remove(request_or_group_id);
                 Err(ApicizeAppError::ApicizeError(err))
             }
+            None => Err(ApicizeAppError::UnspecifiedError),
         }
     }
 }
@@ -1026,7 +1106,8 @@ async fn refresh_token(
 
 #[tauri::command]
 fn is_release_mode() -> bool {
-    !cfg!(debug_assertions)
+    // !cfg!(debug_assertions)
+    false
 }
 
 /// Retrieve other sessions for the updated workspace
@@ -1069,6 +1150,21 @@ async fn get_request_active_authorization(
     let workspaces = workspaces_state.workspaces.read().await;
     Ok(workspaces
         .get_request_active_authorization(&session.workspace_id, request_id)?
+        .clone())
+}
+
+#[tauri::command]
+async fn get_request_active_data(
+    sessions_state: State<'_, SessionsState>,
+    workspaces_state: State<'_, WorkspacesState>,
+    session_id: &str,
+    request_id: &str,
+) -> Result<Option<ExternalData>, ApicizeAppError> {
+    let sessions = sessions_state.sessions.read().await;
+    let session = sessions.get_session(session_id)?;
+    let workspaces = workspaces_state.workspaces.read().await;
+    Ok(workspaces
+        .get_request_active_data(&session.workspace_id, request_id)?
         .clone())
 }
 

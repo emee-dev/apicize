@@ -84,7 +84,11 @@ export const RequestGroupEditor = observer((props: { sx?: SxProps }) => {
     const GroupPanel = observer(() => {
         return <>
             <Stack direction='row' className='editor-panel-header'>
-                <EditorTitle icon={<SvgIcon color='folder'><FolderIcon /></SvgIcon>} name={group.name.length ?? 0 > 0 ? `${group.name} - ${usePanel}` : '(Unnamed)'}>
+                <EditorTitle
+                    icon={<SvgIcon color='folder'><FolderIcon /></SvgIcon>}
+                    name={group.name.length ?? 0 > 0 ? `${group.name} - ${usePanel}` : '(Unnamed)'}
+                    diag={apicize.showDiagnosticInfo ? group.id : undefined}
+                >
                     <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                 </EditorTitle>
                 <RunToolbar requestEntry={group} />
@@ -110,7 +114,7 @@ export const RequestGroupEditor = observer((props: { sx?: SxProps }) => {
                     <Box className='panels' flexGrow={1}>
                         <Box>
                             {usePanel === 'Info' ? <RequestGroupInfoEditor group={group} />
-                                : usePanel === 'Parameters' ? <RequestParametersEditor requestOrGroup={group} parameters={activeSelection.parameters} />
+                                : usePanel === 'Parameters' ? <RequestParametersEditor requestOrGroup={group} />
                                     // : usePanel === 'Warnings' ? <RequestWarningsEditor requestOrGroupId={groupId} />
                                     : null}
                         </Box>

@@ -24,22 +24,7 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
     const parameters = workspace.activeParameters
     const data = workspace.data
 
-    let focusSeed: boolean
-    let defaultPanel: DefaulltsPanels
-    if (workspace.mode === WorkspaceMode.Seed) {
-        if ((data?.length ?? 0) > 0) {
-            focusSeed = true
-            defaultPanel = 'Parameters'
-        } else {
-            focusSeed = false
-            defaultPanel = 'External Data'
-        }
-    } else {
-        defaultPanel = 'Parameters'
-        focusSeed = false
-    }
-
-    const [panel, setPanel] = useState<DefaulltsPanels>(defaultPanel)
+    const [panel, setPanel] = useState<DefaulltsPanels>('Parameters')
 
     if (!parameters) {
         workspace.initializeParameterList()
@@ -127,7 +112,6 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
         <FormControl>
             <InputLabel id='data-label-id'>Seed Data</InputLabel>
             <Select
-                autoFocus={focusSeed}
                 labelId='data-label'
                 aria-labelledby='data-label-id'
                 id='cred-data'

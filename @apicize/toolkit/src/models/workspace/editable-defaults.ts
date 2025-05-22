@@ -70,7 +70,7 @@ export class EditableDefaults implements SelectedParametersWithData {
     setDataId(entityId: string) {
         this.selectedData = entityId === NO_SELECTION_ID
             ? NO_SELECTION
-            : { id: entityId, name: this.workspace.getDataName(entityId) }
+            : { id: entityId, name: this.workspace.data?.find(d => d.id === entityId)?.name ?? "Unnamed" }
         this.onUpdate()
     }
 

@@ -169,20 +169,10 @@ pre.log {
   margin-bottom: 0;
   white-space: normal;
   word-break: break-word;
-  font-size: 0.9em;
+  /* font-size: 0.9em; */
   /* line-height: 1.1; */
 }
 
-pre.results {
-  word-break: break-word !important;
-  padding-top: 0;
-  margin-top: 0;
-  margin-bottom: 0;
-  /* white-space: normal; */
-  word-break: break-word;
-  font-size: 0.9em;
-  line-height: 0.8;
-}
 
 .navigation-narrow {
   top: 0;
@@ -415,47 +405,12 @@ pre.results {
   padding: 0 0 0 12px;
 }
 
-.results-panel {
-  display: flex;
-  flex-grow: 1;
-  flex-direction: column;
-  overflow: auto;
-  margin: 0;
-  padding: 3em 1em 1em 1em;
-}
 
 .nav-selection-pane button {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-}
-
-.test-result-section:first-child {
-  margin-top: 0 !important;
-}
-
-.test-result-section {
-  margin: 1rem 0rem 1.5rem 0.5rem;
-}
-
-.test-result {
-  padding: 0;
-  line-height: 1;
-  display: flex;
-  margin-top: 0.5rem;
-}
-
-.test-result.behavior:not(:first-child) {
-  margin-top: 0;
-}
-
-.test-result-icon {
-  width: 2.0rem;
-  display: flex;
-  flex-flow: column;
-  align-items: left;
-  justify-content: center;
 }
 
 .recent-file .filename {
@@ -474,4 +429,80 @@ pre.results {
 
 .test-details {
   padding-left: 1.5rem;
+}
+
+.diag.id {
+  font-size: 0.8rem;
+}
+
+
+
+.results-panel {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  overflow: auto;
+  margin: 0;
+  padding: 3em 1em 1em 1em;
+}
+
+.results-info {
+  font-size: inherit;
+}
+
+.results-test-section:first-child {
+  margin-top: 0 !important;
+}
+
+.results-test-section {
+  margin: 1rem 0rem 1.5rem 1.5rem;
+}
+
+.results-test-name {
+  font-weight: 600;
+  font-size: inherit;
+}
+
+.results-test-timing {
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+}
+
+.test-result {
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  padding: .2rem 0;
+  display: flex;
+  align-content: center;
+}
+
+.test-result-detail {
+  display: flex;
+  align-content: center;
+}
+
+.test-result-detail-info {
+  margin: 0.2em 0;
+}
+
+.test-result.behavior:not(:first-child) {
+  margin-top: 0;
+}
+
+.test-result-icon {
+  width: 2.0rem;
+  display: flex;
+  flex-flow: column;
+  align-items: left;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+code.results-log {
+  padding-top: 0;
+  margin-top: 0.25em;
+  font-size: 0.85em;
+  line-height: 1.3em;
+  white-space: pre-wrap;
 }

@@ -25,8 +25,8 @@ export function ResultRawPreview(props: { execution: Execution }) {
     if (!body || updateKey !== currentUpdateKey) {
         workspace.getExecutionResultDetail(props.execution.requestOrGroupId, props.execution.resultIndex)
             .then(details => {
-                setBody((details.entityType === 'request' && details.response?.body)
-                    ? details.response.body
+                setBody((details.entityType === 'request' && details.testContext.response?.body)
+                    ? details.testContext.response.body
                     : {
                         type: 'Text',
                         text: ''

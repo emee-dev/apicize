@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
+import { createRef, useRef, useState } from "react";
 import { useApicize } from "../../contexts/apicize.context";
 import { useFileOperations } from "../../contexts/file-operations.context";
 import { useWorkspace } from "../../contexts/workspace.context";
@@ -47,6 +47,16 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
     const handleOpenFileMenuClose = () => {
         setOpenMenu(null);
     };
+
+    const normalizeWorkbookFileName = (filename: string) => {
+        if (filename.startsWith(apicize.workbookDirectory)) {
+            filename = filename.substring(apicize.workbookDirectory.length + 1)
+            if (filename.endsWith('.apicize')) {
+                filename = filename.substring(0, filename.length - 8)
+            }
+        }
+        return filename
+    }
 
     window.onkeydown = ((e) => {
         if (e.ctrlKey) {
@@ -134,6 +144,7 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
 
         <IconButton size="large"
             aria-label='open'
+            id='file-open-btn'
             sx={{ fontSize: apicize.navigationFontSize, marginTop: buttonSpacing }}
             title={`Open Workbook (${apicize.ctrlKey} + O)`}
             onClick={() => fileOps.openWorkbook(false, undefined, true)}>
@@ -147,6 +158,20 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
                     sx={{ padding: iconPadding, minWidth: '1em', width: '1em', marginLeft: '-0.3em', alignSelf: alignDropBtnSelf, alignItems: alignDropBtnItems }}
                     onClick={handleOpenFileMenuClick}
                 ><KeyboardArrowDownIcon />
+                    <DropdownMenu
+                        id="file-open-menu"
+                        autoFocus
+                        className="drop-down-menu"
+                        slotProps={{
+                            list: {
+                                'aria-labelledby': 'file-open-menu-button',
+                            }
+                        }}
+                        anchorEl={openMenu}
+                        open={openMenu !== null}
+                        onClose={handleOpenFileMenuClose}
+                    >
+                    </DropdownMenu>
                 </IconButton>
                 : null
         }
@@ -168,7 +193,7 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
                     {
                         apicize.recentWorkbookFileNames.map((f, idx) => (
                             <MenuItem autoFocus={idx == 0} key={`nav-file-${idx}`} className='recent-file' disableRipple onClick={() => handleFileOpen(f, false)}>
-                                <Box className='filename'>{f}</Box>
+                                <Box className='filename'>{normalizeWorkbookFileName(f)}</Box>
                                 <IconButton title='Open in New Window' onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleFileOpen(f, true); }}><OpenInBrowserIcon sx={{ marginRight: 0 }} fontSize='inherit' /></IconButton>
                             </MenuItem>
                         ))

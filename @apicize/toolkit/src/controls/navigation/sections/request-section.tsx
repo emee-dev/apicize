@@ -276,7 +276,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
     //     } as DroppableData
     // })
 
-    const SectionContent = observer(() => {
+    const SectionContent = (() => {
         return <>
             {
                 workspace.navigation.requests.map(r => buildRequest(r, 1))
@@ -293,6 +293,18 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
             onClick={e => {
                 e.preventDefault()
                 e.stopPropagation()
+            }}
+            onKeyDown={(e) => {
+                if (e.key == 'Enter') {
+                    e.preventDefault()
+                    e.stopPropagation()
+                }
+            }}
+            onKeyUp={(e) => {
+                if (e.key == 'Enter') {
+                    e.preventDefault()
+                    e.stopPropagation()
+                }
             }}
             onFocusCapture={e => e.stopPropagation()}
             sx={{ margin: '0.5em 0 0 0', padding: 0 }}

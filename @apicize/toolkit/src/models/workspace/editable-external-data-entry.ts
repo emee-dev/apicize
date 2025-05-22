@@ -59,12 +59,12 @@ export class EditableExternalDataEntry extends Editable<ExternalData> {
             }
                 break
             case ExternalDataSourceType.FileJSON:
-                if (/^(?!\/\\)(?!.*\.\.)(?!.*\/\/)(?!.*\/\.)[\.\w\/ ]{1,200}\.json$/.exec(this.source) === null) {
+                if (/^(?:(?!.*\.\.)(?!.*[\\\/]{2})(?!.*\/\/)(?!.*\\\\.)(?:\.|\.|\.\\|[^\n"?:*<>|]+)[^\n"?:*<>|])+.json$/.exec(this.source) === null) {
                     return 'Value must be a relative .json file name using forward slashes'
                 }
                 break
             case ExternalDataSourceType.FileCSV:
-                if (/^(?!\/\\)(?!.*\.\.)(?!.*\/\/)(?!.*\/\.)[\.\w\/ ]{1,200}\.csv$/.exec(this.source) === null) {
+                if (/^(?:(?!.*\.\.)(?!.*[\\\/]{2})(?!.*\/\/)(?!.*\\\\.)(?:\.|\.|\.\\|[^\n"?:*<>|]+)[^\n"?:*<>|])+.csv$/.exec(this.source) === null) {
                     return 'Value must be a relative .csv file name using forward slashes'
                 }
                 break

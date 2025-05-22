@@ -7,7 +7,7 @@ import { useClipboard } from "../../../contexts/clipboard.context"
 import { RichViewer } from "../rich-viewer"
 import { EditorMode } from "../../../models/editor-mode"
 import { ResultEditSessionType } from "../../editors/editor-types"
-import { ExecutionResultDetail, ExecutionResultSummary } from "@apicize/lib-typescript"
+import { ExecutionResultDetail } from "@apicize/lib-typescript"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { useFeedback } from "../../../contexts/feedback.context"
 import { useState } from "react"
@@ -30,10 +30,10 @@ export const ResultDetailsViewer = observer((props: { execution: Execution }) =>
     if (!details || updateKey !== currentUpdateKey) {
         workspace.getExecutionResultDetail(requestOrGroupId, resultIndex)
             .then(d => {
-                if (d.entityType === 'request' && d.request?.body?.type === 'Binary') {
+                if (d.entityType === 'request' && d.testContext.request?.body?.type === 'Binary') {
                     //@ts-expect-error
                     d.request.body.data = base64Encode(d.request.body.data)
-                    if (d.response?.body?.type === 'Binary') {
+                    if (d.testContext.response?.body?.type === 'Binary') {
                         //@ts-expect-error
                         d.response.body.data = base64Encode(d.request.body.data)
                     }
@@ -43,8 +43,6 @@ export const ResultDetailsViewer = observer((props: { execution: Execution }) =>
             }).catch(e => feedback.toastError(e))
         return
     }
-
-
 
     const text = beautify.js_beautify(JSON.stringify(details), {})
 

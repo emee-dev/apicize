@@ -1,6 +1,6 @@
 import { Selection, BodyType, GroupExecution, Method, NameValuePair, Request, RequestGroup, BaseRequest } from "@apicize/lib-typescript"
 import { EditableState } from "../editable"
-import { action, computed, observable, toJS } from "mobx"
+import { action, computed, observable, reaction, toJS } from "mobx"
 import { EditableNameValuePair } from "./editable-name-value-pair"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EntityType } from "./entity-type"
@@ -39,6 +39,7 @@ export class EditableRequest extends EditableRequestEntry {
         this.selectedAuthorization = entry.selectedAuthorization ?? undefined
         this.selectedCertificate = entry.selectedCertificate ?? undefined
         this.selectedProxy = entry.selectedProxy ?? undefined
+        this.selectedData = entry.selectedData ?? undefined
 
         this.url = entry.url ?? ''
         this.method = entry.method ?? Method.Get
@@ -104,6 +105,7 @@ export class EditableRequest extends EditableRequestEntry {
             selectedAuthorization: this.selectedAuthorization,
             selectedCertificate: this.selectedCertificate,
             selectedProxy: this.selectedProxy,
+            selectedData: this.selectedData,
         }
         if ((request.headers?.length ?? 0) === 0) {
             delete request.headers
@@ -176,6 +178,7 @@ export class EditableRequest extends EditableRequestEntry {
         this.selectedAuthorization = entity.selectedAuthorization
         this.selectedCertificate = entity.selectedCertificate
         this.selectedProxy = entity.selectedProxy
+        this.selectedData = entity.selectedData
         this.warnings = entity.warnings
     }
 
@@ -215,6 +218,7 @@ export interface RequestInfo {
     selectedAuthorization?: Selection,
     selectedCertificate?: Selection,
     selectedProxy?: Selection,
+    selectedData?: Selection,
     warnings?: Map<string, string>
 }
 

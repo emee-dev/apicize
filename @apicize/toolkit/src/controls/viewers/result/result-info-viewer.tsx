@@ -11,6 +11,7 @@ import ViewIcon from "../../../icons/view-icon"
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
 import beautify from "js-beautify"
+import { useApicize } from "../../../contexts/apicize.context"
 
 const ApicizeErrorToString = (error?: ApicizeError): string => {
     const sub = (err?: ApicizeError) => err ? `, ${err.description}${ApicizeErrorToString(err.source)}` : ''
@@ -19,6 +20,7 @@ const ApicizeErrorToString = (error?: ApicizeError): string => {
 
 export const ResultInfoViewer = observer((props: { requestOrGroupId: string, resultIndex: number, results: ExecutionResultSummary[] }) => {
 
+    const apicize = useApicize()
     const workspace = useWorkspace()
     const theme = useTheme()
     const clipboardCtx = useClipboard()
@@ -77,17 +79,17 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
         const isFirst = props.depth === 0
         const key = isFirst ? 'first-result' : `result-${idx++}`
 
-        return <Box key={key} className='test-result-section'>
+        return <Box key={key} className='results-test-section'>
             {
                 <Grid2 container direction='row' display='flex' alignItems='center' >
                     <Grid2 display='flex' flexDirection='column' alignItems='start' alignContent='center' flexGrow='content'>
-                        <Box display='flex' fontSize={(props.depth === 0) ? '1.1rem' : 'inherit'}>
-                            <Box sx={{ whiteSpace: 'nowrap' }}>
+                        <Box display='flex'>
+                            <Box sx={{ whiteSpace: 'nowrap' }} className='results-test-name'>
                                 {props.childResult.name}
                                 <Box component='span' marginLeft='1rem' marginRight='0.5rem' sx={{ color }}> ({subtitle}) </Box>
                             </Box>
                         </Box>
-                        <Box display='flex' alignContent='start' marginLeft='1.5rem' fontSize='0.9em'>
+                        <Box display='flex' alignContent='start' marginLeft='1.5rem' className='results-test-timing'>
                             {props.childResult.executedAt > 0 ? `@${fmtMinSec(props.childResult.executedAt)}` : '@Start'}{props.childResult.duration > 0 ? ` for ${props.childResult.duration.toLocaleString()} ms` : ''}
                         </Box>
                     </Grid2>
@@ -177,32 +179,34 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                     <Box className='test-result-icon' key={`result-${idx++}`}>
                         {behavior.success ? (<CheckIcon color='success' />) : (<BlockIcon color='error' />)}
                     </Box>
-                    <Stack direction='column' key={`result-${idx++}`}>
+                    <Stack direction='column' key={`result-${idx++}`} className='test-result-detail'>
                         <Box key={`result-${idx++}`}>
                             {fullName}
                         </Box>
-                        {
-                            (behavior.error?.length ?? 0) > 0
-                                ?
-                                <Stack direction='row' key={`result-${idx++}`}>
-                                    <Typography key={`result-${idx++}`} sx={{ left: '-24px', marginBottom: 0, paddingTop: 0, ":first-letter": { textTransform: 'capitalize' } }} color='error'>{behavior.error}</Typography>
-                                </Stack>
-                                : <></>
-                        }
-                        {
-                            (behavior.logs ?? []).map((log) => (
-                                <Box className='test-result' key={`result-${idx++}`}>
-                                    <Stack direction='column' key={`result-${idx++}`}>
-                                        <pre className='results' key={`result-${idx++}`}>{log}</pre>
+                        <Box className='test-result-detail-info'>
+                            {
+                                error
+                                    ?
+                                    <Stack direction='row' key={`result-${idx++}`}>
+                                        <Typography key={`result-${idx++}`} sx={{ left: '-24px', marginBottom: 0, paddingTop: 0, ":first-letter": { textTransform: 'capitalize' } }} color='error'>{behavior.error}</Typography>
                                     </Stack>
-                                </Box>
-                            ))
-                        }
+                                    : null
+                            }
+                            {
+                                (behavior.logs ?? []).map((log) => (
+                                    <Box className='' key={`result-${idx++}`}>
+                                        <Stack direction='column' key={`result-${idx++}`}>
+                                            <code className='results-log' key={`result-${idx++}`}>{log}</code>
+                                        </Stack>
+                                    </Box>
+                                ))
+                            }
+                        </Box>
                     </Stack>
                 </Stack>
             </Box >
             : <Box key={key} className={className}>
-                <Stack direction='row' key={`result-${idx++}`}>
+                <Stack direction='row' key={`result-${idx++}`} className='test-result-detail'>
                     <Box className='test-result-icon' key={`result-${idx++}`}>
                         {behavior.success ? (<CheckIcon color='success' />) : (<BlockIcon color='error' />)}
                     </Box>
@@ -215,7 +219,6 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
             </Box >
     }
 
-
     const TestScenario = (props: { scenario: ApicizeTestScenario }) => {
         const key = `result-${idx++}`
         const scenario = props.scenario
@@ -226,7 +229,6 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                 return <TestBehavior behavior={child} namePrefix={scenario.name} />
             }
         }
-
 
         return <Box key={key} className='test-result'>
             <Stack direction='row' key={`result-${idx++}`}>
@@ -246,7 +248,6 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
             </Stack>
         </Box>
     }
-
 
     const changeResult = (e: React.MouseEvent, index: number) => {
         e.preventDefault()
@@ -274,7 +275,9 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
         }
     }
 
-    const result = <Stack className="results-info" sx={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '100%', overflow: 'hidden', display: 'flex' }}>
+    const result = <Stack className="results-info" sx={{
+        position: 'absolute', top: 0, bottom: 0, right: 0, width: '100%', overflow: 'hidden', display: 'flex',
+    }}>
         {/* <Typography variant='h2' sx={{ marginTop: 0, flexGrow: 0 }} component='div'>
             {title}
             <IconButton

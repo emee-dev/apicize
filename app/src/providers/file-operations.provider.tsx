@@ -39,6 +39,7 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
                     : undefined,
                 pkceListenerPort: apicizeSettings.pkceListenerPort,
                 alwaysHideNavTree: apicizeSettings.alwaysHideNavTree,
+                showDiagnosticInfo: apicizeSettings.showDiagnosticInfo,
             }
             await core.invoke<ApicizeSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {
@@ -107,8 +108,7 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
             }
         }
 
-        const openInSessionId = openInNewWindow ? undefined : activeSessionId
-        await core.invoke('new_workspace', { openInSessionId })
+        await core.invoke('new_workspace', { sessionId: activeSessionId, openInNewSession: openInNewWindow })
         feedback.toast('Created New Workbook', ToastSeverity.Success)
     }
 
@@ -150,8 +150,7 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
 
             if (!fileName) return
 
-            const openInSessionId = openInNewWindow ? undefined : activeSessionId
-            await core.invoke('open_workspace', { fileName, openInSessionId })
+            await core.invoke('open_workspace', { fileName, sessionId: activeSessionId, openInNewSession: openInNewWindow })
         } catch (e) {
             feedback.toastError(e)
         }

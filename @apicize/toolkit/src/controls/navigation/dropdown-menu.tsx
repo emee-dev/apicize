@@ -9,7 +9,7 @@ export const DropdownMenu = styled((props: MenuProps) => (
         }}
         transformOrigin={{
             vertical: 'top',
-            horizontal: 'right',
+            horizontal: 25,
         }}
         {...props}
     />
@@ -36,7 +36,7 @@ export const DropdownMenu = styled((props: MenuProps) => (
             },
         },
         ...theme.applyStyles('dark', {
-            color: theme.palette.grey[300],
+            color: theme.palette.grey[100],
         }),
     },
 }));

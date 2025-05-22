@@ -1,7 +1,6 @@
 import { TextField, Select, MenuItem, FormControl, InputLabel, Stack, SxProps, Grid2, Box, SvgIcon } from '@mui/material'
 import { AuthorizationType } from '@apicize/lib-typescript';
 import { EditorTitle } from '../editor-title';
-import { EditableAuthorization } from '../../models/workspace/editable-authorization';
 import { observer } from 'mobx-react-lite';
 import { AuthorizationApiKeyEditor } from './authorization/authorization-apikey-editor';
 import { AuthorizationBasicEditor } from './authorization/authorization-basic-editor';
@@ -9,8 +8,10 @@ import { AuthorizationOAuth2ClientEditor } from './authorization/authorization-o
 import { AuthorizationOAuth2PkceEditor } from './authorization/authorization-oauth2-pkce-editor';
 import AuthIcon from '../../icons/auth-icon';
 import { useWorkspace } from '../../contexts/workspace.context';
+import { useApicize } from '../../contexts/apicize.context';
 
 export const AuthorizationEditor = observer((props: { sx: SxProps }) => {
+    const apicize = useApicize()
     const workspace = useWorkspace()
     workspace.nextHelpTopic = 'workspace/authorizations'
     const activeSelection = workspace.activeSelection
@@ -23,7 +24,11 @@ export const AuthorizationEditor = observer((props: { sx: SxProps }) => {
     return (
         <Stack className='editor authorization' direction={'column'} sx={props.sx}>
             <Box className='editor-panel-header'>
-                <EditorTitle icon={<SvgIcon color='authorization'><AuthIcon /></SvgIcon>} name={authorization.name} />
+                <EditorTitle
+                    icon={<SvgIcon color='authorization'><AuthIcon /></SvgIcon>}
+                    name={authorization.name}
+                    diag={apicize.showDiagnosticInfo ? authorization.id : undefined}
+                />
             </Box>
             <Box className='editor-panel'>
                 <Grid2 container className='editor-content' direction={'column'} spacing={3}>

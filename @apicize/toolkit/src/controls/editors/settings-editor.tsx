@@ -52,6 +52,21 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
         checkSave(++saveCtr)
     }
 
+    const setAlwaysHideNavTree = (value: boolean) => {
+        apicize.setAlwaysHideNavTree(value)
+        checkSave(++saveCtr)
+    }
+
+    const setShowDiagnosticInfo = (value: boolean) => {
+        apicize.setShowDiagnosticInfo(value)
+        checkSave(++saveCtr)
+    }
+
+    const resetToDefaults = () => {
+        apicize.resetToDefaults()
+        checkSave(++saveCtr)
+    }
+
     return <Stack direction={'column'} className='editor' sx={props.sx}>
         <Box className='editor-panel-header'>
             <EditorTitle icon={<SvgIcon><SettingsIcon /></SvgIcon>} name='Settings'>
@@ -94,13 +109,20 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                 </Stack>
                 <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                     <InputLabel id='hide-nav-menu-label-id' sx={{ width: '12em' }}>Alwaays Hide Nav Menu:</InputLabel>
-                    <RadioGroup row value={apicize.alwaysHideNavTree} onChange={(e) => apicize.setAlwaysHideNavTree(e.target.value === 'true')}>
+                    <RadioGroup row value={apicize.alwaysHideNavTree} onChange={(e) => setAlwaysHideNavTree(e.target.value === 'true')}>
+                        <FormControlLabel value={true} control={<Radio />} label='Yes' />
+                        <FormControlLabel value={false} control={<Radio />} label='No' />
+                    </RadioGroup>
+                </Stack>
+                <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                    <InputLabel id='diag-info-label-id' sx={{ width: '12em' }}>Show Diagnostic Info:</InputLabel>
+                    <RadioGroup row value={apicize.showDiagnosticInfo} onChange={(e) => setShowDiagnosticInfo(e.target.value === 'true')}>
                         <FormControlLabel value={true} control={<Radio />} label='Yes' />
                         <FormControlLabel value={false} control={<Radio />} label='No' />
                     </RadioGroup>
                 </Stack>
                 <Box paddingTop='2em'>
-                    <Button variant="outlined" aria-label="defaults" startIcon={<RestartAltIcon />} onClick={() => apicize.resetToDefaults()}>Reset to Defaults</Button>
+                    <Button variant="outlined" aria-label="defaults" startIcon={<RestartAltIcon />} onClick={() => resetToDefaults()}>Reset to Defaults</Button>
                 </Box>
             </Stack>
         </Box>

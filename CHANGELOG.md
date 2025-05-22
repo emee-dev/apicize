@@ -1,5 +1,20 @@
 # Change Log
 
+# 0.20.0
+
+* Allow data to be assigned at the group/request level
+* Add "output" to test context
+* Organize request detail to show test context variables
+* Improved synchronization of open windows
+* Improved new window placement
+* Formatting clean-up of response summary
+
+### Regressions / Known Issues
+
+* Tree keyboard navigation does not work well, keyboard accessibility in general needs work
+* Warnings (display and clearing) have not yet been added back in
+* Multi-window seems (as C3P0 would say) not entire stable.  Use with caution and save often.
+
 # 0.19.3
 
 * Show window only when ready to be displayed

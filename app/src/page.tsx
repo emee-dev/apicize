@@ -53,6 +53,10 @@ const workspaceStore = new WorkspaceStore(
       sessionId,
       requestId
     }),
+    getRequestActiveData: (requestId: string) => core.invoke('get_request_active_data', {
+      sessionId,
+      requestId
+    }),
     add: (entityType: EntityType, relativeToId: string | null, relativePosition: IndexedEntityPosition | null, cloneFromId: string | null) =>
       core.invoke<string>('add', {
         sessionId,
@@ -100,7 +104,6 @@ const workspaceStore = new WorkspaceStore(
     findDescendantGroups: (groupId) => core.invoke(
       'find_descendant_groups', { sessionId, groupId }
     ),
-
     initializePkce: (data: { authorizationId: string }) =>
       emit('oauth2-pkce-init', data),
     closePkce: (data: { authorizationId: string }) =>

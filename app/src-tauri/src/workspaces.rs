@@ -637,7 +637,7 @@ impl Workspaces {
                 info.workspace
                     .requests
                     .entities
-                    .insert(entry.get_id().clone(), entry);
+                    .insert(entry.get_id().to_string(), entry);
             }
 
             // Add all of the new child mappings
@@ -817,6 +817,46 @@ impl Workspaces {
                         }
                         None => {
                             return Err(ApicizeAppError::InvalidAuthorization(auth.id.to_owned()))
+                        }
+                    }
+                }
+            }
+
+            match Self::get_request_parent_id(entry.get_id(), workspace) {
+                Some(parent_id) => {
+                    id_to_check = parent_id.to_string();
+                }
+                None => {
+                    break;
+                }
+            }
+        }
+
+        Ok(result)
+    }
+
+    pub fn get_request_active_data(
+        &self,
+        workspace_id: &str,
+        request_id: &str,
+    ) -> Result<Option<ExternalData>, ApicizeAppError> {
+        let workspace = self.get_workspace(workspace_id)?;
+
+        let mut result: Option<ExternalData> = None;
+        let mut id_to_check = request_id.to_string();
+
+        while let Some(entry) = workspace.requests.entities.get(&id_to_check) {
+            if let Some(data) = entry.selected_data() {
+                if data.id == NO_SELECTION_ID {
+                    result = None;
+                    break;
+                } else {
+                    match workspace.data.iter().find(|d| d.id == data.id) {
+                        Some(ed) => {
+                            result = Some(ed.clone());
+                        }
+                        None => {
+                            return Err(ApicizeAppError::InvalidAuthorization(data.id.to_owned()))
                         }
                     }
                 }
@@ -1064,7 +1104,7 @@ impl Workspaces {
                 info.workspace
                     .scenarios
                     .entities
-                    .insert(id.clone(), scenario);
+                    .insert(id.to_string(), scenario);
 
                 Ok(result)
             }
@@ -1114,7 +1154,7 @@ impl Workspaces {
             },
             None => Authorization::default(),
         };
-        let id = authorization.get_id().clone();
+        let id = authorization.get_id().to_string();
         info.workspace
             .authorizations
             .add_entity(authorization, relative_to, relative_position)?;
@@ -1167,7 +1207,7 @@ impl Workspaces {
                 info.workspace
                     .authorizations
                     .entities
-                    .insert(id.clone(), authorization);
+                    .insert(id.to_string(), authorization);
 
                 Ok(result)
             }
@@ -1215,7 +1255,7 @@ impl Workspaces {
             },
             None => Certificate::default(),
         };
-        let id = certificate.get_id().clone();
+        let id = certificate.get_id().to_string();
         info.workspace
             .certificates
             .add_entity(certificate, relative_to, relative_position)?;
@@ -1264,7 +1304,7 @@ impl Workspaces {
                 info.workspace
                     .certificates
                     .entities
-                    .insert(id.clone(), certificate);
+                    .insert(id.to_string(), certificate);
                 Ok(result)
             }
             None => Err(ApicizeAppError::InvalidWorkspace(workspace_id.into())),
@@ -1354,7 +1394,10 @@ impl Workspaces {
                     &proxy.name,
                     EntityType::Proxy,
                 );
-                info.workspace.proxies.entities.insert(id.clone(), proxy);
+                info.workspace
+                    .proxies
+                    .entities
+                    .insert(id.to_string(), proxy);
                 Ok(result)
             }
             None => Err(ApicizeAppError::InvalidWorkspace(workspace_id.into())),
@@ -1369,6 +1412,7 @@ impl Workspaces {
         let info = self.get_workspace_info_mut(workspace_id)?;
         info.dirty = true;
         info.workspace.defaults = defaults.clone();
+        Self::clear_invalid_parameters(&mut info.workspace);
         Ok(())
     }
 
@@ -1392,13 +1436,14 @@ impl Workspaces {
     }
 
     /// Find the parent ID for the specified request
-    fn get_request_parent_id(request_id: &String, workspace: &Workspace) -> Option<String> {
+    fn get_request_parent_id(request_id: &str, workspace: &Workspace) -> Option<String> {
+        let request_id_as_string = request_id.to_string();
         workspace
             .requests
             .child_ids
             .iter()
             .find_map(|(parent_id, child_ids)| {
-                if child_ids.contains(request_id) {
+                if child_ids.contains(&request_id_as_string) {
                     Some(parent_id.to_owned())
                 } else {
                     None
@@ -1571,6 +1616,7 @@ impl Workspaces {
             let mut default_authorization: Option<Selection> = None;
             let mut default_certificate: Option<Selection> = None;
             let mut default_proxy: Option<Selection> = None;
+            let mut default_data: Option<Selection> = None;
 
             let mut id = request_id.to_string();
 
@@ -1579,22 +1625,51 @@ impl Workspaces {
                     Some(request) => {
                         if let Some(e) = request.selected_scenario() {
                             if default_scenario.is_none() {
-                                default_scenario = Some(e.clone());
+                                default_scenario =
+                                    if let Some(m) = scenarios.iter().find(|s| s.id == e.id) {
+                                        Some(m.clone())
+                                    } else {
+                                        Some(e.clone())
+                                    };
                             }
                         }
                         if let Some(e) = request.selected_authorization() {
                             if default_authorization.is_none() {
-                                default_authorization = Some(e.clone());
+                                default_authorization =
+                                    if let Some(m) = authorizations.iter().find(|s| s.id == e.id) {
+                                        Some(m.clone())
+                                    } else {
+                                        Some(e.clone())
+                                    };
                             }
                         }
                         if let Some(e) = request.selected_certificate() {
                             if default_certificate.is_none() {
-                                default_certificate = Some(e.clone());
+                                default_certificate =
+                                    if let Some(m) = certificates.iter().find(|s| s.id == e.id) {
+                                        Some(m.clone())
+                                    } else {
+                                        Some(e.clone())
+                                    };
                             }
                         }
                         if let Some(e) = request.selected_proxy() {
                             if default_proxy.is_none() {
-                                default_proxy = Some(e.clone());
+                                default_proxy =
+                                    if let Some(m) = proxies.iter().find(|s| s.id == e.id) {
+                                        Some(m.clone())
+                                    } else {
+                                        Some(e.clone())
+                                    };
+                            }
+                        }
+                        if let Some(e) = request.selected_data() {
+                            if default_data.is_none() {
+                                default_data = if let Some(m) = data.iter().find(|s| s.id == e.id) {
+                                    Some(m.clone())
+                                } else {
+                                    Some(e.clone())
+                                };
                             }
                         }
                     }
@@ -1605,7 +1680,8 @@ impl Workspaces {
                 if default_scenario.is_some()
                     && default_authorization.is_some()
                     && default_certificate.is_some()
-                    || default_proxy.is_some()
+                    && default_proxy.is_some()
+                    && default_data.is_some()
                 {
                     break;
                 }
@@ -1621,49 +1697,73 @@ impl Workspaces {
 
             if default_scenario.is_none() {
                 default_scenario = match &info.workspace.defaults.selected_scenario {
-                    Some(s) => match info.workspace.scenarios.entities.get(&s.id) {
-                        Some(e) => Some(Selection {
-                            id: e.id.clone(),
-                            name: e.name.clone(),
+                    Some(s) => info
+                        .workspace
+                        .scenarios
+                        .entities
+                        .get(&s.id)
+                        .map(|e| Selection {
+                            id: e.id.to_string(),
+                            name: e.name.to_string(),
                         }),
-                        None => todo!(),
-                    },
                     None => None,
                 }
             }
             if default_authorization.is_none() {
                 default_authorization = match &info.workspace.defaults.selected_authorization {
-                    Some(s) => match info.workspace.authorizations.entities.get(&s.id) {
-                        Some(e) => Some(Selection {
-                            id: e.get_id().clone(),
-                            name: e.get_name().clone(),
-                        }),
-                        None => todo!(),
-                    },
+                    Some(s) => {
+                        info.workspace
+                            .authorizations
+                            .entities
+                            .get(&s.id)
+                            .map(|e| Selection {
+                                id: e.get_id().to_string(),
+                                name: e.get_name().to_string(),
+                            })
+                    }
                     None => None,
                 }
             }
             if default_certificate.is_none() {
                 default_certificate = match &info.workspace.defaults.selected_certificate {
-                    Some(s) => match info.workspace.certificates.entities.get(&s.id) {
-                        Some(e) => Some(Selection {
-                            id: e.get_id().clone(),
-                            name: e.get_name().clone(),
+                    Some(s) => info
+                        .workspace
+                        .certificates
+                        .entities
+                        .get(&s.id)
+                        .map(|e| Selection {
+                            id: e.get_id().to_string(),
+                            name: e.get_name().to_string(),
                         }),
-                        None => todo!(),
-                    },
                     None => None,
                 }
             }
             if default_proxy.is_none() {
                 default_proxy = match &info.workspace.defaults.selected_proxy {
-                    Some(s) => match info.workspace.proxies.entities.get(&s.id) {
-                        Some(e) => Some(Selection {
-                            id: e.get_id().clone(),
-                            name: e.name.clone(),
+                    Some(s) => info
+                        .workspace
+                        .proxies
+                        .entities
+                        .get(&s.id)
+                        .map(|e| Selection {
+                            id: e.get_id().to_string(),
+                            name: e.name.to_string(),
                         }),
-                        None => todo!(),
-                    },
+                    None => None,
+                }
+            }
+            if default_data.is_none() {
+                default_data = match &info.workspace.defaults.selected_data {
+                    Some(s) => {
+                        info.workspace
+                            .data
+                            .iter()
+                            .find(|d| d.id == s.id)
+                            .map(|e| Selection {
+                                id: e.get_id().to_string(),
+                                name: e.name.to_string(),
+                            })
+                    }
                     None => None,
                 }
             }
@@ -1672,6 +1772,7 @@ impl Workspaces {
             Self::insert_default_selection(&default_authorization, &mut authorizations);
             Self::insert_default_selection(&default_certificate, &mut certificates);
             Self::insert_default_selection(&default_proxy, &mut proxies);
+            Self::insert_default_selection(&default_data, &mut data);
         }
 
         Ok(WorkspaceParameters {

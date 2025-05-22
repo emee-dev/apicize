@@ -1,5 +1,5 @@
 import { RequestGroup, GroupExecution } from "@apicize/lib-typescript"
-import { observable, computed, action } from "mobx"
+import { observable, action } from "mobx"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EntityType } from "./entity-type"
 import { EntityGroup, WorkspaceStore } from "../../contexts/workspace.context"
@@ -25,6 +25,7 @@ export class EditableRequestGroup extends EditableRequestEntry {
         this.selectedAuthorization = entry.selectedAuthorization ?? undefined
         this.selectedCertificate = entry.selectedCertificate ?? undefined
         this.selectedProxy = entry.selectedProxy ?? undefined
+        this.selectedData = entry.selectedData ?? undefined
         this.warnings = entry.warnings
             ? new Map(entry.warnings.map(w => [GenerateIdentifier(), w]))
             : new Map<string, string>()
@@ -43,7 +44,7 @@ export class EditableRequestGroup extends EditableRequestEntry {
             selectedAuthorization: this.selectedAuthorization ?? undefined,
             selectedCertificate: this.selectedCertificate ?? undefined,
             selectedProxy: this.selectedProxy ?? undefined,
-            // selectedData: this.selectedData ?? undefined,
+            selectedData: this.selectedData ?? undefined,
         })
     }
 
@@ -63,6 +64,7 @@ export class EditableRequestGroup extends EditableRequestEntry {
         this.selectedAuthorization = entity.selectedAuthorization
         this.selectedCertificate = entity.selectedCertificate
         this.selectedProxy = entity.selectedProxy
+        this.selectedData = entity.selectedData
     }
 
 }

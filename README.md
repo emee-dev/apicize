@@ -5,6 +5,19 @@
 Apicize is a testing platform that facilitates webservice testing both via GUI and CLI.  It utilizes Rust and V8 for file I/O and
 to execute  HTTP requests and tests.  Tauri, React, MobX and MUI are used for the UI.
 
+> ## Breaking Changes (0.20.0)
+>
+> In order to better support data assignment at the request or group level, and to improve consistency in how
+> output variables are passed between requests, the following changes have been made:
+>
+> 1. To output variables in a test, call `output('name', {value})` instead of adding properties to the `output` global variable.  This will include some level of validation to ensure that output is a valid object that can be
+passed to subsequent requests
+> 2. The global variable `$` will contain a merged list of scenario variables, output variables from previous requests and data row values.  Output defined variables will take precedence over same-named scenario variables, and data row variables will take precedence over both of these. See [Testing in Apicize](#testing-in-apicize) for more information.
+> 3. Output variables will no longer be added to `variables`; instead use `output` or `$` to access them
+>
+> Some of this will break existing scripts that leverage output variables.  Sorry, but things were getting unweildy.  As we continue to barrel toward 1.0, we'll try and minimize these sort of breakages.
+
+
 ### Contents
 
 * [Installation](#installation)
@@ -83,7 +96,18 @@ This test simply indicates that you received a 200 response.  You can test for m
 
 The `expect` assertion is imported from the [Chai](https://www.chaijs.com/) library.
 
-You will have access to the `request`, `response` and `scenario` used when executing a test.
+When authoring a test, the following global variables will be available for use in JavaScript:
+
+* `variables`:  A list of variables defined in the currently active Scenario (if any)
+* `output`: A list of values output from previous requests in the group
+* `data`:  When a data seed is defined, this will hold the values for the current data row
+* `$`: A merged list of previously scenario variables, output variables and data row variables.  These values, as defined, are used 
+to populate handlebars values in the request URL, headers, body, etc.
+* `request`: Properties describing an HTTP request
+* `resposne`: Properties describe an HTTP response
+
+After executing a request, you can view the response details and examine `textContext` to see all 
+global variables available for use by your testing.
 
 **request** properties include:
 
@@ -91,6 +115,10 @@ You will have access to the `request`, `response` and `scenario` used when execu
 * `method`
 * `headers`
 * `body`
+  * `type`: Type of body data (JSON, XML, Form, Raw, Text)
+  * `text`: UTF-8 text of response (when not raw/binary)
+  * `data`: For JSON and XML data, this will be a JSON object of the data; for Form, it will be name-value pairs; 
+for Raw, it will be a Base64 representation of the binary data
 
 **response** properties include:
 
@@ -100,19 +128,16 @@ You will have access to the `request`, `response` and `scenario` used when execu
 * `body`
 * `auth_token_cached` (set to true if previously generated OAuth token was used)
 
-The body properties mentioned above have two properties:  `data` which is a Base64 representation of data and `text` which, if the Base64 data could be converted to UTF8, 
-will contain textual content
-
-The **scenario** property is a name/value set of scenario variables passed into the test. If you are testing a group, you can update values in **scenario** and they will
-be available for the next test.  For example, if you have a group of tests that create, update and delete a record using a REST API, you can store the ID in a scenario 
-variable called `id` and use it in subsequent calls *in that group*.  Example:
+To output a value for use a subsequent request in the group, call the `output` function with a
+variable name and value.  The value must be JSON serializable (basically, any value but a 
+JavaScript function or symbol)
 
 ```js
 describe('status', () => {
   it('equals 200', () => {
     expect(response.status).to.equal(200)
     // Assuming id is a property returned in the response...
-    scenario.id = JSON.parse(response.body.text).id
+    output('id', JSON.parse(response.body.text).id)
   })
 })
 

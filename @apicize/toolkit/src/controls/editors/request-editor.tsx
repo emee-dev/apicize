@@ -87,7 +87,11 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
         const panelsClass = (usePanel === 'Body' || usePanel === 'Test') ? 'panels full-width' : 'panels'
         return <>
             <Stack direction='row' className='editor-panel-header'>
-                <EditorTitle icon={<SvgIcon color='request'><RequestIcon /></SvgIcon>} name={(request.name.length > 0) ? `${request.name} - ${usePanel}` : `(Unnamed) - ${usePanel}`}>
+                <EditorTitle
+                    icon={<SvgIcon color='request'><RequestIcon /></SvgIcon>}
+                    name={(request.name.length > 0) ? `${request.name} - ${usePanel}` : `(Unnamed) - ${usePanel}`}
+                    diag={apicize.showDiagnosticInfo ? request.id : undefined}
+                >
                     <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                 </EditorTitle>
                 <RunToolbar requestEntry={request} />
@@ -123,7 +127,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
 
                                     : usePanel === 'Body' ? <RequestBodyEditor body={activeSelection.requestBody} headers={activeSelection.requestHeaders} />
                                         : usePanel === 'Test' ? <RequestTestEditor request={request} />
-                                            : usePanel === 'Parameters' ? <RequestParametersEditor requestOrGroup={request} parameters={activeSelection.parameters} />
+                                            : usePanel === 'Parameters' ? <RequestParametersEditor requestOrGroup={request} />
                                                 // : usePanel === 'Warnings' ? <RequestWarningsEditor requestOrGroupId={request.id} />
                                                 : null}
                     </Box>

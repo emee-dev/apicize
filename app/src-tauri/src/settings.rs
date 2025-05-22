@@ -76,6 +76,10 @@ pub struct ApicizeSettings {
     /// Always hide navigation tree
     #[serde(default)]
     pub always_hide_nav_tree: bool,
+
+    /// Display diagnostic info like IDs
+    #[serde(default)]
+    pub show_diagnostic_info: bool,
 }
 
 impl ApicizeSettings {
@@ -115,6 +119,9 @@ impl ApicizeSettings {
 
         match self.recent_workbook_file_names.as_mut() {
             Some(recent) => {
+                if changed && recent.len() > 9 {
+                    recent.truncate(9);
+                }
                 match recent.iter().position(|r| r == file_name) {
                     Some(index) => {
                         if index != 0 {
@@ -126,9 +133,6 @@ impl ApicizeSettings {
                         recent.push(file_name.to_string());
                         changed = true;
                     }
-                }
-                if changed && recent.len() > 10 {
-                    recent.truncate(10);
                 }
             }
             None => {
@@ -159,6 +163,7 @@ impl ApicizeSettings {
                 recent_workbook_file_names: None,
                 pkce_listener_port: 8080,
                 always_hide_nav_tree: false,
+                show_diagnostic_info: false,
             };
             Ok(SerializationOpenSuccess {
                 file_name: String::from(""),
