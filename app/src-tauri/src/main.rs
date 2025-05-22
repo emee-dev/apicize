@@ -487,12 +487,8 @@ fn create_workspace(
                 .build()
                 .unwrap();
 
-        if let Some(sz) = size {
-            window.set_size(sz).unwrap();
-        }
-
+        window.set_size(size).unwrap();
         if let Some(p) = pos {
-            println!("Position should be {}, {}", p.x, p.y);
             window.set_position(p).unwrap();
         }
 
@@ -534,7 +530,7 @@ fn get_new_window_size_and_position(
     app: &AppHandle,
     session_id: &Option<String>,
 ) -> (
-    Option<PhysicalSize<u32>>,
+    PhysicalSize<u32>,
     Option<PhysicalPosition<i32>>,
     Option<bool>,
 ) {
@@ -559,7 +555,16 @@ fn get_new_window_size_and_position(
             }
         }
     }
-    (size, pos, maxed)
+
+    let sz = match size {
+        Some(s) => s,
+        None => PhysicalSize {
+            width: 1200,
+            height: 800,
+        },
+    };
+
+    (sz, pos, maxed)
 }
 
 #[tauri::command]
@@ -605,10 +610,7 @@ async fn clone_workspace(
         window.set_position(p).unwrap();
     }
 
-    if let Some(sz) = size {
-        window.set_size(sz).unwrap();
-    }
-
+    window.set_size(size).unwrap();
     if let Some(true) = maxed {
         window.maximize().unwrap();
     }

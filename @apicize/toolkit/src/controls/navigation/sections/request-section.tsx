@@ -276,7 +276,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
     //     } as DroppableData
     // })
 
-    const SectionContent = (() => {
+    const SectionContent = observer(() => {
         return <>
             {
                 workspace.navigation.requests.map(r => buildRequest(r, 1))

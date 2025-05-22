@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.20.1
+
+* Fix navigation request menu reactivity
+
+
 # 0.20.0
 
 * Allow data to be assigned at the group/request level
