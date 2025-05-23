@@ -476,7 +476,8 @@ fn create_workspace(
             startup_state: Some(workspace_result.startup_state),
         });
 
-        let (size, pos, maxed) = get_new_window_size_and_position(&app, &current_session_id);
+        let (size, pos, maxed, center) =
+            get_new_window_size_and_position(&app, &current_session_id);
 
         let webview_url = tauri::WebviewUrl::App("index.html".into());
         let window =
@@ -491,7 +492,9 @@ fn create_workspace(
         if let Some(p) = pos {
             window.set_position(p).unwrap();
         }
-
+        if center {
+            window.center().unwrap();
+        }
         window.hide().unwrap();
 
         active_session_id
@@ -533,10 +536,12 @@ fn get_new_window_size_and_position(
     PhysicalSize<u32>,
     Option<PhysicalPosition<i32>>,
     Option<bool>,
+    bool,
 ) {
     let mut size: Option<PhysicalSize<u32>> = None;
     let mut pos: Option<PhysicalPosition<i32>> = None;
     let mut maxed: Option<bool> = None;
+    let mut center = false;
 
     if let Some(id) = &session_id {
         if let Some(w) = app.get_webview_window(id) {
@@ -558,13 +563,27 @@ fn get_new_window_size_and_position(
 
     let sz = match size {
         Some(s) => s,
-        None => PhysicalSize {
-            width: 1200,
-            height: 800,
-        },
+        None => {
+            let mut width = 1200;
+            let mut height = 800;
+
+            if let Ok(Some(monitor)) = app.primary_monitor() {
+                let monitor_size = monitor.size();
+                let factor = monitor.scale_factor();
+                let adj_preferred_width = (1200.0 * factor).floor() as u32;
+                let adj_preferred_height = (800.0 * factor).floor() as u32;
+                let adj_monitor_width = (monitor_size.width as f64 * factor).floor() as u32;
+                let adj_monitor_height = (monitor_size.height as f64 * factor).floor() as u32;
+
+                width = u32::min(adj_monitor_width, adj_preferred_width);
+                height = u32::min(adj_monitor_height, adj_preferred_height);
+                center = true;
+            }
+            PhysicalSize { width, height }
+        }
     };
 
-    (sz, pos, maxed)
+    (sz, pos, maxed, center)
 }
 
 #[tauri::command]
@@ -597,7 +616,7 @@ async fn clone_workspace(
         sessions.trace_all_sessions();
     }
 
-    let (size, pos, maxed) = get_new_window_size_and_position(&app, &Some(session_id));
+    let (size, pos, maxed, center) = get_new_window_size_and_position(&app, &Some(session_id));
     let webview_url = tauri::WebviewUrl::App("index.html".into());
     let window =
         tauri::WebviewWindowBuilder::new(&app, active_session_id.clone(), webview_url.clone())
@@ -609,7 +628,9 @@ async fn clone_workspace(
     if let Some(p) = pos {
         window.set_position(p).unwrap();
     }
-
+    if center {
+        window.center().unwrap();
+    }
     window.set_size(size).unwrap();
     if let Some(true) = maxed {
         window.maximize().unwrap();
