@@ -489,11 +489,10 @@ fn create_workspace(
                 .unwrap();
 
         window.set_size(size).unwrap();
-        if let Some(p) = pos {
-            window.set_position(p).unwrap();
-        }
         if center {
             window.center().unwrap();
+        } else if let Some(p) = pos {
+            window.set_position(p).unwrap();
         }
         window.hide().unwrap();
 
@@ -625,13 +624,12 @@ async fn clone_workspace(
             .build()
             .unwrap();
 
-    if let Some(p) = pos {
-        window.set_position(p).unwrap();
-    }
+    window.set_size(size).unwrap();
     if center {
         window.center().unwrap();
+    } else if let Some(p) = pos {
+        window.set_position(p).unwrap();
     }
-    window.set_size(size).unwrap();
     if let Some(true) = maxed {
         window.maximize().unwrap();
     }

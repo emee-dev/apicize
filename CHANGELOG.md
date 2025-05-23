@@ -3,6 +3,7 @@
 # 0.20.2
 
 * Consolidate nested test scenario messaging
+* Adjust initial window size to take into account scaling
 
 # 0.20.1
 
