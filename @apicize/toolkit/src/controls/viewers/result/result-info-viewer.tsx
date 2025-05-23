@@ -153,25 +153,49 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
     }
 
     const TestResult = (props: { result: ApicizeTestResult }) => {
-        switch (props.result.type) {
-            case 'Behavior':
-                return <TestBehavior behavior={props.result} />
-            case 'Scenario':
-                return <TestScenario scenario={props.result} />
-            default:
-                return null
+
+        let behaviorsToRender: JSX.Element[] = []
+
+        const processResult = (r: ApicizeTestResult, behaviors: string[]) => {
+            switch (r.type) {
+                case 'Scenario':
+                    if (r.children) {
+                        for (const c of r.children) {
+                            processResult(c, [...behaviors, r.name])
+                        }
+                    }
+                    break
+                case 'Behavior':
+                    behaviorsToRender.push(<TestBehavior behavior={r} parents={behaviors} />)
+                    break
+
+            }
         }
+
+        processResult(props.result, []);
+        return <>
+            {behaviorsToRender}
+        </>
+
+        // switch (props.result.type) {
+        //     case 'Behavior':
+        //         return <TestBehavior behavior={props.result} />
+        //     case 'Scenario':
+        //         return <TestScenario scenario={props.result} />
+        //     default:
+        //         return null
+        // }
     }
 
-    const TestBehavior = (props: { behavior: ApicizeTestBehavior, namePrefix?: string }) => {
+    const TestBehavior = (props: { behavior: ApicizeTestBehavior, parents: string[] }) => {
         const key = `result-${idx++}`
         const behavior = props.behavior
-        const fullName = props.namePrefix ? `${props.namePrefix} ${behavior.name}` : behavior.name
+        const fullName = [...props.parents, behavior.name].join(' ')
 
         const error = (behavior.error && behavior.error.length > 0) ? behavior.error : null
         const logs = (behavior.logs?.length ?? 0) > 0 ? behavior.logs : null
 
-        const className = props.namePrefix ? 'test-result ' : 'test-result behavior'
+        const className = 'test-result-behavior'
 
         return (error || logs)
             ? <Box key={key} className={className}>
@@ -219,35 +243,35 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
             </Box >
     }
 
-    const TestScenario = (props: { scenario: ApicizeTestScenario }) => {
-        const key = `result-${idx++}`
-        const scenario = props.scenario
+    // const TestScenario = (props: { scenario: ApicizeTestScenario }) => {
+    //     const key = `result-${idx++}`
+    //     const scenario = props.scenario
 
-        if (scenario.children.length === 1) {
-            const child = scenario.children[0]
-            if (child.type === 'Behavior') {
-                return <TestBehavior behavior={child} namePrefix={scenario.name} />
-            }
-        }
+    //     if (scenario.children.length === 1) {
+    //         const child = scenario.children[0]
+    //         if (child.type === 'Behavior') {
+    //             return <TestBehavior behavior={child} namePrefix={scenario.name} />
+    //         }
+    //     }
 
-        return <Box key={key} className='test-result'>
-            <Stack direction='row' key={`result-${idx++}`}>
-                <Box sx={{ width: '1.5rem', marginRight: '0.5rem' }} key={`result-${idx++}`}>
-                    {scenario.success ? (<CheckIcon color='success' />) : (<BlockIcon color='error' />)}
-                </Box>
-                <Stack direction='column'>
-                    <Box key={`result-${idx++}`}>
-                        <Typography sx={{ marginTop: 0, marginBottom: 0, paddingTop: 0 }} component='div' key={`result-${idx++}`}>
-                            {scenario.name}
-                        </Typography>
-                    </Box>
-                    {
-                        scenario.children.map(c => <TestResult result={c} key={`result-${idx++}`} />)
-                    }
-                </Stack>
-            </Stack>
-        </Box>
-    }
+    //     return <Box key={key} className='test-result'>
+    //         <Stack direction='row' key={`result-${idx++}`}>
+    //             <Box sx={{ width: '1.5rem', marginRight: '0.5rem' }} key={`result-${idx++}`}>
+    //                 {scenario.success ? (<CheckIcon color='success' />) : (<BlockIcon color='error' />)}
+    //             </Box>
+    //             <Stack direction='column'>
+    //                 <Box key={`result-${idx++}`}>
+    //                     <Typography sx={{ marginTop: 0, marginBottom: 0, paddingTop: 0 }} component='div' key={`result-${idx++}`}>
+    //                         {scenario.name}
+    //                     </Typography>
+    //                 </Box>
+    //                 {
+    //                     scenario.children.map(c => <TestResult result={c} key={`result-${idx++}`} />)
+    //                 }
+    //             </Stack>
+    //         </Stack>
+    //     </Box>
+    // }
 
     const changeResult = (e: React.MouseEvent, index: number) => {
         e.preventDefault()

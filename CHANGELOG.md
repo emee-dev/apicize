@@ -1,9 +1,12 @@
 # Change Log
 
+# 0.20.2
+
+* Consolidate nested test scenario messaging
+
 # 0.20.1
 
 * Fix navigation request menu reactivity
-
 
 # 0.20.0
 
