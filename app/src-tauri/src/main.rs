@@ -35,7 +35,9 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex, OnceLock},
 };
-use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, State};
+use tauri::{
+    AppHandle, Emitter, LogicalSize, Manager, PhysicalSize, State, WebviewWindowBuilder, Wry,
+};
 use tauri_plugin_clipboard::Clipboard;
 use tokio_util::sync::CancellationToken;
 use trace::{ReqwestEvent, ReqwestLogger};
@@ -480,27 +482,15 @@ fn create_workspace(
             startup_state: Some(workspace_result.startup_state),
         });
 
-        let (size, pos, maxed, center) =
-            get_new_window_size_and_position(&app, &current_session_id);
-
         let webview_url = tauri::WebviewUrl::App("index.html".into());
         let mut builder =
             tauri::WebviewWindowBuilder::new(&app, active_session_id.clone(), webview_url.clone())
                 .visible(false)
+                .prevent_overflow_with_margin(LogicalSize::new(64, 64))
                 .title(format_window_title(&workspace_result.display_name, info.dirty).as_str());
 
-        builder = builder.inner_size(f64::from(size.width), f64::from(size.height));
-
-        if center {
-            builder = builder.center();
-        } else if Some(true) == maxed {
-            builder = builder.maximized(true);
-        } else if let Some(p) = pos {
-            builder = builder.position(f64::from(p.x), f64::from(p.y));
-        }
-
+        builder = position_window_builder(&app, builder, &current_session_id);
         let window = builder.build().unwrap();
-        // window.set_size(size).unwrap();
         window.hide().unwrap();
 
         active_session_id
@@ -535,64 +525,59 @@ fn create_workspace(
     Ok(())
 }
 
-fn get_new_window_size_and_position(
+fn position_window_builder<'a>(
     app: &AppHandle,
+    builder: WebviewWindowBuilder<'a, Wry, AppHandle>,
     session_id: &Option<String>,
-) -> (
-    PhysicalSize<u32>,
-    Option<PhysicalPosition<i32>>,
-    Option<bool>,
-    bool,
-) {
-    let mut size: Option<PhysicalSize<u32>> = None;
-    let mut pos: Option<PhysicalPosition<i32>> = None;
-    let mut maxed: Option<bool> = None;
-    let mut center = false;
-
+) -> WebviewWindowBuilder<'a, Wry, AppHandle> {
     if let Some(id) = &session_id {
         if let Some(w) = app.get_webview_window(id) {
-            if let Ok(mut p) = w.outer_position() {
-                p.x += 64;
-                p.y += 64;
-                pos = Some(p);
+            let factor = if let Ok(Some(monitor)) = app.primary_monitor() {
+                monitor.scale_factor()
+            } else {
+                1.0
+            };
+
+            let mut result: WebviewWindowBuilder<'a, Wry, AppHandle> = builder;
+            // If opening from an existing session, position at a 64 pixel offset
+            if let Ok(p) = w.outer_position() {
+                result =
+                    result.position(f64::from(p.x + 64) / factor, f64::from(p.y + 64) / factor);
             }
             if let Ok(b) = w.is_maximized() {
-                maxed = Some(b);
+                result = result.maximized(b);
             }
             if let Ok(s) = w.inner_size() {
-                size = Some(s);
+                result =
+                    result.inner_size(f64::from(s.width) / factor, f64::from(s.height) / factor);
             }
-        }
+            result = result.prevent_overflow();
+            return result;
+        };
     }
 
-    let sz = match size {
-        Some(s) => s,
-        None => {
-            let mut width = 1200;
-            let mut height = 800;
+    // If opening window without referencing existing session, open at 80% of monitor size
+    let width: u32;
+    let height: u32;
+    let margin: PhysicalSize<f64>;
+    if let Ok(Some(monitor)) = app.primary_monitor() {
+        let factor = monitor.scale_factor();
+        width = monitor.size().width;
+        height = monitor.size().height;
+        margin = PhysicalSize::new(
+            f64::from(width) / (5.0 * factor),
+            f64::from(height) / (5.0 * factor),
+        );
+    } else {
+        width = 1000;
+        height = 800;
+        margin = PhysicalSize::new(64.0, 64.0);
+    }
 
-            if let Ok(Some(monitor)) = app.primary_monitor() {
-                let monitor_size = monitor.size();
-                let factor = monitor.scale_factor();
-                let adj_preferred_width = (1200.0 * factor).floor() as u32;
-                let adj_preferred_height = (800.0 * factor).floor() as u32;
-                let adj_monitor_width = (monitor_size.width as f64 * factor).floor() as u32;
-                let adj_monitor_height = (monitor_size.height as f64 * factor).floor() as u32;
-                width = adj_monitor_width * 3 / 4;
-                height = adj_monitor_height * 3 / 4;
-                if width < adj_preferred_width {
-                    width = adj_monitor_width;
-                }
-                if height < adj_preferred_height {
-                    height = adj_monitor_height;
-                }
-                center = true;
-            }
-            PhysicalSize { width, height }
-        }
-    };
-
-    (sz, pos, maxed, center)
+    builder
+        .inner_size(f64::from(width), f64::from(height))
+        .prevent_overflow_with_margin(margin)
+        .center()
 }
 
 #[tauri::command]
@@ -625,25 +610,14 @@ async fn clone_workspace(
         sessions.trace_all_sessions();
     }
 
-    let (size, pos, maxed, center) = get_new_window_size_and_position(&app, &Some(session_id));
     let webview_url = tauri::WebviewUrl::App("index.html".into());
-    let window =
+    let mut builder =
         tauri::WebviewWindowBuilder::new(&app, active_session_id.clone(), webview_url.clone())
             .visible(false)
-            .title(format_window_title(&info.display_name, info.dirty).as_str())
-            .build()
-            .unwrap();
+            .title(format_window_title(&info.display_name, info.dirty).as_str());
+    builder = position_window_builder(&app, builder, &Some(session_id));
 
-    window.set_size(size).unwrap();
-    if center {
-        window.center().unwrap();
-    } else if let Some(p) = pos {
-        window.set_position(p).unwrap();
-    }
-    if let Some(true) = maxed {
-        window.maximize().unwrap();
-    }
-
+    let window = builder.build().unwrap();
     window.hide().unwrap();
     Ok(())
 }
@@ -713,8 +687,8 @@ async fn save_workspace(
 
     if let Some(specified_file_name) = &file_name {
         let workspaces = workspaces_state.workspaces.read().await;
-        let other_file_workspace_ids = workspaces
-            .find_workspace_by_filename(specified_file_name, Some(&session.workspace_id));
+        let other_file_workspace_ids =
+            workspaces.find_workspace_by_filename(specified_file_name, Some(&session.workspace_id));
         if !other_file_workspace_ids.is_empty() {
             return Err(ApicizeAppError::InvalidOperation(
                 "A workspace is already open using that workbook name".to_string(),

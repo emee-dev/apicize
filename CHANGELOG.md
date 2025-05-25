@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.20.4
+
+* Adjust window sizing to take into account scale factor
+
 # 0.20.3
 
 * Added check to prevent Save As over another opened workspace
