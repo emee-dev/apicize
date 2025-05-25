@@ -12,10 +12,17 @@ and reuse it until either it expires, or you click on "CLEAR ANY CACHED TOKEN" i
 The PKCE token flow will be initiatiated when executing tests on a Request or Group with a PKCE Authorization.  Alternatively,
 you can click on "REQUEST TOKEN" to manually trigger the process.
 
-## PKCE Authorization Only Works in the UI
+## Limitations
+
+### PKCE Authorization Only Works in the UI
 
 Because PKCE authorization may require two-factor information that can only be known at runtime, user interaction is required.  As a result,
 tests with PKCE Authorization will fail when using the CLI runner.
+
+### No HTTPS
+
+This mechanism does not support HTTPS.  Most OAuth2 providers will be okay with this as long as the callback is http://localhost,
+which this is.
 
 :image[authorization/oauth2-pkce.webp]
 

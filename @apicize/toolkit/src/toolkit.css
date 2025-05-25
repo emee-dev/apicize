@@ -62,11 +62,16 @@ body .light {
   height: 100vh;
   background-color: #03021f;
   color: #fff;
-  padding: 0 1em;
+  padding: 0.5em 1em;
 }
 
 .help>* {
   padding: 0 1em;
+}
+
+.logo {
+  margin-top: 0.5em;
+  margin-right: 1em;
 }
 
 .help .MuiTypography-h1:first-of-type {
@@ -74,17 +79,57 @@ body .light {
   margin: 0;
   padding: 0;
   display: flex;
-  justify-items: center;
+  font-size: 2.0em;
+  width: 100%;
   align-items: center;
+  justify-content: start;
 }
 
+.help-icon {
+  vertical-align: middle;
+}
+
+.help .MuiTypography-h1:first-of-type svg.help-icon {
+  height: 2.0em;
+  width: 2.0em;
+}
+
+
 .help-toolbar {
-  display: inline-block;
-  margin-right: 1rem;
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+}
+
+.help-toolbar-start {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 0;
+  justify-content: start;
+  margin-left: 1em;
+}
+
+.help-toolbar-start .MuiIconButton-root:first-child {
+  margin-left: 0;
+}
+
+.help-toolbar-end {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  justify-content: end;
+}
+
+.help-toolbar.top {
+  display: flex;
+  flex-grow: 1;
+  margin-right: 0;
+  justify-content: start;
+  align-self: start;
 }
 
 .help-toolbar button {
-  font-size: 24px;
+  font-size: 1em;
 }
 
 .MuiTypeography-h1 .help-icon {
@@ -95,10 +140,6 @@ body .light {
   margin-left: 0.25rem;
 }
 
-.help-icon {
-  vertical-align: middle;
-}
-
 
 .help .MuiTypography-body1,
 .help pre,
@@ -107,9 +148,22 @@ body .light {
   padding: 0;
 }
 
+.help .MuiTypography-h1 {
+  margin: 1.0rem 0 1.0rem 0;
+}
+
+.help .MuiTypography-h2 {
+  font-size: 1.3em;
+}
+
+.help .MuiTypography-h3 {
+  font-size: 1.15em;
+}
+
+
 .help .MuiTypography-h2,
 .help .MuiTypography-h3 {
-  margin: 0.5rem 0 1.0rem 0;
+  margin: 1.0rem 0 0.5rem 0;
   padding: 0;
 }
 
@@ -143,6 +197,23 @@ body .light {
 .help td,
 .help th {
   padding: 0.5em;
+}
+
+.help-contents .MuiMenuItem-root {
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+}
+
+.help-contents .MuiListSubheader-root {
+  font-size: inherit;
+  font-weight: bold !important;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  line-height: normal;
+}
+
+.help-contents .child-menu {
+  padding-left: 2em;
 }
 
 
@@ -486,9 +557,13 @@ pre.log {
   margin: 0.2em 0;
 }
 
-.test-result.behavior:not(:first-child) {
-  margin-top: 0;
+.test-result-behavior {
+  margin-top: 0.5em;
 }
+
+/* .test-result.behavior:not(:first-child) {
+  margin-top: 0;
+} */
 
 .test-result-icon {
   width: 2.0rem;
@@ -497,6 +572,17 @@ pre.log {
   align-items: left;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.test-result-error {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  margin-block: 0 !important;
+
+  :first-letter {
+    text-transform: 'capitalize';
+  }
 }
 
 code.results-log {

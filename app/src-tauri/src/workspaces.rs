@@ -429,8 +429,28 @@ impl Workspaces {
     }
 
     pub fn remove_workspace(&mut self, workspace_id: &str) {
-        log::trace!("Removing workspace {}", &workspace_id);
+        // log::trace!("Removing workspace {}", &workspace_id);
         self.workspaces.remove(workspace_id);
+    }
+
+    pub fn find_workspace_by_filename(
+        &self,
+        file_name: &str,
+        skip_workspace_id: Option<&String>,
+    ) -> Vec<String> {
+        self.workspaces
+            .iter()
+            .filter_map(|(id, w)| {
+                if Some(id) == skip_workspace_id {
+                    None
+                } else {
+                    match w.file_name == file_name {
+                        true => Some(id.clone()),
+                        false => None,
+                    }
+                }
+            })
+            .collect()
     }
 
     pub fn get_workspace_info(

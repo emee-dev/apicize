@@ -21,7 +21,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@apicize/toolkit@npm:^0.20.2, @apicize/toolkit@workspace:@apicize/toolkit":
+"@apicize/toolkit@npm:^0.20.3, @apicize/toolkit@workspace:@apicize/toolkit":
   version: 0.0.0-use.local
   resolution: "@apicize/toolkit@workspace:@apicize/toolkit"
   dependencies:
@@ -33,6 +33,7 @@ __metadata:
     "@mui/material": "npm:^6.4.6"
     "@mui/system": "npm:^6.4.6"
     "@mui/x-tree-view": "npm:^7.26.0"
+    "@tauri-apps/plugin-opener": "npm:^2.2.7"
     "@types/chai": "npm:^5"
     "@types/hast": "npm:^3.0.4"
     "@types/jest": "npm:^29.5.3"
@@ -2253,6 +2254,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tauri-apps/plugin-opener@npm:^2.2.7":
+  version: 2.2.7
+  resolution: "@tauri-apps/plugin-opener@npm:2.2.7"
+  dependencies:
+    "@tauri-apps/api": "npm:^2.0.0"
+  checksum: 10c0/40b9d39062537c3c4611ab6ffd3750deb483c627858b20b45e7d829203e28e8c983fae745e1e88b20266c6dceb3497aeea1255dd6b4d2cc31f2d09ba19ff82c9
+  languageName: node
+  linkType: hard
+
 "@tauri-apps/plugin-os@npm:^2.2.0":
   version: 2.2.0
   resolution: "@tauri-apps/plugin-os@npm:2.2.0"
@@ -2847,7 +2857,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:app"
   dependencies:
-    "@apicize/toolkit": "npm:^0.20.2"
+    "@apicize/toolkit": "npm:^0.20.3"
     "@dnd-kit/core": "npm:^6.1.0"
     "@fontsource/open-sans": "npm:^5.1.1"
     "@fontsource/roboto-mono": "npm:^5.1.1"

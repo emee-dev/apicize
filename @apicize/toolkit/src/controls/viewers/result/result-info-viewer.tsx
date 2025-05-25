@@ -30,7 +30,6 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
     const mainResultIndex = props.resultIndex
     const mainResult = props.results[mainResultIndex]
 
-
     let idx = 0
     let summaries: Map<number, ExecutionResultSummary>
 
@@ -211,18 +210,16 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                             {
                                 error
                                     ?
-                                    <Stack direction='row' key={`result-${idx++}`}>
-                                        <Typography key={`result-${idx++}`} sx={{ left: '-24px', marginBottom: 0, paddingTop: 0, ":first-letter": { textTransform: 'capitalize' } }} color='error'>{behavior.error}</Typography>
+                                    <Stack direction='column' key={`result-${idx++}`}>
+                                        <Typography key={`result-${idx++}`} className='test-result-error' color='error'>{behavior.error}</Typography>
                                     </Stack>
                                     : null
                             }
                             {
                                 (behavior.logs ?? []).map((log) => (
-                                    <Box className='' key={`result-${idx++}`}>
-                                        <Stack direction='column' key={`result-${idx++}`}>
-                                            <code className='results-log' key={`result-${idx++}`}>{log}</code>
-                                        </Stack>
-                                    </Box>
+                                    <Stack direction='column' key={`result-${idx++}`}>
+                                        <code className='results-log' key={`result-${idx++}`}>{log}</code>
+                                    </Stack>
                                 ))
                             }
                         </Box>

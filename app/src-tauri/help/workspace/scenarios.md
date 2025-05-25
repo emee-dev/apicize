@@ -6,38 +6,20 @@ Scenario variables can be used to dynamically set URLs and posted body content. 
 [requests's body](help:requests/body) by using handlebar syntax:
 
 ```json
-{"author":"{{author}}","quote":"{{quote}}"}
+{
+    "author":"{{author}}",
+    "quote":"{{quote}}"
+}
 ```
 
-You can also update or create new variables within your [requests' tests](help:requests/test).  For example, assume that a web request to create a record returns a JSON payload with a property
-called `id`.  You can create a new variable called `id` as follows:
+Scenario values can be substituted into request names, URLs, headers, query string parameters and body content.  To access a scenario variable in a test, use the global variables `variables` or 
 
-```js
-describe('status', () => {
-    it('equals 200', () => {
-        expect(response.status).to.equal(200)
-        const data = JSON.parse(response.body.text)
-        variables.id = data.id
-        console.log(`New record ID is ${variables.id}`)
-    })
-})
-```
-
-In this test, we make sure we had success, and then parse the body text to get `id`, and then assign that to a new variable called `id`.  Subsequent requests in the group will have access to
-`id`.  For exmaple, we can set a subsequent request's URL to use that variable like this:
-
-```
-http://localhost:8080/quote/{{id}}
-```
-
-Scenario variables are maintained and saved as name/string value pairs, but in scripts, they can be updated to any value that can be serialized as JSON.  
-
-You can also specify a JSON value, a JSON fille or CSV file.  The entire data set will be merged in with each call.  If you want to execute Requests or Groups for each row or entry in the external
+A scenario value can be text, JSON value, JSON fille or CSV file.  The entire data set will be merged in with each call.  If you want to execute Requests or Groups for each row or entry in the external
 file, you can set up Seed data (see [**Running Tests**](help:running-tests))
 
 :image[scenarios.webp]
 
 ### See Also
 
-* [**Testing**](help:testing)
+* [**Authoring Tests**](help:authoring-tests)
 * [**Running Tests**](help:running-tests)

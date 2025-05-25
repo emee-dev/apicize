@@ -15,7 +15,7 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
     const feedback = useFeedback()
     const fileOps = useFileOperations()
 
-    workspace.nextHelpTopic = 'settings/display'
+    workspace.nextHelpTopic = 'settings'
 
     let saveCtr = 0
     const checkSave = (ctr: number) => {
@@ -62,9 +62,32 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
         checkSave(++saveCtr)
     }
 
-    const resetToDefaults = () => {
-        apicize.resetToDefaults()
-        checkSave(++saveCtr)
+    const resetToDefaults = async () => {
+        if (await feedback.confirm({
+            okButton: 'Yes',
+            cancelButton: 'No',
+            defaultToCancel: true,
+            message: 'Are you sure you want to reset to default settings?'
+        })) {
+            fileOps.generateDefaultSettings()
+                .then(settings => {
+                    apicize.update(settings)
+                    checkSave(++saveCtr)
+                })
+                .catch(e => feedback.toastError(e))
+        }
+    }
+
+    const changeWorkbookDirectory = () => {
+        fileOps.selectWorkbookDirectory()
+            .then(d => {
+                if (d && d !== apicize.workbookDirectory) {
+                    apicize.setWorkbookDirectory(d)
+                    checkSave(++saveCtr)
+                    feedback.toast(`Workbook directory changed to ${d}`, ToastSeverity.Info)
+                }
+            })
+            .catch(e => feedback.toastError(e))
     }
 
     return <Stack direction={'column'} className='editor' sx={props.sx}>
@@ -90,6 +113,13 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                         onChange={(e) => setNavigationFontSize(parseInt(e.target.value))} />
                 </Stack>
                 <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                    <InputLabel id='hide-nav-menu-label-id' sx={{ width: '12em' }}>Alwaays Hide Nav Menu:</InputLabel>
+                    <RadioGroup row value={apicize.alwaysHideNavTree} onChange={(e) => setAlwaysHideNavTree(e.target.value === 'true')}>
+                        <FormControlLabel value={true} control={<Radio />} label='Yes' />
+                        <FormControlLabel value={false} control={<Radio />} label='No' />
+                    </RadioGroup>
+                </Stack>
+                <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                     <InputLabel id='color-mode-label-id' sx={{ width: '12em' }}>Color Mode:</InputLabel>
                     <Select
                         value={apicize.colorScheme}
@@ -101,18 +131,16 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                     </Select>
                 </Stack>
                 <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                    <InputLabel id='directory-label-id' sx={{ width: '12em' }}>Workbook Directory:</InputLabel>
+                    <InputLabel>{apicize.workbookDirectory}</InputLabel>
+                    <Button variant="outlined" onClick={changeWorkbookDirectory}>Set</Button>
+                </Stack>
+                <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                     <InputLabel id='pkce-port-label-id' sx={{ width: '12em' }}>PKCE Listener Port:</InputLabel>
                     <TextField type='number' slotProps={{ htmlInput: { min: 1, max: 65535 } }}
                         value={apicize.pkceListenerPort}
                         size='small'
                         onChange={(e) => setPkceListenerPort(parseInt(e.target.value))} />
-                </Stack>
-                <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
-                    <InputLabel id='hide-nav-menu-label-id' sx={{ width: '12em' }}>Alwaays Hide Nav Menu:</InputLabel>
-                    <RadioGroup row value={apicize.alwaysHideNavTree} onChange={(e) => setAlwaysHideNavTree(e.target.value === 'true')}>
-                        <FormControlLabel value={true} control={<Radio />} label='Yes' />
-                        <FormControlLabel value={false} control={<Radio />} label='No' />
-                    </RadioGroup>
                 </Stack>
                 <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                     <InputLabel id='diag-info-label-id' sx={{ width: '12em' }}>Show Diagnostic Info:</InputLabel>

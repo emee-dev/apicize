@@ -55,7 +55,6 @@ export const NavigationControl = observer(() => {
         }
     }
 
-    console.log(`Window size width: ${windowSize.width} versus ${PREFERRED_WIDTH}`)
     return (apicize.alwaysHideNavTree || windowSize.width < PREFERRED_WIDTH)
         ? <Box className='navigation-narrow' display='flex'>
             <Stack direction='column' sx={{ flexGrow: 1 }} className='nav-selection-pane' typography='navigation'>

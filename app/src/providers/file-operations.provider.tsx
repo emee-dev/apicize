@@ -3,9 +3,10 @@ import * as core from '@tauri-apps/api/core'
 import * as dialog from '@tauri-apps/plugin-dialog'
 import * as path from '@tauri-apps/api/path'
 import { exists, readFile, readTextFile } from "@tauri-apps/plugin-fs"
-import { base64Encode, FileOperationsContext, FileOperationsStore, SshFileType, ToastSeverity, useApicize, useFeedback, WorkspaceStore } from "@apicize/toolkit";
+import { base64Encode, FileOperationsContext, FileOperationsStore, HelpContents, SshFileType, ToastSeverity, useApicize, useFeedback, WorkspaceStore } from "@apicize/toolkit";
 import { GetTitle, ApicizeSettings, Workspace, Persistence } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
+import { EditableSettings } from "@apicize/toolkit/dist/models/editable-settings";
 
 
 /**
@@ -20,6 +21,14 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
 
     const _sshPath = useRef('')
     const _bodyDataPath = useRef('')
+
+    /**
+     * Generate default settings
+     * @returns set of default settings
+     */
+    const generateDefaultSettings = async (): Promise<EditableSettings> => {
+        return new EditableSettings(await core.invoke<ApicizeSettings>('generate_settings_defaults', {}))
+    }
 
     /**
      * Updates specified settings and saves
@@ -382,6 +391,35 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
             throw new Error(`Help topic "${showTopic}" not found at ${helpFile}`)
         }
     }
+
+    const retriveHelpContents = async (): Promise<HelpContents> => {
+        const helpContents = await join(await resourceDir(), 'help', 'contents.json')
+        const contents = await readTextFile(helpContents)
+        try {
+            const result = JSON.parse(contents)
+            if (typeof result !== 'object') {
+                throw new Error('Help contents not in expected format')
+            }
+            return result
+        } catch (e) {
+            throw new Error(`Unable to read contents - ${e}`)
+        }
+    }
+
+    const selectWorkbookDirectory = async (): Promise<string | null> => {
+        try {
+            feedback.setModal(true)
+            return await dialog.open({
+                multiple: false,
+                title: 'Select Apicize Workbook Directory',
+                defaultPath: apicizeSettings.workbookDirectory,
+                directory: true
+            })
+        } finally {
+            feedback.setModal(false)
+        }
+    }
+
     const fileOpsStore = new FileOperationsStore({
         onNewWorkbook: newWorkspace,
         onOpenWorkbook: openWorkspace,
@@ -392,6 +430,9 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
         onOpenFile: openFile,
         onSaveSettings: saveSettings,
         onRetrieveHelpTopic: retrieveHelpTopic,
+        onRetrieveHelpContents: retriveHelpContents,
+        onSelectWorkbookDirectory: selectWorkbookDirectory,
+        onGenerateDefaultSettings: generateDefaultSettings,
     })
 
     return (

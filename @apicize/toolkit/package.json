@@ -1,7 +1,7 @@
 {
   "name": "@apicize/toolkit",
   "private": true,
-  "version": "0.20.2",
+  "version": "0.20.3",
   "description": "UI toolkit for Apicize applications",
   "keywords": [],
   "license": "MIT",
@@ -55,6 +55,7 @@
     "@mui/material": "^6.4.6",
     "@mui/system": "^6.4.6",
     "@mui/x-tree-view": "^7.26.0",
+    "@tauri-apps/plugin-opener": "^2.2.7",
     "ace-code": "^1.38.0",
     "ace-layout": "^1.4.2",
     "ace-linters": "^1.5.0",

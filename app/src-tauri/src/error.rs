@@ -1,3 +1,5 @@
+use std::io;
+
 use apicize_lib::{ApicizeError, FileAccessError};
 use thiserror::Error;
 
@@ -7,6 +9,9 @@ use crate::workspaces::EntityType;
 pub enum ApicizeAppError {
     #[error(transparent)]
     ApicizeError(#[from] ApicizeError),
+
+    #[error(transparent)]
+    IOError(#[from] io::Error),
 
     #[error("file access error")]
     FileAccessError(#[from] FileAccessError),

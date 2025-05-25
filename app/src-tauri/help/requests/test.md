@@ -6,7 +6,7 @@ Use the request pane to create behavior-driven tests that you can use to validat
 
 :image[requests/tests.webp]
 
-Read the section on [Testing](help:testing) for more information authoring Apicize tests.
+Read the section on [**Authoring Tests**](help:authoring-tests) for information on how to create tests.
 
 ### See Also
 

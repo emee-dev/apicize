@@ -112,24 +112,7 @@ async fn main() {
                 loaded_settings.data
             } else {
                 // If unable to load settings, try and put into place some sensible defaults
-                ApicizeSettings {
-                    workbook_directory: Some(String::from(
-                        app.path()
-                            .document_dir()
-                            .unwrap()
-                            .join("apicize")
-                            .to_string_lossy(),
-                    )),
-                    font_size: 12,
-                    navigation_font_size: 12,
-                    color_scheme: ColorScheme::Dark,
-                    editor_panels: String::from(""),
-                    last_workbook_file_name: None,
-                    recent_workbook_file_names: None,
-                    pkce_listener_port: 8080,
-                    always_hide_nav_tree: false,
-                    show_diagnostic_info: false,
-                }
+                generate_settings_defaults(app.handle().clone())?
             };
 
             // Copy demo files from resources if we do not have settings saved
@@ -215,6 +198,7 @@ async fn main() {
         .plugin(tauri_plugin_clipboard::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         // .plugin(
         //     tauri_plugin_log::Builder::new()
         //         .level(log::LevelFilter::Warn)
@@ -242,18 +226,12 @@ async fn main() {
                 ))
             })
             .unwrap();
-
-            // app.webview_windows()
-            //     .iter()
-            //     .next()
-            //     .unwrap()
-            //     .1
-            //     .set_focus()
-            //     .unwrap()
         }))
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+        // .plugin(tauri_plugin_window_state::Builder::default()
+        //     .build())
         .invoke_handler(tauri::generate_handler![
             initialize_session,
+            generate_settings_defaults,
             new_workspace,
             open_workspace,
             save_workspace,
@@ -350,6 +328,32 @@ async fn initialize_session(
     }
 
     Ok(init)
+}
+
+#[tauri::command]
+fn generate_settings_defaults(app: AppHandle) -> Result<ApicizeSettings, ApicizeAppError> {
+    let workbook_directory = String::from(
+        app.path()
+            .document_dir()
+            .unwrap()
+            .join("apicize")
+            .to_string_lossy(),
+    );
+
+    fs::create_dir_all(&workbook_directory)?;
+
+    Ok(ApicizeSettings {
+        workbook_directory: Some(workbook_directory),
+        font_size: 12,
+        navigation_font_size: 12,
+        color_scheme: ColorScheme::Dark,
+        editor_panels: String::from(""),
+        last_workbook_file_name: None,
+        recent_workbook_file_names: None,
+        pkce_listener_port: 8080,
+        always_hide_nav_tree: false,
+        show_diagnostic_info: false,
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -480,20 +484,23 @@ fn create_workspace(
             get_new_window_size_and_position(&app, &current_session_id);
 
         let webview_url = tauri::WebviewUrl::App("index.html".into());
-        let window =
+        let mut builder =
             tauri::WebviewWindowBuilder::new(&app, active_session_id.clone(), webview_url.clone())
                 .visible(false)
-                .title(format_window_title(&workspace_result.display_name, info.dirty).as_str())
-                .maximized(maxed.is_some_and(|m| m))
-                .build()
-                .unwrap();
+                .title(format_window_title(&workspace_result.display_name, info.dirty).as_str());
 
-        window.set_size(size).unwrap();
+        builder = builder.inner_size(f64::from(size.width), f64::from(size.height));
+
         if center {
-            window.center().unwrap();
+            builder = builder.center();
+        } else if Some(true) == maxed {
+            builder = builder.maximized(true);
         } else if let Some(p) = pos {
-            window.set_position(p).unwrap();
+            builder = builder.position(f64::from(p.x), f64::from(p.y));
         }
+
+        let window = builder.build().unwrap();
+        // window.set_size(size).unwrap();
         window.hide().unwrap();
 
         active_session_id
@@ -551,10 +558,8 @@ fn get_new_window_size_and_position(
             }
             if let Ok(b) = w.is_maximized() {
                 maxed = Some(b);
-                if let Ok(s) = w.inner_size() {
-                    size = Some(s);
-                }
-            } else if let Ok(s) = w.outer_size() {
+            }
+            if let Ok(s) = w.inner_size() {
                 size = Some(s);
             }
         }
@@ -573,9 +578,14 @@ fn get_new_window_size_and_position(
                 let adj_preferred_height = (800.0 * factor).floor() as u32;
                 let adj_monitor_width = (monitor_size.width as f64 * factor).floor() as u32;
                 let adj_monitor_height = (monitor_size.height as f64 * factor).floor() as u32;
-
-                width = u32::min(adj_monitor_width, adj_preferred_width);
-                height = u32::min(adj_monitor_height, adj_preferred_height);
+                width = adj_monitor_width * 3 / 4;
+                height = adj_monitor_height * 3 / 4;
+                if width < adj_preferred_width {
+                    width = adj_monitor_width;
+                }
+                if height < adj_preferred_height {
+                    height = adj_monitor_height;
+                }
                 center = true;
             }
             PhysicalSize { width, height }
@@ -698,12 +708,22 @@ async fn save_workspace(
     session_id: &str,
     file_name: Option<String>,
 ) -> Result<(), ApicizeAppError> {
-    let mut workspaces = workspaces_state.workspaces.write().await;
     let sessions = sessions_state.sessions.write().await;
-
     let session = sessions.get_session(session_id)?;
-    let info = workspaces.get_workspace_info_mut(&session.workspace_id)?;
 
+    if let Some(specified_file_name) = &file_name {
+        let workspaces = workspaces_state.workspaces.read().await;
+        let other_file_workspace_ids = workspaces
+            .find_workspace_by_filename(specified_file_name, Some(&session.workspace_id));
+        if !other_file_workspace_ids.is_empty() {
+            return Err(ApicizeAppError::InvalidOperation(
+                "A workspace is already open using that workbook name".to_string(),
+            ));
+        }
+    }
+
+    let mut workspaces = workspaces_state.workspaces.write().await;
+    let info = workspaces.get_workspace_info_mut(&session.workspace_id)?;
     let save_as = match file_name {
         Some(n) => n,
         None => {

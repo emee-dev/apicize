@@ -34,6 +34,14 @@
     "clipboard:read-all",
     "clipboard:write-all",
     "os:allow-os-type",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://*"
+        }
+      ]
+    },
     "fs:default",
     "fs:allow-home-read",
     "fs:allow-home-read-recursive",

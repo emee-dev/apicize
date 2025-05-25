@@ -1,0 +1,34 @@
+{
+    "Workspaces": "home",
+    "Workspace Entities": {
+        "Requests": {
+            "Overview": "workspace/requests",
+            "Information": "requests/info",
+            "Headers": "requests/headers",
+            "Query String": "requests/query",
+            "Body": "requests/body",
+            "Testing": "requests/test",
+            "Parameters": "requests/parameters"
+        },
+        "Groups": "workspace/groups",
+        "Scenarios": "workspace/scenarios",
+        "Authorizations": {
+            "Overview": "workspace/authorizations",
+            "Basic Auth": "authorization/basic",
+            "API Key": "authorization/api-key",
+            "OAuth2 Client Flow": "authorization/oauth2-client",
+            "OAuth2 PKCE Flow": "authorization/oauth2-pkce"
+        },
+        "Certificates": "workspace/certificates",
+        "Proxies": "workspace/proxies",
+        "Workspace Defaults": "workspace/defaults"
+    },
+    "Testing": {
+        "Authoriing Tests": "authoring-tests",
+        "Running Tests": "running-tests",
+        "View Communication Logs": "logs"
+    },
+    "Storing Parameters": "parameter-storage",
+    "Settings": "settings",
+    "About Apicize": "about"
+}

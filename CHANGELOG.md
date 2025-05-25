@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.20.3
+
+* Added check to prevent Save As over another opened workspace
+* Removed window state plugin for now, it doesn't work as required
+* Updated help screens
+
 # 0.20.2
 
 * Consolidate nested test scenario messaging

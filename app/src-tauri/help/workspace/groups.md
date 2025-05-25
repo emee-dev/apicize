@@ -2,7 +2,7 @@
 
 In Apicize, a Request Group is a list of [Requests](help:requests) and/or child Groups. Request Groups do more than organize requests, they can be used to orchestrate tests with dependencies and/or load testing.  
 
-When executing **Sequential** requests, each Request or child Group will run one after the other.  If any of your Requests and their tests rely upon a preceding result, you will want to run them sequentially.  This can be useful, for example, when testing a sequence of API calls to create, retrieve, update and delete a record (i.e. CRUD). More information about running tests with dependencies can be found in the [testing](help:testing) topic.
+When executing **Sequential** requests, each Request or child Group will run one after the other.  If any of your Requests and their tests rely upon a preceding result, you will want to run them sequentially.  This can be useful, for example, when testing a sequence of API calls to create, retrieve, update and delete a record (i.e. CRUD). More information about running tests with dependencies can be found in the [authoring tests](help:authoring-tests).
 
 When executing **Concurrent** requests, each Request or child Group will by launched concurrently.  This can be used to load test an API.
 
@@ -28,5 +28,6 @@ In the configuration shown below, requests within the group will execute sequeun
 
 ### See Also
 
+* [**Running Tests and Viewing Results**](help:running-tests)
+* [**Authoring Tests**](help:authoring-tests)
 * [**Workspace**](help:home)
-* [**Testing**](help:testing)

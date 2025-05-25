@@ -155,7 +155,7 @@ export interface ApicizeExecutionTestContext {
     request?: ApicizeHttpRequest
     response?: ApicizeHttpResponse
     merged?: Map<string, JsonValue>
-    variables?: Map<string, JsonValue>
+    scenario?: Map<string, JsonValue>
     data?: Map<string, JsonValue>
 }
 

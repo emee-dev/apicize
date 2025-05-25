@@ -1,6 +1,6 @@
 import { ApicizeSettings } from '@apicize/lib-typescript';
 import { SupportedColorScheme } from '@mui/material';
-import { action, computed, observable } from 'mobx';
+import { action, observable } from 'mobx';
 
 export class EditableSettings {
     @observable accessor dirty = false
@@ -21,20 +21,24 @@ export class EditableSettings {
 
     constructor(settings?: ApicizeSettings) {
         if (settings) {
-            this.workbookDirectory = settings.workbookDirectory
-            this.lastWorkbookFileName = settings.lastWorkbookFileName
-            this.fontSize = settings.fontSize
-            this.navigationFontSize = settings.navigationFontSize
-            this.colorScheme = settings.colorScheme
-            this.editorPanels = settings.editorPanels
-            this.recentWorkbookFileNames = settings.recentWorkbookFileNames?.slice(0, 10) ?? []
-            this.pkceListenerPort = settings.pkceListenerPort ?? 8080
-            this.alwaysHideNavTree = settings.alwaysHideNavTree
-            this.showDiagnosticInfo = settings.showDiagnosticInfo
+            this.setValues(settings)
         }
     }
 
     public ctrlKey: string = 'Ctrl'
+
+    private setValues(settings: ApicizeSettings) {
+        this.workbookDirectory = settings.workbookDirectory
+        this.lastWorkbookFileName = settings.lastWorkbookFileName
+        this.fontSize = settings.fontSize
+        this.navigationFontSize = settings.navigationFontSize
+        this.colorScheme = settings.colorScheme
+        this.editorPanels = settings.editorPanels
+        this.recentWorkbookFileNames = settings.recentWorkbookFileNames?.slice(0, 10) ?? []
+        this.pkceListenerPort = settings.pkceListenerPort ?? 8080
+        this.alwaysHideNavTree = settings.alwaysHideNavTree
+        this.showDiagnosticInfo = settings.showDiagnosticInfo
+    }
 
     @action
     changeApp(name: string, version: string) {
@@ -146,16 +150,12 @@ export class EditableSettings {
     @action
     public setShowDiagnosticInfo(value: boolean) {
         this.showDiagnosticInfo = value
-        this.dirty = false
+        this.dirty = true
     }
 
     @action
-    public resetToDefaults() {
-        this.fontSize = 12
-        this.colorScheme = 'dark'
-        this.editorPanels = ''
-        this.pkceListenerPort = 8080
-        this.alwaysHideNavTree = false
-        this.showDiagnosticInfo = false
+    public update(settings: ApicizeSettings) {
+        this.setValues(settings)
+        this.dirty = true
     }
 }

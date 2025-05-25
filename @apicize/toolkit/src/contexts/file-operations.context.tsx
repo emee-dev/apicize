@@ -1,5 +1,8 @@
 import { createContext, useContext } from "react";
 import { SshFileType } from "../models/workspace/ssh-file-type";
+import { HelpContents } from "../models/help-contents";
+import { ApicizeSettings } from "..";
+
 
 export class FileOperationsStore {
     public readonly newWorkbook: (openInNewWindow: boolean) => Promise<void>
@@ -11,7 +14,9 @@ export class FileOperationsStore {
     public readonly openFile: () => Promise<Uint8Array | null>
     public readonly saveSettings: () => Promise<void>
     public readonly retrieveHelpTopic: (showTopic: string) => Promise<string>
-
+    public readonly retrieveHelpContents: () => Promise<HelpContents>
+    public readonly selectWorkbookDirectory: () => Promise<string | null>
+    public readonly generateDefaultSettings: () => Promise<ApicizeSettings>
 
     constructor(private readonly callbacks: {
         onNewWorkbook: (openInNewWindow: boolean) => Promise<void>,
@@ -23,6 +28,9 @@ export class FileOperationsStore {
         onOpenFile: () => Promise<Uint8Array | null>,
         onSaveSettings: () => Promise<void>,
         onRetrieveHelpTopic: (showTopic: string) => Promise<string>,
+        onRetrieveHelpContents: () => Promise<HelpContents>,
+        onSelectWorkbookDirectory: () => Promise<string | null>,
+        onGenerateDefaultSettings: () => Promise<ApicizeSettings>,
     }) {
         this.newWorkbook = callbacks.onNewWorkbook
         this.openWorkbook = callbacks.onOpenWorkbook
@@ -33,6 +41,9 @@ export class FileOperationsStore {
         this.openFile = callbacks.onOpenFile
         this.saveSettings = callbacks.onSaveSettings
         this.retrieveHelpTopic = callbacks.onRetrieveHelpTopic
+        this.retrieveHelpContents = callbacks.onRetrieveHelpContents
+        this.selectWorkbookDirectory = callbacks.onSelectWorkbookDirectory
+        this.generateDefaultSettings = callbacks.onGenerateDefaultSettings
     }
 }
 

@@ -1,23 +1,26 @@
-# :toolbar-left
+# :logo :toolbar-top
 
-:logo
-Apicize is yet another application to test HTTP calls.
+# What is Apicize?
+
+Apicize is yet another application to test HTTP calls.  Its *raison d'être* is to lower the friction between interactively
+testing in development and leveraging that testing in an automated fashion during deployment, post-deployment health checks,
+etc.
 
 ## What differentiates Apicize?
+
+### Test-Driven
+
+Whenever you set up a Request, you get a default [test](help:requests/test) created which checks for an HTTP status 200.  Obviously,
+meaningful testing will often require more than this.  You may want to inspect the response and validate data.  You may want to test for known
+error conditions.  Apicize accomodates [BDD style testing](https://en.wikipedia.org/wiki/Behavior-driven_development) using the 
+[Chai](https://www.chaijs.com/) library.  Apicize supports running Groups of Requests either in Sequence or Concurrently.  This lets
+you test chains of dependent requests, or to ensure idempotency by making multiple calls in parallel.
 
 ### "All Local" Application
 
 This application runs on your computer and the only external connection it makes are to the APIs you configure in your tests.  It does not store
 information anywhere other than your drive.  It does not bombard you with marketing requests to upsell you on collaboration features,
 cloud storage, etc.
-
-### Test-Driven
-
-Whenever you set up a Request, you get a default [test](help:requests/test) created which checks for an HTTP status 200.  Obviously,
-meaningful tests may require more than this.  You may want to inspect the response and confirm data.  You may want to test for known
-error conditions.  Apicize accomodates [BDD style testing](https://en.wikipedia.org/wiki/Behavior-driven_development) using the 
-[Chai](https://www.chaijs.com/) library.  Apicize supports running Groups of Requests either in Sequence or in Parallel.  This lets
-you test chains of dependent requests, or to perform load testing by making concurrent calls.
 
 ### Secure
 
@@ -30,22 +33,5 @@ buffer overruns and other security vulnerabilities.
 
 ### CI/CD Friendly
 
-A command-line test runner for Apicize workbooks, with minimal dependencies, is available which can be run in a CI/CD environment.
-
-# Contents
-
-* [**Requests**](help:requests)
-    * [**Groups**](help:groups)
-    * [**Information**](help:requests/info)
-    * [**Headers**](help:requests/headers)
-    * [**Query String Parameters**](help:requests/query)
-    * [**Tests**](help:requests/test)
-    * [**Parameters**](help:requests/parameters)
-* [**Scenarios**](help:scenarios)
-* [**Authorizations**](help:authorizations)
-* [**Certificates**](help:certificates)
-* [**Proxies**](help:proxies)
-* [**Defaults**](help:settings/parameters)
-    * [**Display Settings**](help:settings/display)
-* [**Testing**](help:testing)
-* [**Running Tests**](help:running-tests)
+A [command-line test runner](https://github.com/apicize/cli) for Apicize workbooks, with minimal dependencies, 
+can be used to execute without a GUI during CI/CD or other automated context.

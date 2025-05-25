@@ -18,4 +18,3 @@ To delete a Certificate, select it in the navigation pane, and in its context me
 ### See Also
 
 * [**Requests**](help:requests)
-

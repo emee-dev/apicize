@@ -19,9 +19,9 @@ If you are testing a Group, there are two Execution settings:
 
 * **Group Execution** controls how multiple runs are dispatched at the group level.  If you select Concurrent, all runs of the Group (and its children) will be dispatched at the same time.
 * **Group Item Execution** controls how each of the children in a group are dispatched.  If you select Concurrent, all children of the Group will be dispatched at the same time.  If you
-have Requests in a group that rely upon variables set in a previous Request (see [Testing](help:testing)), then Concurrent Group Item Execution will likely break these tests.
+have Requests in a group that rely upon variables set in a previous Request (see [**Authoring Tests**](help:authoring-tests)), then Concurrent Group Item Execution will likely break these tests.
 
-> Use **Sequential** Group Item Execution for a Group when setting variables in a Request's test to be used by subsequent Requests
+> Use **Sequential** Group Item Execution for a Group when outputing values from a Request's test to be used by subsequent Requests
 
 ## Seeding Data
 
@@ -32,8 +32,9 @@ Some things to keep in mind when using Seeded data:
 
 1. Each row will be executed sequentially for Requests and Groups being tested.  The specified number of runs, concurrency, etc. will all be applied
 2. As a security measure, the Seed file **must** be in the same directory or child directory as the workbook.
-3. When using a JSON file, if the file contains a scalar value (string, number, etc.) or ab array of scalar values, a variable
-named **data** will be set.
+3. When using a JSON file, if the file contains a scalar value (string, number, etc.) or ab array of scalar values, a variable named **data** will be set.
+4. Although you can set a Seeded file for any request or group (as well as the Workspace itself), only one Seed file can be active at any time.  There is no support for "nested"
+seed files.  This means that once a Seed file is loaded for a workbook or group, any Seed data configured for child groups or requests will be ignored.
 
 ## Viewing Results
 
@@ -67,6 +68,6 @@ content encoded as Base64 will be displayed
 
 ### See Also
 
-* [**Testing**](help:testing)
+* [**Authoring Tests**](help:authoring-tests)
 * [**Requests**](help:requests)
 * [**Workspace**](help:home)

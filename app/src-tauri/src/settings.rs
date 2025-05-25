@@ -36,6 +36,11 @@ pub enum ColorScheme {
     Dark,
 }
 
+
+pub struct ApicizeWindowState {
+    
+}
+
 /// Apicize application settings
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]

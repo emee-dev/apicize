@@ -34,69 +34,6 @@ ace.config.dynamicModules = {
     'ace/ext/searchbox': () => import('ace-code/src/ext/searchbox')
 }
 
-// function createAceMode(modeName: string, highlighterObj: ace.Ace.HighlightRulesMap): SyntaxMode {
-//     // var myHighlightRules = function () {
-//     //     //@ts-expect-error(2683)
-//     //     this.$rules = highlighterObj;
-//     // };
-//     // oop.inherits(myHighlightRules, Json5HighlightRules);
-//     // console.log(myHighlightRules)
-
-//     var CustomMode = function () {
-//         // //@ts-expect-error(2683)
-//         // this.HighlightRules = myHighlightRules;
-//     };
-//     oop.inherits(CustomMode, JsonMode);
-
-//     (function () {
-//         // //Create worker for live syntax checking
-//         // //@ts-expect-error(2683)
-//         // this.createWorker = function (session: ace.Ace.EditSession) {
-//         //     session.on("change", function () {
-//         //         session.clearAnnotations();
-//         //         let annotations: ace.Ace.Annotation[] = [];
-//         //         for (let row = 0; row < session.getLength(); row++) {
-//         //             let tokens = session.getTokens(row);
-//         //             if (!tokens || tokens.length == 0) continue;
-//         //             tokens.forEach(token => {
-//         //                 if (token.type === "invalid") annotations.push({ row: row, column: 0, text: "This need to be fixed!", type: "error" });
-//         //             });
-//         //         }
-//         //         session.setAnnotations(annotations);
-//         //     });
-//         // }
-//         // //@ts-expect-error
-//         // this.$id = modeName;
-//     }).call(CustomMode.prototype);
-
-//     // @ts-expect-error
-//     return new CustomMode();
-// }
-
-
-// let resultsMode: SyntaxMode | null = null
-
-// const getResultsMode = (): SyntaxMode => {
-//     // if (resultsMode) {
-//     //     return resultsMode
-//     // }
-
-
-//     resultsMode = createAceMode("DetailsMode", {
-//         "start": [
-//             { token: "invalid", regex: /(OMIT_CATCH|Not support.*|\<(.*?)\>)/ },
-//             { token: "section.property", regex: /\[(.*?)\]/ },
-//             { token: "def", regex: /\b.*([a-zA-Z0-9_.-]+)\b(\s*)(=)/ },
-//             { token: "variable", regex: /#\b([a-zA-Z0-9_.-]+)\b(\s*)(=)/ },
-//         ],
-//     });
-
-
-//     return resultsMode
-// }
-
-
-
 const updateEditorMode = (editor: Editor, type: ResultEditSessionType, mode: EditorMode | undefined) => {
     switch (mode) {
         case EditorMode.js:

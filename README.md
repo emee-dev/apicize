@@ -14,7 +14,7 @@ to execute  HTTP requests and tests.  Tauri, React, MobX and MUI are used for th
 passed to subsequent requests
 > 2. The global variable `$` will contain a merged list of scenario variables, output variables from previous requests and data row values.  Output defined variables will take precedence over same-named scenario variables, and data row variables will take precedence over both of these. See [Testing in Apicize](#testing-in-apicize) for more information.
 > 3. Output variables will no longer be added to `variables`; instead use `output` or `$` to access them
->
+
 > Some of this will break existing scripts that leverage output variables.  Sorry, but things were getting unweildy.  As we continue to barrel toward 1.0, we'll try and minimize these sort of breakages.
 
 
@@ -98,7 +98,7 @@ The `expect` assertion is imported from the [Chai](https://www.chaijs.com/) libr
 
 When authoring a test, the following global variables will be available for use in JavaScript:
 
-* `variables`:  A list of variables defined in the currently active Scenario (if any)
+* `scenario`:  A list of variables defined in the currently active Scenario (if any)
 * `output`: A list of values output from previous requests in the group
 * `data`:  When a data seed is defined, this will hold the values for the current data row
 * `$`: A merged list of previously scenario variables, output variables and data row variables.  These values, as defined, are used 
@@ -107,7 +107,7 @@ to populate handlebars values in the request URL, headers, body, etc.
 * `resposne`: Properties describe an HTTP response
 
 After executing a request, you can view the response details and examine `textContext` to see all 
-global variables available for use by your testing.
+global variables available for use in your testing.
 
 **request** properties include:
 

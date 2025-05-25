@@ -1,8 +1,10 @@
-import { Box, IconButton, Link, LinkProps, SvgIcon, SxProps, Typography, TypographyProps, TypographyPropsVariantOverrides } from '@mui/material'
+import { Box, IconButton, Link, LinkProps, ListSubheader, Menu, MenuItem, SvgIcon, SxProps, Typography, TypographyProps, TypographyPropsVariantOverrides } from '@mui/material'
 import HomeIcon from '@mui/icons-material/Home';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import AltRouteIcon from '@mui/icons-material/AltRoute'
+import MenuIcon from '@mui/icons-material/Menu';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { createElement, Fragment, HTMLAttributes, useRef, useState } from 'react'
 import { jsx, jsxs } from 'react/jsx-runtime'
 import { visit } from 'unist-util-visit';
@@ -50,6 +52,8 @@ import SaveAsIcon from '@mui/icons-material/SaveAs'
 import { Parent } from 'unist';
 import { useApicize } from '../contexts/apicize.context';
 import { useWorkspace } from '../contexts/workspace.context';
+import { DropdownMenu } from './navigation/dropdown-menu';
+import { HelpContents } from '../models/help-contents';
 
 // Register `hName`, `hProperties` types, used when turning markdown to HTML:
 /// <reference types="mdast-util-to-hast" />
@@ -66,56 +70,37 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
     let version = apicize.appVersion
 
     let [content, setContent] = useState(createElement(Fragment));
+    const [contentsMenu, setContentsMenu] = useState<null | HTMLElement>(null)
+    const [helpContents, setHelpContents] = useState<null | HelpContents>(null)
+
     let activeTopic = useRef('')
 
-    // reaction(
-    //     () => ({ topic: workspace.helpTopic, visible: workspace.helpVisible }),
-    //     async ({ topic, visible }) => {
-    //         if (!visible) return
+    const handleShowContents = () => {
+        const target = document.getElementById('help-contents-button')
+        if (helpContents) {
+            setContentsMenu(target)
+        } else {
+            fileOps.retrieveHelpContents()
+                .then(contents => {
+                    setHelpContents(contents)
+                    setContentsMenu(target)
+                })
+                .catch(e => feedback.toastError(e))
+        }
+    };
 
-    //         try {
-    //             showHome = topic !== 'home'
-    //             showBack = workspace.helpHistory.length > 1
+    const handleShowHelp = (topic: string) => {
+        setContentsMenu(null);
+        workspace.showHelp(topic, true)
+    }
+    const handleContentsMenuClose = () => {
+        setContentsMenu(null);
+    };
 
-    //             if (topic === lastTopic) return
 
-    //             const helpText = await fileOps.retrieveHelpTopic(topic ?? 'home')
-    //             if (helpText.length > 0) {
-    //                 const r = await unified()
-    //                     .use(remarkParse)
-    //                     .use(remarkGfm)
-    //                     .use(remarkDirective)
-    //                     .use(remarkApicizeDirectives)
-    //                     .use(remarkRehype)
-    //                     // @ts-expect-error
-    //                     .use(rehypeReact, {
-    //                         Fragment,
-    //                         jsx,
-    //                         jsxs,
-    //                         passNode: true,
-    //                         components: {
-    //                             logo,
-    //                             icon: rehypeTransformIcon,
-    //                             toolbar: rehypeTransformToolbar,
-    //                             h1: rehypeTransformHeader,
-    //                             h2: rehypeTransformHeader,
-    //                             h3: rehypeTransformHeader,
-    //                             h4: rehypeTransformHeader,
-    //                             h5: rehypeTransformHeader,
-    //                             h6: rehypeTransformHeader,
-    //                             a: rehypeTranformAnchor,
-    //                             p: rehypeTransformParagraph,
-    //                         }
-    //                     })
-    //                     .process(helpText)
-    //                 setContent(r.result)
-    //                 setLastTopic(topic)
-    //             }
-    //         } catch (e) {
-    //             feedback.toast(`Unable to display topic ${topic} - ${e}`, ToastSeverity.Error)
-    //         }
-    //     }
-    // )
+    function browseTo(url: string) {
+        openUrl(url).catch(e => feedback.toastError(e))
+    }
 
     function remarkApicizeDirectives() {
         const handleLogo = (node: LeafDirective) => {
@@ -133,9 +118,9 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
                 const data: any = node.data || (node.data = {})
                 data.hName = 'toolbar'
                 return true
-            } else if (node.name === 'toolbar-left') {
+            } else if (node.name === 'toolbar-top') {
                 const data: any = node.data || (node.data = {})
-                data.hName = 'toolbarLeft'
+                data.hName = 'toolbarTop'
                 return true
             } else {
                 return false
@@ -287,6 +272,11 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
                 attrs = { ...attrs, href: '#' }
                 return <Link {...attrs} onClick={() => workspace.showHelp(topic)} />
             }
+            else if (/^https:\/\//.test(attrs.href)) {
+                const url = attrs.href
+                attrs = { ...attrs, href: '#' }
+                return <Link {...attrs} onClick={() => browseTo(url)} />
+            }
             else if (attrs.href.startsWith('icon:')) {
                 return <DisplaySettingsIcon />
             }
@@ -300,27 +290,32 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
 
     const rehypeTransformToolbar = (attrs: ExtraProps): React.ReactNode => renderToolbar()
 
-    const rehypeTransformToolbarLeft = (attrs: ExtraProps): React.ReactNode => renderToolbar('0')
+    const rehypeTransformToolbarTop = (attrs: ExtraProps): React.ReactNode => renderToolbar('help-toolbar top')
 
-    const renderToolbar = (marginLeft = '2em') => {
+    const renderToolbar = (className: string = 'help-toolbar') => {
         return (
-            <Box className='help-toolbar' marginLeft={marginLeft}>
-                {
-                    workspace.allowHelpHome
-                        ? <IconButton color='primary' size='medium' aria-label='Home' title='Home' onClick={() => workspace.showHelp('home')}><HomeIcon fontSize='inherit' /></IconButton>
-                        : <></>
-                }
-                {
-                    workspace.allowHelpBack
-                        ? <IconButton color='primary' size='medium' aria-label='Back' title='Back' onClick={() => workspace.helpBack()}><ArrowBackIcon fontSize='inherit' /></IconButton>
-                        : <></>
-                }
-                {
-                    workspace.allowHelpAbout
-                        ? <IconButton color='primary' size='medium' aria-label='About' title='About' onClick={() => workspace.showHelp('about')}><QuestionMarkIcon fontSize='inherit' /></IconButton>
-                        : <></>
-                }
-                <IconButton color='primary' size='medium' aria-label='Close' title='Close' sx={{ marginLeft: '1rem' }} onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+            <Box className={className}>
+                <Box className='help-toolbar-start'>
+                    {
+                        workspace.allowHelpBack
+                            ? <IconButton color='primary' size='medium' aria-label='Back' title='Back' onClick={() => workspace.helpBack()}><ArrowBackIcon fontSize='inherit' /></IconButton>
+                            : <></>
+                    }
+                    <IconButton id='close-button' color='primary' size='medium' aria-label='Close' title='Close' onClick={() => workspace.returnToNormal()}><CloseIcon fontSize='inherit' /></IconButton>
+                </Box>
+                <Box className='help-toolbar-end'>
+                    {
+                        workspace.allowHelpHome
+                            ? <IconButton color='primary' size='medium' aria-label='Home' title='Home' onClick={() => workspace.showHelp('home')}><HomeIcon fontSize='inherit' /></IconButton>
+                            : <></>
+                    }
+                    <IconButton id='help-contents-button' color='primary' size='medium' aria-label='Contents' title='Contents' onClick={() => handleShowContents()}><MenuIcon fontSize='inherit' /></IconButton>
+                    {
+                        workspace.allowHelpAbout
+                            ? <IconButton color='primary' size='medium' aria-label='About' title='About' onClick={() => workspace.showHelp('about')}><QuestionMarkIcon fontSize='inherit' /></IconButton>
+                            : <></>
+                    }
+                </Box>
             </Box>
         )
     }
@@ -348,7 +343,7 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
                             logo,
                             icon: rehypeTransformIcon,
                             toolbar: rehypeTransformToolbar,
-                            toolbarLeft: rehypeTransformToolbarLeft,
+                            toolbarTop: rehypeTransformToolbarTop,
                             h1: rehypeTransformHeader,
                             h2: rehypeTransformHeader,
                             h3: rehypeTransformHeader,
@@ -367,9 +362,41 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
         })();
     }
 
+    const HelpContents = () => {
+        if (helpContents === null) {
+            return null
+        }
+
+        const renderHelpContent = ([name, value]: [string, string | HelpContents]): any =>
+            (typeof value == 'string')
+                ? <MenuItem disableRipple onClick={() => handleShowHelp(value)}>
+                    <Box display='block'>
+                        {name}
+                    </Box>
+                </MenuItem>
+                : <Box>
+                    <ListSubheader>{name}</ListSubheader>
+                    <Box className='child-menu'>
+                        {Object.entries(value).map(renderHelpContent)}
+                    </Box>
+                </Box >
+
+        return Object.entries(helpContents).map(renderHelpContent)
+    }
+
     return <Box className='help' sx={props.sx}>
         <Box className='help-text'>
             {content}
         </Box>
+        <DropdownMenu
+            id="help-contents-menu"
+            autoFocus
+            className="drop-down-menu help-contents"
+            anchorEl={contentsMenu}
+            open={contentsMenu !== null}
+            onClose={handleContentsMenuClose}
+        >
+            <HelpContents />
+        </DropdownMenu>
     </Box>
 })
