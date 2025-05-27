@@ -1,4 +1,4 @@
-import { TextField, Select, MenuItem, FormControl, InputLabel, Grid2, ToggleButton } from '@mui/material'
+import { TextField, Select, MenuItem, FormControl, InputLabel, Grid, ToggleButton } from '@mui/material'
 import { GroupExecution, Method, Methods } from '@apicize/lib-typescript'
 import { EditableRequest } from '../../../models/workspace/editable-request'
 import { observer } from 'mobx-react-lite'
@@ -33,13 +33,13 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
     let times = request.runs == 1 ? 'one time' : `${request.runs} times`
 
     return (
-        <Grid2 container direction='column' spacing={3}>
-            <Grid2>
+        <Grid container direction='column' spacing={3}>
+            <Grid>
                 <TextField
                     id='request-name'
                     label="Name"
                     aria-label='request name'
-                    autoFocus={request.name === ''}
+                    // autoFocus={request.name === ''}
                     required
                     size="small"
                     value={request.name}
@@ -48,13 +48,13 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                     helperText={request.nameInvalid ? 'Request name is required' : ''}
                     fullWidth
                 />
-            </Grid2>
-            <Grid2>
+            </Grid>
+            <Grid>
                 <TextField
                     id='request-url'
                     label="URL"
                     aria-label='request url'
-                    autoFocus={request.url !== ''}
+                    // autoFocus={request.url !== ''}
                     required
                     size="small"
                     value={request.url}
@@ -63,9 +63,9 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                     helperText={request.urlInvalid ? 'URL is required' : ''}
                     fullWidth
                 />
-            </Grid2>
-            <Grid2 container direction='row' spacing={2}>
-                <Grid2>
+            </Grid>
+            <Grid container direction='row' spacing={2}>
+                <Grid>
                     <FormControl>
                         <InputLabel id='request-method-label-id'>Method</InputLabel>
                         <Select
@@ -80,8 +80,8 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                             {methodMenuItems()}
                         </Select>
                     </FormControl>
-                </Grid2>
-                <Grid2>
+                </Grid>
+                <Grid>
                     <FormControl>
                         <TextField
                             aria-label='request timeout in milliseconds'
@@ -94,10 +94,10 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                             onChange={e => request.setTimeout(parseInt(e.target.value))}
                         />
                     </FormControl>
-                </Grid2>
-            </Grid2>
-            <Grid2 container direction='row' spacing={2}>
-                <Grid2 container direction='row' spacing={0}>
+                </Grid>
+            </Grid>
+            <Grid container direction='row' spacing={2}>
+                <Grid container direction='row' spacing={0}>
                     <TextField
                         aria-label='Nubmer of Run Attempts'
                         placeholder='Attempts'
@@ -118,8 +118,8 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                     <ToggleButton value='Run' title={`Run selected request ${times}`} disabled={running} size='small' onClick={handleRunClick()}>
                         <PlayCircleFilledIcon color={running ? 'disabled' : 'success'} />
                     </ToggleButton>
-                </Grid2>
-                <Grid2>
+                </Grid>
+                <Grid>
                     <FormControl>
                         <InputLabel id='multirun-execution-label-id'>Multi-Run Execution</InputLabel>
                         <Select
@@ -137,8 +137,8 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                             <MenuItem value={GroupExecution.Concurrent}>Concurrent</MenuItem>
                         </Select>
                     </FormControl>
-                </Grid2>
-            </Grid2>
-        </Grid2>
+                </Grid>
+            </Grid>
+        </Grid>
     )
 })

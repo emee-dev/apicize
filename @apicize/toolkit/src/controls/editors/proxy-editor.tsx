@@ -1,4 +1,4 @@
-import { Stack, TextField, SxProps, Grid2, Box } from '@mui/material'
+import { Stack, TextField, SxProps, Grid, Box } from '@mui/material'
 import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';
@@ -27,8 +27,8 @@ export const ProxyEditor = observer((props: { sx?: SxProps }) => {
                 />
             </Box>
             <Box className='editor-panel'>
-                <Grid2 container className='editor-content' direction={'column'} spacing={3}>
-                    <Grid2>
+                <Grid container className='editor-content' direction={'column'} spacing={3}>
+                    <Grid>
                         <TextField
                             id='proxy-name'
                             label='Name'
@@ -43,8 +43,8 @@ export const ProxyEditor = observer((props: { sx?: SxProps }) => {
                             helperText={proxy.nameInvalid ? 'Proxy name is required' : ''}
                             fullWidth
                         />
-                    </Grid2>
-                    <Grid2>
+                    </Grid>
+                    <Grid>
                         <TextField
                             id='proxy-url'
                             label='URL'
@@ -58,8 +58,8 @@ export const ProxyEditor = observer((props: { sx?: SxProps }) => {
                             helperText={proxy.urlInvalid ? 'URL must include http/https/socks5 protocol prefix and address' : ''}
                             fullWidth
                         />
-                    </Grid2>
-                </Grid2>
+                    </Grid>
+                </Grid>
             </Box>
         </Stack >
     )

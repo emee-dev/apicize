@@ -1,4 +1,4 @@
-import { action, computed, makeObservable, observable, runInAction } from "mobx"
+import { action, computed, makeObservable, observable, runInAction, toJS } from "mobx"
 import { Execution } from "../models/workspace/execution"
 import { EditableRequest, RequestInfo } from "../models/workspace/editable-request"
 import { EditableRequestGroup } from "../models/workspace/editable-request-group"
@@ -14,7 +14,7 @@ import {
     Scenario,
     Proxy,
     ExternalData,
-    SelectedParametersWithData,
+    WorkspaceDefaultParameters,
     Body,
     NameValuePair,
     BasicAuthorization,
@@ -35,7 +35,7 @@ import { EditableDefaults } from "../models/workspace/editable-defaults"
 import { EditableWarnings } from "../models/workspace/editable-warnings"
 import { EditableExternalDataEntry } from "../models/workspace/editable-external-data-entry"
 import { EditableRequestEntry } from "../models/workspace/editable-request-entry"
-import { Navigation, NavigationHierarchicalEntry, ParamNavigationSection } from "../models/navigation"
+import { Navigation, NavigationEntryState, NavigationRequestEntry, ParamNavigationSection } from "../models/navigation"
 import { EditableRequestBody } from "../models/workspace/editable-request-body"
 import { WorkspaceParameters } from "../models/workspace/workspace-parameters"
 import { CachedTokenInfo } from "../models/workspace/cached-token-info"
@@ -46,7 +46,6 @@ import { EditableSettings } from "../models/editable-settings"
 import { IndexedEntityPosition } from "../models/workspace/indexed-entity-position"
 import { EditableRequestHeaders } from "../models/workspace/editable-request-headers"
 import { ReqwestEvent } from "../models/trace"
-import { NO_SELECTION } from "../models/store"
 
 export type ResultsPanel = 'Info' | 'Headers' | 'Preview' | 'Text' | 'Details'
 
@@ -55,7 +54,7 @@ export enum WorkspaceMode {
     Help,
     Settings,
     Defaults,
-    Warnings,
+    // Warnings,
     Console,
     RequestList,
     ScenarioList,
@@ -65,6 +64,7 @@ export enum WorkspaceMode {
 }
 
 export type RequestPanel = 'Info' | 'Headers' | 'Query String' | 'Body' | 'Test' | 'Parameters' | 'Warnings'
+export type GroupPanel = 'Info' | 'Parameters' | 'Warnings'
 
 export class WorkspaceStore {
     private pkceTokens = new Map<string, CachedTokenInfo>()
@@ -88,24 +88,24 @@ export class WorkspaceStore {
 
     @observable accessor activeParameters: ListParameters | null = null
 
-    @observable accessor defaults: EditableDefaults = new EditableDefaults({}, this)
+    @observable accessor defaults = new EditableDefaults({}, this)
     @observable accessor data: EditableExternalDataEntry[] | null = null
-    @observable accessor warnings = new EditableWarnings()
 
     @observable accessor warnOnWorkspaceCreds: boolean = true
-    @observable accessor invalidItems = new Set<string>()
+    // @observable accessor invalidItems = new Set<string>()
 
     @observable accessor requestPanel: RequestPanel = 'Info'
+    @observable accessor groupPanel: GroupPanel = 'Info'
 
     executions = new Map<string, Execution>()
     @observable accessor executingRequestIDs: string[] = []
 
     private pendingPkceRequests = new Map<string, Map<string, boolean>>()
 
-
     @observable accessor expandedItems: string[] = ['hdr-r']
     @observable accessor mode = WorkspaceMode.Normal;
     @observable accessor helpTopic: string | null = null
+
     private helpTopicHistory: string[] = []
     public nextHelpTopic: string | null = null
 
@@ -173,9 +173,8 @@ export class WorkspaceStore {
         this.navigation = initialization.navigation
         this.executions.clear()
         this.updateIndexedNames()
-        this.warnings.clear()
         this.warnOnWorkspaceCreds = true
-        this.invalidItems.clear()
+        // this.invalidItems.clear()
         this.executingRequestIDs = []
         this.pendingPkceRequests.clear()
         this.mode = WorkspaceMode.Normal
@@ -386,7 +385,7 @@ export class WorkspaceStore {
     private updateIndexedNames() {
         this.indexedNavigationNames.clear()
 
-        const updateFromRequest = (entry: NavigationHierarchicalEntry) => {
+        const updateFromRequest = (entry: NavigationRequestEntry) => {
             this.indexedNavigationNames.set(entry.id, entry.name)
             if (entry.children) {
                 for (const child of entry.children) {
@@ -431,56 +430,50 @@ export class WorkspaceStore {
         }
     }
 
-    @action
-    async updateNavigationEntry(entry: UpdatedNavigationEntry) {
-        const updateRequestNavigation = (e: NavigationHierarchicalEntry) => {
-            if (e.id === entry.id) {
-                e.name = entry.name
-                return true
-            }
-            if (e.children) {
-                for (const c of e.children) {
-                    if (updateRequestNavigation(c)) {
-                        return true
+    findNavigationEntry(id: string, entityType: EntityType) {
+        const findMatchingRequest = (entries: NavigationRequestEntry[]): NavigationRequestEntry | null => {
+            for (const entry of entries) {
+                if (entry.id === id) {
+                    return entry
+                }
+                if (entry.children) {
+                    const match = findMatchingRequest(entry.children)
+                    if (match) {
+                        return match
                     }
                 }
             }
-            return false
+            return null
         }
 
-        const updateParameterNavigation = (m: ParamNavigationSection) => {
-            const e = m.public.find(e => e.id === entry.id)
-                || m.private.find(e => e.id === entry.id)
-                || m.vault.find(e => e.id === entry.id)
-            if (e) {
-                e.name = entry.name
-            }
+        const findMatchingParameter = (section: ParamNavigationSection) => {
+            return section.public.find(e => e.id === id)
+                || section.private.find(e => e.id === id)
+                || section.vault.find(e => e.id === id)
         }
 
-        this.indexedNavigationNames.set(entry.id, entry.name ?? '(Unnamed)')
-
-        switch (entry.entityType) {
-            case EntityType.RequestEntry:
+        switch (entityType) {
             case EntityType.Request:
             case EntityType.Group:
-                for (const req of this.navigation.requests) {
-                    if (updateRequestNavigation(req)) {
-                        return
-                    }
-                }
-                break
+            case EntityType.RequestEntry:
+                return findMatchingRequest(this.navigation.requests)
             case EntityType.Scenario:
-                updateParameterNavigation(this.navigation.scenarios)
-                break
+                return findMatchingParameter(this.navigation.scenarios)
             case EntityType.Authorization:
-                updateParameterNavigation(this.navigation.authorizations)
-                break
+                return findMatchingParameter(this.navigation.authorizations)
             case EntityType.Certificate:
-                updateParameterNavigation(this.navigation.certificates)
-                break
+                return findMatchingParameter(this.navigation.certificates)
             case EntityType.Proxy:
-                updateParameterNavigation(this.navigation.proxies)
-                break
+                return findMatchingParameter(this.navigation.proxies)
+        }
+    }
+
+    @action
+    async updateNavigationEntry(entry: UpdatedNavigationEntry) {
+        const match = this.findNavigationEntry(entry.id, entry.entityType)
+        if (match) {
+            match.name = entry.name
+            match.state = entry.state
         }
     }
 
@@ -608,19 +601,6 @@ export class WorkspaceStore {
                 this.updateExpanded(parentIds.map(pid => `g-${pid}`), true)
             })
             .catch(e => this.feedback.toastError(e))
-    }
-
-    @action
-    deleteWorkspaceWarning(warningId: string) {
-        this.warnings.delete(warningId)
-        this.clearActive()
-    }
-
-    @action
-    deleteRequestWarning(requestEntry: EditableRequestEntry, warningId: string) {
-        if (requestEntry.warnings) {
-            requestEntry.warnings.delete(warningId)
-        }
     }
 
     getRequestActiveAuthorization(request: EditableRequestEntry) {
@@ -846,7 +826,7 @@ export class WorkspaceStore {
     }
 
     @action
-    updateDefaults(defaults: SelectedParametersWithData) {
+    updateDefaults(defaults: WorkspaceDefaultParameters) {
         this.defaults = new EditableDefaults(defaults, this)
         this.callbacks.update({ entityType: 'Defaults', ...defaults }).catch((e) => {
             this.feedback.toastError(e)
@@ -988,9 +968,14 @@ export class WorkspaceStore {
             this.feedback.toast(`Invalid execution request ${status.requestOrGroupId}`, ToastSeverity.Error)
         }
 
+        const navigation = this.findNavigationEntry(status.requestOrGroupId, EntityType.RequestEntry)
+
         if (status.running) {
             if (!execution.isRunning) {
                 execution.startExecution()
+            }
+            if (navigation) {
+                navigation.state |= NavigationEntryState.Running
             }
         } else {
             this.cachedExecutionDetail = null
@@ -998,6 +983,9 @@ export class WorkspaceStore {
                 execution.completeExecution(status.results)
             } else {
                 execution.stopExecution()
+            }
+            if (navigation) {
+                navigation.state &= ~NavigationEntryState.Running
             }
         }
     }
@@ -1103,6 +1091,11 @@ export class WorkspaceStore {
     @action
     changeRequestPanel(panel: RequestPanel) {
         this.requestPanel = panel
+    }
+
+    @action
+    changeGroupPanel(panel: GroupPanel) {
+        this.groupPanel = panel
     }
 
     @action
@@ -1420,6 +1413,7 @@ export class ActiveSelection {
         switch (this.type) {
             case EntityType.Request:
             case EntityType.Group:
+            case EntityType.RequestEntry:
                 this.workspace.getRequestParameterList(this.id)
                     .then(result => runInAction(() => {
                         this.parameters = result
@@ -1510,7 +1504,7 @@ export interface EntityDataList {
     list: ExternalData[]
 }
 
-export interface EntityDefaults extends SelectedParametersWithData {
+export interface EntityDefaults extends WorkspaceDefaultParameters {
     entityType: 'Defaults'
 }
 
@@ -1536,6 +1530,7 @@ export interface UpdatedNavigationEntry {
     id: string
     name: string
     entityType: EntityType
+    state: number
 }
 
 export interface SessionInitialization {
@@ -1546,7 +1541,7 @@ export interface SessionInitialization {
     resultSummaries: { [resultOrGroupId: string]: ExecutionResultSummary[] },
     dirty: boolean
     editorCount: number
-    defaults: SelectedParametersWithData
+    defaults: WorkspaceDefaultParameters
     data: ExternalData[]
     fileName: string
     displayName: string

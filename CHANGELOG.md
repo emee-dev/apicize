@@ -1,5 +1,12 @@
 # Change Log
 
+# 0.20.5
+
+* Fix public credentials warning
+* Disable keyboard handling on TreeView (until we can make it work sensibly)
+* Update @Mui libraries
+* Add validation errors and restore warning (parameter selection) functionality
+
 # 0.20.4
 
 * Adjust window sizing to take into account scale factor

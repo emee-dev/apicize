@@ -69,30 +69,63 @@ body .light {
   padding: 0 1em;
 }
 
-.logo {
+.help .logo {
   margin-top: 0.5em;
   margin-right: 1em;
 }
 
 .help .MuiTypography-h1:first-of-type {
   min-height: 4rem;
-  margin: 0;
+  margin: 0 0 1em 0;
   padding: 0;
   display: flex;
-  font-size: 2.0em;
+  font-size: 1.5em;
   width: 100%;
   align-items: center;
   justify-content: start;
 }
 
+
 .help-icon {
   vertical-align: middle;
 }
 
-.help .MuiTypography-h1:first-of-type svg.help-icon {
-  height: 2.0em;
-  width: 2.0em;
+.help .logo-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
+
+.help .logo-header {
+  margin: 0 0 0 48px;
+  flex-direction: column;
+  display: flex;
+  justify-content: center;
+}
+
+.help .logo-header .MuiTypography-h1 {
+  font-size: 2em;
+  height: auto;
+}
+
+
+.help .logo-header .MuiTypography-h1,
+.help .logo-header .MuiTypography-h2,
+.help .logo-header .MuiTypography-h3 {
+  margin: 0;
+  padding: 0;
+  line-height: normal;
+  height: auto;
+  min-height: 0;
+}
+
+
+/* 
+
+.help .MuiTypography-h1:first-of-type svg.help-icon {
+  height: 1.5em;
+  width: 1.5em;
+} */
 
 
 .help-toolbar {
@@ -260,6 +293,10 @@ pre.log {
   margin-bottom: 0;
   display: inline-block;
   vertical-align: middle;
+}
+
+.MuiCollapse-root.MuiTreeItem-groupTransition {
+  padding-left: 2em;
 }
 
 .MuiTreeItem-iconContainer {

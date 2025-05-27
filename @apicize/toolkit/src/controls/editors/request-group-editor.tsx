@@ -9,17 +9,14 @@ import { ResultsViewer } from '../viewers/results-viewer'
 import { EditorTitle } from '../editor-title';
 import { RequestParametersEditor } from './request/request-parameters-editor';
 import { observer } from 'mobx-react-lite';
-import { EditableRequestGroup } from '../../models/workspace/editable-request-group';
 import { RunToolbar } from '../run-toolbar';
-import { useWorkspace } from '../../contexts/workspace.context';
-import { RequestWarningsEditor } from './request/request-warnings.editor';
+import { useWorkspace, GroupPanel } from '../../contexts/workspace.context';
 import { RunResultsToolbar } from '../run-results-toolbar';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { useFileOperations } from '../../contexts/file-operations.context';
 import { useApicize } from '../../contexts/apicize.context'
 import { RequestGroupInfoEditor } from './request/request-group-info-editor';
-
-type RequestPanel = 'Info' | 'Headers' | 'Query String' | 'Body' | 'Test' | 'Parameters' | 'Warnings'
+import { WarningsEditor } from './warnings-editor';
 
 export const RequestGroupEditor = observer((props: { sx?: SxProps }) => {
     const apicize = useApicize()
@@ -37,25 +34,18 @@ export const RequestGroupEditor = observer((props: { sx?: SxProps }) => {
     const group = activeSelection.group
     const execution = workspace.getExecution(group.id)
 
-    const handlePanelChanged = (_: React.SyntheticEvent, newValue: RequestPanel) => {
+    const handlePanelChanged = (_: React.SyntheticEvent, newValue: GroupPanel) => {
         if (newValue) {
-            workspace.changeRequestPanel(newValue)
+            workspace.changeGroupPanel(newValue)
         }
     }
 
     const isRunning = execution.isRunning
 
-    let usePanel = workspace.requestPanel
+    let usePanel = workspace.groupPanel
+    const hasWarnings = group.warnings.hasEntries
 
-    let hasWarnings = (group?.warnings?.size ?? 0) > 0
-
-    if (usePanel === 'Warnings') {
-        const warnings = group.warnings
-        // If user cleared warnings, switch to Parameters
-        if (!hasWarnings) {
-            usePanel = 'Info'
-        }
-    } else if (usePanel !== 'Info' && usePanel !== 'Parameters') {
+    if (!hasWarnings && usePanel === 'Warnings') {
         usePanel = 'Info'
     }
 
@@ -115,8 +105,8 @@ export const RequestGroupEditor = observer((props: { sx?: SxProps }) => {
                         <Box>
                             {usePanel === 'Info' ? <RequestGroupInfoEditor group={group} />
                                 : usePanel === 'Parameters' ? <RequestParametersEditor requestOrGroup={group} />
-                                    // : usePanel === 'Warnings' ? <RequestWarningsEditor requestOrGroupId={groupId} />
-                                    : null}
+                                    : usePanel === 'Warnings' ? <WarningsEditor warnings={group.warnings} onDelete={(id) => group.deleteWarning(id)} />
+                                        : null}
                         </Box>
                     </Box>
                 </Stack>

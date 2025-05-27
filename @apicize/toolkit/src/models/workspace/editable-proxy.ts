@@ -1,5 +1,5 @@
 import { Proxy } from "@apicize/lib-typescript"
-import { Editable, EditableState } from "../editable"
+import { Editable } from "../editable"
 import { action, computed, observable } from "mobx"
 import { EntityType } from "./entity-type"
 import { EntityProxy, WorkspaceStore } from "../../contexts/workspace.context"
@@ -21,7 +21,8 @@ export class EditableProxy extends Editable<Proxy> {
             entityType: 'Proxy',
             id: this.id,
             name: this.name,
-            url: this.url
+            url: this.url,
+            validationErrors: this.validationErrors,
         })
     }
 
@@ -45,9 +46,14 @@ export class EditableProxy extends Editable<Proxy> {
         return ! /^(\{\{.+\}\}|https?:\/\/|socks5:\/\/)(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?$/.test(this.url)
     }
 
-    @computed get state() {
-        return (this.nameInvalid || this.urlInvalid)
-            ? EditableState.Warning
-            : EditableState.None
+    @computed get validationErrors(): { [property: string]: string } | undefined {
+        const results: { [property: string]: string } = {}
+        if (this.nameInvalid) {
+            results.name = 'Name is required'
+        }
+        if (this.urlInvalid) {
+            results.url = 'The proxy URL is invalid'
+        }
+        return Object.keys(results).length > 0 ? results : undefined
     }
 }

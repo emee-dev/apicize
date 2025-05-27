@@ -1,5 +1,5 @@
 import { ExternalData, ExternalDataSourceType } from "@apicize/lib-typescript"
-import { Editable, EditableState } from "../editable"
+import { Editable } from "../editable"
 import { action, computed, observable, toJS } from "mobx"
 import { EntityType } from "./entity-type"
 import { WorkspaceStore } from "../../contexts/workspace.context"
@@ -70,11 +70,5 @@ export class EditableExternalDataEntry extends Editable<ExternalData> {
                 break
         }
         return null
-    }
-
-    @computed get state() {
-        return this.nameInvalid || this.sourceError
-            ? EditableState.Warning
-            : EditableState.None
     }
 }

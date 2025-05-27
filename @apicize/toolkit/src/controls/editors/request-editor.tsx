@@ -14,17 +14,17 @@ import { RequestQueryStringEditor } from './request/request-query-string-editor'
 import { RequestTestEditor } from './request/request-test-editor'
 import { ResultsViewer } from '../viewers/results-viewer'
 import { EditorTitle } from '../editor-title';
-import { RequestParametersEditor } from './request/request-parameters-editor';
 import { observer } from 'mobx-react-lite';
 import { RunToolbar } from '../run-toolbar';
 import { useWorkspace, RequestPanel } from '../../contexts/workspace.context';
-import { RequestWarningsEditor } from './request/request-warnings.editor';
 import { RunResultsToolbar } from '../run-results-toolbar';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { useFileOperations } from '../../contexts/file-operations.context';
 import RequestIcon from '../../icons/request-icon';
 import { useApicize } from '../../contexts/apicize.context'
 import { RequestBodyEditor } from './request/request-body-editor'
+import { WarningsEditor } from './warnings-editor'
+import { RequestParametersEditor } from './request/request-parameters-editor'
 
 export const RequestEditor = observer((props: { sx?: SxProps }) => {
     const apicize = useApicize()
@@ -51,14 +51,11 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
 
     let usePanel = workspace.requestPanel
 
-    let hasWarnings = (request?.warnings?.size ?? 0) > 0
+    let hasWarnings = request.warnings.hasEntries
 
-    if (usePanel === 'Warnings') {
-        const warnings = request.warnings
-        // If user cleared warnings, switch to Parameters
-        if ((warnings?.size ?? 0) === 0) {
-            usePanel = 'Parameters'
-        }
+    if (! hasWarnings && usePanel === 'Warnings') {
+        usePanel = 'Info'
+        return null
     }
 
     let lastResize = Date.now()
@@ -112,11 +109,11 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
                         <ToggleButton value="Body" title="Show Request Body" aria-label='show body' size='small'><ArticleOutlinedIcon /></ToggleButton>
                         <ToggleButton value="Test" title="Show Request Tests" aria-label='show test' size='small'><ScienceIcon /></ToggleButton>
                         <ToggleButton value="Parameters" title="Show Request Parameters" aria-label='show parameters' size='small'><AltRouteIcon /></ToggleButton>
-                        {/* {
+                        {
                             hasWarnings
                                 ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings' size='small'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
                                 : null
-                        } */}
+                        }
                     </ToggleButtonGroup>
 
 
@@ -128,7 +125,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
                                     : usePanel === 'Body' ? <RequestBodyEditor body={activeSelection.requestBody} headers={activeSelection.requestHeaders} />
                                         : usePanel === 'Test' ? <RequestTestEditor request={request} />
                                             : usePanel === 'Parameters' ? <RequestParametersEditor requestOrGroup={request} />
-                                                // : usePanel === 'Warnings' ? <RequestWarningsEditor requestOrGroupId={request.id} />
+                                                : usePanel === 'Warnings' ? <WarningsEditor warnings={request.warnings} onDelete={(id) => request.deleteWarning(id)} />
                                                 : null}
                     </Box>
                 </Stack>

@@ -1,5 +1,5 @@
 import Box from '@mui/material/Box'
-import { Button, FormControl, Grid2, IconButton, InputLabel, MenuItem, Select, Stack } from '@mui/material'
+import { Button, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, Stack } from '@mui/material'
 import { EditableNameValuePair } from '../../../models/workspace/editable-name-value-pair'
 import { NameValueEditor } from '../name-value-editor'
 import FileOpenIcon from '@mui/icons-material/FileOpen'
@@ -287,7 +287,7 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
         sx={{ zIndex: 99999, opacity: 0.5, transition: "opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms", backgroundColor: "#008000" }} />
 
       <Stack direction='column' spacing={3} position='relative' width='100%' height='100%'>
-        <Grid2 container direction='row' display='flex' justifyContent='space-between' maxWidth='65em'>
+        <Grid container direction='row' display='flex' justifyContent='space-between' maxWidth='65em'>
           <Stack direction='row'>
             <FormControl>
               <InputLabel id='request-body-type-label-id'>Body Content Type</InputLabel>
@@ -319,11 +319,11 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
                 : <></>
             }
           </Stack>
-          <Grid2 container direction='row' spacing={2}>
+          <Grid container direction='row' spacing={2}>
             <Button variant='outlined' size='small' disabled={![BodyType.JSON, BodyType.XML].includes(bodyInfo.type)} onClick={performBeautify}>Beautify</Button>
             <Button variant='outlined' size='small' disabled={!allowUpdateHeader} onClick={updateTypeHeader}>Update Content-Type Header</Button>
-          </Grid2>
-        </Grid2>
+          </Grid>
+        </Grid>
         {bodyInfo.type == BodyType.None
           ? <></>
           : bodyInfo.type == BodyType.Form

@@ -1,4 +1,4 @@
-import { Box, Grid2, IconButton, Link, Stack, SvgIcon, useTheme } from "@mui/material"
+import { Box, Grid, IconButton, Link, Stack, SvgIcon, useTheme } from "@mui/material"
 import { Typography } from "@mui/material"
 import CheckIcon from '@mui/icons-material/Check'
 import BlockIcon from '@mui/icons-material/Block'
@@ -80,8 +80,8 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
 
         return <Box key={key} className='results-test-section'>
             {
-                <Grid2 container direction='row' display='flex' alignItems='center' >
-                    <Grid2 display='flex' flexDirection='column' alignItems='start' alignContent='center' flexGrow='content'>
+                <Grid container direction='row' display='flex' alignItems='center' >
+                    <Grid display='flex' flexDirection='column' alignItems='start' alignContent='center' flexGrow='content'>
                         <Box display='flex'>
                             <Box sx={{ whiteSpace: 'nowrap' }} className='results-test-name'>
                                 {props.childResult.name}
@@ -91,8 +91,8 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                         <Box display='flex' alignContent='start' marginLeft='1.5rem' className='results-test-timing'>
                             {props.childResult.executedAt > 0 ? `@${fmtMinSec(props.childResult.executedAt)}` : '@Start'}{props.childResult.duration > 0 ? ` for ${props.childResult.duration.toLocaleString()} ms` : ''}
                         </Box>
-                    </Grid2>
-                    <Grid2 display='flex' flexBasis='content' alignItems='center' alignContent='start' marginLeft='1.0rem'>
+                    </Grid>
+                    <Grid display='flex' flexBasis='content' alignItems='center' alignContent='start' marginLeft='1.0rem'>
                         <IconButton
                             title="Copy Data to Clipboard"
                             color='primary'
@@ -104,8 +104,8 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                                 ? <></>
                                 : <Link title='View Details' underline='hover' display='inline-flex' marginLeft='0.5rem' alignItems='center' onClick={e => changeResult(e, props.childResult.index)}><SvgIcon><ViewIcon /></SvgIcon></Link>
                         }
-                    </Grid2>
-                </Grid2 >
+                    </Grid>
+                </Grid >
             }
             {(props.childResult.error)
                 ? (<TestInfo isError={true} text={`${ApicizeErrorToString(props.childResult.error)}`} />)
@@ -165,7 +165,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                     }
                     break
                 case 'Behavior':
-                    behaviorsToRender.push(<TestBehavior behavior={r} parents={behaviors} />)
+                    behaviorsToRender.push(<TestBehavior behavior={r} parents={behaviors} key={`result-${idx++}`} />)
                     break
 
             }

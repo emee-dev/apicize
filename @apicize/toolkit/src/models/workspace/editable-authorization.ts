@@ -2,7 +2,7 @@ import {
     Authorization, AuthorizationType,
     Selection
 } from "@apicize/lib-typescript"
-import { Editable, EditableState } from "../editable"
+import { Editable } from "../editable"
 import { action, computed, observable } from "mobx"
 import { NO_SELECTION } from "../store"
 import { EntityType } from "./entity-type"
@@ -85,7 +85,8 @@ export class EditableAuthorization extends Editable<Authorization> {
                     id: this.id,
                     name: this.name ?? '',
                     header: this.header,
-                    value: this.value
+                    value: this.value,
+                    validationErrors: this.validationErrors,
                 }
                 break
             case AuthorizationType.Basic:
@@ -95,7 +96,8 @@ export class EditableAuthorization extends Editable<Authorization> {
                     id: this.id,
                     name: this.name ?? '',
                     username: this.username,
-                    password: this.password
+                    password: this.password,
+                    validationErrors: this.validationErrors,
                 }
                 break
             case AuthorizationType.OAuth2Client:
@@ -111,7 +113,8 @@ export class EditableAuthorization extends Editable<Authorization> {
                     scope: this.scope,
                     audience: this.audience,
                     selectedCertificate: this.selectedCertificate ?? NO_SELECTION,
-                    selectedProxy: this.selectedProxy ?? NO_SELECTION
+                    selectedProxy: this.selectedProxy ?? NO_SELECTION,
+                    validationErrors: this.validationErrors,
                 }
                 break
             case AuthorizationType.OAuth2Pkce:
@@ -126,6 +129,7 @@ export class EditableAuthorization extends Editable<Authorization> {
                     sendCredentialsInBody: this.sendCredentialsInBody,
                     scope: this.scope,
                     audience: this.audience,
+                    validationErrors: this.validationErrors,
                 }
                 break
             default:
@@ -275,30 +279,23 @@ export class EditableAuthorization extends Editable<Authorization> {
         return ((this.clientId?.length ?? 0) === 0)
     }
 
-    @computed get state() {
-        let problem: boolean
-        switch (this.type) {
-            case AuthorizationType.ApiKey:
-                problem = this.nameInvalid
-                    || this.headerInvalid
-                    || this.valueInvalid
-            case AuthorizationType.Basic:
-                problem = this.nameInvalid
-                    || this.usernameInvalid
-            case AuthorizationType.OAuth2Client:
-                problem = this.nameInvalid
-                    || this.accessTokenUrlInvalid
-                    || this.clientIdInvalid
-            case AuthorizationType.OAuth2Pkce:
-                problem = this.nameInvalid
-                    || this.authorizationUrlInvalid
-                    || this.accessTokenUrlInvalid
-                    || this.clientIdInvalid
-            default:
-                problem = false
+    @computed get validationErrors(): { [property: string]: string } | undefined {
+        const results: { [property: string]: string } = {}
+        if (this.nameInvalid) {
+            results.name = 'Name is required'
         }
-        return problem
-            ? EditableState.Warning
-            : EditableState.None
+        if (this.headerInvalid) {
+            results.header = 'Header is invalid'
+        }
+        if (this.username) {
+            results.usernanme = 'User name is invalid'
+        }
+        if (this.accessTokenUrlInvalid) {
+            results.accessTokenUrl = 'Access token URL is invalid'
+        }
+        if (this.authorizationUrlInvalid) {
+            results.authorizationUrl = 'Authorization URL is invalid'
+        }
+        return Object.keys(results).length > 0 ? results : undefined
     }
 }

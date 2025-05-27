@@ -34,8 +34,8 @@ export const MainPanel = observer(() => {
                 return <SettingsEditor sx={{ display: 'block', flexGrow: 1 }} />
             case WorkspaceMode.Console:
                 return <LogViewer />
-            case WorkspaceMode.Warnings:
-                return <WarningsEditor sx={{ display: 'block', flexGrow: 1 }} />
+            // case WorkspaceMode.Warnings:
+            //     return <WarningsEditor sx={{ display: 'block', flexGrow: 1 }} />
             case WorkspaceMode.Defaults:
                 return <DefaultsEditor sx={{ display: 'block', flexGrow: 1 }} />
             case WorkspaceMode.RequestList:

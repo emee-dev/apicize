@@ -1,4 +1,3 @@
-import { Identifiable } from "@apicize/lib-typescript"
 import { action, computed, observable } from "mobx"
 import { EntityType } from "./workspace/entity-type"
 import { EditableProxy } from "./workspace/editable-proxy"
@@ -9,6 +8,7 @@ import { EditableScenario } from "./workspace/editable-scenario"
 import { EditableCertificate } from "./workspace/editable-certificate"
 import { WorkspaceStore } from "../contexts/workspace.context"
 import { EditableDefaults } from "./workspace/editable-defaults"
+import { EditableWarnings } from "./workspace/editable-warnings"
 
 export type EditableEntity = EditableRequest | EditableRequestGroup | EditableScenario | EditableAuthorization
     | EditableCertificate | EditableProxy | EditableDefaults
@@ -20,13 +20,11 @@ export abstract class Editable<T> {
     @observable accessor id: string = ''
     @observable accessor name: string = ''
     @observable accessor dirty: boolean = false
-    abstract accessor state: EditableState
 
     public abstract readonly entityType: EntityType
     protected abstract onUpdate(): void
 
     constructor(protected workspace: WorkspaceStore) { }
-
 
     markAsDirty() {
         this.dirty = true
@@ -42,10 +40,4 @@ export abstract class Editable<T> {
     get nameInvalid() {
         return this.dirty && ((this.name?.length ?? 0) === 0)
     }
-}
-
-export enum EditableState {
-    None,
-    Running,
-    Warning
 }

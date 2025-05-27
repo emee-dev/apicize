@@ -1,4 +1,4 @@
-import { Alert, Button, FormControl, FormControlLabel, FormLabel, Grid2, Radio, RadioGroup, TextField } from "@mui/material"
+import { Alert, Button, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, TextField } from "@mui/material"
 import { observer } from "mobx-react-lite"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { EditableAuthorization } from "../../../models/workspace/editable-authorization"
@@ -18,11 +18,11 @@ export const AuthorizationOAuth2PkceEditor = observer((props: { authorization: E
         }
     }
 
-    return <Grid2 container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
-        <Grid2>
+    return <Grid container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
+        <Grid>
             <Alert severity="warning">PKCE authorization requires user interaction and will not available from the Apicize CLI test runner.</Alert>
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <TextField
                 id='auth-oauth2-auth-url'
                 label='Authorization URL'
@@ -34,8 +34,8 @@ export const AuthorizationOAuth2PkceEditor = observer((props: { authorization: E
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <TextField
                 id='auth-oauth2-access-token-url'
                 label='Access Token URL'
@@ -47,8 +47,8 @@ export const AuthorizationOAuth2PkceEditor = observer((props: { authorization: E
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <TextField
                 id='auth-oauth2-client-id'
                 label='Client ID'
@@ -60,8 +60,8 @@ export const AuthorizationOAuth2PkceEditor = observer((props: { authorization: E
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <FormControl>
                 <FormLabel id='lbl-auth-send-creds'>Send Crendentials In</FormLabel>
                 <RadioGroup defaultValue='false' name='auth-send-creds' aria-labelledby="auth-send-creds" value={props.authorization.sendCredentialsInBody} row onChange={e => props.authorization.setCredentialsInBody(e.target.value === 'true')}>
@@ -69,8 +69,8 @@ export const AuthorizationOAuth2PkceEditor = observer((props: { authorization: E
                     <FormControlLabel value={true} control={<Radio />} label='Body' />
                 </RadioGroup>
             </FormControl>
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <TextField
                 id='auth-oauth2-scope'
                 label='Scope'
@@ -80,8 +80,8 @@ export const AuthorizationOAuth2PkceEditor = observer((props: { authorization: E
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <TextField
                 id='auth-oauth2-aud'
                 label='Audience'
@@ -91,8 +91,8 @@ export const AuthorizationOAuth2PkceEditor = observer((props: { authorization: E
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2 container spacing={2}>
+        </Grid>
+        <Grid container spacing={2}>
             <Button variant='outlined'
                 aria-label='Request access token'
                 onClick={() => {
@@ -106,6 +106,6 @@ export const AuthorizationOAuth2PkceEditor = observer((props: { authorization: E
                 onClick={clearTokens}>
                 Clear Any Cached Token
             </Button>
-        </Grid2>
-    </Grid2 >
+        </Grid>
+    </Grid >
 })

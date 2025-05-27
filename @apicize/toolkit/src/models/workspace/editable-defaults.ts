@@ -1,25 +1,28 @@
-import { Selection, SelectedParametersWithData, GetTitle } from "@apicize/lib-typescript"
+import { Selection, WorkspaceDefaultParameters, GetTitle } from "@apicize/lib-typescript"
 import { action, makeObservable, observable, toJS } from "mobx"
 import { NO_SELECTION, NO_SELECTION_ID } from "../store"
 import { EntityDefaults, WorkspaceStore } from "../../contexts/workspace.context"
+import { EditableWarnings } from "./editable-warnings"
 
-export class EditableDefaults implements SelectedParametersWithData {
+export class EditableDefaults {
     @observable accessor selectedScenario: Selection = NO_SELECTION
     @observable accessor selectedAuthorization: Selection = NO_SELECTION
     @observable accessor selectedCertificate: Selection = NO_SELECTION
     @observable accessor selectedProxy: Selection = NO_SELECTION
     @observable accessor selectedData: Selection = NO_SELECTION
+    @observable accessor warnings = new EditableWarnings()
 
     @observable accessor id = 'Defaults'
     @observable accessor name = 'Defaults'
     public dirty = false;
 
-    public constructor(defaults: SelectedParametersWithData, private readonly workspace: WorkspaceStore) {
-        this.selectedScenario = defaults?.selectedScenario ?? NO_SELECTION
-        this.selectedAuthorization = defaults?.selectedAuthorization ?? NO_SELECTION
-        this.selectedCertificate = defaults?.selectedCertificate ?? NO_SELECTION
-        this.selectedProxy = defaults?.selectedProxy ?? NO_SELECTION
-        this.selectedData = defaults?.selectedData ?? NO_SELECTION
+    public constructor(defaults: WorkspaceDefaultParameters, private readonly workspace: WorkspaceStore) {
+        this.selectedScenario = defaults.selectedScenario ?? NO_SELECTION
+        this.selectedAuthorization = defaults.selectedAuthorization ?? NO_SELECTION
+        this.selectedCertificate = defaults.selectedCertificate ?? NO_SELECTION
+        this.selectedProxy = defaults.selectedProxy ?? NO_SELECTION
+        this.selectedData = defaults.selectedData ?? NO_SELECTION
+        this.warnings.set(defaults.warnings)
         makeObservable(this)
     }
 
@@ -31,7 +34,14 @@ export class EditableDefaults implements SelectedParametersWithData {
             selectedCertificate: this.selectedCertificate.id === NO_SELECTION_ID ? undefined : toJS(this.selectedCertificate),
             selectedProxy: this.selectedProxy.id === NO_SELECTION_ID ? undefined : toJS(this.selectedProxy),
             selectedData: this.selectedData.id === NO_SELECTION_ID ? undefined : toJS(this.selectedData),
+            warnings: this.warnings.hasEntries ? [...this.warnings.entries.values()] : undefined,
         })
+    }
+
+    @action
+    deleteWarning(warningId: string) {
+        this.warnings.delete(warningId)
+        this.onUpdate()
     }
 
     @action
@@ -81,5 +91,6 @@ export class EditableDefaults implements SelectedParametersWithData {
         this.selectedCertificate = updatedDefaults.selectedCertificate ?? NO_SELECTION
         this.selectedProxy = updatedDefaults.selectedProxy ?? NO_SELECTION
         this.selectedData = updatedDefaults.selectedData ?? NO_SELECTION
+        this.warnings.set(updatedDefaults.warnings)
     }
 }

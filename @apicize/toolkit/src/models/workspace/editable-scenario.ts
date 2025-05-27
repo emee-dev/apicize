@@ -1,5 +1,5 @@
 import { Scenario, Variable, VariableSourceType } from "@apicize/lib-typescript"
-import { Editable, EditableState } from "../editable"
+import { Editable } from "../editable"
 import { action, computed, observable, toJS } from "mobx"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EntityType } from "./entity-type"
@@ -28,7 +28,8 @@ export class EditableScenario extends Editable<Scenario> {
             entityType: 'Scenario',
             id: this.id,
             name: this.name,
-            variables: this.variables.map(v => v.toWorkspace())
+            variables: this.variables.map(v => v.toWorkspace()),
+            validationErrors: this.validationErrors
         })
     }
 
@@ -59,10 +60,15 @@ export class EditableScenario extends Editable<Scenario> {
         return ((this.name?.length ?? 0) === 0)
     }
 
-    @computed get state() {
-        return this.nameInvalid || this.variables.find(v => v.state === EditableState.Warning)
-            ? EditableState.Warning
-            : EditableState.None
+    @computed get validationErrors(): { [property: string]: string } | undefined {
+        const results: { [property: string]: string } = {}
+        if (this.nameInvalid) {
+            results.name = 'Name is required'
+        }
+        if (this.variables?.findIndex(v => v.nameInvalid || v.valueError !== null) !== -1) {
+            results.variables = 'One ore more variables are incorrectly defined'
+        }
+        return Object.keys(results).length > 0 ? results : undefined
     }
 }
 
@@ -138,11 +144,5 @@ export class EditableVariable implements Variable {
                 break
         }
         return null
-    }
-
-    @computed get state() {
-        return this.nameInvalid || this.valueError
-            ? EditableState.Warning
-            : EditableState.None
     }
 }

@@ -5,7 +5,6 @@ import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
 import { TreeItem } from '@mui/x-tree-view/TreeItem'
 import { Box, Stack, SvgIcon, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { useEffect } from 'react'
-import { EditableState } from "../../models/editable";
 import { EntityType } from "../../models/workspace/entity-type";
 import { useWorkspace, WorkspaceMode } from "../../contexts/workspace.context";
 import DefaultsIcon from "../../icons/defaults-icon";
@@ -23,6 +22,8 @@ import RequestIcon from "../../icons/request-icon"
 import ScenarioIcon from "../../icons/scenario-icon"
 import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import { NavOpsMenu } from "./nav-ops-menu"
+import { NavigationEntry, NavigationEntryState } from "../../models/navigation"
+import { iconsFromState } from "./nav-tree-item"
 
 const PREFERRED_WIDTH = 1200
 
@@ -42,17 +43,6 @@ export const NavigationControl = observer(() => {
 
     const toggleMode = (mode: WorkspaceMode) => {
         workspace.setMode((workspace.mode === mode) ? WorkspaceMode.Normal : mode)
-    }
-
-    const iconFromState = (state: EditableState) => {
-        switch (state) {
-            case EditableState.Running:
-                return <PlayArrowIcon color="success" />
-            case EditableState.Warning:
-                return <WarningAmberIcon color="warning" />
-            default:
-                return null
-        }
     }
 
     return (apicize.alwaysHideNavTree || windowSize.width < PREFERRED_WIDTH)
@@ -133,11 +123,45 @@ export const NavigationControl = observer(() => {
                 }}
                 className='navigation-tree'
             >
-                {
+                <RequestSection includeHeader={true} />
+                <ScenarioSection includeHeader={true} />
+                <AuthorizationSection includeHeader={true} />
+                <CertificateSection includeHeader={true} />
+                <ProxySection includeHeader={true} />
+                <TreeItem
+                    itemId="defaults"
+                    sx={{ margin: '1.0em 0 1.0em 0', padding: 0 }}
+                    key='defaults'
+                    label={(
+                        <Box
+                            className='nav-item'
+                            typography='navigation'
+                        >
+                            <Box className='nav-icon-box'>
+                                <SvgIcon color='defaults'><DefaultsIcon /></SvgIcon>
+                            </Box>
+                            <Box className='nav-node-text' display='flex' flexGrow={1} alignItems='center'>
+                                Defaults
+                                <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
+                                    {
+                                        iconsFromState({
+                                            id: 'defaults',
+                                            name: '',
+                                            state: workspace.defaults.warnings.hasEntries
+                                                ? NavigationEntryState.Warning
+                                                : NavigationEntryState.None
+                                        })
+                                    }
+                                </Box>
+                            </Box>
+                        </Box>
+                    )} />
+                {/* {
                     workspace.warnings.hasEntries
                         ? <TreeItem
                             itemId="wkbk-warnings"
                             sx={{ margin: '0.5em 0 1.0em 0', padding: 0 }}
+                            key='wkbk-warnings'
                             label={(
                                 <Box
                                     component='span'
@@ -154,32 +178,7 @@ export const NavigationControl = observer(() => {
                                 </Box>
                             )} onClick={() => workspace.changeActive(EntityType.Warnings, '')} />
                         : null
-                }
-
-                <RequestSection includeHeader={true} />
-                <ScenarioSection includeHeader={true} />
-                <AuthorizationSection includeHeader={true} />
-                <CertificateSection includeHeader={true} />
-                <ProxySection includeHeader={true} />
-                <TreeItem
-                    itemId="defaults"
-                    sx={{ margin: '1.0em 0 1.0em 0', padding: 0 }}
-                    label={(
-                        <Box
-                            className='nav-item'
-                            typography='navigation'
-                        >
-                            <Box className='nav-icon-box'>
-                                <SvgIcon color='defaults'><DefaultsIcon /></SvgIcon>
-                            </Box>
-                            <Box className='nav-node-text' display='flex' flexGrow={1} alignItems='center'>
-                                Defaults
-                            </Box>
-                            <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left'>
-                                {/* {iconFromState(workspace.defaultsState)} */}
-                            </Box>
-                        </Box>
-                    )} />
+                }                 */}
             </SimpleTreeView>
         </Stack >
 })

@@ -3,11 +3,10 @@ import { action, makeObservable, observable, toJS } from "mobx"
 import { EditableNameValuePair } from "./editable-name-value-pair"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EntityBody, WorkspaceStore } from "../../contexts/workspace.context"
-import { Editable, EditableState } from "../editable"
+import { Editable } from "../editable"
 import { EntityType } from "./entity-type"
 export class EditableRequestBody extends Editable<Body> {
     public readonly entityType = EntityType.Request
-    public readonly state = EditableState.None
 
     @observable public accessor type: BodyType = BodyType.None
     @observable public accessor data: string | NameValuePair[] | Uint8Array | undefined = undefined

@@ -1,10 +1,10 @@
-import { Grid2, TextField } from "@mui/material"
+import { Grid, TextField } from "@mui/material"
 import { observer } from "mobx-react-lite"
 import { EditableAuthorization } from "../../../models/workspace/editable-authorization"
 
-export const AuthorizationApiKeyEditor = observer((props: {authorization: EditableAuthorization}) => {
-    return <Grid2 container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
-        <Grid2>
+export const AuthorizationApiKeyEditor = observer((props: { authorization: EditableAuthorization }) => {
+    return <Grid container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
+        <Grid>
             <TextField
                 id='auth-header'
                 label="Header"
@@ -16,8 +16,8 @@ export const AuthorizationApiKeyEditor = observer((props: {authorization: Editab
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <TextField
                 id='auth-value'
                 label="Value"
@@ -29,6 +29,6 @@ export const AuthorizationApiKeyEditor = observer((props: {authorization: Editab
                 size='small'
                 fullWidth
             />
-        </Grid2>
-    </Grid2>
+        </Grid>
+    </Grid>
 })

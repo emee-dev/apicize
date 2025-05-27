@@ -1,4 +1,4 @@
-import { Stack, TextField, SxProps, Grid2, Box, SvgIcon, IconButton, Button, FormControl, MenuItem, Select, InputLabel } from '@mui/material'
+import { Stack, TextField, SxProps, Grid, Box, SvgIcon, IconButton, Button, FormControl, MenuItem, Select, InputLabel } from '@mui/material'
 import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';
 import { EditableVariable } from '../../models/workspace/editable-scenario';
@@ -62,11 +62,11 @@ export const ScenarioEditor = observer((props: { sx?: SxProps }) => {
                         fullWidth
                     />
                     <Stack direction='column' paddingTop='2em'>
-                        <Grid2 container spacing={3}>
+                        <Grid container spacing={3}>
                             {
                                 (scenario.variables ?? []).map(variable => [
-                                    <Grid2 container rowSpacing={2} spacing={1} size={12} columns={12}>
-                                        <Grid2 size={{ md: 3 }}>
+                                    <Grid container rowSpacing={2} spacing={1} size={12} columns={12}>
+                                        <Grid size={{ md: 3 }}>
                                             <TextField
                                                 id={`${variable.id}-name`}
                                                 label='Variable Name'
@@ -81,8 +81,8 @@ export const ScenarioEditor = observer((props: { sx?: SxProps }) => {
                                                 }}
                                                 fullWidth
                                             />
-                                        </Grid2>
-                                        <Grid2 size={{ md: 2 }}>
+                                        </Grid>
+                                        <Grid size={{ md: 2 }}>
                                             <FormControl sx={{ width: '100%' }}>
                                                 <InputLabel id={`${variable.id}-type-lbl`}>Type</InputLabel>
                                                 <Select
@@ -103,8 +103,8 @@ export const ScenarioEditor = observer((props: { sx?: SxProps }) => {
                                                     <MenuItem key={`${variable.id}-type-file-csv`} value={VariableSourceType.FileCSV}>CSV File</MenuItem>
                                                 </Select>
                                             </FormControl>
-                                        </Grid2>
-                                        <Grid2 size={{ md: 6 }}>
+                                        </Grid>
+                                        <Grid size={{ md: 6 }}>
                                             <TextField
                                                 id={`${variable.id}-value`}
                                                 label='Value'
@@ -123,19 +123,19 @@ export const ScenarioEditor = observer((props: { sx?: SxProps }) => {
                                                 }}
                                                 fullWidth
                                             />
-                                        </Grid2>
-                                        <Grid2 className='namevalue-col-btn' size={{ md: 1 }}>
+                                        </Grid>
+                                        <Grid className='namevalue-col-btn' size={{ md: 1 }}>
                                             <IconButton aria-label="delete" onClick={() => onDeleteVariable(variable.id)}>
                                                 <DeleteIcon color='primary' />
                                             </IconButton>
-                                        </Grid2>
-                                    </Grid2>
+                                        </Grid>
+                                    </Grid>
                                 ])
                             }
                             <Box>
                                 <Button variant="outlined" aria-label="add" startIcon={<AddIcon />} size='small' onClick={() => onAddVariable()}>Add Scenario Variable</Button>
                             </Box>
-                        </Grid2>
+                        </Grid>
                     </Stack>
                 </Stack>
             </Box>

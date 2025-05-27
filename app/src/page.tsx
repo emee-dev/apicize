@@ -9,7 +9,7 @@ import { ClipboardProvider } from './providers/clipboard.provider';
 import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
 import { WorkspaceProvider } from './providers/workspace.provider';
-import { ExecutionResultSummary, ExecutionStatus, ExternalData, SelectedParametersWithData } from '@apicize/lib-typescript';
+import { ExecutionResultSummary, ExecutionStatus } from '@apicize/lib-typescript';
 import { ApicizeProvider } from './providers/apicize.provider';
 import { ConfigurableTheme } from './controls/configurable-theme';
 import { PkceProvider } from './providers/pkce.provider';

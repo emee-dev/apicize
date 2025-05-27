@@ -2,12 +2,13 @@ use apicize_lib::{
     editing::{
         execution_result_detail::ExecutionResultDetail,
         execution_result_summary::ExecutionResultSummary, indexed_entities::IndexedEntityPosition,
-        validated_selected_parameters::ValidatedSelectedParameters,
     },
+    identifiable::CloneIdentifiable,
     indexed_entities::NO_SELECTION_ID,
     Authorization, Certificate, ExecutionConcurrency, ExternalData, Identifiable, IndexedEntities,
     NameValuePair, Proxy, Request, RequestBody, RequestEntry, RequestGroup, RequestMethod,
-    Scenario, SelectedParameters, Selection, WorkbookDefaultParameters, Workspace,
+    Scenario, SelectedParameters, Selection, ValidationErrors, Warnings, WorkbookDefaultParameters,
+    Workspace,
 };
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -21,17 +22,29 @@ use uuid::Uuid;
 use crate::{error::ApicizeAppError, sessions::SessionStartupState};
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct NavigationHierarchicalEntry {
+#[serde(rename_all = "camelCase")]
+
+pub struct NavigationRequestEntry {
     pub id: String,
     pub name: String,
-    pub children: Option<Vec<NavigationHierarchicalEntry>>,
+    pub children: Option<Vec<NavigationRequestEntry>>,
+    pub state: u8,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+
+pub struct NavigationEntry {
+    pub id: String,
+    pub name: String,
+    pub state: u8,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ParamNavigationSection {
-    pub public: Vec<Selection>,
-    pub private: Vec<Selection>,
-    pub vault: Vec<Selection>,
+    pub public: Vec<NavigationEntry>,
+    pub private: Vec<NavigationEntry>,
+    pub vault: Vec<NavigationEntry>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -40,11 +53,12 @@ pub struct UpdatedNavigationEntry {
     pub id: String,
     pub name: String,
     pub entity_type: EntityType,
+    pub state: u8,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Navigation {
-    pub requests: Vec<NavigationHierarchicalEntry>,
+    pub requests: Vec<NavigationRequestEntry>,
     pub scenarios: ParamNavigationSection,
     pub authorizations: ParamNavigationSection,
     pub certificates: ParamNavigationSection,
@@ -123,6 +137,34 @@ pub struct RequestInfo {
     /// Populated with any warnings regarding how the request is set up
     #[serde(skip_serializing_if = "Option::is_none")]
     pub warnings: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Validation errors
+    pub validation_errors: Option<HashMap<String, String>>,
+}
+
+impl Identifiable for RequestInfo {
+    fn get_id(&self) -> &str {
+        &self.id
+    }
+
+    fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    fn get_title(&self) -> String {
+        let name = self.get_name();
+        if name.is_empty() {
+            "(Unnamed)".to_string()
+        } else {
+            name.to_string()
+        }
+    }
+}
+
+impl Warnings for RequestInfo {
+    fn get_warnings(&self) -> &Option<Vec<String>> {
+        &self.warnings
+    }
 }
 
 pub struct WorkspaceInfo {
@@ -180,12 +222,15 @@ impl RequestInfo {
             selected_proxy: request.selected_proxy.clone(),
             selected_data: request.selected_data.clone(),
             warnings: request.warnings.clone(),
+            validation_errors: request.validation_errors.clone(),
         }
     }
 }
 
 impl ParamNavigationSection {
-    pub fn new<T: Identifiable>(parameters: &IndexedEntities<T>) -> ParamNavigationSection {
+    pub fn new<T: Identifiable + Warnings + ValidationErrors>(
+        parameters: &IndexedEntities<T>,
+    ) -> ParamNavigationSection {
         ParamNavigationSection {
             public: Self::map_entities(
                 &parameters.entities,
@@ -202,49 +247,40 @@ impl ParamNavigationSection {
         }
     }
 
-    fn map_entities<T: Identifiable>(
+    fn map_entities<T: Identifiable + Warnings + ValidationErrors>(
         entities: &HashMap<String, T>,
         ids: &[String],
-    ) -> Vec<Selection> {
+    ) -> Vec<NavigationEntry> {
         ids.iter()
-            .map(|id| Selection {
-                id: id.clone(),
-                name: entities.get(id).unwrap().get_title(),
+            .map(|id| {
+                let entity = &entities.get(id).unwrap();
+                let state = if entity
+                    .get_warnings()
+                    .as_ref()
+                    .is_some_and(|w| !w.is_empty())
+                {
+                    NAVIGATION_STATE_WARNING
+                } else {
+                    0
+                } | if entity
+                    .get_validation_errors()
+                    .as_ref()
+                    .is_some_and(|e| !e.is_empty())
+                {
+                    NAVIGATION_STATE_ERROR
+                } else {
+                    0
+                };
+                NavigationEntry {
+                    id: id.clone(),
+                    name: entity.get_title(),
+                    state,
+                }
             })
             .collect()
     }
 
-    pub fn check_navigation_update(
-        &mut self,
-        id: &str,
-        name: &str,
-        entity_type: EntityType,
-    ) -> Option<UpdatedNavigationEntry> {
-        let mut entry = self.public.iter_mut().find(|e| e.id == id);
-        if entry.is_none() {
-            entry = self.private.iter_mut().find(|e| e.id == id);
-        }
-        if entry.is_none() {
-            entry = self.vault.iter_mut().find(|e| e.id == id);
-        }
-        let nav_name = if name.is_empty() { "(Unnamed)" } else { name };
-        if let Some(e) = entry {
-            if e.name.eq(nav_name) {
-                None
-            } else {
-                e.name = nav_name.to_string();
-                Some(UpdatedNavigationEntry {
-                    id: id.to_string(),
-                    name: nav_name.to_string(),
-                    entity_type,
-                })
-            }
-        } else {
-            None
-        }
-    }
-
-    pub fn consolidate_list(&self, include_off: bool) -> Vec<Selection> {
+    pub fn generate_selection_list(&self, include_off: bool) -> Vec<Selection> {
         let mut results: Vec<Selection> = if include_off {
             vec![Selection {
                 id: NO_SELECTION_ID.to_string(),
@@ -253,18 +289,23 @@ impl ParamNavigationSection {
         } else {
             vec![]
         };
-        results.extend(self.public.clone());
-        results.extend(self.private.clone());
-        results.extend(self.vault.clone());
+        let create_selection = |entry: &NavigationEntry| Selection {
+            id: entry.id.clone(),
+            name: entry.name.clone(),
+        };
+        results.extend(self.public.iter().map(create_selection));
+        results.extend(self.private.iter().map(create_selection));
+        results.extend(self.vault.iter().map(create_selection));
         results
     }
 }
 
-impl NavigationHierarchicalEntry {
+impl NavigationRequestEntry {
     fn from_requests(
         ids: &[String],
         requests: &IndexedEntities<RequestEntry>,
-    ) -> Option<Vec<NavigationHierarchicalEntry>> {
+        executing_request_ids: &HashSet<String>,
+    ) -> Option<Vec<NavigationRequestEntry>> {
         let results = ids
             .iter()
             .map(|id| {
@@ -273,14 +314,41 @@ impl NavigationHierarchicalEntry {
                 let children = match &entity {
                     RequestEntry::Request(_) => None,
                     RequestEntry::Group(_) => match requests.child_ids.get(id) {
-                        Some(child_ids) => Self::from_requests(child_ids, requests),
+                        Some(child_ids) => {
+                            Self::from_requests(child_ids, requests, executing_request_ids)
+                        }
                         None => Some(vec![]),
                     },
                 };
-                NavigationHierarchicalEntry {
+                let request = requests.entities.get(id).unwrap();
+
+                let state = if request
+                    .get_warnings()
+                    .as_ref()
+                    .is_some_and(|w| !w.is_empty())
+                {
+                    NAVIGATION_STATE_WARNING
+                } else {
+                    0
+                } | if request
+                    .get_validation_errors()
+                    .as_ref()
+                    .is_some_and(|e| !e.is_empty())
+                {
+                    NAVIGATION_STATE_ERROR
+                } else {
+                    0
+                } | if executing_request_ids.contains(id) {
+                    NAVIGATION_STATE_RUNNING
+                } else {
+                    0
+                };
+
+                NavigationRequestEntry {
                     id: id.clone(),
-                    name: requests.entities.get(id).unwrap().get_title(),
+                    name: request.get_title(),
                     children,
+                    state,
                 }
             })
             .collect::<Vec<_>>();
@@ -292,48 +360,19 @@ impl NavigationHierarchicalEntry {
         }
     }
 
-    pub fn build(requests: &IndexedEntities<RequestEntry>) -> Vec<NavigationHierarchicalEntry> {
-        Self::from_requests(&requests.top_level_ids, requests).unwrap_or_default()
-    }
-
-    /// Check navigation name and return updated value if changed
-    pub fn check_navigation_update(
-        &mut self,
-        id: &str,
-        name: &str,
-        entity_type: &EntityType,
-    ) -> Option<UpdatedNavigationEntry> {
-        let nav_name = if name.is_empty() { "(Unnamed)" } else { name };
-
-        if self.id == id {
-            if self.name.eq(nav_name) {
-                return None;
-            } else {
-                self.name = nav_name.to_string();
-                return Some(UpdatedNavigationEntry {
-                    id: id.to_string(),
-                    name: nav_name.to_string(),
-                    entity_type: entity_type.clone(),
-                });
-            };
-        }
-
-        if let Some(children) = self.children.as_mut() {
-            for child in children.iter_mut() {
-                if let Some(result) = child.check_navigation_update(id, name, entity_type) {
-                    return Some(result);
-                }
-            }
-        }
-
-        None
+    pub fn build(
+        requests: &IndexedEntities<RequestEntry>,
+        executing_request_ids: &HashSet<String>,
+    ) -> Vec<NavigationRequestEntry> {
+        Self::from_requests(&requests.top_level_ids, requests, executing_request_ids)
+            .unwrap_or_default()
     }
 }
 
 impl Navigation {
-    pub fn new(workspace: &Workspace) -> Navigation {
+    pub fn new(workspace: &Workspace, executing_request_ids: &HashSet<String>) -> Navigation {
         Navigation {
-            requests: NavigationHierarchicalEntry::build(&workspace.requests),
+            requests: NavigationRequestEntry::build(&workspace.requests, executing_request_ids),
             scenarios: ParamNavigationSection::new(&workspace.scenarios),
             authorizations: ParamNavigationSection::new(&workspace.authorizations),
             certificates: ParamNavigationSection::new(&workspace.certificates),
@@ -363,7 +402,7 @@ impl Workspaces {
         is_new: bool,
     ) -> OpenWorkspaceResult {
         let workspace_id = Uuid::new_v4().to_string();
-        let navigation = Navigation::new(&workspace);
+        let navigation = Navigation::new(&workspace, &HashSet::default());
 
         let display_name = if file_name.is_empty() {
             String::default()
@@ -401,10 +440,11 @@ impl Workspaces {
                 .add_entity(RequestEntry::Request(request), None, None)
                 .unwrap();
 
-            info.navigation.requests.push(NavigationHierarchicalEntry {
+            info.navigation.requests.push(NavigationRequestEntry {
                 id: request_id.clone(),
                 name: "New Request".to_string(),
                 children: None,
+                state: 0,
             });
 
             OpenWorkspaceResult {
@@ -679,7 +719,7 @@ impl Workspaces {
         let info = self.get_workspace_info_mut(workspace_id)?;
         info.dirty = true;
         info.workspace.requests.remove_entity(request_or_group_id)?;
-        Self::clear_invalid_parameters(&mut info.workspace);
+        info.workspace.validate_selections();
         Ok(())
     }
 
@@ -701,43 +741,62 @@ impl Workspaces {
         workspace_id: &str,
         request: RequestInfo,
     ) -> Result<Option<UpdatedNavigationEntry>, ApicizeAppError> {
-        match self.workspaces.get_mut(workspace_id) {
-            Some(info) => {
-                info.dirty = true;
-                let id = &request.id;
-                let mut result: Option<UpdatedNavigationEntry> = None;
-                for req in info.navigation.requests.iter_mut() {
-                    result = req.check_navigation_update(id, &request.name, &EntityType::Request);
-                    if result.is_some() {
-                        break;
-                    }
-                }
-                if let Some(RequestEntry::Request(existing_request)) =
-                    info.workspace.requests.entities.get_mut(id)
-                {
-                    existing_request.name = request.name.clone();
-                    existing_request.test = request.test;
-                    existing_request.url = request.url;
-                    existing_request.method = request.method;
-                    existing_request.query_string_params = request.query_string_params;
-                    existing_request.timeout = request.timeout;
-                    existing_request.keep_alive = request.keep_alive;
-                    existing_request.runs = request.runs;
-                    existing_request.multi_run_execution = request.multi_run_execution;
-                    existing_request.selected_scenario = request.selected_scenario;
-                    existing_request.selected_authorization = request.selected_authorization;
-                    existing_request.selected_certificate = request.selected_certificate;
-                    existing_request.selected_proxy = request.selected_proxy;
-                    existing_request.selected_data = request.selected_data;
-                    existing_request.warnings = request.warnings;
+        let info = self.get_workspace_info_mut(workspace_id)?;
+        info.dirty = true;
 
-                    Ok(result)
-                } else {
-                    Err(ApicizeAppError::InvalidRequest(request.id))
-                }
+        let (name, state) = match info.workspace.requests.entities.get_mut(&request.id) {
+            Some(RequestEntry::Request(existing_request)) => {
+                existing_request.name = request.name;
+                existing_request.test = request.test;
+                existing_request.url = request.url;
+                existing_request.method = request.method;
+                existing_request.query_string_params = request.query_string_params;
+                existing_request.timeout = request.timeout;
+                existing_request.keep_alive = request.keep_alive;
+                existing_request.runs = request.runs;
+                existing_request.multi_run_execution = request.multi_run_execution;
+                existing_request.selected_scenario = request.selected_scenario;
+                existing_request.selected_authorization = request.selected_authorization;
+                existing_request.selected_certificate = request.selected_certificate;
+                existing_request.selected_proxy = request.selected_proxy;
+                existing_request.selected_data = request.selected_data;
+                existing_request.warnings = request.warnings;
+                existing_request.validation_errors = request.validation_errors;
+                (
+                    existing_request.get_title().to_string(),
+                    if existing_request
+                        .warnings
+                        .as_ref()
+                        .is_some_and(|w| !w.is_empty())
+                    {
+                        NAVIGATION_STATE_WARNING
+                    } else {
+                        0
+                    } | if existing_request
+                        .validation_errors
+                        .as_ref()
+                        .is_some_and(|w| !w.is_empty())
+                    {
+                        NAVIGATION_STATE_ERROR
+                    } else {
+                        0
+                    } | {
+                        if info.executing_request_ids.contains(&request.id) {
+                            NAVIGATION_STATE_RUNNING
+                        } else {
+                            0
+                        }
+                    },
+                )
             }
-            None => Err(ApicizeAppError::InvalidWorkspace(workspace_id.into())),
-        }
+            _ => {
+                return Err(ApicizeAppError::InvalidRequest(
+                    format!("Mismatch request ID: {}", request.id).to_string(),
+                ));
+            }
+        };
+
+        info.check_request_navigation_update(&request.id, &name, state)
     }
 
     pub fn update_group(
@@ -749,19 +808,33 @@ impl Workspaces {
             Some(info) => {
                 info.dirty = true;
                 let id = &group.id;
-                let mut result: Option<UpdatedNavigationEntry> = None;
-                for req in info.navigation.requests.iter_mut() {
-                    result = req.check_navigation_update(id, &group.name, &EntityType::Group);
-                    if result.is_some() {
-                        break;
-                    }
-                }
+                let result = info.check_request_navigation_update(
+                    &group.id,
+                    &group.get_title().to_string(),
+                    if group.warnings.as_ref().is_some_and(|w| !w.is_empty()) {
+                        NAVIGATION_STATE_WARNING
+                    } else {
+                        0
+                    } | if group
+                        .validation_errors
+                        .as_ref()
+                        .is_some_and(|w| !w.is_empty())
+                    {
+                        NAVIGATION_STATE_ERROR
+                    } else {
+                        0
+                    } | if info.executing_request_ids.contains(&group.id) {
+                        NAVIGATION_STATE_RUNNING
+                    } else {
+                        0
+                    },
+                );
                 info.workspace
                     .requests
                     .entities
                     .insert(id.clone(), RequestEntry::Group(group));
 
-                Ok(result)
+                result
             }
             None => Err(ApicizeAppError::InvalidWorkspace(workspace_id.into())),
         }
@@ -1089,8 +1162,7 @@ impl Workspaces {
         let info = self.get_workspace_info_mut(workspace_id)?;
         info.dirty = true;
         info.workspace.scenarios.remove_entity(scenario_id)?;
-
-        Self::clear_invalid_parameters(&mut info.workspace);
+        info.workspace.validate_selections();
         Ok(())
     }
 
@@ -1116,11 +1188,9 @@ impl Workspaces {
             Some(info) => {
                 info.dirty = true;
                 let id = scenario.get_id();
-                let result = info.navigation.scenarios.check_navigation_update(
-                    id,
-                    &scenario.name,
-                    EntityType::Scenario,
-                );
+                let result =
+                    info.check_parameter_navigation_update(&scenario, EntityType::Scenario);
+
                 info.workspace
                     .scenarios
                     .entities
@@ -1219,11 +1289,8 @@ impl Workspaces {
             Some(info) => {
                 info.dirty = true;
                 let id = authorization.get_id();
-                let result = info.navigation.authorizations.check_navigation_update(
-                    id,
-                    authorization.get_name(),
-                    EntityType::Authorization,
-                );
+                let result = info
+                    .check_parameter_navigation_update(&authorization, EntityType::Authorization);
                 info.workspace
                     .authorizations
                     .entities
@@ -1290,7 +1357,7 @@ impl Workspaces {
         let info = self.get_workspace_info_mut(workspace_id)?;
         info.dirty = true;
         info.workspace.certificates.remove_entity(certificate_id)?;
-        Self::clear_invalid_parameters(&mut info.workspace);
+        info.workspace.validate_selections();
         Ok(())
     }
 
@@ -1316,11 +1383,8 @@ impl Workspaces {
             Some(info) => {
                 info.dirty = true;
                 let id = certificate.get_id();
-                let result = info.navigation.certificates.check_navigation_update(
-                    id,
-                    certificate.get_name(),
-                    EntityType::Certificate,
-                );
+                let result =
+                    info.check_parameter_navigation_update(&certificate, EntityType::Certificate);
                 info.workspace
                     .certificates
                     .entities
@@ -1382,7 +1446,7 @@ impl Workspaces {
         let info = self.get_workspace_info_mut(workspace_id)?;
         info.dirty = true;
         info.workspace.proxies.remove_entity(proxy_id)?;
-        Self::clear_invalid_parameters(&mut info.workspace);
+        info.workspace.validate_selections();
         Ok(())
     }
 
@@ -1409,11 +1473,7 @@ impl Workspaces {
             Some(info) => {
                 info.dirty = true;
                 let id = proxy.get_id();
-                let result = info.navigation.proxies.check_navigation_update(
-                    id,
-                    &proxy.name,
-                    EntityType::Proxy,
-                );
+                let result = info.check_parameter_navigation_update(&proxy, EntityType::Proxy);
                 info.workspace
                     .proxies
                     .entities
@@ -1432,7 +1492,7 @@ impl Workspaces {
         let info = self.get_workspace_info_mut(workspace_id)?;
         info.dirty = true;
         info.workspace.defaults = defaults.clone();
-        Self::clear_invalid_parameters(&mut info.workspace);
+        info.workspace.validate_selections();
         Ok(())
     }
 
@@ -1500,7 +1560,7 @@ impl Workspaces {
         if let Some(index) = info.workspace.data.iter().position(|d| d.id == data_id) {
             info.workspace.data.remove(index);
         }
-        Self::clear_invalid_parameters(&mut info.workspace);
+        info.workspace.validate_selections();
         Ok(())
     }
 
@@ -1552,55 +1612,6 @@ impl Workspaces {
         }
     }
 
-    /// This should be called after updating any parameter type value (scenario, authorization, etc.)
-    /// to ensure workspace items still have valid parameters after an update; if a default has
-    /// a parameter that no longer exists, that parameter will be cleared (set to Default)
-    fn clear_invalid_parameters(workspace: &mut Workspace) {
-        let scenario_ids = workspace
-            .scenarios
-            .entities
-            .keys()
-            .cloned()
-            .collect::<HashSet<String>>();
-        let auth_ids = workspace
-            .authorizations
-            .entities
-            .keys()
-            .cloned()
-            .collect::<HashSet<String>>();
-        let cert_ids = workspace
-            .certificates
-            .entities
-            .keys()
-            .cloned()
-            .collect::<HashSet<String>>();
-        let proxy_ids = workspace
-            .proxies
-            .entities
-            .keys()
-            .cloned()
-            .collect::<HashSet<String>>();
-        let data_ids = workspace
-            .data
-            .iter()
-            .map(|d| d.id.to_string())
-            .collect::<HashSet<String>>();
-
-        for (_, entry) in workspace.requests.entities.iter_mut() {
-            entry.validate_scenario(&scenario_ids);
-            entry.validate_authorization(&auth_ids);
-            entry.validate_certificate(&cert_ids);
-            entry.validate_proxy(&proxy_ids);
-            entry.validate_data(&data_ids);
-        }
-
-        workspace.defaults.validate_scenario(&scenario_ids);
-        workspace.defaults.validate_authorization(&auth_ids);
-        workspace.defaults.validate_certificate(&cert_ids);
-        workspace.defaults.validate_proxy(&proxy_ids);
-        workspace.defaults.validate_data(&data_ids);
-    }
-
     /// Build a list of parameters, optionally including the default selections
     /// for a specified request
     pub fn list_parameters(
@@ -1612,10 +1623,19 @@ impl Workspaces {
 
         let include_off = true; // active_request_id.is_some();
 
-        let mut scenarios = info.navigation.scenarios.consolidate_list(include_off);
-        let mut authorizations = info.navigation.authorizations.consolidate_list(include_off);
-        let mut certificates = info.navigation.certificates.consolidate_list(include_off);
-        let mut proxies = info.navigation.proxies.consolidate_list(include_off);
+        let mut scenarios = info
+            .navigation
+            .scenarios
+            .generate_selection_list(include_off);
+        let mut authorizations = info
+            .navigation
+            .authorizations
+            .generate_selection_list(include_off);
+        let mut certificates = info
+            .navigation
+            .certificates
+            .generate_selection_list(include_off);
+        let mut proxies = info.navigation.proxies.generate_selection_list(include_off);
         let mut data = vec![Selection {
             id: NO_SELECTION_ID.to_string(),
             name: "Off".to_string(),
@@ -1805,6 +1825,108 @@ impl Workspaces {
     }
 }
 
+impl WorkspaceInfo {
+    // Check parameter and returns update to navigation if required
+    pub fn check_parameter_navigation_update<T: Identifiable + Warnings + ValidationErrors>(
+        &mut self,
+        parameter: &T,
+        entity_type: EntityType,
+    ) -> Option<UpdatedNavigationEntry> {
+        let section = match entity_type {
+            EntityType::Scenario => &mut self.navigation.scenarios,
+            EntityType::Authorization => &mut self.navigation.authorizations,
+            EntityType::Certificate => &mut self.navigation.certificates,
+            EntityType::Proxy => &mut self.navigation.proxies,
+            _ => {
+                return None;
+            }
+        };
+
+        let id = parameter.get_id();
+        let nav_name = parameter.get_title();
+        let nav_state = if parameter
+            .get_warnings()
+            .as_ref()
+            .is_some_and(|w| !w.is_empty())
+        {
+            NAVIGATION_STATE_WARNING
+        } else {
+            0
+        } | if parameter
+            .get_validation_errors()
+            .as_ref()
+            .is_some_and(|w| !w.is_empty())
+        {
+            NAVIGATION_STATE_ERROR
+        } else {
+            0
+        };
+
+        let mut entry = section.public.iter_mut().find(|e| e.id == id);
+        if entry.is_none() {
+            entry = section.private.iter_mut().find(|e| e.id == id);
+        }
+        if entry.is_none() {
+            entry = section.vault.iter_mut().find(|e| e.id == id);
+        }
+
+        if let Some(e) = entry {
+            if e.name.eq(&nav_name) && (e.state & nav_state == 0) {
+                None
+            } else {
+                e.name = nav_name.to_string();
+                e.state = nav_state;
+                Some(UpdatedNavigationEntry {
+                    id: id.to_string(),
+                    name: nav_name.to_string(),
+                    entity_type,
+                    state: nav_state,
+                })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn check_request_navigation_update(
+        &mut self,
+        id: &str,
+        name: &str,
+        state: u8,
+    ) -> Result<Option<UpdatedNavigationEntry>, ApicizeAppError> {
+        Self::check_request_navigation_update_int(id, name, state, &mut self.navigation.requests)
+    }
+
+    /// Check request navigation name and returns update to navigation if required
+    fn check_request_navigation_update_int(
+        id: &str,
+        name: &str,
+        state: u8,
+        entries: &mut Vec<NavigationRequestEntry>,
+    ) -> Result<Option<UpdatedNavigationEntry>, ApicizeAppError> {
+        for entry in entries {
+            if id == entry.id && (entry.name != name || (entry.state & state == 0)) {
+                entry.name = name.to_string();
+                entry.state = state;
+                return Ok(Some(UpdatedNavigationEntry {
+                    id: id.to_string(),
+                    name: name.to_string(),
+                    entity_type: EntityType::RequestEntry,
+                    state,
+                }));
+            }
+
+            if let Some(children) = &mut entry.children {
+                let result = Self::check_request_navigation_update_int(id, name, state, children)?;
+                if result.is_some() {
+                    return Ok(result);
+                }
+            }
+        }
+        Ok(None)
+    }
+}
+
 #[derive(Serialize_repr, Deserialize_repr, Clone, Debug)]
 #[repr(u8)]
 pub enum EntityType {
@@ -1820,7 +1942,7 @@ pub enum EntityType {
     Data = 10,
     Parameters = 11,
     Defaults = 12,
-    Warnings = 13,
+    // Warnings = 13,
 }
 
 impl Display for EntityType {
@@ -1838,7 +1960,7 @@ impl Display for EntityType {
             EntityType::Data => "Data",
             EntityType::Parameters => "Parameters",
             EntityType::Defaults => "Defaults",
-            EntityType::Warnings => "Warnings",
+            // EntityType::Warnings => "Warnings",
         };
         write!(f, "{}", desc)
     }
@@ -1883,3 +2005,10 @@ pub struct OpenWorkspaceResult {
     pub display_name: String,
     pub startup_state: SessionStartupState,
 }
+
+// Note:  These need to match NavigationEntryState values
+// defined in @apicize/lib-typescript
+pub const NAVIGATION_STATE_DIRTY: u8 = 1;
+pub const NAVIGATION_STATE_WARNING: u8 = 2;
+pub const NAVIGATION_STATE_ERROR: u8 = 4;
+pub const NAVIGATION_STATE_RUNNING: u8 = 8;

@@ -1,9 +1,10 @@
 import { RequestGroup, GroupExecution } from "@apicize/lib-typescript"
-import { observable, action } from "mobx"
+import { observable, action, computed } from "mobx"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EntityType } from "./entity-type"
 import { EntityGroup, WorkspaceStore } from "../../contexts/workspace.context"
 import { EditableRequestEntry } from "./editable-request-entry"
+import { EditableWarnings } from "./editable-warnings"
 
 export class EditableRequestGroup extends EditableRequestEntry {
     public readonly entityType = EntityType.Group
@@ -11,6 +12,7 @@ export class EditableRequestGroup extends EditableRequestEntry {
     @observable public accessor execution = GroupExecution.Sequential
 
     @observable accessor timeout = 0
+    @observable accessor warnings = new EditableWarnings()
 
     public constructor(entry: RequestGroup, workspace: WorkspaceStore) {
         super(workspace)
@@ -26,9 +28,7 @@ export class EditableRequestGroup extends EditableRequestEntry {
         this.selectedCertificate = entry.selectedCertificate ?? undefined
         this.selectedProxy = entry.selectedProxy ?? undefined
         this.selectedData = entry.selectedData ?? undefined
-        this.warnings = entry.warnings
-            ? new Map(entry.warnings.map(w => [GenerateIdentifier(), w]))
-            : new Map<string, string>()
+        this.warnings.set(entry.warnings)
     }
 
     protected onUpdate() {
@@ -45,6 +45,8 @@ export class EditableRequestGroup extends EditableRequestEntry {
             selectedCertificate: this.selectedCertificate ?? undefined,
             selectedProxy: this.selectedProxy ?? undefined,
             selectedData: this.selectedData ?? undefined,
+            warnings: this.warnings.hasEntries ? [...this.warnings.entries.values()] : undefined,
+            validationErrors: this.validationErrors
         })
     }
 
@@ -65,6 +67,24 @@ export class EditableRequestGroup extends EditableRequestEntry {
         this.selectedCertificate = entity.selectedCertificate
         this.selectedProxy = entity.selectedProxy
         this.selectedData = entity.selectedData
+        this.warnings.set(entity.warnings)
     }
 
+    @action
+    deleteWarning(id: string) {
+        this.warnings.delete(id)
+        this.onUpdate()
+    }
+
+    @computed get nameInvalid() {
+        return ((this.name?.length ?? 0) === 0)
+    }
+
+    @computed get validationErrors(): { [property: string]: string } | undefined {
+        const results: { [property: string]: string } = {}
+        if (this.nameInvalid) {
+            results.name = 'Name is required'
+        }
+        return Object.keys(results).length > 0 ? results : undefined
+    }
 }

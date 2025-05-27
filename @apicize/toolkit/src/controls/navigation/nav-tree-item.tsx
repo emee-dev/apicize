@@ -4,35 +4,40 @@ import { Box } from "@mui/system"
 import { TreeItem } from "@mui/x-tree-view/TreeItem"
 import { observer } from "mobx-react-lite"
 import { DraggableData, DroppableData } from "../../models/drag-drop"
-import { EditableState } from "../../models/editable"
 import { EntityType } from "../../models/workspace/entity-type"
 import { OverridableStringUnion } from "@mui/types";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import ErrorIcon from '@mui/icons-material/Error';
 import { CSS, useCombinedRefs } from '@dnd-kit/utilities';
 import { useState } from "react"
 import { useDragDrop } from "../../contexts/dragdrop.context"
 import { useApicize } from "../../contexts/apicize.context"
 import { useWorkspace } from "../../contexts/workspace.context"
 import { IndexedEntityPosition } from "../../models/workspace/indexed-entity-position"
+import { NavigationEntry, NavigationEntryState } from "../../models/navigation"
 
 
-const iconFromState = (state: EditableState) => {
-    switch (state) {
-        case EditableState.Running:
-            return <PlayArrowIcon color="success" fontSize='inherit' />
-        case EditableState.Warning:
-            return <WarningAmberIcon color="warning" fontSize='inherit' />
-        default:
-            return null
+export const iconsFromState = (entry: NavigationEntry) => {
+    let icons = []
+    if (entry.state & NavigationEntryState.Error) {
+        icons.push(<ErrorIcon color="error" fontSize='medium' sx={{ marginLeft: '0.25em' }} key={`err-${entry.id}`} />)
     }
+    if (entry.state & NavigationEntryState.Warning) {
+        icons.push(<WarningAmberIcon color="warning" fontSize='medium' sx={{ marginLeft: '0.25em' }} key={`warn-${entry.id}`} />)
+    }
+    if (entry.state & NavigationEntryState.Running) {
+        icons.push(<PlayArrowIcon color="success" fontSize='medium' sx={{ marginLeft: '0.25em' }} key={`play-${entry.id}`} />)
+    }
+    return icons.length > 0
+        ? <Box display='inline-flex' flexDirection='row' marginLeft='0.5em' justifyContent='center' typography='navigation'>{icons}</Box>
+        : null
 }
 
 export const NavTreeItem = observer((props: {
+    entry: NavigationEntry,
     type: EntityType,
-    id: string,
-    title: string,
     depth: number,
     isDraggable: boolean,
     acceptDropTypes?: EntityType[],
@@ -57,18 +62,19 @@ export const NavTreeItem = observer((props: {
     const settings = useApicize()
     const workspace = useWorkspace()
     const dragDrop = useDragDrop()
-    const itemId = `${props.type}-${props.id}`
+    const entry = props.entry
+    const itemId = `${props.type}-${entry.id}`
 
     const [focused, setFocused] = useState<boolean>(false)
 
     const { attributes, listeners, setNodeRef: setDragRef, transform } = props.isDraggable
         ? useDraggable({
-            id: props.id,
+            id: entry.id,
             data: {
                 type: props.type,
                 move: (relativeToId: string, relativePosition: IndexedEntityPosition) => {
                     if (props.onMove) {
-                        props.onMove(props.id, relativeToId, relativePosition)
+                        props.onMove(entry.id, relativeToId, relativePosition)
                     }
                 }
             } as DraggableData
@@ -82,7 +88,7 @@ export const NavTreeItem = observer((props: {
 
     const { isOver, setNodeRef: setDropRef } = props.acceptDropTypes
         ? useDroppable({
-            id: props.id,
+            id: entry.id,
             data: {
                 acceptAppend: props.acceptDropAppends === true,
                 acceptReposition: true,
@@ -99,6 +105,7 @@ export const NavTreeItem = observer((props: {
 
     return <TreeItem
         itemId={itemId}
+        key={itemId}
         {...listeners}
         {...attributes}
         sx={{ background: isOver ? dragDrop.toBackgroundColor() : 'default', margin: 0, padding: 0 }}
@@ -106,11 +113,16 @@ export const NavTreeItem = observer((props: {
             e.preventDefault()
             e.stopPropagation()
         }}
+        onKeyDown={(e) => {
+            e.defaultMuiPrevented = true
+            e.preventDefault()
+            // e.stopPropagation()
+        }}
         // Add a selected class so that we can mark expandable tree items as selected and have them show up properly
         label={(
             <Box
-                key={`lbl-${props.id}`}
-                id={`lbl-${props.id}`}
+                key={`lbl-${entry.id}`}
+                id={`lbl-${entry.id}`}
                 ref={useCombinedRefs(setDragRef, setDropRef)}
                 style={dragStyle}
                 className='nav-item'
@@ -120,7 +132,7 @@ export const NavTreeItem = observer((props: {
                     // Override click behavior to set active item, but not to propogate upward
                     // because we don't want to toggle expansion on anything other than the
                     // lefticon click
-                    workspace.changeActive(props.type, props.id)
+                    workspace.changeActive(props.type, entry.id)
                     e.preventDefault()
                     e.stopPropagation()
                 }}
@@ -141,13 +153,11 @@ export const NavTreeItem = observer((props: {
                 <Box
                     className='nav-node-text'
                     justifyContent='left'
-                    justifyItems='center'
+                    alignItems='center'
                     display='flex'
                 >
-                    {props.title}
-                    {/* <Box display='inline-flex' width='2em' paddingLeft='1em' justifyItems='center' justifyContent='left' typography='navigation'>
-                        {iconFromState(props.item.state)}
-                    </Box> */}
+                    {settings.showDiagnosticInfo ? `${entry.name} (${entry.state})` : entry.name}
+                    {iconsFromState(entry)}
                 </Box>
                 {
                     props.onMenu
@@ -161,7 +171,7 @@ export const NavTreeItem = observer((props: {
                             onClick={(e) => {
                                 e.preventDefault()
                                 e.stopPropagation()
-                                if (props.onMenu) props.onMenu(e, props.id, props.type)
+                                if (props.onMenu) props.onMenu(e, entry.id, props.type)
                             }}
                         >
                             <Box className='nav-icon-context'><MoreVertIcon /></Box>

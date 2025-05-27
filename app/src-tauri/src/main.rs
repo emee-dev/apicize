@@ -806,22 +806,21 @@ async fn get_workspace_save_status(
     let session = sessions.get_session(session_id)?;
     let info = workspaces.get_workspace_info_mut(&session.workspace_id)?;
 
+    let any_public_auths = info
+        .workspace
+        .authorizations
+        .child_ids
+        .get("W")
+        .is_some_and(|c| !c.is_empty());
+    let any_public_certs = info
+        .workspace
+        .certificates
+        .child_ids
+        .get("W")
+        .is_some_and(|c| !c.is_empty());
+
     let warn_on_workspace_creds = if info.warn_on_workspace_creds {
-        info.workspace
-            .authorizations
-            .child_ids
-            .get("W")
-            .iter()
-            .count()
-            > 0
-            || info
-                .workspace
-                .certificates
-                .child_ids
-                .get("W")
-                .iter()
-                .count()
-                > 0
+        any_public_auths || any_public_certs
     } else {
         false
     };
@@ -881,7 +880,7 @@ async fn run_request(
 ) -> Result<Vec<ExecutionResultSummary>, ApicizeAppError> {
     let workspace_id: String;
     let runner: Arc<TestRunnerContext>;
-    let mut other_sessions: Option<Vec<String>>;
+    let other_session_ids: Vec<String>;
 
     let cancellation = CancellationToken::new();
     {
@@ -915,17 +914,19 @@ async fn run_request(
             info.executing_request_ids
                 .insert(request_or_group_id.to_string());
             cloned_workspace = info.workspace.clone();
-        }
 
-        other_sessions = get_workspace_sessions(&workspace_id, &sessions, Some(session_id));
-        if let Some(other_session_ids) = &other_sessions {
-            let status = ExecutionStatus {
+            other_session_ids =
+                get_workspace_sessions(&workspace_id, &sessions, Some(request_or_group_id))
+                    .unwrap_or_default();
+
+            let execution_status = ExecutionStatus {
                 request_or_group_id: request_or_group_id.to_string(),
                 running: true,
                 results: None,
             };
-            for session_id in other_session_ids {
-                app.emit_to(session_id, "update_execution", &status)
+
+            for emit_to_session_id in &other_session_ids {
+                app.emit_to(emit_to_session_id, "update_execution", &execution_status)
                     .unwrap();
             }
         }
@@ -946,11 +947,8 @@ async fn run_request(
         .remove(request_or_group_id);
 
     {
-        let sessions = sessions_state.sessions.read().await;
         let mut workspaces = workspaces_state.workspaces.write().await;
         let info = workspaces.get_workspace_info_mut(&workspace_id)?;
-
-        other_sessions = get_workspace_sessions(&workspace_id, &sessions, Some(session_id));
 
         match responses.into_iter().next() {
             Some(Ok(result)) => {
@@ -962,32 +960,30 @@ async fn run_request(
                 info.result_details
                     .insert(request_or_group_id.to_string(), details);
 
-                if let Some(other_session_ids) = &other_sessions {
-                    let status = ExecutionStatus {
-                        request_or_group_id: request_or_group_id.to_string(),
-                        running: false,
-                        results: Some(summaries.clone()),
-                    };
-                    for session_id in other_session_ids {
-                        app.emit_to(session_id, "update_execution", &status)
-                            .unwrap();
-                    }
+                let execution_status = ExecutionStatus {
+                    request_or_group_id: request_or_group_id.to_string(),
+                    running: false,
+                    results: Some(summaries.clone()),
+                };
+
+                for emit_to_session_id in &other_session_ids {
+                    app.emit_to(emit_to_session_id, "update_execution", &execution_status)
+                        .unwrap();
                 }
 
                 info.executing_request_ids.remove(request_or_group_id);
                 Ok(summaries)
             }
+
             Some(Err(err)) => {
-                if let Some(other_session_ids) = &other_sessions {
-                    let status = ExecutionStatus {
-                        request_or_group_id: request_or_group_id.to_string(),
-                        running: false,
-                        results: None,
-                    };
-                    for session_id in other_session_ids {
-                        app.emit_to(session_id, "update_execution", &status)
-                            .unwrap();
-                    }
+                let status = ExecutionStatus {
+                    request_or_group_id: request_or_group_id.to_string(),
+                    running: false,
+                    results: None,
+                };
+                for session_id in &other_session_ids {
+                    app.emit_to(session_id, "update_execution", &status)
+                        .unwrap();
                 }
                 info.executing_request_ids.remove(request_or_group_id);
                 Err(ApicizeAppError::ApicizeError(err))
@@ -1365,7 +1361,7 @@ async fn add(
     }?;
 
     let info = workspaces.get_workspace_info_mut(&workspace_id)?;
-    info.navigation = Navigation::new(&info.workspace);
+    info.navigation = Navigation::new(&info.workspace, &info.executing_request_ids);
 
     dispatch_save_state(&app, &sessions, &workspace_id, info, true);
 
@@ -1508,7 +1504,7 @@ async fn delete(
     }?;
 
     let info = workspaces.get_workspace_info_mut(workspace_id)?;
-    info.navigation = Navigation::new(&info.workspace);
+    info.navigation = Navigation::new(&info.workspace, &info.executing_request_ids);
     dispatch_save_state(&app, &sessions, workspace_id, info, true);
     Ok(())
 }
@@ -1572,7 +1568,7 @@ async fn move_entity(
 
     let results = if was_moved {
         let info = workspaces.get_workspace_info_mut(&workspace_id)?;
-        info.navigation = Navigation::new(&info.workspace);
+        info.navigation = Navigation::new(&info.workspace, &info.executing_request_ids);
 
         dispatch_save_state(&app, &sessions, &workspace_id, info, true);
 
@@ -1649,12 +1645,4 @@ fn dispatch_data_list_notification(
 struct UpdateEvent {
     session_id: String,
     entity: Entity,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct UpdatedNavigationEntry {
-    entity_type: EntityType,
-    id: String,
-    name: String,
 }

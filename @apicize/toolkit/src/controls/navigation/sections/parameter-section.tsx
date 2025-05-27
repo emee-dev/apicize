@@ -88,9 +88,8 @@ const ParameterSubsection = observer((props: {
             props.entries.map((e) =>
                 <NavTreeItem
                     type={props.type}
-                    id={e.id}
+                    entry={e}
                     key={e.id}
-                    title={e.name}
                     depth={2}
                     onSelect={props.onSelect}
                     isDraggable={true}

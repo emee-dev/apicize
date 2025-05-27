@@ -1,5 +1,5 @@
 import { Selection, GroupExecution, Request, RequestGroup, GetTitle } from "@apicize/lib-typescript"
-import { Editable, EditableState } from "../editable"
+import { Editable } from "../editable"
 import { action, computed, observable, reaction, runInAction } from "mobx"
 import { DEFAULT_SELECTION_ID, NO_SELECTION_ID, NO_SELECTION } from "../store"
 import { toJS } from "mobx"
@@ -16,8 +16,6 @@ export abstract class EditableRequestEntry extends Editable<Request | RequestGro
     @observable accessor selectedData: Selection | undefined = undefined
 
     @observable public accessor parameters: WorkspaceParameters | undefined = undefined
-
-    @observable accessor warnings: Map<string, string> | undefined = undefined
 
     constructor(workspace: WorkspaceStore) {
         super(workspace)
@@ -98,11 +96,5 @@ export abstract class EditableRequestEntry extends Editable<Request | RequestGro
 
     @computed get nameInvalid() {
         return this.dirty && ((this.name?.length ?? 0) === 0)
-    }
-
-    @computed get state() {
-        return this.nameInvalid || (this.warnings?.size ?? 0) > 0
-            ? EditableState.Warning
-            : EditableState.None
     }
 }

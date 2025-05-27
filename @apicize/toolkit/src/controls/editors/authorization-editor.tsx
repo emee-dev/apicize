@@ -1,4 +1,4 @@
-import { TextField, Select, MenuItem, FormControl, InputLabel, Stack, SxProps, Grid2, Box, SvgIcon } from '@mui/material'
+import { TextField, Select, MenuItem, FormControl, InputLabel, Stack, SxProps, Grid, Box, SvgIcon } from '@mui/material'
 import { AuthorizationType } from '@apicize/lib-typescript';
 import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';
@@ -31,8 +31,8 @@ export const AuthorizationEditor = observer((props: { sx: SxProps }) => {
                 />
             </Box>
             <Box className='editor-panel'>
-                <Grid2 container className='editor-content' direction={'column'} spacing={3}>
-                    <Grid2>
+                <Grid container className='editor-content' direction={'column'} spacing={3}>
+                    <Grid>
                         <TextField
                             id='auth-name'
                             label='Name'
@@ -45,9 +45,9 @@ export const AuthorizationEditor = observer((props: { sx: SxProps }) => {
                             onChange={e => authorization.setName(e.target.value)}
                             fullWidth
                         />
-                    </Grid2>
-                    <Grid2>
-                        <Grid2 container direction={'row'} spacing={'2em'}>
+                    </Grid>
+                    <Grid>
+                        <Grid container direction={'row'} spacing={'2em'}>
                             <FormControl>
                                 <InputLabel id='auth-type-label-id'>Type</InputLabel>
                                 <Select
@@ -65,9 +65,9 @@ export const AuthorizationEditor = observer((props: { sx: SxProps }) => {
                                     <MenuItem value={AuthorizationType.OAuth2Pkce}>OAuth2 PKCE Flow</MenuItem>
                                 </Select>
                             </FormControl>
-                        </Grid2>
-                    </Grid2>
-                    <Grid2 marginTop='24px'>
+                        </Grid>
+                    </Grid>
+                    <Grid marginTop='24px'>
                         {
                             authorization.type === AuthorizationType.ApiKey ?
                                 <AuthorizationApiKeyEditor authorization={authorization} />
@@ -79,8 +79,8 @@ export const AuthorizationEditor = observer((props: { sx: SxProps }) => {
                                             ? <AuthorizationOAuth2PkceEditor authorization={authorization} />
                                             : null
                         }
-                    </Grid2>
-                </Grid2>
+                    </Grid>
+                </Grid>
             </Box>
         </Stack>
     )

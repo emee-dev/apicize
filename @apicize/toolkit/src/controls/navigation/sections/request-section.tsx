@@ -15,7 +15,7 @@ import { useWorkspace } from "../../../contexts/workspace.context"
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
 import { useApicize } from "../../../contexts/apicize.context"
-import { NavigationHierarchicalEntry } from "../../../models/navigation"
+import { NavigationRequestEntry } from "../../../models/navigation"
 import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position"
 
 export const RequestSection = observer((props: { includeHeader?: boolean }) => {
@@ -231,39 +231,40 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
         </Menu>
     }
 
-    const buildRequest = (entry: NavigationHierarchicalEntry, depth: number) => {
-        return entry.children
+    const RequestTreeItem = observer((props: { entry: NavigationRequestEntry, depth: number }) => {
+        return props.entry.children
             ? <NavTreeItem
-                id={entry.id}
-                key={entry.id}
-                title={entry.name}
-                depth={depth}
+                entry={props.entry}
+                // key={props.entry.id}
+                depth={props.depth}
                 type={EntityType.Group}
                 acceptDropTypes={[EntityType.Request, EntityType.Group]}
                 acceptDropAppends={true}
-                onSelect={() => workspace.changeActive(EntityType.Group, entry.id)}
+                onSelect={() => workspace.changeActive(EntityType.Group, props.entry.id)}
                 onMenu={showRequestMenu}
                 onMove={handleMoveRequestGroup}
                 isDraggable={true}
                 icon={<FolderIcon />}
                 iconColor="folder"
-                children={entry.children.map((child) =>
-                    buildRequest(child, depth + 1)
-                )}
-            />
+            >
+                {
+                    props.entry.children.map((child) =>
+                        <RequestTreeItem entry={child} depth={props.depth + 1} key={child.id} />
+                    )
+                }
+            </NavTreeItem>
             : <NavTreeItem
-                id={entry.id}
-                key={entry.id}
-                title={entry.name}
-                depth={depth}
+                entry={props.entry}
+                // key={props.entry.id}
+                depth={props.depth}
                 type={EntityType.Request}
                 acceptDropTypes={[EntityType.Request, EntityType.Group]}
-                onSelect={() => workspace.changeActive(EntityType.Request, entry.id)}
+                onSelect={() => workspace.changeActive(EntityType.Request, props.entry.id)}
                 onMenu={showRequestMenu}
                 onMove={handleMoveRequest}
                 isDraggable={true}
             />
-    }
+    })
 
     // const { isOver, setNodeRef: setDropRef } = useDroppable({
     //     id: 'hdr-r',
@@ -279,7 +280,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
     const SectionContent = observer(() => {
         return <>
             {
-                workspace.navigation.requests.map(r => buildRequest(r, 1))
+                workspace.navigation.requests.map(r => <RequestTreeItem entry={r} depth={1} key={r.id} />)
             }
             <RequestsMenu />
             <RequestMenu />
@@ -295,16 +296,9 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
                 e.stopPropagation()
             }}
             onKeyDown={(e) => {
-                if (e.key == 'Enter') {
-                    e.preventDefault()
-                    e.stopPropagation()
-                }
-            }}
-            onKeyUp={(e) => {
-                if (e.key == 'Enter') {
-                    e.preventDefault()
-                    e.stopPropagation()
-                }
+                e.defaultMuiPrevented = true
+                e.preventDefault()
+                // e.stopPropagation()
             }}
             onFocusCapture={e => e.stopPropagation()}
             sx={{ margin: '0.5em 0 0 0', padding: 0 }}

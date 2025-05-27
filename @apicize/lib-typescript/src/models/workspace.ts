@@ -1,6 +1,6 @@
 import { IndexedEntities } from './indexed-entities'
 import { RequestEntry } from './request'
-import { SelectedParametersWithData } from './selected-parameters'
+import { WorkspaceDefaultParameters } from './selected-parameters'
 import { Scenario } from './scenario'
 import { Authorization } from './authorization'
 import { Certificate } from './certificate'
@@ -19,7 +19,6 @@ export interface Workspace {
     authorizations: IndexedEntities<Authorization>,
     certificates: IndexedEntities<Certificate>,
     proxies: IndexedEntities<Proxy>,
-    defaults: SelectedParametersWithData,
+    defaults: WorkspaceDefaultParameters,
     data: ExternalData[],
-    warnings?: string[],
 }

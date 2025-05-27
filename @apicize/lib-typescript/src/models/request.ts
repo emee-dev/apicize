@@ -9,6 +9,8 @@ import {
 import { Executable } from './executable';
 import { NameValuePair } from './name-value-pair';
 import { SelectedParameters } from './selected-parameters';
+import { ValidationErrors } from './validation-errors';
+import { Warnings } from './warnings';
 
 export enum Method {
     Get = 'GET',
@@ -78,7 +80,7 @@ export interface BodyRaw {
 
 export type RequestEntry = Request | RequestGroup
 
-export interface BaseRequest extends Identifiable, Named, SelectedParameters, Executable {
+export interface BaseRequest extends Identifiable, Named, SelectedParameters, Executable, ValidationErrors, Warnings {
     url: string
     method?: Method
     timeout?: number
@@ -92,7 +94,6 @@ export interface BaseRequest extends Identifiable, Named, SelectedParameters, Ex
     referrerPolicy?: ReferrerPolicy
     duplex?: RequestDuplex
     test?: string,
-    warnings?: string[]
 }
 
 export interface Request extends BaseRequest {
@@ -104,7 +105,6 @@ export enum GroupExecution {
     Concurrent = "CONCURRENT",
 }
 
-export interface RequestGroup extends Identifiable, Named, SelectedParameters, Executable {
+export interface RequestGroup extends Identifiable, Named, SelectedParameters, Executable, ValidationErrors, Warnings {
     execution: GroupExecution
-    warnings?: string[]
 }

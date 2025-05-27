@@ -1,5 +1,5 @@
 import { CertificateType, Certificate } from "@apicize/lib-typescript"
-import { Editable, EditableState } from "../editable"
+import { Editable } from "../editable"
 import { action, computed, observable } from "mobx"
 import { EntityType } from "./entity-type"
 import { EntityCertificate, WorkspaceStore } from "../../contexts/workspace.context"
@@ -48,7 +48,8 @@ export class EditableCertificate extends Editable<Certificate> {
                     id: this.id,
                     name: this.name,
                     pem: this.pem,
-                    key: this.key
+                    key: this.key,
+                    validationErrors: this.validationErrors,
                 }
                 break
             case CertificateType.PEM:
@@ -58,6 +59,7 @@ export class EditableCertificate extends Editable<Certificate> {
                     id: this.id,
                     name: this.name,
                     pem: this.pem,
+                    validationErrors: this.validationErrors,
                 }
                 break
             case CertificateType.PKCS12:
@@ -68,6 +70,7 @@ export class EditableCertificate extends Editable<Certificate> {
                     name: this.name,
                     pfx: this.pfx,
                     password: this.password,
+                    validationErrors: this.validationErrors,
                 }
                 break
         }
@@ -137,26 +140,21 @@ export class EditableCertificate extends Editable<Certificate> {
         return ((this.pfx?.length ?? 0) === 0)
     }
 
-    @computed get state() {
-        let problem: boolean
-        switch (this.type) {
-            case CertificateType.PKCS8_PEM:
-                problem = this.nameInvalid
-                    || this.pemInvalid
-                    || this.keyInvalid
-            case CertificateType.PEM:
-                problem = this.nameInvalid
-                    || this.pemInvalid
-            case CertificateType.PKCS12:
-                problem = this.nameInvalid
-                    || this.pfxInvalid
-            default:
-                problem = false
+    @computed get validationErrors(): { [property: string]: string } | undefined {
+        const results: { [property: string]: string } = {}
+        if (this.nameInvalid) {
+            results.name = 'Name is required'
         }
-
-        return problem
-            ? EditableState.Warning
-            : EditableState.None
+        if (this.pemInvalid) {
+            results.pem = 'PEM is invalid'
+        }
+        if (this.keyInvalid) {
+            results.key = 'Key is invalid'
+        }
+        if (this.pfx) {
+            results.pfx = 'PFX is invalid'
+        }
+        return Object.keys(results).length > 0 ? results : undefined
     }
 }
 

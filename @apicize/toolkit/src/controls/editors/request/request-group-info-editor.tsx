@@ -1,4 +1,4 @@
-import { TextField, SxProps, Grid, FormControl, InputLabel, MenuItem, Select, Grid2, ToggleButton, Stack } from '@mui/material'
+import { TextField, SxProps, Grid, FormControl, InputLabel, MenuItem, Select, ToggleButton, Stack } from '@mui/material'
 import { GroupExecution } from '@apicize/lib-typescript';
 import { EditableRequestGroup } from '../../../models/workspace/editable-request-group';
 import { observer } from 'mobx-react-lite';
@@ -36,11 +36,11 @@ export const RequestGroupInfoEditor = observer((props: {
         }
     }
 
-    let times = group.runs == 1 ? 'one time' : `${group.runs} times`    
+    let times = group.runs == 1 ? 'one time' : `${group.runs} times`
 
     return (
-        <Grid2 container direction='column' spacing={3} sx={props.sx}>
-            <Grid2>
+        <Grid container direction='column' spacing={3} sx={props.sx}>
+            <Grid>
                 <TextField
                     id='group-name'
                     label='Name'
@@ -52,10 +52,13 @@ export const RequestGroupInfoEditor = observer((props: {
                     // size='small'
                     value={group.name}
                     onChange={e => group.setName(e.target.value)}
+                    error={group.nameInvalid}
+                    helperText={group.nameInvalid ? 'Group name is required' : ''}
+
                 />
-            </Grid2>
-            <Grid2 container direction='row' spacing={2}>
-                <Grid2 container direction='row' spacing={0}>
+            </Grid>
+            <Grid container direction='row' spacing={2}>
+                <Grid container direction='row' spacing={0}>
                     <TextField
                         aria-label='Nubmer of Run Attempts'
                         placeholder='Attempts'
@@ -76,8 +79,8 @@ export const RequestGroupInfoEditor = observer((props: {
                     <ToggleButton value='Run' title={`Run selected group ${times}`} disabled={running} onClick={handleRunClick()} size='small'>
                         <PlayCircleFilledIcon color={running ? 'disabled' : 'success'} />
                     </ToggleButton>
-                </Grid2>
-                <Grid2>
+                </Grid>
+                <Grid>
                     <FormControl>
                         <InputLabel id='multirun-execution-label-id'>Group Execution</InputLabel>
                         <Select
@@ -95,8 +98,8 @@ export const RequestGroupInfoEditor = observer((props: {
                             <MenuItem value={GroupExecution.Concurrent}>Concurrent</MenuItem>
                         </Select>
                     </FormControl>
-                </Grid2>
-                <Grid2>
+                </Grid>
+                <Grid>
                     <FormControl>
                         <InputLabel id='execution-label-id'>Group Item Execution</InputLabel>
                         <Select
@@ -114,8 +117,8 @@ export const RequestGroupInfoEditor = observer((props: {
                             <MenuItem value={GroupExecution.Concurrent}>Concurrent</MenuItem>
                         </Select>
                     </FormControl>
-                </Grid2>
-            </Grid2>
-        </Grid2>
+                </Grid>
+            </Grid>
+        </Grid>
     )
 })

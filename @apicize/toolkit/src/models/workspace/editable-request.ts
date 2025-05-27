@@ -1,5 +1,4 @@
-import { Selection, BodyType, GroupExecution, Method, NameValuePair, Request, RequestGroup, BaseRequest } from "@apicize/lib-typescript"
-import { EditableState } from "../editable"
+import { Selection, BodyType, GroupExecution, Method, NameValuePair, Request, RequestGroup, BaseRequest, Warnings, ValidationErrors } from "@apicize/lib-typescript"
 import { action, computed, observable, reaction, toJS } from "mobx"
 import { EditableNameValuePair } from "./editable-name-value-pair"
 import { GenerateIdentifier } from "../../services/random-identifier-generator"
@@ -7,6 +6,7 @@ import { EntityType } from "./entity-type"
 import { EntityRequest, WorkspaceStore } from "../../contexts/workspace.context"
 import { EditableRequestEntry } from "./editable-request-entry"
 import { RequestDuplex } from "undici-types"
+import { EditableWarnings } from "./editable-warnings"
 
 export class EditableRequest extends EditableRequestEntry {
     public readonly entityType = EntityType.Request
@@ -25,6 +25,8 @@ export class EditableRequest extends EditableRequestEntry {
     @observable public accessor referrer: string | undefined = undefined
     @observable public accessor referrerPolicy: ReferrerPolicy | undefined = undefined
     @observable public accessor duplex: RequestDuplex | undefined = undefined
+    @observable accessor warnings = new EditableWarnings()
+
 
     public constructor(entry: BaseRequest, workspace: WorkspaceStore) {
         super(workspace)
@@ -40,6 +42,8 @@ export class EditableRequest extends EditableRequestEntry {
         this.selectedCertificate = entry.selectedCertificate ?? undefined
         this.selectedProxy = entry.selectedProxy ?? undefined
         this.selectedData = entry.selectedData ?? undefined
+
+        this.warnings.set(entry.warnings)
 
         this.url = entry.url ?? ''
         this.method = entry.method ?? Method.Get
@@ -73,10 +77,6 @@ export class EditableRequest extends EditableRequestEntry {
         this.referrer = entry.referrer
         this.referrerPolicy = entry.referrerPolicy
         this.duplex = entry.duplex
-
-        this.warnings = entry.warnings
-            ? new Map(entry.warnings.map(w => [GenerateIdentifier(), w]))
-            : new Map<string, string>()
     }
 
     public onUpdate() {
@@ -106,6 +106,8 @@ export class EditableRequest extends EditableRequestEntry {
             selectedCertificate: this.selectedCertificate,
             selectedProxy: this.selectedProxy,
             selectedData: this.selectedData,
+            warnings: this.warnings.hasEntries ? [...this.warnings.entries.values()] : undefined,
+            validationErrors: this.validationErrors,
         }
         if ((request.headers?.length ?? 0) === 0) {
             delete request.headers
@@ -158,6 +160,12 @@ export class EditableRequest extends EditableRequestEntry {
     }
 
     @action
+    deleteWarning(id: string) {
+        this.warnings.delete(id)
+        this.onUpdate()
+    }
+
+    @action
     refreshFromExternalUpdate(entity: EntityRequest) {
         this.name = entity.name ?? ''
         this.url = entity.url
@@ -179,25 +187,34 @@ export class EditableRequest extends EditableRequestEntry {
         this.selectedCertificate = entity.selectedCertificate
         this.selectedProxy = entity.selectedProxy
         this.selectedData = entity.selectedData
-        this.warnings = entity.warnings
+        this.warnings.set(entity.warnings)
+    }
+
+    @computed get nameInvalid() {
+        return ((this.name?.length ?? 0) === 0)
     }
 
     @computed get urlInvalid() {
-        return this.dirty && this.url.length == 0
+        return this.url.length == 0
     }
 
-    @computed get state() {
-        return (this.dirty && (this.nameInvalid || this.urlInvalid))
-            || (this.warnings?.size ?? 0) > 0
-            ? EditableState.Warning
-            : EditableState.None
+    @computed get validationErrors(): { [property: string]: string } | undefined {
+        const results: { [property: string]: string } = {}
+        if (this.nameInvalid) {
+            results.name = 'Name is required'
+        }
+        if (this.urlInvalid) {
+            results.url = 'URL is required'
+        }
+        return Object.keys(results).length > 0 ? results : undefined
     }
+
 }
 
 /**
  * This is all request information, excluding the request body
  */
-export interface RequestInfo {
+export interface RequestInfo extends Warnings, ValidationErrors {
     id: string
     name: string
     url: string
@@ -219,7 +236,6 @@ export interface RequestInfo {
     selectedCertificate?: Selection,
     selectedProxy?: Selection,
     selectedData?: Selection,
-    warnings?: Map<string, string>
 }
 
 export interface RequestEntryInfo {

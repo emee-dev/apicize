@@ -1,4 +1,5 @@
 import { Selection } from "./selection";
+import { Warnings } from "./warnings";
 
 export interface SelectedParameters {
     selectedScenario?: Selection,
@@ -8,6 +9,6 @@ export interface SelectedParameters {
     selectedData?: Selection,
 }
 
-export interface SelectedParametersWithData extends SelectedParameters {
+export interface WorkspaceDefaultParameters extends SelectedParameters, Warnings {
     selectedData?: Selection
 }

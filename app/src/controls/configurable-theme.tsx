@@ -1,22 +1,24 @@
 import { useApicize } from "@apicize/toolkit"
-import { createTheme, ThemeProvider } from "@mui/material/styles"
-import { TypographyOptions } from "@mui/material/styles/createTypography";
+import { createTheme, ThemeProvider, TypographyVariantsOptions } from "@mui/material/styles"
 import { observer } from "mobx-react-lite"
 import { ReactNode } from "react"
 import "@mui/x-tree-view/themeAugmentation"
 
-interface ExtendedTypographyOptions extends TypographyOptions {
+interface ExtendedTypographyOptions extends TypographyVariantsOptions {
   code: React.CSSProperties;
   navigation: React.CSSProperties;
 }
 
 export const ConfigurableTheme = observer((props: {
   children?: ReactNode,
-  colorScheme: 'dark' | 'light', 
+  colorScheme: 'dark' | 'light',
   fontSize: number,
   navigationFontSize: number,
 }) => {
   const palette = createTheme()
+  palette.palette.text.primary = props.colorScheme === 'dark'
+    ? '#FFFFFF'
+    : '#000000'
 
   const isDark = props.colorScheme === 'dark'
 
@@ -104,8 +106,8 @@ export const ConfigurableTheme = observer((props: {
       },
       navigation: {
         fontSize: props.navigationFontSize
-      }
-    } as ExtendedTypographyOptions,
+      },
+    } as TypographyVariantsOptions,
     components: {
       MuiOutlinedInput: {
         styleOverrides: {

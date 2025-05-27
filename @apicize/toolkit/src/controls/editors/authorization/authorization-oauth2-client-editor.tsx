@@ -1,4 +1,4 @@
-import { Button, FormControl, FormControlLabel, FormLabel, Grid2, InputLabel, MenuItem, Radio, RadioGroup, Select, TextField } from "@mui/material"
+import { Button, FormControl, FormControlLabel, FormLabel, Grid, InputLabel, MenuItem, Radio, RadioGroup, Select, TextField } from "@mui/material"
 import { observer } from "mobx-react-lite"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { EditableAuthorization } from "../../../models/workspace/editable-authorization"
@@ -33,8 +33,8 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
         return null
     }
 
-    return parameters ? <Grid2 container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
-        <Grid2>
+    return parameters ? <Grid container direction={'column'} spacing={3} className='authorization-editor-subpanel'>
+        <Grid>
             <TextField
                 id='auth-oauth2-access-token-url'
                 label='Access Token URL'
@@ -46,8 +46,8 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <TextField
                 id='auth-oauth2-client-id'
                 label='Client ID'
@@ -59,8 +59,8 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <TextField
                 id='auth-oauth2-client-secret'
                 label='Client Secret'
@@ -70,8 +70,8 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <FormControl>
                 <FormLabel id='lbl-auth-send-creds'>Send Crendentials In</FormLabel>
                 <RadioGroup defaultValue='false' name='auth-send-creds' aria-labelledby="auth-send-creds" row value={props.authorization.sendCredentialsInBody} onChange={
@@ -81,8 +81,8 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                     <FormControlLabel value={true} control={<Radio />} label='Body' />
                 </RadioGroup>
             </FormControl>
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <TextField
                 id='auth-oauth2-scope'
                 label='Scope'
@@ -92,8 +92,8 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <TextField
                 id='auth-oauth2-aud'
                 label='Audience'
@@ -103,8 +103,8 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                 size='small'
                 fullWidth
             />
-        </Grid2>
-        <Grid2 container direction='row' spacing='2em'>
+        </Grid>
+        <Grid container direction='row' spacing='2em'>
             <FormControl>
                 <InputLabel id='cred-cert-label'>Certificate</InputLabel>
                 <Select
@@ -155,8 +155,8 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                     {itemsFromSelections(parameters.proxies)}
                 </Select>
             </FormControl>
-        </Grid2>
-        <Grid2>
+        </Grid>
+        <Grid>
             <Button
                 color='warning'
                 aria-label='Clear cached oauth tokens'
@@ -165,7 +165,7 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                 onClick={clearTokens}>
                 Clear Any Cached Token
             </Button>
-        </Grid2>
-    </Grid2>
+        </Grid>
+    </Grid>
         : null
 })

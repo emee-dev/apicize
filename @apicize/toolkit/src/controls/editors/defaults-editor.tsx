@@ -1,4 +1,4 @@
-import { Stack, FormControl, InputLabel, MenuItem, Select, SxProps, Box, SvgIcon, IconButton, ToggleButtonGroup, ToggleButton, Grid2, TextField, Button } from '@mui/material'
+import { Stack, FormControl, InputLabel, MenuItem, Select, SxProps, Box, SvgIcon, IconButton, ToggleButtonGroup, ToggleButton, Grid, TextField, Button } from '@mui/material'
 import { observer } from 'mobx-react-lite';
 import { useWorkspace, WorkspaceMode } from '../../contexts/workspace.context';
 import { Selection } from '@apicize/lib-typescript';
@@ -12,8 +12,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useState } from 'react';
 import { ExternalDataSourceType } from '@apicize/lib-typescript';
 import { useFeedback } from '../../contexts/feedback.context';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { WarningsEditor } from './warnings-editor';
 
-type DefaulltsPanels = 'Parameters' | 'External Data'
+type DefaultsPanels = 'Parameters' | 'External Data' | 'Warnings'
 
 export const DefaultsEditor = observer((props: { sx: SxProps }) => {
     const workspace = useWorkspace()
@@ -24,7 +26,7 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
     const parameters = workspace.activeParameters
     const data = workspace.data
 
-    const [panel, setPanel] = useState<DefaulltsPanels>('Parameters')
+    const [panel, setPanel] = useState<DefaultsPanels>('Parameters')
 
     if (!parameters) {
         workspace.initializeParameterList()
@@ -37,7 +39,7 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
     }
 
 
-    const handlePanelChanged = (_: React.SyntheticEvent, newValue: DefaulltsPanels) => {
+    const handlePanelChanged = (_: React.SyntheticEvent, newValue: DefaultsPanels) => {
         if (newValue) setPanel(newValue)
     }
 
@@ -46,6 +48,11 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
         return selections.map(s => (
             <MenuItem key={`creds-${credIndex++}`} value={s.id}>{s.name}</MenuItem>
         ))
+    }
+
+    const hasWarnings = workspace.defaults.warnings.hasEntries
+    if (!hasWarnings && panel === 'Warnings') {
+        setPanel('Parameters')
     }
 
     const ParameterEditor = <Stack spacing={3}>
@@ -129,8 +136,8 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
     const DataEditor = <Stack spacing={3}>
         {
             data.map((d, idx) => (
-                <Grid2 key={`def-data-${idx}`} container rowSpacing={2} spacing={1} size={12} columns={12}>
-                    <Grid2 size={4}>
+                <Grid key={`def-data-${idx}`} container rowSpacing={2} spacing={1} size={12} columns={12}>
+                    <Grid size={4}>
                         <TextField
                             id={`${d.id}-name`}
                             label='Variable Name'
@@ -143,8 +150,8 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
                             onChange={(e) => d.setName(e.target.value)}
                             fullWidth
                         />
-                    </Grid2>
-                    <Grid2 size={3}>
+                    </Grid>
+                    <Grid size={3}>
                         <FormControl fullWidth>
                             <InputLabel id={`${d.id}-type-lbl`}>Type</InputLabel>
                             <Select
@@ -162,8 +169,8 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
                                 <MenuItem key={`${d.id}-type-json`} value={ExternalDataSourceType.JSON}>JSON Value</MenuItem>
                             </Select>
                         </FormControl>
-                    </Grid2>
-                    <Grid2 size={4}>
+                    </Grid>
+                    <Grid size={4}>
                         <TextField
                             id={`${d.id}-value`}
                             label='Value'
@@ -178,13 +185,13 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
                             onChange={(e) => d.setSource(e.target.value)}
                             fullWidth
                         />
-                    </Grid2>
-                    <Grid2 className='namevalue-col-btn' size={1}>
+                    </Grid>
+                    <Grid className='namevalue-col-btn' size={1}>
                         <IconButton aria-label="delete" onClick={() => workspace.deleteData(d.id)}>
                             <DeleteIcon color='primary' />
                         </IconButton>
-                    </Grid2>
-                </Grid2>
+                    </Grid>
+                </Grid>
             ))
         }
         <Box>
@@ -210,6 +217,12 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
                     aria-label="text alignment">
                     <ToggleButton value="Parameters" title="Show Default Parameters" aria-label='show test' size='small'><AltRouteIcon /></ToggleButton>
                     <ToggleButton value="External Data" title="Show External Data" aria-label='show test' size='small'><DatasetIcon /></ToggleButton>
+                    {
+                        hasWarnings
+                            ? <ToggleButton hidden={true} value="Warnings" title="Request Warnings" aria-label='show warnings' size='small'><WarningAmberIcon sx={{ color: '#FFFF00' }} /></ToggleButton>
+                            : null
+                    }
+
                 </ToggleButtonGroup>
                 <Box flexGrow={1} flexDirection='row' className='panels'>
                     {
@@ -217,7 +230,9 @@ export const DefaultsEditor = observer((props: { sx: SxProps }) => {
                             ? ParameterEditor
                             : panel == 'External Data'
                                 ? DataEditor
-                                : <></>
+                                : panel == 'Warnings'
+                                    ? <WarningsEditor warnings={workspace.defaults.warnings} onDelete={(id) => defaults.deleteWarning(id)} />
+                                    : <></>
                     }
                 </Box>
             </Stack>

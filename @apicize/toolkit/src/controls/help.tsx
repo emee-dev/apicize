@@ -1,4 +1,4 @@
-import { Box, IconButton, Link, LinkProps, ListSubheader, Menu, MenuItem, SvgIcon, SxProps, Typography, TypographyProps, TypographyPropsVariantOverrides } from '@mui/material'
+import { Box, IconButton, Link, LinkProps, ListSubheader, Menu, MenuItem, SvgIcon, SxProps, Typography, TypographyProps, TypographyPropsVariantOverrides, TypographyVariant } from '@mui/material'
 import HomeIcon from '@mui/icons-material/Home';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
@@ -22,7 +22,6 @@ import rehypeReact from 'rehype-react'
 import remarkGfm from 'remark-gfm'
 import { LeafDirective } from 'mdast-util-directive'
 import { Element } from 'hast';
-import { Variant } from '@mui/material/styles/createTypography';
 import { OverridableStringUnion } from '@mui/types'
 import { unified } from 'unified';
 import remarkDirective from 'remark-directive';
@@ -195,7 +194,7 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
         }
         if (id) {
             id = id.trim().toLowerCase().replace(/[^\s\w]/g, '').replace(/\s/g, '-')
-            const name = (attrs.node as Element).tagName as OverridableStringUnion<Variant | 'inherit', TypographyPropsVariantOverrides>
+            const name = (attrs.node as Element).tagName as OverridableStringUnion<TypographyVariant | 'inherit', TypographyPropsVariantOverrides>
             return <Typography id={id} component='div' variant={name} {...attrs} />
         } else {
             return <></>

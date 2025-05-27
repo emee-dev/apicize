@@ -1,6 +1,6 @@
 import { EditableNameValuePair } from "../../models/workspace/editable-name-value-pair";
 import { Box } from "@mui/material";
-import { Button, Grid2, IconButton, Stack, TextField } from "@mui/material";
+import { Button, Grid, IconButton, Stack, TextField } from "@mui/material";
 import { toJS } from "mobx";
 import { GenerateIdentifier } from "../../services/random-identifier-generator";
 import AddIcon from '@mui/icons-material/Add';
@@ -52,8 +52,8 @@ export function NameValueEditor(props: {
     return <Stack direction='column' position='relative' spacing={4} width='100%'>
         {
             (props.values ?? []).map(value => [
-                <Grid2 container key={`nv-${ctr++}`} rowSpacing={2} spacing={1} size={12} columns={12}>
-                    <Grid2 size={4}>
+                <Grid container key={`nv-${ctr++}`} rowSpacing={2} spacing={1} size={12} columns={12}>
+                    <Grid size={4}>
                         <TextField
                             id={`${value.id}-name`}
                             label={props.nameHeader}
@@ -63,8 +63,8 @@ export function NameValueEditor(props: {
                             onChange={(e) => onNameUpdate(value.id, e.target.value)}
                             fullWidth
                         />
-                    </Grid2>
-                    <Grid2 size={7}>
+                    </Grid>
+                    <Grid size={7}>
                         <TextField
                             id={`${value.id}-value`}
                             label={props.valueHeader}
@@ -74,13 +74,13 @@ export function NameValueEditor(props: {
                             onChange={(e) => onValueUpdate(value.id, e.target.value)}
                             fullWidth
                         />
-                    </Grid2>
-                    <Grid2 className='namevalue-col-btn' size={1}>
+                    </Grid>
+                    <Grid className='namevalue-col-btn' size={1}>
                         <IconButton aria-label="delete" onClick={() => onDelete(value.id)}>
                             <DeleteIcon color='primary' />
                         </IconButton>
-                    </Grid2>
-                </Grid2>
+                    </Grid>
+                </Grid>
             ])
         }
         <Box>

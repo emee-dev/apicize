@@ -29,7 +29,7 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                     feedback.toast(`Unable to save Settings - ${e}`, ToastSeverity.Error)
                 }
             }
-        }, 2000)
+        }, 500)
     }
 
     const setFontSize = (size: number) => {

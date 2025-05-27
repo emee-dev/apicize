@@ -1,4 +1,4 @@
-import { ToggleButton, Box, Grid2, SvgIcon } from "@mui/material";
+import { ToggleButton, Box, Grid, SvgIcon } from "@mui/material";
 import { SxProps } from "@mui/material";
 import { observer } from "mobx-react-lite";
 import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined'
@@ -68,7 +68,7 @@ export const RunToolbar = observer((props: { sx?: SxProps, requestEntry: Editabl
     let times = props.requestEntry.runs == 1 ? 'one time' : `${props.requestEntry.runs} times`
 
     return (
-        <Grid2 container direction={'row'} display='flex' flexGrow={1} marginLeft='2em' alignItems='center' justifyContent='space-between' sx={props.sx}>
+        <Grid container direction={'row'} display='flex' flexGrow={1} marginLeft='2em' alignItems='center' justifyContent='space-between' sx={props.sx}>
             <Box>
                 <ToggleButton value='Run' sx={{ display: runDisplay }} title={`Run selected ${label} once with no timeout (${apicize.ctrlKey}-Enter)`} size='small' disabled={running} onClick={handleRunClick(true)}>
                     <PlayCircleOutlined color={running ? 'disabled' : 'success'} />
@@ -83,6 +83,6 @@ export const RunToolbar = observer((props: { sx?: SxProps, requestEntry: Editabl
             <ToggleButton value='Seed' size='small' title={seedingFrom === '' ? 'Not Seeding Data' : `Seeding from ${seedingFrom}`} onClick={() => workspace.changeRequestPanel('Parameters')}>
                 <SvgIcon className='seed-icon' color={seedingFrom === '' ? 'primary' : 'success'}><SeedIcon /></SvgIcon>
             </ToggleButton>
-        </Grid2>
+        </Grid>
     )
 })
