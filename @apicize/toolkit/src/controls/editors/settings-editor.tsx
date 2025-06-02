@@ -8,6 +8,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useApicize } from '../../contexts/apicize.context';
+import { ExecutionReportFormat } from '@apicize/lib-typescript';
 
 export const SettingsEditor = observer((props: { sx?: SxProps }) => {
     const apicize = useApicize()
@@ -59,6 +60,11 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
 
     const setShowDiagnosticInfo = (value: boolean) => {
         apicize.setShowDiagnosticInfo(value)
+        checkSave(++saveCtr)
+    }
+
+    const setReportFormat = (value: ExecutionReportFormat) => {
+        apicize.setReportFormat(value)
         checkSave(++saveCtr)
     }
 
@@ -134,6 +140,13 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                     <InputLabel id='directory-label-id' sx={{ width: '12em' }}>Workbook Directory:</InputLabel>
                     <InputLabel>{apicize.workbookDirectory}</InputLabel>
                     <Button variant="outlined" onClick={changeWorkbookDirectory}>Set</Button>
+                </Stack>
+                <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                    <InputLabel id='rpt-fmt-label-id' sx={{ width: '12em' }}>Clipboard Format:</InputLabel>
+                    <RadioGroup row value={apicize.reportFormat} onChange={(e) => setReportFormat(e.target.value as ExecutionReportFormat)}>
+                        <FormControlLabel value={ExecutionReportFormat.JSON} control={<Radio />} label='JSON' />
+                        <FormControlLabel value={ExecutionReportFormat.CSV} control={<Radio />} label='CSV' />
+                    </RadioGroup>
                 </Stack>
                 <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                     <InputLabel id='pkce-port-label-id' sx={{ width: '12em' }}>PKCE Listener Port:</InputLabel>

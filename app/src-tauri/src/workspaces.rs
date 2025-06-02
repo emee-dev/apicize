@@ -1,14 +1,10 @@
 use apicize_lib::{
-    editing::{
-        execution_result_detail::ExecutionResultDetail,
-        execution_result_summary::ExecutionResultSummary, indexed_entities::IndexedEntityPosition,
-    },
-    identifiable::CloneIdentifiable,
-    indexed_entities::NO_SELECTION_ID,
-    Authorization, Certificate, ExecutionConcurrency, ExternalData, Identifiable, IndexedEntities,
-    NameValuePair, Proxy, Request, RequestBody, RequestEntry, RequestGroup, RequestMethod,
-    Scenario, SelectedParameters, Selection, ValidationErrors, Warnings, WorkbookDefaultParameters,
-    Workspace,
+    editing::indexed_entities::IndexedEntityPosition, identifiable::CloneIdentifiable,
+    indexed_entities::NO_SELECTION_ID, Authorization, Certificate, ExecutionConcurrency,
+    ExecutionReportFormat, ExecutionResultDetail, ExecutionResultSummary, ExternalData,
+    Identifiable, IndexedEntities, NameValuePair, Proxy, Request, RequestBody, RequestEntry,
+    RequestGroup, RequestMethod, Scenario, SelectedParameters, Selection, ValidationErrors,
+    Warnings, WorkbookDefaultParameters, Workspace,
 };
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -390,7 +386,7 @@ impl Workspaces {
     pub fn trace_all_workspaces(&self) {
         println!("*** Workspaces ***");
         for (id, info) in &self.workspaces {
-            println!("   ID: {}, Name: {}", id, info.display_name);
+            println!("   ID: {}, Name: {}, Path: {}", id, info.display_name, info.file_name);
         }
     }
 
@@ -559,6 +555,22 @@ impl Workspaces {
                     index,
                 )),
             },
+            None => Err(ApicizeAppError::InvalidRequest(
+                request_or_group_id.to_string(),
+            )),
+        }
+    }
+
+    pub fn generate_report(
+        &self,
+        workspace_id: &str,
+        request_or_group_id: &str,
+        index: usize,
+        format: ExecutionReportFormat,
+    ) -> Result<String, ApicizeAppError> {
+        let info = self.get_workspace_info(workspace_id)?;
+        match info.result_summaries.get(request_or_group_id) {
+            Some(results) => Ok(Workspace::geneate_report(index, results, format)?),
             None => Err(ApicizeAppError::InvalidRequest(
                 request_or_group_id.to_string(),
             )),

@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.21.0
+
+* Add CSV reporting output
+
 # 0.20.5
 
 * Fix public credentials warning

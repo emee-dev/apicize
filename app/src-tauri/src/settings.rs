@@ -8,8 +8,8 @@ use std::{
 };
 
 use apicize_lib::{
-    open_data_file, save_data_file, FileAccessError, SerializationOpenSuccess,
-    SerializationSaveSuccess,
+    open_data_file, save_data_file, ExecutionReportFormat, FileAccessError,
+    SerializationOpenSuccess, SerializationSaveSuccess,
 };
 use dirs::{config_dir, document_dir, home_dir};
 use serde::{Deserialize, Serialize};
@@ -36,10 +36,7 @@ pub enum ColorScheme {
     Dark,
 }
 
-
-pub struct ApicizeWindowState {
-    
-}
+pub struct ApicizeWindowState {}
 
 /// Apicize application settings
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
@@ -69,9 +66,12 @@ pub struct ApicizeSettings {
     /// Layout for editor panels (UI)
     pub editor_panels: String,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    /// Layout for editor panels (UI)
+    pub report_format: ExecutionReportFormat,
 
     /// Recent workbook file names opened in UI
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub recent_workbook_file_names: Option<Vec<String>>,
 
     /// Port for UI PKCE listener
@@ -169,6 +169,7 @@ impl ApicizeSettings {
                 pkce_listener_port: 8080,
                 always_hide_nav_tree: false,
                 show_diagnostic_info: false,
+                report_format: ExecutionReportFormat::JSON,
             };
             Ok(SerializationOpenSuccess {
                 file_name: String::from(""),

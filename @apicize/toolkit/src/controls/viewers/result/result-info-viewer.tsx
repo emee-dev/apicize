@@ -12,6 +12,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
 import beautify from "js-beautify"
 import { useApicize } from "../../../contexts/apicize.context"
+import { ExecutionReportJson } from "../../../models/execution-report"
 
 const ApicizeErrorToString = (error?: ApicizeError): string => {
     const sub = (err?: ApicizeError) => err ? `, ${err.description}${ApicizeErrorToString(err.source)}` : ''
@@ -119,7 +120,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                 (props.childResult.testResults && props.childResult.testResults.length > 0)
                     ? <Box className='test-details'>
                         {
-                            props.childResult.testResults.map(testResult => <TestResult result={testResult} key={`result-${idx++}`} />)
+                            props.childResult.testResults.map(testResult => <TestBehavior behavior={testResult} key={`result-${idx++}`} />)
                         }
                     </Box>
                     : (<></>)
@@ -151,45 +152,9 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
         </Box>
     }
 
-    const TestResult = (props: { result: ApicizeTestResult }) => {
-
-        let behaviorsToRender: JSX.Element[] = []
-
-        const processResult = (r: ApicizeTestResult, behaviors: string[]) => {
-            switch (r.type) {
-                case 'Scenario':
-                    if (r.children) {
-                        for (const c of r.children) {
-                            processResult(c, [...behaviors, r.name])
-                        }
-                    }
-                    break
-                case 'Behavior':
-                    behaviorsToRender.push(<TestBehavior behavior={r} parents={behaviors} key={`result-${idx++}`} />)
-                    break
-
-            }
-        }
-
-        processResult(props.result, []);
-        return <>
-            {behaviorsToRender}
-        </>
-
-        // switch (props.result.type) {
-        //     case 'Behavior':
-        //         return <TestBehavior behavior={props.result} />
-        //     case 'Scenario':
-        //         return <TestScenario scenario={props.result} />
-        //     default:
-        //         return null
-        // }
-    }
-
-    const TestBehavior = (props: { behavior: ApicizeTestBehavior, parents: string[] }) => {
+    const TestBehavior = (props: { behavior: ApicizeTestBehavior }) => {
         const key = `result-${idx++}`
         const behavior = props.behavior
-        const fullName = [...props.parents, behavior.name].join(' ')
 
         const error = (behavior.error && behavior.error.length > 0) ? behavior.error : null
         const logs = (behavior.logs?.length ?? 0) > 0 ? behavior.logs : null
@@ -204,7 +169,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                     </Box>
                     <Stack direction='column' key={`result-${idx++}`} className='test-result-detail'>
                         <Box key={`result-${idx++}`}>
-                            {fullName}
+                            {behavior.name}
                         </Box>
                         <Box className='test-result-detail-info'>
                             {
@@ -233,7 +198,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                     </Box>
                     <Box key={`result-${idx++}`}>
                         <Typography sx={{ marginTop: 0, marginBottom: 0, paddingTop: 0 }} component='div' key={`result-${idx++}`}>
-                            {fullName}
+                            {behavior.name}
                         </Typography>
                     </Box>
                 </Stack>
@@ -281,16 +246,16 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
         try {
             e.preventDefault()
             e.stopPropagation()
-            const payload = props.results[index]
-            if (payload) {
-                clipboardCtx.writeTextToClipboard(
-                    beautify.js_beautify(JSON.stringify(payload), {})
-                )
-                    .then(() =>
-                        feedback.toast('Data copied to clipboard', ToastSeverity.Success)
-                    )
-                    .catch(e => feedback.toastError(e))
-            }
+
+            workspace.generateReport(props.requestOrGroupId, props.resultIndex, apicize.reportFormat)
+                .then(results => {
+                    clipboardCtx.writeTextToClipboard(results)
+                        .then(() =>
+                            feedback.toast('Data copied to clipboard', ToastSeverity.Success)
+                        )
+                        .catch(e => feedback.toastError(e))
+                })
+                .catch(err => feedback.toastError(err))
         } catch (e) {
             feedback.toast(`${e}`, ToastSeverity.Error)
         }

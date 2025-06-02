@@ -1,4 +1,4 @@
-import { ApicizeSettings } from '@apicize/lib-typescript';
+import { ApicizeSettings, ExecutionReportFormat } from '@apicize/lib-typescript';
 import { SupportedColorScheme } from '@mui/material';
 import { action, observable } from 'mobx';
 
@@ -18,6 +18,7 @@ export class EditableSettings {
     @observable accessor pkceListenerPort = 8080
     @observable accessor alwaysHideNavTree = false
     @observable accessor showDiagnosticInfo = false
+    @observable accessor reportFormat = ExecutionReportFormat.JSON
 
     constructor(settings?: ApicizeSettings) {
         if (settings) {
@@ -38,6 +39,7 @@ export class EditableSettings {
         this.pkceListenerPort = settings.pkceListenerPort ?? 8080
         this.alwaysHideNavTree = settings.alwaysHideNavTree
         this.showDiagnosticInfo = settings.showDiagnosticInfo
+        this.reportFormat = settings.reportFormat
     }
 
     @action
@@ -150,6 +152,11 @@ export class EditableSettings {
     @action
     public setShowDiagnosticInfo(value: boolean) {
         this.showDiagnosticInfo = value
+        this.dirty = true
+    }
+
+    @action setReportFormat(value: ExecutionReportFormat) {
+        this.reportFormat = value
         this.dirty = true
     }
 

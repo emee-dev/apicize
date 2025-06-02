@@ -1,3 +1,5 @@
+import { ExecutionReportFormat } from "./execution-report-format"
+
 /**
  * Format of application settings
  */
@@ -12,4 +14,5 @@ export interface ApicizeSettings {
     pkceListenerPort: number | undefined
     alwaysHideNavTree: boolean
     showDiagnosticInfo: boolean
+    reportFormat: ExecutionReportFormat
 }

@@ -1,4 +1,4 @@
-import { ApicizeError, ApicizeTestResult } from "../execution"
+import { ApicizeError, ApicizeTestBehavior } from "./execution"
 import { ExecutionResultSuccess } from "./execution-result-success"
 
 /**
@@ -19,7 +19,7 @@ export interface ExecutionResultSummary {
     responseBodyLength?: number
     success: ExecutionResultSuccess
     error?: ApicizeError
-    testResults?: ApicizeTestResult[]
+    testResults?: ApicizeTestBehavior[]
     runNumber?: number
     runCount?: number
     rowNumber?: number

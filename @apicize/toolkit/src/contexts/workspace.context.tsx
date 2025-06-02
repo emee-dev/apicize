@@ -28,6 +28,7 @@ import {
     ExecutionStatus,
     ExecutionResultDetail,
     ExternalDataSourceType,
+    ExecutionReportFormat,
 } from "@apicize/lib-typescript"
 import { EntityType } from "../models/workspace/entity-type"
 import { createContext, useContext } from "react"
@@ -46,6 +47,7 @@ import { EditableSettings } from "../models/editable-settings"
 import { IndexedEntityPosition } from "../models/workspace/indexed-entity-position"
 import { EditableRequestHeaders } from "../models/workspace/editable-request-headers"
 import { ReqwestEvent } from "../models/trace"
+import { ExecutionReport } from "../models/execution-report"
 
 export type ResultsPanel = 'Info' | 'Headers' | 'Preview' | 'Text' | 'Details'
 
@@ -136,6 +138,7 @@ export class WorkspaceStore {
             executeRequest: (requestId: string, workbookFullName: string, singleRun: boolean) => Promise<ExecutionResultSummary[]>,
             cancelRequest: (requestId: string) => Promise<void>,
             getResultDetail: (requestId: string, index: number) => Promise<ExecutionResultDetail>,
+            generateReport: (requestId: string, index: number, format: ExecutionReportFormat) => Promise<string>,
             getEntityType: (entityId: string) => Promise<EntityType | null>,
             findDescendantGroups: (groupId: string) => Promise<string[]>,
             initializePkce: (data: { authorizationId: string }) => Promise<void>,
@@ -959,6 +962,11 @@ export class WorkspaceStore {
         const detail = await this.callbacks.getResultDetail(requestOrGroupId, index)
         this.cachedExecutionDetail = [requestOrGroupId, index, detail]
         return detail
+    }
+
+    @action
+    async generateReport(requestId: string, index: number, format: ExecutionReportFormat): Promise<string> {
+        return await this.callbacks.generateReport(requestId, index, format)
     }
 
     @action

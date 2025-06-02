@@ -1,8 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use apicize_lib::{
-    editing::execution_result_summary::ExecutionResultSummary, WorkbookDefaultParameters,
-};
+use apicize_lib::{ExecutionResultSummary, WorkbookDefaultParameters};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -75,13 +73,6 @@ impl Sessions {
             .filter(|(_, s)| s.workspace_id == workspace_id)
             .map(|(id, _)| id.clone())
             .collect()
-    }
-
-    pub fn get_workspace_session_count(&self, workspace_id: &str) -> usize {
-        self.sessions
-            .values()
-            .filter(|s| s.workspace_id == workspace_id)
-            .count()
     }
 
     pub fn count(&self) -> usize {

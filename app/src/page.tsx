@@ -98,6 +98,9 @@ const workspaceStore = new WorkspaceStore(
     getResultDetail: (requestId, index) => core.invoke(
       'get_result_detail', { sessionId, requestId, index }
     ),
+    generateReport: (requestId, index, format) => core.invoke(
+      'generate_report', { sessionId, requestId, index, format }
+    ),
     getEntityType: (entityId) => core.invoke(
       'get_entity_type', { sessionId, entityId }
     ),

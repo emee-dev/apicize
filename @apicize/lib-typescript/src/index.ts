@@ -1,8 +1,9 @@
 
-export * from './models/editing/execution-result-summary'
-export * from './models/editing/execution-result-detail'
-export * from './models/editing/execution-result-success'
-export * from './models/editing/execution-status'
+export * from './models/execution-result-summary'
+export * from './models/execution-result-detail'
+export * from './models/execution-result-success'
+export * from './models/execution-status'
+export * from './models/execution-report-format'
 export * from './models/execution'
 export * from './models/request'
 export * from './models/apicize-settings';

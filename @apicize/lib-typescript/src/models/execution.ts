@@ -220,10 +220,7 @@ export interface ApicizeTestScenario {
     name: string
     success: boolean,
     children: ApicizeTestResult[]
-    testCount: number
-    testFailCount: number
 }
-
 
 export interface ApicizeTestBehavior {
     type: 'Behavior'
@@ -231,8 +228,6 @@ export interface ApicizeTestBehavior {
     success: boolean,
     error?: string
     logs?: string[]
-    testCount: number
-    testFailCount: number
 }
 
 export interface ApicizeError {

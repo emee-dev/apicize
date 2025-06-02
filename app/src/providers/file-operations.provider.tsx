@@ -49,6 +49,7 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
                 pkceListenerPort: apicizeSettings.pkceListenerPort,
                 alwaysHideNavTree: apicizeSettings.alwaysHideNavTree,
                 showDiagnosticInfo: apicizeSettings.showDiagnosticInfo,
+                reportFormat: apicizeSettings.reportFormat,
             }
             await core.invoke<ApicizeSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {

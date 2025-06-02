@@ -10,16 +10,13 @@ pub mod trace;
 pub mod workspaces;
 
 use apicize_lib::{
-    editing::{
-        execution_result_detail::ExecutionResultDetail,
-        execution_result_summary::ExecutionResultSummary, execution_status::ExecutionStatus,
-        indexed_entities::IndexedEntityPosition,
-    },
+    editing::indexed_entities::IndexedEntityPosition,
     oauth2_client_tokens::{
         clear_all_oauth2_tokens, clear_oauth2_token, store_oauth2_token, CachedTokenInfo,
         PkceTokenResult,
     },
-    ApicizeRunner, Authorization, ExternalData, TestRunnerContext, Warnings, Workspace,
+    ApicizeRunner, Authorization, ExecutionReportFormat, ExecutionResultDetail,
+    ExecutionResultSummary, ExecutionStatus, ExternalData, TestRunnerContext, Warnings, Workspace,
 };
 use dragdrop::DroppedFile;
 use error::ApicizeAppError;
@@ -244,6 +241,7 @@ async fn main() {
             save_settings,
             run_request,
             cancel_request,
+            generate_report,
             get_result_detail,
             store_token,
             clear_all_cached_authorizations,
@@ -300,7 +298,9 @@ async fn initialize_session(
     let workspaces = workspaces_state.workspaces.read().await;
     let settings = settings_state.settings.read().await;
     let session = sessions.get_session(session_id)?;
-    let editor_count = sessions.get_workspace_session_count(&session.workspace_id);
+    let editor_count = sessions
+        .get_workspace_session_ids(&session.workspace_id)
+        .len();
     let info = workspaces.get_workspace_info(&session.workspace_id)?;
 
     let startup_state = session.startup_state.as_ref();
@@ -355,6 +355,7 @@ fn generate_settings_defaults(app: AppHandle) -> Result<ApicizeSettings, Apicize
         pkce_listener_port: 8080,
         always_hide_nav_tree: false,
         show_diagnostic_info: false,
+        report_format: apicize_lib::ExecutionReportFormat::JSON,
     })
 }
 
@@ -371,94 +372,69 @@ fn create_workspace(
 ) -> Result<(), ApicizeAppError> {
     let mut save_recent_file_name: Option<String> = None;
 
-    // If the session contains the only instance of the workspace that is open,
-    // flag it to close if we are able to create/open its replacement
-    let mut force_reopen = false;
-    let mut remove_old_workspace: Option<String> = if open_in_new_session {
-        None
-    } else {
-        match &current_session_id {
-            Some(session_id) => {
-                if let Ok(session) = sessions.get_session(session_id) {
-                    let workspace_session_count =
-                        sessions.get_workspace_session_count(&session.workspace_id);
-                    if workspace_session_count == 1 {
-                        force_reopen = true;
-                        Some(session.workspace_id.clone())
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            }
-            None => None,
-        }
+    // Find the existing workspace for the file, if there is one
+    let existing_workspace_id = match &open_existing_file_name {
+        Some(file_name) => workspaces
+            .workspaces
+            .iter()
+            .find_map(|(id, info)| if !info.file_name.is_empty() && file_name.eq(&info.file_name) {
+                Some(id.clone())
+            } else {
+                None
+            }),
+        None => None,
     };
 
-    let workspace_result: OpenWorkspaceResult = match open_existing_file_name {
-        Some(file_name) => {
-            // Check to see if the file is already open in a workspace, and if we want to reuse it
-            let mut use_existing_workspace: Option<OpenWorkspaceResult> = if force_reopen {
-                None
-            } else {
-                workspaces.workspaces.iter().find_map(|(id, info)| {
-                    if !info.file_name.is_empty() && file_name.eq(&info.file_name) {
-                        Some(OpenWorkspaceResult {
-                            workspace_id: id.clone(),
-                            display_name: info.file_name.clone(),
-                            startup_state: SessionStartupState::default(),
-                        })
-                    } else {
-                        None
-                    }
-                })
-            };
-
-            // If we are opening in an existing session, and that session has this workbook open,
-            // then we are going to reload the workbook
-            if !open_in_new_session {
-                if let Some(w) = &use_existing_workspace {
-                    if let Some(other_session_id) = &current_session_id {
-                        if w.workspace_id.as_str() == other_session_id {
-                            remove_old_workspace = Some(w.workspace_id.clone());
-                            use_existing_workspace = None;
-                        }
-                    }
+    // If the session contains the only instance of the workspace that is open,
+    // flag it to close if we are able to create/open its replacement
+    let mut remove_workspace_id: Option<&str> = None;
+    if !open_in_new_session {
+        if let Some(existing_workspace_id) = &existing_workspace_id {
+            if let Some(session_id) = &current_session_id {
+                let workspace_session_ids =
+                    sessions.get_workspace_session_ids(&existing_workspace_id);
+                if workspace_session_ids.len() == 1
+                    && workspace_session_ids.first().unwrap().as_str() == session_id
+                {
+                    remove_workspace_id = Some(existing_workspace_id);
                 }
             }
+        }
+    }
 
-            // Attempt to open the workspace
-            let open_result = match use_existing_workspace {
-                Some(r) => Ok(r),
-                None => match Workspace::open(&PathBuf::from(&file_name)) {
+    let workspace_result = match &open_existing_file_name {
+        Some(file_name) => {
+            if let (None, Some(existing_workspace_id)) =
+                (remove_workspace_id, &existing_workspace_id)
+            {
+                Ok(OpenWorkspaceResult {
+                    workspace_id: existing_workspace_id.clone(),
+                    display_name: workspaces.workspaces.get(existing_workspace_id).unwrap()
+                        .display_name.clone(),
+                    startup_state: SessionStartupState::default(),
+                })
+            } else {
+                match Workspace::open(&PathBuf::from(&file_name)) {
                     Ok(workspace) => {
-                        let result = workspaces.add_workspace(workspace, &file_name, false);
-                        save_recent_file_name = Some(file_name.to_string());
-                        Ok(result)
+                        if let Some(old_workspace_id) = &remove_workspace_id {
+                            workspaces.remove_workspace(old_workspace_id);
+                        }
+                        save_recent_file_name = Some(file_name.clone());
+                        Ok(workspaces.add_workspace(workspace, &file_name, false))
                     }
                     Err(err) => {
                         if create_new_if_error {
-                            let workspace = Workspace::new()?;
-                            let mut result = workspaces.add_workspace(workspace, "", true);
-                            result.startup_state.error = Some(format!(
-                                "Unable to load workboook {}: {}",
-                                &file_name, err.error,
-                            ));
+                            let mut result = workspaces.add_workspace(Workspace::new()?, "", true);
+                            result.startup_state.error =  Some(format!("{}", err));
                             Ok(result)
                         } else {
-                            Err(ApicizeAppError::FileAccessError(err))
+                            Err(err)
                         }
                     }
-                },
-            }?;
-
-            Ok::<OpenWorkspaceResult, ApicizeAppError>(open_result)
+                }
+            }
         }
-        None => {
-            let workspace = Workspace::new()?;
-            Ok(workspaces.add_workspace(workspace, "", true))
-        }
+        None => Ok(workspaces.add_workspace(Workspace::new()?, "", true)),
     }?;
 
     // clear_all_oauth2_tokens().await;
@@ -504,14 +480,6 @@ fn create_workspace(
 
     let info1 = workspaces.get_workspace_info(&workspace_result.workspace_id)?;
     dispatch_save_state(&app, sessions, &workspace_result.workspace_id, info1, false);
-
-    // Remove the session's old workspace if we don't need it anymore
-    if let Some(old_workspace_id) = remove_old_workspace {
-        if !is_release_mode() {
-            println!("Removing workspace {}", &old_workspace_id);
-        }
-        workspaces.remove_workspace(&old_workspace_id);
-    }
 
     if !is_release_mode() {
         workspaces.trace_all_workspaces();
@@ -746,7 +714,7 @@ fn dispatch_save_state(
             file_name: info.file_name.clone(),
             display_name: info.display_name.clone(),
             dirty: info.dirty,
-            editor_count: sessions.get_workspace_session_count(workspace_id),
+            editor_count: sessions.get_workspace_session_ids(workspace_id).len(),
         };
 
         for session_id in session_ids {
@@ -776,7 +744,7 @@ async fn close_workspace(
 
     sessions.remove_session(session_id)?;
 
-    let editor_count = sessions.get_workspace_session_count(&workspace_id);
+    let editor_count = sessions.get_workspace_session_ids(&workspace_id).len();
     if editor_count == 0 {
         let mut workspaces = workspaces_state.workspaces.write().await;
         workspaces.remove_workspace(&workspace_id);
@@ -1013,6 +981,21 @@ async fn get_result_detail(
     let session = sessions.get_session(session_id)?;
     let workspaces = workspaces_state.workspaces.read().await;
     workspaces.get_result_detail(&session.workspace_id, request_id, index)
+}
+
+#[tauri::command]
+async fn generate_report(
+    sessions_state: State<'_, SessionsState>,
+    workspaces_state: State<'_, WorkspacesState>,
+    session_id: &str,
+    request_id: &str,
+    index: usize,
+    format: ExecutionReportFormat,
+) -> Result<String, ApicizeAppError> {
+    let sessions = sessions_state.sessions.read().await;
+    let session = sessions.get_session(session_id)?;
+    let workspaces = workspaces_state.workspaces.read().await;
+    workspaces.generate_report(&session.workspace_id, request_id, index, format)
 }
 
 #[tauri::command]
