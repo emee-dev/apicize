@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.21.1
+
+* Fix populating form data
+
 # 0.21.0
 
 * Add CSV reporting output

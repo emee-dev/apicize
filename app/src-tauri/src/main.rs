@@ -392,7 +392,7 @@ fn create_workspace(
         if let Some(existing_workspace_id) = &existing_workspace_id {
             if let Some(session_id) = &current_session_id {
                 let workspace_session_ids =
-                    sessions.get_workspace_session_ids(&existing_workspace_id);
+                    sessions.get_workspace_session_ids(existing_workspace_id);
                 if workspace_session_ids.len() == 1
                     && workspace_session_ids.first().unwrap().as_str() == session_id
                 {
@@ -420,7 +420,7 @@ fn create_workspace(
                             workspaces.remove_workspace(old_workspace_id);
                         }
                         save_recent_file_name = Some(file_name.clone());
-                        Ok(workspaces.add_workspace(workspace, &file_name, false))
+                        Ok(workspaces.add_workspace(workspace, file_name, false))
                     }
                     Err(err) => {
                         if create_new_if_error {
