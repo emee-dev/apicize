@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.22.1
+
+* Restore serialization for default runs and redirects
+
 # 0.22.0
 
 * Support keep alive, allow invalid certs and number of redirect options
