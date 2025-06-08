@@ -1,4 +1,4 @@
-import { TextField, Select, MenuItem, FormControl, InputLabel, Grid, ToggleButton } from '@mui/material'
+import { TextField, Select, MenuItem, FormControl, InputLabel, Grid, ToggleButton, Checkbox, FormControlLabel } from '@mui/material'
 import { GroupExecution, Method, Methods } from '@apicize/lib-typescript'
 import { EditableRequest } from '../../../models/workspace/editable-request'
 import { observer } from 'mobx-react-lite'
@@ -42,6 +42,7 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                     // autoFocus={request.name === ''}
                     required
                     size="small"
+                    title="Name of request"
                     value={request.name}
                     onChange={e => request.setName(e.target.value)}
                     error={request.nameInvalid}
@@ -57,6 +58,7 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                     // autoFocus={request.url !== ''}
                     required
                     size="small"
+                    title="Destination URL for request"
                     value={request.url}
                     onChange={e => request.setUrl(e.target.value)}
                     error={request.urlInvalid}
@@ -73,6 +75,7 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                             aria-labelledby='request-method-label-id'
                             id="request-method"
                             value={request.method}
+                            title="HTTP method"
                             onChange={e => request.setMethod(e.target.value as Method)}
                             size='small'
                             label="Method"
@@ -89,20 +92,49 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                             label='Timeout (ms)'
                             size='small'
                             sx={{ width: '8em' }}
+                            title="Number of milliseconds to wait for a response"
                             type='number'
                             value={request.timeout}
                             onChange={e => request.setTimeout(parseInt(e.target.value))}
                         />
                     </FormControl>
                 </Grid>
+                <Grid>
+                    <FormControl>
+                        <TextField
+                            aria-label='number of redirects'
+                            placeholder='# of Redirects'
+                            label='# of Redirects'
+                            title='Allow # of Redirects (0 = disable)'
+                            size='small'
+                            sx={{ width: '8em' }}
+                            type='number'
+                            value={request.numberOfRedirects}
+                            onChange={e => request.setNumberOfRedirects(parseInt(e.target.value))}
+                        />
+                    </FormControl>
+                </Grid>
+                <Grid>
+                    <FormControlLabel control={<Checkbox checked={request.acceptInvalidCerts}
+                        onChange={(e) => request.setAcceptInvalidCerts(e.target.checked)} />}
+                        title="Enable to allow expired or self-signed certificates"
+                        label="Allow Invalid Certificates" />
+                </Grid>
+                <Grid>
+                    <FormControlLabel control={<Checkbox checked={request.keepAlive}
+                        onChange={(e) => request.setKeepAlive(e.target.checked)} />}
+                        title="Enable HTTP2 connection Keep Alive"
+                        label="Keep Alive" />
+                </Grid>                
             </Grid>
             <Grid container direction='row' spacing={2}>
                 <Grid container direction='row' spacing={0}>
                     <TextField
-                        aria-label='Nubmer of Run Attempts'
+                        aria-label='Nubmer of Runs'
                         placeholder='Attempts'
                         label='# of Runs'
                         disabled={running}
+                        title='Number of times to run the request'
                         size='small'
                         sx={{ width: '8em', flexGrow: 0 }}
                         type='number'
@@ -131,6 +163,7 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                             size='small'
                             sx={{ minWidth: '10em' }}
                             label='Multi-Run Execution'
+                            title='Whether to execute multiple request runs sequentially (one at a time) or concurrently'
                             onChange={e => request.setMultiRunExecution(e.target.value as GroupExecution)}
                         >
                             <MenuItem value={GroupExecution.Sequential}>Sequential</MenuItem>

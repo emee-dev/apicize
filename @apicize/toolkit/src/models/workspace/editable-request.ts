@@ -15,7 +15,9 @@ export class EditableRequest extends EditableRequestEntry {
 
     @observable public accessor method = Method.Get
     @observable public accessor timeout = 30000
-    @observable public accessor keepalive = false as boolean | undefined
+    @observable public accessor keepAlive = false
+    @observable public accessor acceptInvalidCerts = false
+    @observable public accessor numberOfRedirects = 10
     // @observable public accessor headers: EditableNameValuePair[] = []
     @observable public accessor queryStringParams: EditableNameValuePair[] = []
     // @observable public accessor body: Body = { type: BodyType.None, data: undefined }
@@ -48,7 +50,7 @@ export class EditableRequest extends EditableRequestEntry {
         this.url = entry.url ?? ''
         this.method = entry.method ?? Method.Get
         this.timeout = entry.timeout ?? 30000
-        this.keepalive = entry.keepalive
+        this.keepAlive = entry.keepAlive
         // this.headers = entry.headers?.map(h => ({
         //     id: GenerateIdentifier(),
         //     ...h
@@ -96,7 +98,9 @@ export class EditableRequest extends EditableRequestEntry {
             test: this.test,
             duplex: this.duplex,
             // integrity: this.integrity,
-            keepalive: this.keepalive,
+            keepAlive: this.keepAlive,
+            acceptInvalidCerts: this.acceptInvalidCerts,
+            numberOfRedirects: this.numberOfRedirects,
             mode: this.mode,
             runs: this.runs,
             timeout: this.timeout,
@@ -142,6 +146,27 @@ export class EditableRequest extends EditableRequestEntry {
     }
 
     @action
+    setKeepAlive(value: boolean) {
+        this.keepAlive = value
+        this.onUpdate()
+    }
+
+    @action
+    setAcceptInvalidCerts(value: boolean) {
+        this.acceptInvalidCerts = value
+        this.onUpdate()
+    }
+
+    @action
+    setNumberOfRedirects(value: number) {
+        if (value < 0) {
+            throw new Error('Number of redirects must be zero (disabled) or greater')
+        }
+        this.numberOfRedirects = value
+        this.onUpdate()
+    }
+
+    @action
     setQueryStringParams(value: EditableNameValuePair[] | undefined) {
         this.queryStringParams = value ?? []
         this.onUpdate()
@@ -171,7 +196,7 @@ export class EditableRequest extends EditableRequestEntry {
         this.url = entity.url
         this.method = entity.method
         this.timeout = entity.timeout
-        this.keepalive = entity.keepalive
+        this.keepAlive = entity.keepAlive
         this.mode = entity.mode
         this.runs = entity.runs
         this.multiRunExecution = entity.multiRunExecution
@@ -220,7 +245,9 @@ export interface RequestInfo extends Warnings, ValidationErrors {
     url: string
     method: Method
     timeout: number
-    keepalive?: boolean
+    keepAlive: boolean
+    acceptInvalidCerts: boolean
+    numberOfRedirects: number
     mode?: RequestMode
     runs: number
     multiRunExecution: GroupExecution

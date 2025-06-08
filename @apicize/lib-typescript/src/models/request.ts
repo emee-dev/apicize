@@ -84,7 +84,9 @@ export interface BaseRequest extends Identifiable, Named, SelectedParameters, Ex
     url: string
     method?: Method
     timeout?: number
-    keepalive?: boolean
+    keepAlive: boolean
+    acceptInvalidCerts: boolean
+    numberOfRedirects?: number
     headers?: NameValuePair[]
     queryStringParams?: NameValuePair[]
     redirect?: RequestRedirect
@@ -97,7 +99,7 @@ export interface BaseRequest extends Identifiable, Named, SelectedParameters, Ex
 }
 
 export interface Request extends BaseRequest {
-    body?: Body 
+    body?: Body
 }
 
 export enum GroupExecution {

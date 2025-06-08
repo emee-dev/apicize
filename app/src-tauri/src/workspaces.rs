@@ -103,8 +103,14 @@ pub struct RequestInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u32>,
     /// Keep HTTP connection alive
+    #[serde(default = "bool::default", skip_serializing_if = "std::ops::Not::not")]
+    pub keep_alive: bool,
+    /// Allow invalid certificates (default is false)
+    #[serde(default = "bool::default", skip_serializing_if = "std::ops::Not::not")]
+    pub accept_invalid_certs: bool,
+    /// Number redirects (default = 10)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub keep_alive: Option<bool>,
+    pub number_of_redirects: Option<usize>,
     /// Number of runs for the request to execute
     pub runs: usize,
     /// Execution of multiple runs
@@ -208,6 +214,8 @@ impl RequestInfo {
             method: request.method.clone(),
             timeout: request.timeout,
             keep_alive: request.keep_alive,
+            accept_invalid_certs: false,
+            number_of_redirects: None,
             runs: request.runs,
             multi_run_execution: request.multi_run_execution.clone(),
             query_string_params: request.query_string_params.clone(),

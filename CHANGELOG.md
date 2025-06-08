@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.22.0
+
+* Support keep alive, allow invalid certs and number of redirect options
+
 # 0.21.2
 
 * Fix populating form data

@@ -30,15 +30,18 @@ export const ResultDetailsViewer = observer((props: { execution: Execution }) =>
     if (!details || updateKey !== currentUpdateKey) {
         workspace.getExecutionResultDetail(requestOrGroupId, resultIndex)
             .then(d => {
-                if (d.entityType === 'request' && d.testContext.request?.body?.type === 'Binary') {
-                    //@ts-expect-error
-                    d.request.body.data = base64Encode(d.request.body.data)
-                    if (d.testContext.response?.body?.type === 'Binary') {
+                const d1 = structuredClone(d)
+                if (d1.entityType === 'request') {
+                    if (d1.testContext.request?.body?.type === 'Binary') {
                         //@ts-expect-error
-                        d.response.body.data = base64Encode(d.request.body.data)
+                        d1.testContext.request.body.data = base64Encode(d1.testContext.request.body.data)
+                    }
+                    if (d1.testContext.response?.body?.type === 'Binary') {
+                        //@ts-expect-error
+                        d1.testContext.response.body.data = base64Encode(d.testContext.response.body.data)
                     }
                 }
-                setDetails({ ...d, entityType: undefined } as unknown as ExecutionResultDetail)
+                setDetails({ ...d1, entityType: undefined } as unknown as ExecutionResultDetail)
                 setCurrentUpdateKey(updateKey)
             }).catch(e => feedback.toastError(e))
         return
