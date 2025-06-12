@@ -10,10 +10,10 @@
   "scripts": {
     "test": "jest",
     "css": "cp ./src/toolkit.css ./dist/toolkit.css",
-    "build": "tsc --build && shx cp ./src/toolkit.css ./dist/toolkit.css && shx cp -r ./typings/* ./dist/typings/",
+    "build": "tsc --build && shx cp ./src/toolkit.css ./dist/toolkit.css",
     "watch-css": "nodemon --watch src/toolkit.css --exec npm run css",
     "watch": "tsc --watch",
-    "rebuild": "rm -rf dist && rm ./tsconfig.tsbuildinfo && tsc --build && shx cp ./src/toolkit.css ./dist/toolkit.css && shx cp -r ./typings/* ./dist/typings/",
+    "rebuild": "rm -rf dist && rm ./tsconfig.tsbuildinfo && tsc --build && shx cp ./src/toolkit.css ./dist/toolkit.css",
     "typeface-roboto-mono": "^1.1.13"
   },
   "devDependencies": {

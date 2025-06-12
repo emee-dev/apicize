@@ -12,12 +12,27 @@ import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context";
 import MonacoEditor, { monaco } from 'react-monaco-editor';
 
 // import CHAI_RAW from '../../../../typings/chai?raw'
-import BDD_RAW from '../../../../typings/bdd?raw'
-import CHAI_RAW from '../../../../typings/chai?raw'
 import ES5_RAW from '../../../../../../node_modules/typescript/lib/lib.es5.d.ts?raw'
 import { editor } from "monaco-editor";
 import { useApicize } from "../../../contexts/apicize.context";
 import { runInAction } from "mobx";
+
+const BDD_RAW = `
+/**
+ * Describes something under test (code, entity, etc.)
+ * @param name Name of what is being tested
+ * @param fn Function that includes child "describe" and "it" functions
+ */
+declare function describe(name: string, fn: () => void): void
+
+
+/**
+ * Tests an expected behavior
+ * @param name Name of the behavior being tested
+ * @param fn Function that throws an Error (or fails assertion) upon failure
+ */
+declare function it(name: string, fn: () => void): void
+`
 
 export const RequestTestEditor = observer((props: { request: EditableRequest }) => {
   const workspace = useWorkspace()
@@ -167,12 +182,12 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
                 monaco.editor.createModel(BDD_RAW, 'typescript', bddUri)
               }
 
-              const chaiUri = monaco.Uri.parse('file://node_modules/@types/chai/index.d.ts')
-              if (!monaco.editor.getModel(chaiUri)) {
-                monaco.languages.typescript.typescriptDefaults.addExtraLib(CHAI_RAW)
-                monaco.languages.typescript.javascriptDefaults.addExtraLib(CHAI_RAW)
-                monaco.editor.createModel(CHAI_RAW, 'typescript', chaiUri)
-              }
+              // const chaiUri = monaco.Uri.parse('file://node_modules/@types/chai/index.d.ts')
+              // if (!monaco.editor.getModel(chaiUri)) {
+              //   monaco.languages.typescript.typescriptDefaults.addExtraLib(CHAI_RAW)
+              //   monaco.languages.typescript.javascriptDefaults.addExtraLib(CHAI_RAW)
+              //   monaco.editor.createModel(CHAI_RAW, 'typescript', chaiUri)
+              // }
 
               initalialized.current = true
             }
