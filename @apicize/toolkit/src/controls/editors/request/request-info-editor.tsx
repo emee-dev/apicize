@@ -50,22 +50,6 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                     fullWidth
                 />
             </Grid>
-            <Grid>
-                <TextField
-                    id='request-url'
-                    label="URL"
-                    aria-label='request url'
-                    // autoFocus={request.url !== ''}
-                    required
-                    size="small"
-                    title="Destination URL for request"
-                    value={request.url}
-                    onChange={e => request.setUrl(e.target.value)}
-                    error={request.urlInvalid}
-                    helperText={request.urlInvalid ? 'URL is required' : ''}
-                    fullWidth
-                />
-            </Grid>
             <Grid container direction='row' spacing={2}>
                 <Grid>
                     <FormControl>
@@ -84,48 +68,22 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                         </Select>
                     </FormControl>
                 </Grid>
-                <Grid>
-                    <FormControl>
-                        <TextField
-                            aria-label='request timeout in milliseconds'
-                            placeholder='Timeout in Milliseconds'
-                            label='Timeout (ms)'
-                            size='small'
-                            sx={{ width: '8em' }}
-                            title="Number of milliseconds to wait for a response"
-                            type='number'
-                            value={request.timeout}
-                            onChange={e => request.setTimeout(parseInt(e.target.value))}
-                        />
-                    </FormControl>
+                <Grid flexGrow={1}>
+                    <TextField
+                        id='request-url'
+                        label="URL"
+                        aria-label='request url'
+                        // autoFocus={request.url !== ''}
+                        required
+                        size="small"
+                        title="Destination URL for request"
+                        value={request.url}
+                        onChange={e => request.setUrl(e.target.value)}
+                        error={request.urlInvalid}
+                        helperText={request.urlInvalid ? 'URL is required' : ''}
+                        fullWidth
+                    />
                 </Grid>
-                <Grid>
-                    <FormControl>
-                        <TextField
-                            aria-label='number of redirects'
-                            placeholder='# of Redirects'
-                            label='# of Redirects'
-                            title='Allow # of Redirects (0 = disable)'
-                            size='small'
-                            sx={{ width: '8em' }}
-                            type='number'
-                            value={request.numberOfRedirects}
-                            onChange={e => request.setNumberOfRedirects(parseInt(e.target.value))}
-                        />
-                    </FormControl>
-                </Grid>
-                <Grid>
-                    <FormControlLabel control={<Checkbox checked={request.acceptInvalidCerts}
-                        onChange={(e) => request.setAcceptInvalidCerts(e.target.checked)} />}
-                        title="Enable to allow expired or self-signed certificates"
-                        label="Allow Invalid Certificates" />
-                </Grid>
-                <Grid>
-                    <FormControlLabel control={<Checkbox checked={request.keepAlive}
-                        onChange={(e) => request.setKeepAlive(e.target.checked)} />}
-                        title="Enable HTTP2 connection Keep Alive"
-                        label="Keep Alive" />
-                </Grid>                
             </Grid>
             <Grid container direction='row' spacing={2}>
                 <Grid container direction='row' spacing={0}>
@@ -170,6 +128,50 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
                             <MenuItem value={GroupExecution.Concurrent}>Concurrent</MenuItem>
                         </Select>
                     </FormControl>
+                </Grid>
+            </Grid>
+            <Grid container direction='row' spacing={2}>
+                <Grid>
+                    <FormControl>
+                        <TextField
+                            aria-label='request timeout in milliseconds'
+                            placeholder='Timeout in Milliseconds'
+                            label='Timeout (ms)'
+                            size='small'
+                            sx={{ width: '8em' }}
+                            title="Number of milliseconds to wait for a response"
+                            type='number'
+                            value={request.timeout}
+                            onChange={e => request.setTimeout(parseInt(e.target.value))}
+                        />
+                    </FormControl>
+                </Grid>
+                <Grid>
+                    <FormControl>
+                        <TextField
+                            aria-label='number of redirects'
+                            placeholder='# of Redirects'
+                            label='# of Redirects'
+                            title='Allow # of Redirects (0 = disable)'
+                            size='small'
+                            sx={{ width: '8em' }}
+                            type='number'
+                            value={request.numberOfRedirects}
+                            onChange={e => request.setNumberOfRedirects(parseInt(e.target.value))}
+                        />
+                    </FormControl>
+                </Grid>
+                <Grid>
+                    <FormControlLabel control={<Checkbox checked={request.acceptInvalidCerts}
+                        onChange={(e) => request.setAcceptInvalidCerts(e.target.checked)} />}
+                        title="Enable to allow expired or self-signed certificates"
+                        label="Allow Invalid Certificates" />
+                </Grid>
+                <Grid>
+                    <FormControlLabel control={<Checkbox checked={request.keepAlive}
+                        onChange={(e) => request.setKeepAlive(e.target.checked)} />}
+                        title="Enable HTTP2 connection Keep Alive"
+                        label="Keep Alive" />
                 </Grid>
             </Grid>
         </Grid>

@@ -25,7 +25,7 @@ export function ResultResponsePreview(props: { execution: Execution }) {
     const [currentUpdateKey, setCurrentUpdateKey] = useState('')
 
     if (!body || updateKey !== currentUpdateKey) {
-        workspace.getExecutionResultDetail(props.execution.requestOrGroupId, props.execution.resultIndex)
+        workspace.getExecutionResultDetail(props.execution.requestOrGroupId, props.execution.resultIndex, false)
             .then(details => {
                 setBody((details.entityType === 'request' && details.testContext.response?.body)
                     ? details.testContext.response.body

@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es6",
+    "composite": true,
     "lib": [
       "dom",
       "dom.iterable",
@@ -31,12 +32,8 @@
     "**/*.tsx",
   ],
   "exclude": [
+    "bdd.d.ts",
     "node_modules",
     "src-tauri"
-  ],
-  "references": [
-    {
-      "path": "../@apicize/toolkit"
-    }
   ]
 }

@@ -4,6 +4,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin"
 import TerserPlugin from "terser-webpack-plugin"
 import { outputConfig, entryConfig, terserPluginConfig } from "./env.config.js"
 import { fileURLToPath } from 'url';
+import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,6 +15,10 @@ export default (env, options) => {
             entry: entryConfig,
             module: {
                 rules: [
+                    {
+                        resourceQuery: /raw/,
+                        type: 'asset/source',
+                    },
                     {
                         test: /\.tsx?$/,
                         use: "ts-loader",
@@ -40,6 +45,10 @@ export default (env, options) => {
                 },
             },
             plugins: [
+                new MonacoWebpackPlugin({
+                    // available options are documented at https://github.com/microsoft/monaco-editor/blob/main/webpack-plugin/README.md#options
+                    languages: ['json', 'javascript', 'typescript', 'css', 'xml']
+                }),
                 new CleanWebpackPlugin(),
                 new HtmlWebpackPlugin({
                     template: "./src/index.html",

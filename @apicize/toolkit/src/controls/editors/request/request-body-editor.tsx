@@ -12,85 +12,36 @@ import { useFileOperations } from '../../../contexts/file-operations.context'
 import { toJS } from 'mobx'
 import { useWorkspace } from '../../../contexts/workspace.context'
 import { ToastSeverity, useFeedback } from '../../../contexts/feedback.context'
-import { RichEditor, RichEditorCommands } from '../rich-editor'
-import { useEffect, useRef, useState } from 'react'
+import { createRef, useEffect, useRef, useState } from 'react'
 import { EditorMode } from '../../../models/editor-mode'
 import { DroppedFile, useFileDragDrop } from '../../../contexts/file-dragdrop.context'
 import { EditableRequestBody } from '../../../models/workspace/editable-request-body'
 import { RequestEditSessionType } from '../editor-types'
 import { EditableRequestHeaders } from '../../../models/workspace/editable-request-headers'
 import { GenerateIdentifier } from '../../../services/random-identifier-generator'
+import { editor } from 'monaco-editor'
+import MonacoEditor from 'react-monaco-editor'
+import { useApicize } from '../../../contexts/apicize.context'
 
 export const RequestBodyEditor = observer((props: { body: EditableRequestBody | null, headers: EditableRequestHeaders | null }) => {
   const workspace = useWorkspace()
   const clipboard = useClipboard()
+  const settings = useApicize()
   const fileOps = useFileOperations()
   const feedback = useFeedback()
   const fileDragDrop = useFileDragDrop()
 
   workspace.nextHelpTopic = 'requests/body'
 
-  const refContainer = useRef<HTMLElement>(null)
-  const refCommands = useRef<RichEditorCommands>(null)
-
+  const refContainer = createRef<HTMLElement>()
   const [isDragging, setIsDragging] = useState(false)
+  const [model, setModel] = useState<editor.ITextModel | null>(null)
+  const editor = useRef<editor.IStandaloneCodeEditor | null>(null)
+
+  // let [allowUpdateHeader, setAllowUpdateHeader] = useState(false)
 
   const bodyInfo = props.body
   const headerInfo = props.headers
-
-  useEffect(() => {
-    if (refContainer.current) {
-      const unregisterDragDrop = fileDragDrop.register(refContainer, {
-        onEnter: (_x, _y, _paths) => {
-          setIsDragging(true)
-        },
-        onOver: (_x, _y) => {
-          setIsDragging(true)
-        },
-        onLeave: () => {
-          setIsDragging(false)
-        },
-        onDrop: (file: DroppedFile) => {
-          setIsDragging(false)
-          if (bodyInfo) {
-            switch (file.type) {
-              case 'binary':
-                bodyInfo.setBody({
-                  type: BodyType.Raw,
-                  data: file.data
-                })
-                break
-              case 'text':
-                switch (file.extension) {
-                  case 'json':
-                    bodyInfo.setBody({
-                      type: BodyType.JSON,
-                      data: file.data
-                    })
-                    break
-                  case 'xml':
-                    bodyInfo.setBody({
-                      type: BodyType.XML,
-                      data: file.data
-                    })
-                    break
-                  default:
-                    bodyInfo.setBody({
-                      type: BodyType.Text,
-                      data: file.data
-                    })
-                }
-                refCommands.current?.setText(file.data)
-                break
-            }
-          }
-        }
-      })
-      return (() => {
-        unregisterDragDrop()
-      })
-    }
-  }, [])
 
   if (!bodyInfo) {
     const workspace = useWorkspace()
@@ -104,79 +55,71 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
     return null
   }
 
-  const id = bodyInfo.id
+  // const id = bodyInfo.id
+  let editorMode: EditorMode | undefined
+  let mimeType: string | undefined
 
-  const headerDoesNotMatchType = (bodyType: BodyType | undefined | null) => {
-    let needsContextHeaderUpdate = true
-    let mimeType = getBodyTypeMimeType(bodyType)
-    const contentTypeHeader = headerInfo?.headers?.find(h => h.name === 'Content-Type')
-    if (contentTypeHeader) {
-      needsContextHeaderUpdate = contentTypeHeader.value !== mimeType
+  switch (bodyInfo.type) {
+    case BodyType.JSON:
+      editorMode = EditorMode.json
+      mimeType = 'application/json'
+      break
+    case BodyType.XML:
+      editorMode = EditorMode.xml
+      mimeType = 'application/xml'
+      break
+    case BodyType.Text:
+      editorMode = EditorMode.txt
+      mimeType = 'text/plain'
+      break
+    case BodyType.Form:
+      mimeType = 'application/x-www-form-urlencoded'
+      break
+    case BodyType.Raw:
+      mimeType = 'application/octet-stream'
+      break
+  }
+
+  // If we are editing text, ensure we have a model
+  if (editorMode && !model) {
+    workspace.getRequestEditModel(bodyInfo.id, RequestEditSessionType.Body, editorMode)
+      .then(m => setModel(m))
+      .catch(e => feedback.toastError(e))
+    return null
+  }
+
+  let allowUpdateHeader = false
+  const contentTypeHeader = headerInfo?.headers?.find(h => h.name === 'Content-Type')
+  if (mimeType) {
+    if (contentTypeHeader && mimeType.length > 0) {
+      allowUpdateHeader = contentTypeHeader.value !== mimeType
     } else {
-      needsContextHeaderUpdate = mimeType.length !== 0
+      allowUpdateHeader = mimeType.length !== 0
     }
-    return needsContextHeaderUpdate
+  } else {
+    allowUpdateHeader = false
   }
-
-  const getBodyTypeMimeType = (bodyType: BodyType | undefined | null) => {
-    switch (bodyType) {
-      case BodyType.None:
-        return ''
-      case BodyType.JSON:
-        return 'application/json'
-      case BodyType.XML:
-        return 'application/xml'
-      case BodyType.Text:
-        return 'text/plain'
-      case BodyType.Form:
-        return 'application/x-www-form-urlencoded'
-      default:
-        return 'application/octet-stream'
-    }
-  }
-
-  const getBodyTypeEditorMode = (bodyType: BodyType | undefined | null) => {
-    switch (bodyType) {
-      case BodyType.JSON:
-        return EditorMode.json
-      case BodyType.XML:
-        return EditorMode.xml
-      case BodyType.Text:
-        return EditorMode.txt
-      default:
-        return undefined
-    }
-  }
-
-  const allowUpdateHeader = headerDoesNotMatchType(bodyInfo?.type ?? BodyType.None)
-
 
   const updateBodyType = (val: BodyType | string) => {
     const v = toJS(val)
     const newBodyType = (v == "" ? undefined : v as unknown as BodyType) ?? BodyType.Text
     bodyInfo.setBodyType(newBodyType)
-    // setAllowUpdateHeader(headerDoesNotMatchType(newBodyType))
   }
 
   function performBeautify() {
-    if (refCommands.current) {
-      refCommands.current.beautify()
-      bodyInfo?.onUpdate()
+    if (editor.current) {
+      try {
+        const action = editor.current.getAction('editor.action.formatDocument')
+        if (!action) throw new Error('Format action not found')
+        action.run()
+      } catch (e) {
+        feedback.toastError(e)
+      }
     }
   }
 
-  const updateBodyAsText = (data: string | undefined) => {
-    const value = data ?? ''
-    bodyInfo.setBodyData(value)
-    workspace.updateEditorSessionText(id, RequestEditSessionType.Body, value)
-  }
-
-  const updateBodyAsFormData = (data: EditableNameValuePair[] | undefined) => {
-    bodyInfo.setBodyData(data ?? [])
-  }
-
   const updateTypeHeader = () => {
-    const mimeType = getBodyTypeMimeType(bodyInfo.type)
+    if (!mimeType) return
     let newHeaders = headerInfo.headers.map(h => ({
       id: h.id,
       isNew: h.isNew,
@@ -236,14 +179,8 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
   let allowCopy: boolean
   switch (bodyInfo.type) {
     case BodyType.Form:
-      allowCopy = (bodyInfo.data?.length ?? 0) > 0
-      break
     case BodyType.JSON:
-      allowCopy = (bodyInfo.data?.length ?? 0) > 0
-      break
     case BodyType.XML:
-      allowCopy = (bodyInfo.data?.length ?? 0) > 0
-      break
     case BodyType.Text:
       allowCopy = (bodyInfo.data?.length ?? 0) > 0
       break
@@ -270,10 +207,29 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
     p
       .then(() => feedback.toast('Body copied to clipboard', ToastSeverity.Info))
       .catch(e => feedback.toastError(e))
-
   }
 
-  const editorMode = getBodyTypeEditorMode(bodyInfo.type)
+  const RawEditor = () => {
+    return <Stack
+      direction='row'
+      sx={{
+        borderRadius: '4px',
+        overflow: 'hidden',
+        border: '1px solid #444!important',
+        width: 'fit-content',
+      }}
+    >
+      <IconButton aria-label='load body from file' title='Load Body from File' onClick={() => openFile()} sx={{ marginRight: '4px' }}>
+        <FileOpenIcon color='primary' />
+      </IconButton>
+      <IconButton aria-label='copy body from clipboard' title='Paste Body from Clipboard' disabled={!clipboard.hasImage}
+        onClick={() => pasteImageFromClipboard()} sx={{ marginRight: '4px' }}>
+        <ContentPasteGoIcon color='primary' />
+      </IconButton>
+      <Box padding='10px'>{bodyInfo.data ? bodyInfo.data.length.toLocaleString() + ' Bytes' : '(None)'}</Box>
+    </Stack>
+  }
+
 
   return (
     <Box id='request-body-container' ref={refContainer} position='relative' width='100%' height='100%' paddingTop='0.7em'>
@@ -332,35 +288,25 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
               values={bodyInfo.data as EditableNameValuePair[]}
               nameHeader='Name'
               valueHeader='Value'
-              onUpdate={updateBodyAsFormData} />
+              onUpdate={(data) => bodyInfo.setBodyData(data ?? [])} />
             : bodyInfo.type == BodyType.Raw
-              ? <Stack
-                direction='row'
-                sx={{
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  border: '1px solid #444!important',
-                  width: 'fit-content',
+              ? <RawEditor />
+              : <MonacoEditor
+                language={editorMode}
+                theme={settings.colorScheme === "dark" ? 'vs-dark' : 'vs-light'}
+                value={typeof bodyInfo.data === 'string' ? bodyInfo.data : ''}
+                onChange={(text: string) => bodyInfo.setBodyData(text)}
+                editorDidMount={(me) => editor.current = me}
+                options={{
+                  minimap: { enabled: false },
+                  model,
+                  detectIndentation: false,
+                  tabSize: settings.tabSize,
+                  autoIndent: 'full',
+                  formatOnType: true,
+                  formatOnPaste: true,
+                  fontSize: settings.fontSize * 1.2,
                 }}
-              >
-                <IconButton aria-label='load body from file' title='Load Body from File' onClick={() => openFile()} sx={{ marginRight: '4px' }}>
-                  <FileOpenIcon color='primary' />
-                </IconButton>
-                <IconButton aria-label='copy body from clipboard' title='Paste Body from Clipboard' disabled={!clipboard.hasImage}
-                  onClick={() => pasteImageFromClipboard()} sx={{ marginRight: '4px' }}>
-                  <ContentPasteGoIcon color='primary' />
-                </IconButton>
-                <Box padding='10px'>{bodyInfo.data ? bodyInfo.data.length.toLocaleString() + ' Bytes' : '(None)'}</Box>
-              </Stack>
-              :
-              <RichEditor
-                id={id}
-                sx={{ width: '100%', height: '100%' }}
-                ref={refCommands}
-                type={RequestEditSessionType.Body}
-                value={bodyInfo.data as string}
-                mode={editorMode}
-                onUpdateValue={updateBodyAsText}
               />
         }
       </Stack>

@@ -1,4 +1,4 @@
-import { action, computed, makeObservable, observable, runInAction, toJS } from "mobx"
+import { action, computed, makeObservable, observable, runInAction } from "mobx"
 import { Execution } from "../models/workspace/execution"
 import { EditableRequest, RequestInfo } from "../models/workspace/editable-request"
 import { EditableRequestGroup } from "../models/workspace/editable-request-group"
@@ -27,27 +27,26 @@ import {
     ExecutionResultSummary,
     ExecutionStatus,
     ExecutionResultDetail,
-    ExternalDataSourceType,
     ExecutionReportFormat,
 } from "@apicize/lib-typescript"
 import { EntityType } from "../models/workspace/entity-type"
 import { createContext, useContext } from "react"
 import { EditableDefaults } from "../models/workspace/editable-defaults"
-import { EditableWarnings } from "../models/workspace/editable-warnings"
 import { EditableExternalDataEntry } from "../models/workspace/editable-external-data-entry"
 import { EditableRequestEntry } from "../models/workspace/editable-request-entry"
 import { Navigation, NavigationEntryState, NavigationRequestEntry, ParamNavigationSection } from "../models/navigation"
 import { EditableRequestBody } from "../models/workspace/editable-request-body"
 import { WorkspaceParameters } from "../models/workspace/workspace-parameters"
 import { CachedTokenInfo } from "../models/workspace/cached-token-info"
-import { EditSession } from "ace-code"
 import { RequestEditSessionType, ResultEditSessionType } from "../controls/editors/editor-types"
 import { FeedbackStore, ToastSeverity } from "./feedback.context"
 import { EditableSettings } from "../models/editable-settings"
 import { IndexedEntityPosition } from "../models/workspace/indexed-entity-position"
 import { EditableRequestHeaders } from "../models/workspace/editable-request-headers"
 import { ReqwestEvent } from "../models/trace"
-import { ExecutionReport } from "../models/execution-report"
+import { editor } from "monaco-editor"
+import { EditorMode } from "../models/editor-mode"
+import { base64Encode } from "../services/base64"
 
 export type ResultsPanel = 'Info' | 'Headers' | 'Preview' | 'Text' | 'Details'
 
@@ -112,9 +111,9 @@ export class WorkspaceStore {
     public nextHelpTopic: string | null = null
 
     // Request/Group edit sessions, indexed by request/group ID and then by type (body, test, etc.)
-    private requestEditSessions = new Map<string, Map<RequestEditSessionType, EditSession>>()
+    private requestModels = new Map<string, Map<RequestEditSessionType, editor.ITextModel>>()
     // Result edit sessions, indexed by request/group ID, and then by result index, and then by type
-    private resultEditSessions = new Map<string, Map<number, Map<ResultEditSessionType, EditSession>>>()
+    private resultModels = new Map<string, Map<number, Map<ResultEditSessionType, editor.ITextModel>>>()
 
     constructor(
         private readonly feedback: FeedbackStore,
@@ -184,8 +183,8 @@ export class WorkspaceStore {
         this.helpTopic = null
         this.helpTopicHistory = []
         this.nextHelpTopic = null
-        this.requestEditSessions.clear()
-        this.resultEditSessions.clear()
+        this.requestModels.clear()
+        this.resultModels.clear()
         this.helpTopic = initialization.helpTopic ?? null
 
         for (const requestOrGroupId of initialization.executingRequestIds) {
@@ -951,17 +950,35 @@ export class WorkspaceStore {
     /***
      * Return execution detail, keeping the most recent one cached in memory
      */
-    async getExecutionResultDetail(requestOrGroupId: string, index: number): Promise<ExecutionResultDetail> {
+    async getExecutionResultDetail(requestOrGroupId: string, index: number, forOutput: boolean): Promise<ExecutionResultDetail> {
+
+        const formatForOutput = (detail: ExecutionResultDetail) => {
+            const d1 = structuredClone(detail)
+            delete (d1 as any)['entityType']
+            if (d1.entityType === 'request') {
+                if (d1.testContext.request?.body?.type === 'Binary') {
+                    //@ts-expect-error
+                    d1.testContext.request.body.data = base64Encode(d1.testContext.request.body.data)
+                }
+                if (d1.testContext.response?.body?.type === 'Binary') {
+                    //@ts-expect-error
+                    d1.testContext.response.body.data = base64Encode(d.testContext.response.body.data)
+                }
+            }
+            return d1
+        }
+
+
         if (this.cachedExecutionDetail !== null) {
             const [cachedId, cachedIndex, cachedDetail] = this.cachedExecutionDetail
             if (cachedId === requestOrGroupId && cachedIndex === index) {
-                return cachedDetail
+                return forOutput ? formatForOutput(cachedDetail) : cachedDetail
             }
         }
 
         const detail = await this.callbacks.getResultDetail(requestOrGroupId, index)
         this.cachedExecutionDetail = [requestOrGroupId, index, detail]
-        return detail
+        return forOutput ? formatForOutput(detail) : detail
     }
 
     @action
@@ -1050,7 +1067,7 @@ export class WorkspaceStore {
                 this.fileName,
                 singleRun)
 
-            this.resultEditSessions.delete(requestOrGroupId)
+            this.resultModels.delete(requestOrGroupId)
             this.cachedExecutionDetail = null
             execution.completeExecution(executionResults)
         } catch (e) {
@@ -1184,43 +1201,98 @@ export class WorkspaceStore {
     }
 
     /**
-     * Returns edit session if exists for the specified request/group
+     * Returns edit model if exists for the specified request/group
      * @param requestOrGroupId
      * @param type 
      * @returns 
      */
-    getRequestEditSession(requestOrGroupId: string, type: RequestEditSessionType) {
-        return this.requestEditSessions.get(requestOrGroupId)?.get(type)
-    }
-
-    /**
-     * Returns edit session if exists for the specified request/group and result index
-     * @param requestOrGroupId 
-     * @param resultIndex 
-     * @param type 
-     */
-    getResultEditSession(requestOrGroupId: string, resultIndex: number, type: ResultEditSessionType) {
-        return this.resultEditSessions.get(requestOrGroupId)?.get(resultIndex)?.get(type)
-    }
-
-    /**
-     * Updates editor session values, excluding the active session (because it's already updated there)
-     * @param requestOrGroupId 
-     * @param type 
-     * @param value 
-     * @param activeSssionId 
-     */
-    updateEditorSessionText(requestOrGroupId: string, type: RequestEditSessionType, value: string) {
-        const editSession = this.getRequestEditSession(requestOrGroupId, type)
-        if (editSession) {
-            // editSession.setValue(value)
+    async getRequestEditModel(requestOrGroupId: string, type: RequestEditSessionType, mode: EditorMode): Promise<editor.ITextModel> {
+        const models = this.requestModels.get(requestOrGroupId)
+        if (models) {
+            let model = models.get(type)
+            if (model) {
+                if (model.getLanguageId() === mode) {
+                    return model
+                }
+            }
         }
+
+        let text: string
+        switch (type) {
+            case RequestEditSessionType.Test:
+                let request = await this.getRequest(requestOrGroupId)
+                text = request.test
+                break
+            case RequestEditSessionType.Body:
+                let body = await this.getRequestBody(requestOrGroupId)
+                if (typeof body.data === 'string') {
+                    text = body.data
+                } else {
+                    text = ''
+                }
+                break
+            default:
+                throw new Error(`Invalid edit model type "${type}"`)
+
+        }
+
+        let model = editor.createModel(text, mode)
+        if (models) {
+            models.set(type, model)
+        } else {
+            this.requestModels.set(requestOrGroupId, new Map([[type, model]]))
+        }
+        return model
+    }
+
+    /**
+     * Returns edit model if exists for the specified result
+     * @param requestOrGroupId
+     * @param index
+     * @param type 
+     * @returns 
+     */
+    async getResultEditModel(requestOrGroupId: string, index: number, type: ResultEditSessionType, mode: EditorMode): Promise<editor.ITextModel> {
+        const existingModel = this.resultModels.get(requestOrGroupId)?.get(index)?.get(type)
+        if (existingModel) {
+            return existingModel
+        }
+        
+        let text: string
+        switch (type) {
+            case ResultEditSessionType.Base64:
+                const detail = await this.getExecutionResultDetail(requestOrGroupId, index, false)
+                text = (detail.entityType === 'request' && detail.testContext.response?.body?.type === 'Binary')
+                    ? base64Encode(detail.testContext.response.body.data)
+                    : ''
+                break
+            default:
+                const detail1 = await this.getExecutionResultDetail(requestOrGroupId, index, false)
+                text = (detail1.entityType === 'request' && detail1.testContext.response?.body?.type !== 'Binary')
+                    ? detail1.testContext.response?.body?.text ?? ''
+                    : ''
+                break
+        }
+
+        let model = editor.createModel(text, mode)
+        let requestModels = this.resultModels.get(requestOrGroupId)
+        if (!requestModels) {
+            requestModels = new Map()
+            this.resultModels.set(requestOrGroupId, requestModels)
+        }
+        let entries = requestModels.get(index)
+        if (!entries) {
+            entries = new Map()
+            requestModels.set(index, entries)
+        }
+        entries.set(type, model)
+        return model
     }
 
     @action
     clearAllEditSessions() {
-        this.requestEditSessions.clear()
-        this.resultEditSessions.clear()
+        this.requestModels.clear()
+        this.resultModels.clear()
     }
 
     /**
@@ -1229,32 +1301,7 @@ export class WorkspaceStore {
      */
     @action
     clearResultEditSessions(requestOrGroupId: string) {
-        this.resultEditSessions.delete(requestOrGroupId)
-    }
-
-    @action
-    setRequestEditSession(requestOrGroupId: string, type: RequestEditSessionType, session: EditSession) {
-        const match = this.requestEditSessions.get(requestOrGroupId)
-        if (match) {
-            match.set(type, session)
-        } else {
-            this.requestEditSessions.set(requestOrGroupId, new Map([[type, session]]))
-        }
-    }
-
-    @action
-    setResultEditSession(requestOrGroupId: string, index: number, type: ResultEditSessionType, session: EditSession) {
-        const match = this.resultEditSessions.get(requestOrGroupId)
-        if (match) {
-            const matchIndex = match.get(index)
-            if (matchIndex) {
-                matchIndex.set(type, session)
-            } else {
-                match.set(index, new Map([[type, session]]))
-            }
-        } else {
-            this.resultEditSessions.set(requestOrGroupId, new Map([[index, new Map([[type, session]])]]))
-        }
+        this.resultModels.delete(requestOrGroupId)
     }
 
     public listLogs(): Promise<ReqwestEvent[]> {

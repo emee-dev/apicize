@@ -13,7 +13,7 @@ export function ResponseHeadersViewer(props: { execution: Execution }) {
     const [headers, setHeaders] = useState<[string, string][] | null>(null)
 
     if (!headers) {
-        workspace.getExecutionResultDetail(props.execution.requestOrGroupId, props.execution.resultIndex)
+        workspace.getExecutionResultDetail(props.execution.requestOrGroupId, props.execution.resultIndex, false)
             .then(details => {
                 setHeaders((details.entityType === 'request' && details.testContext.response?.headers)
                     ? Object.entries(details.testContext.response.headers)

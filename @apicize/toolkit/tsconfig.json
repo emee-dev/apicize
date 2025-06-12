@@ -24,6 +24,7 @@
     "useDefineForClassFields": true,
   },
   "exclude": [
+    "bdd.d.ts",
     "./dist/**/*",
     "test",
     "release/build",

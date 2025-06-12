@@ -1,9 +1,8 @@
 import * as path from 'path';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { outputConfig, entryConfig, devServer } from "./env.config.js"
-import webpackNodeExternals from 'webpack-node-externals';
 import { fileURLToPath } from 'url';
-
+import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default (env, options) => {
@@ -17,6 +16,10 @@ export default (env, options) => {
         target: "web",
         module: {
             rules: [
+                {
+                    resourceQuery: /raw/,
+                    type: 'asset/source',
+                },
                 {
                     test: /\.tsx?$/,
                     use: "ts-loader",
@@ -35,6 +38,10 @@ export default (env, options) => {
             publicPath: "",
         },
         plugins: [
+            new MonacoWebpackPlugin({
+                // available options are documented at https://github.com/microsoft/monaco-editor/blob/main/webpack-plugin/README.md#options
+                languages: ['json', 'javascript', 'typescript', 'css', 'xml']
+            }),
             new HtmlWebpackPlugin({
                 template: "./src/index.html",
                 inject: true,

@@ -29,10 +29,12 @@ export class EditableRequestBody extends Editable<Body> {
         this.workspace.updateBody({
             entityType: 'Body',
             id: this.id,
-            body: {
-                type: this.type,
-                data: this.data
-            } as Body
+            body: this.type === BodyType.None
+                ? undefined
+                : {
+                    type: this.type,
+                    data: this.data
+                } as Body
         })
     }
 

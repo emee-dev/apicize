@@ -7,6 +7,7 @@ import { EntityRequest, WorkspaceStore } from "../../contexts/workspace.context"
 import { EditableRequestEntry } from "./editable-request-entry"
 import { RequestDuplex } from "undici-types"
 import { EditableWarnings } from "./editable-warnings"
+import { monaco } from "react-monaco-editor"
 
 export class EditableRequest extends EditableRequestEntry {
     public readonly entityType = EntityType.Request
@@ -28,7 +29,6 @@ export class EditableRequest extends EditableRequestEntry {
     @observable public accessor referrerPolicy: ReferrerPolicy | undefined = undefined
     @observable public accessor duplex: RequestDuplex | undefined = undefined
     @observable accessor warnings = new EditableWarnings()
-
 
     public constructor(entry: BaseRequest, workspace: WorkspaceStore) {
         super(workspace)

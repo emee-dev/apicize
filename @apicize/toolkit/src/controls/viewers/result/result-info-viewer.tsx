@@ -5,14 +5,12 @@ import BlockIcon from '@mui/icons-material/Block'
 import { observer } from "mobx-react-lite"
 import { useClipboard } from "../../../contexts/clipboard.context"
 import { useWorkspace } from "../../../contexts/workspace.context"
-import { ApicizeError, ApicizeTestBehavior, ApicizeTestResult, ApicizeTestScenario, ExecutionResultSuccess, ExecutionResultSummary } from "@apicize/lib-typescript"
-import React, { useState } from "react"
+import { ApicizeError, ApicizeTestBehavior, ExecutionResultSuccess, ExecutionResultSummary } from "@apicize/lib-typescript"
+import React from "react"
 import ViewIcon from "../../../icons/view-icon"
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
-import beautify from "js-beautify"
 import { useApicize } from "../../../contexts/apicize.context"
-import { ExecutionReportJson } from "../../../models/execution-report"
 
 const ApicizeErrorToString = (error?: ApicizeError): string => {
     const sub = (err?: ApicizeError) => err ? `, ${err.description}${ApicizeErrorToString(err.source)}` : ''

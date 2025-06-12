@@ -20,6 +20,8 @@ export class EditableSettings {
     @observable accessor showDiagnosticInfo = false
     @observable accessor reportFormat = ExecutionReportFormat.JSON
 
+    public readonly tabSize = 3
+
     constructor(settings?: ApicizeSettings) {
         if (settings) {
             this.setValues(settings)

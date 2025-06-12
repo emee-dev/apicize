@@ -1,8 +1,8 @@
 export enum EditorMode {
-    js = 'js',
+    js = 'javascript',
     json = 'json',
     xml = 'xml',
     html = 'html',
     css = 'css',
-    txt = 'txt'
+    txt = 'text'
 }

@@ -1,0 +1,14 @@
+/**
+ * Describes something under test (code, entity, etc.)
+ * @param name Name of what is being tested
+ * @param fn Function that includes child "describe" and "it" functions
+ */
+declare function describe(name: string, fn: () => void): void
+
+
+/**
+ * Tests an expected behavior
+ * @param name Name of the behavior being tested
+ * @param fn Function that throws an Error (or fails assertion) upon failure
+ */
+declare function it(name: string, fn: () => void): void

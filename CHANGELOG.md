@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.23.0
+
+* Switch to Monaco editor and use Webpack for build
+
 # 0.22.1
 
 * Restore serialization for default runs and redirects
