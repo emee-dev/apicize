@@ -284,7 +284,6 @@ export class EditableAuthorization extends Editable<Authorization> {
 
     @computed get validationErrors(): { [property: string]: string } | undefined {
         const results: { [property: string]: string } = {}
-        debugger
         if (this.nameInvalid) {
             results.name = 'Name is required'
         }

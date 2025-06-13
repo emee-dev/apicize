@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.23.2
+
+* Restore base64 conversion for detail view of binary data
+
 # 0.23.1
 
 * Disable in-use keyboard shortcuts in monaco editor

@@ -954,7 +954,6 @@ export class WorkspaceStore {
 
         const formatForOutput = (detail: ExecutionResultDetail) => {
             const d1 = structuredClone(detail)
-            delete (d1 as any)['entityType']
             if (d1.entityType === 'request') {
                 if (d1.testContext.request?.body?.type === 'Binary') {
                     //@ts-expect-error
@@ -962,9 +961,10 @@ export class WorkspaceStore {
                 }
                 if (d1.testContext.response?.body?.type === 'Binary') {
                     //@ts-expect-error
-                    d1.testContext.response.body.data = base64Encode(d.testContext.response.body.data)
+                    d1.testContext.response.body.data = base64Encode(d1.testContext.response.body.data)
                 }
             }
+            delete (d1 as any)['entityType']
             return d1
         }
 
