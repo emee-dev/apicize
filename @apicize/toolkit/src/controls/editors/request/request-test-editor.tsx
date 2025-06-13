@@ -103,6 +103,7 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
     }
   }
 
+
   if (!model) {
     workspace.getRequestEditModel(props.request.id, RequestEditSessionType.Test, EditorMode.js)
       .then(m => setModel(m))

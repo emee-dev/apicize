@@ -44,6 +44,7 @@ export const RichViewer = observer((props: {
     }
 
     let text: string
+    let editorLanguage = props.mode
     if (props.beautify === true) {
         switch (props.mode) {
             case EditorMode.js:
@@ -74,7 +75,7 @@ export const RichViewer = observer((props: {
     }
 
     return <MonacoEditor
-        language={props.mode}
+        language={editorLanguage}
         theme={settings.colorScheme === "dark" ? 'vs-dark' : 'vs-light'}
         value={text}
         options={{

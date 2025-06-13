@@ -394,7 +394,10 @@ impl Workspaces {
     pub fn trace_all_workspaces(&self) {
         println!("*** Workspaces ***");
         for (id, info) in &self.workspaces {
-            println!("   ID: {}, Name: {}, Path: {}", id, info.display_name, info.file_name);
+            println!(
+                "   ID: {}, Name: {}, Path: {}",
+                id, info.display_name, info.file_name
+            );
         }
     }
 
@@ -945,6 +948,21 @@ impl Workspaces {
             }
         }
 
+        if result.is_none() {
+            if let Some(selection) = &workspace.defaults.selected_authorization {
+                match workspace.authorizations.get(selection.id.as_str()) {
+                    Some(auth) => {
+                        result = Some(auth.clone());
+                    }
+                    None => {
+                        return Err(ApicizeAppError::InvalidAuthorization(
+                            selection.id.to_owned(),
+                        ))
+                    }
+                }
+            }
+        }
+
         Ok(result)
     }
 
@@ -969,7 +987,7 @@ impl Workspaces {
                             result = Some(ed.clone());
                         }
                         None => {
-                            return Err(ApicizeAppError::InvalidAuthorization(data.id.to_owned()))
+                            return Err(ApicizeAppError::InvalidExternalData(data.id.to_owned()))
                         }
                     }
                 }
@@ -981,6 +999,21 @@ impl Workspaces {
                 }
                 None => {
                     break;
+                }
+            }
+        }
+
+        if result.is_none() {
+            if let Some(selection) = &workspace.defaults.selected_data {
+                match workspace.data.iter().find(|d| d.id == selection.id) {
+                    Some(ed) => {
+                        result = Some(ed.clone());
+                    }
+                    None => {
+                        return Err(ApicizeAppError::InvalidExternalData(
+                            selection.id.to_owned(),
+                        ))
+                    }
                 }
             }
         }

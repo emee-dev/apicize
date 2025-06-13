@@ -1026,12 +1026,6 @@ export class WorkspaceStore {
             this.executions.set(requestOrGroupId, execution)
         }
 
-        let executingSelection = (this.activeSelection
-            && (this.activeSelection.type === EntityType.Request || this.activeSelection.type === EntityType.Group)
-            && (this.activeSelection.id === requestOrGroupId))
-            ? this.activeSelection
-            : null
-
         execution.startExecution()
 
         // Check if PKCE and initialize PKCE flow, queuing request upon completion
@@ -1257,7 +1251,7 @@ export class WorkspaceStore {
         if (existingModel) {
             return existingModel
         }
-        
+
         let text: string
         switch (type) {
             case ResultEditSessionType.Base64:

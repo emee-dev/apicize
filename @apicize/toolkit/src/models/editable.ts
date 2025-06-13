@@ -8,7 +8,6 @@ import { EditableScenario } from "./workspace/editable-scenario"
 import { EditableCertificate } from "./workspace/editable-certificate"
 import { WorkspaceStore } from "../contexts/workspace.context"
 import { EditableDefaults } from "./workspace/editable-defaults"
-import { EditableWarnings } from "./workspace/editable-warnings"
 
 export type EditableEntity = EditableRequest | EditableRequestGroup | EditableScenario | EditableAuthorization
     | EditableCertificate | EditableProxy | EditableDefaults

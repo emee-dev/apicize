@@ -118,7 +118,7 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
             }
         }
 
-        await core.invoke('new_workspace', { sessionId: activeSessionId, openInNewSession: openInNewWindow })
+        await core.invoke('new_workspace', { currentSessionId: activeSessionId, openInNewSession: openInNewWindow })
         feedback.toast('Created New Workbook', ToastSeverity.Success)
     }
 

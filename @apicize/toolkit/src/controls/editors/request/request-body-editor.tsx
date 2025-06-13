@@ -20,7 +20,7 @@ import { RequestEditSessionType } from '../editor-types'
 import { EditableRequestHeaders } from '../../../models/workspace/editable-request-headers'
 import { GenerateIdentifier } from '../../../services/random-identifier-generator'
 import { editor } from 'monaco-editor'
-import MonacoEditor from 'react-monaco-editor'
+import MonacoEditor, { monaco } from 'react-monaco-editor'
 import { useApicize } from '../../../contexts/apicize.context'
 
 export const RequestBodyEditor = observer((props: { body: EditableRequestBody | null, headers: EditableRequestHeaders | null }) => {
@@ -296,7 +296,9 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
                 theme={settings.colorScheme === "dark" ? 'vs-dark' : 'vs-light'}
                 value={typeof bodyInfo.data === 'string' ? bodyInfo.data : ''}
                 onChange={(text: string) => bodyInfo.setBodyData(text)}
-                editorDidMount={(me) => editor.current = me}
+                editorDidMount={(me) => {
+                  editor.current = me
+                }}
                 options={{
                   minimap: { enabled: false },
                   model,

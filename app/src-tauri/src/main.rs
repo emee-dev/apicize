@@ -10,13 +10,11 @@ pub mod trace;
 pub mod workspaces;
 
 use apicize_lib::{
-    editing::indexed_entities::IndexedEntityPosition,
-    oauth2_client_tokens::{
-        clear_all_oauth2_tokens, clear_oauth2_token, store_oauth2_token, CachedTokenInfo,
-        PkceTokenResult,
-    },
-    ApicizeRunner, Authorization, ExecutionReportFormat, ExecutionResultDetail,
-    ExecutionResultSummary, ExecutionStatus, ExternalData, TestRunnerContext, Warnings, Workspace,
+    clear_all_oauth2_tokens_from_cache, clear_oauth2_token_from_cache,
+    editing::indexed_entities::IndexedEntityPosition, store_oauth2_token_in_cache, ApicizeRunner,
+    Authorization, CachedTokenInfo, ExecutionReportFormat, ExecutionResultDetail,
+    ExecutionResultSummary, ExecutionStatus, ExternalData, PkceTokenResult, TestRunnerContext,
+    Warnings, Workspace,
 };
 use dragdrop::DroppedFile;
 use error::ApicizeAppError;
@@ -374,58 +372,39 @@ fn create_workspace(
 
     // Find the existing workspace for the file, if there is one
     let existing_workspace_id = match &open_existing_file_name {
-        Some(file_name) => workspaces
-            .workspaces
-            .iter()
-            .find_map(|(id, info)| if !info.file_name.is_empty() && file_name.eq(&info.file_name) {
+        Some(file_name) => workspaces.workspaces.iter().find_map(|(id, info)| {
+            if !info.file_name.is_empty() && file_name.eq(&info.file_name) {
                 Some(id.clone())
             } else {
                 None
-            }),
+            }
+        }),
         None => None,
     };
 
-    // If the session contains the only instance of the workspace that is open,
-    // flag it to close if we are able to create/open its replacement
-    let mut remove_workspace_id: Option<&str> = None;
-    if !open_in_new_session {
-        if let Some(existing_workspace_id) = &existing_workspace_id {
-            if let Some(session_id) = &current_session_id {
-                let workspace_session_ids =
-                    sessions.get_workspace_session_ids(existing_workspace_id);
-                if workspace_session_ids.len() == 1
-                    && workspace_session_ids.first().unwrap().as_str() == session_id
-                {
-                    remove_workspace_id = Some(existing_workspace_id);
-                }
-            }
-        }
-    }
-
     let workspace_result = match &open_existing_file_name {
         Some(file_name) => {
-            if let (None, Some(existing_workspace_id)) =
-                (remove_workspace_id, &existing_workspace_id)
-            {
+            if let Some(existing_workspace_id) = &existing_workspace_id {
                 Ok(OpenWorkspaceResult {
                     workspace_id: existing_workspace_id.clone(),
-                    display_name: workspaces.workspaces.get(existing_workspace_id).unwrap()
-                        .display_name.clone(),
+                    display_name: workspaces
+                        .workspaces
+                        .get(existing_workspace_id)
+                        .unwrap()
+                        .display_name
+                        .clone(),
                     startup_state: SessionStartupState::default(),
                 })
             } else {
                 match Workspace::open(&PathBuf::from(&file_name)) {
                     Ok(workspace) => {
-                        if let Some(old_workspace_id) = &remove_workspace_id {
-                            workspaces.remove_workspace(old_workspace_id);
-                        }
                         save_recent_file_name = Some(file_name.clone());
                         Ok(workspaces.add_workspace(workspace, file_name, false))
                     }
                     Err(err) => {
                         if create_new_if_error {
                             let mut result = workspaces.add_workspace(Workspace::new()?, "", true);
-                            result.startup_state.error =  Some(format!("{}", err));
+                            result.startup_state.error = Some(format!("{}", err));
                             Ok(result)
                         } else {
                             Err(err)
@@ -477,6 +456,23 @@ fn create_workspace(
         settings.save()?;
         app.emit("update_settings", settings.clone()).unwrap();
     }
+
+    // Remove any workspaces that no longer have active sessions
+    let workspace_ids_to_remove = workspaces
+        .workspaces
+        .keys()
+        .filter_map(|workspace_id| {
+            if sessions.get_workspace_session_ids(workspace_id).is_empty() {
+                Some(workspace_id.clone())
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<String>>();
+
+    workspace_ids_to_remove
+        .into_iter()
+        .for_each(|workspace_id| workspaces.remove_workspace(&workspace_id));
 
     let info1 = workspaces.get_workspace_info(&workspace_result.workspace_id)?;
     dispatch_save_state(&app, sessions, &workspace_result.workspace_id, info1, false);
@@ -733,7 +729,6 @@ fn dispatch_save_state(
 
 #[tauri::command]
 async fn close_workspace(
-    app: AppHandle,
     sessions_state: State<'_, SessionsState>,
     workspaces_state: State<'_, WorkspacesState>,
     session_id: &str,
@@ -744,15 +739,15 @@ async fn close_workspace(
 
     sessions.remove_session(session_id)?;
 
+    let mut workspaces = workspaces_state.workspaces.write().await;
     let editor_count = sessions.get_workspace_session_ids(&workspace_id).len();
     if editor_count == 0 {
-        let mut workspaces = workspaces_state.workspaces.write().await;
         workspaces.remove_workspace(&workspace_id);
     }
 
-    let workspaces = workspaces_state.workspaces.read().await;
-    let info = workspaces.get_workspace_info(&workspace_id)?;
-    dispatch_save_state(&app, &sessions, &workspace_id, info, false);
+    // let workspaces = workspaces_state.workspaces.read().await;
+    // let info = workspaces.get_workspace_info(&workspace_id)?;
+    // dispatch_save_state(&app, &sessions, &workspace_id, info, false);
 
     if !is_release_mode() {
         workspaces.trace_all_workspaces();
@@ -813,7 +808,7 @@ async fn get_workspace_save_status(
 async fn open_settings() -> Result<ApicizeSettings, String> {
     match ApicizeSettings::open() {
         Ok(result) => {
-            clear_all_oauth2_tokens().await;
+            clear_all_oauth2_tokens_from_cache().await;
             Ok(result.data)
         }
         Err(err) => Err(format!("{}", err.error)),
@@ -1000,17 +995,17 @@ async fn generate_report(
 
 #[tauri::command]
 async fn store_token(authorization_id: String, token_info: CachedTokenInfo) {
-    store_oauth2_token(&authorization_id, token_info).await
+    store_oauth2_token_in_cache(&authorization_id, token_info).await
 }
 
 #[tauri::command]
 async fn clear_all_cached_authorizations() -> usize {
-    clear_all_oauth2_tokens().await
+    clear_all_oauth2_tokens_from_cache().await
 }
 
 #[tauri::command]
 async fn clear_cached_authorization(authorization_id: String) -> bool {
-    clear_oauth2_token(authorization_id.as_str()).await
+    clear_oauth2_token_from_cache(authorization_id.as_str()).await
 }
 
 #[tauri::command]

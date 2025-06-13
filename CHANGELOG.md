@@ -1,5 +1,12 @@
 # Change Log
 
+# 0.23.1
+
+* Disable in-use keyboard shortcuts in monaco editor
+* Fix new workspace (open in existing window)
+* Restore PKCE functionality
+* Include HTML editor language
+
 # 0.23.0
 
 * Switch to Monaco editor and use Webpack for build

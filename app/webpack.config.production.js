@@ -47,7 +47,7 @@ export default (env, options) => {
             plugins: [
                 new MonacoWebpackPlugin({
                     // available options are documented at https://github.com/microsoft/monaco-editor/blob/main/webpack-plugin/README.md#options
-                    languages: ['json', 'javascript', 'typescript', 'css', 'xml']
+                    languages: ['json', 'javascript', 'typescript', 'css', 'xml', 'html']
                 }),
                 new CleanWebpackPlugin(),
                 new HtmlWebpackPlugin({

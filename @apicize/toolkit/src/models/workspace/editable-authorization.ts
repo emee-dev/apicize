@@ -256,31 +256,35 @@ export class EditableAuthorization extends Editable<Authorization> {
     }
 
     @computed get headerInvalid() {
-        return ((this.header?.length ?? 0) === 0)
+        return this.type === AuthorizationType.ApiKey && ((this.header?.length ?? 0) === 0)
     }
 
     @computed get valueInvalid() {
-        return ((this.value?.length ?? 0) === 0)
+        return this.type === AuthorizationType.ApiKey && ((this.value?.length ?? 0) === 0)
     }
 
     @computed get usernameInvalid() {
-        return ((this.username?.length ?? 0) === 0)
+        return this.type === AuthorizationType.Basic && ((this.username?.length ?? 0) === 0)
     }
 
     @computed get accessTokenUrlInvalid() {
-        return ! /^(\{\{.+\}\}|https?:\/\/)(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?$/.test(this.accessTokenUrl)
+        return (this.type === AuthorizationType.OAuth2Client || this.type === AuthorizationType.OAuth2Pkce) &&
+            ! /^(\{\{.+\}\}|https?:\/\/)(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?$/.test(this.accessTokenUrl)
     }
 
     @computed get authorizationUrlInvalid() {
-        return ! /^(\{\{.+\}\}|https?:\/\/)(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?$/.test(this.authorizeUrl)
+        return (this.type === AuthorizationType.OAuth2Pkce) &&
+            ! /^(\{\{.+\}\}|https?:\/\/)(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?$/.test(this.authorizeUrl)
     }
 
     @computed get clientIdInvalid() {
-        return ((this.clientId?.length ?? 0) === 0)
+        return (this.type === AuthorizationType.OAuth2Client || this.type === AuthorizationType.OAuth2Pkce) &&
+            ((this.clientId?.length ?? 0) === 0)
     }
 
     @computed get validationErrors(): { [property: string]: string } | undefined {
         const results: { [property: string]: string } = {}
+        debugger
         if (this.nameInvalid) {
             results.name = 'Name is required'
         }

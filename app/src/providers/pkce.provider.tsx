@@ -6,7 +6,8 @@ import { Window } from "@tauri-apps/api/window"
 import { Webview } from "@tauri-apps/api/webview"
 import { EditableAuthorization } from "@apicize/toolkit";
 import { observer } from "mobx-react-lite";
-import { autorun } from "mobx";
+import { autorun, toJS } from "mobx";
+import { AuthorizationType, OAuth2PkceAuthorization } from "@apicize/lib-typescript";
 
 /**
  * Implementation of file opeartions via Tauri
@@ -58,10 +59,12 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
     /**
      * Close any open PKCE windows
      */
-    const closePkceWindows = async (params: OAuthPkceInitParams) =>
-        Promise.all(
-            (await Window.getAll()).filter(w => w.label.startsWith(`apicize-pkce-${params.authorizationId}`)).map(w => w.close())
+    const closePkceWindows = async (params: OAuthPkceInitParams) => {
+        const allWindows = await Window.getAll()
+        return Promise.all(
+            allWindows.filter(w => w.label.startsWith(`apicize-pkce-${params.authorizationId}`)).map(w => w.close())
         )
+    }
 
     /**
      * Launch the PKCE window for the specified PKCE authorization, store information required
@@ -74,10 +77,25 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
                 throw new Error('Invalid authorization ID')
             }
 
-            await closePkceWindows({ authorizationId: auth.id })
+            if (auth.type !== AuthorizationType.OAuth2Pkce) {
+                throw new Error('Authentication must be PKCE')
+            }
+
+            let pkce: OAuth2PkceAuthorization = {
+                id: auth.id,
+                type: auth.type,
+                accessTokenUrl: auth.accessTokenUrl,
+                authorizeUrl: auth.authorizeUrl,
+                audience: auth.audience,
+                scope: auth.scope,
+                clientId: auth.clientId,
+                sendCredentialsInBody: auth.sendCredentialsInBody,
+            }
+
+            await closePkceWindows({ authorizationId: pkce.id })
 
             const info = await core.invoke<OAuthPkceRequest>('generate_authorization_info', {
-                auth,
+                auth: pkce,
                 port: apicize.pkceListenerPort
             })
 

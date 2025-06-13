@@ -1,4 +1,4 @@
-import { TextField, SxProps, Grid, FormControl, InputLabel, MenuItem, Select, ToggleButton, Stack } from '@mui/material'
+import { TextField, SxProps, Grid, FormControl, InputLabel, MenuItem, Select, ToggleButton } from '@mui/material'
 import { GroupExecution } from '@apicize/lib-typescript';
 import { EditableRequestGroup } from '../../../models/workspace/editable-request-group';
 import { observer } from 'mobx-react-lite';
@@ -6,8 +6,6 @@ import { useWorkspace } from '../../../contexts/workspace.context';
 import { ToastSeverity, useFeedback } from '../../../contexts/feedback.context'
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled'
 import { NO_SELECTION_ID } from '../../../models/store';
-import { EditableDefaults } from '../../../models/workspace/editable-defaults';
-import { useState } from 'react';
 
 export const RequestGroupInfoEditor = observer((props: {
     sx?: SxProps,

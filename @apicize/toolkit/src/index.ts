@@ -34,4 +34,32 @@ export { DragDropContext, DragDropProvider, useDragDrop } from './contexts/dragd
 export { FileDragDropContext, FileDragDropStore, useFileDragDrop } from './contexts/file-dragdrop.context'
 export { EditableSettings as ApicizeSettings } from './models/editable-settings'
 
+import { monaco } from 'react-monaco-editor'
 import "./toolkit.css"
+
+monaco.editor.addKeybindingRules([
+    {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+        command: null
+    },
+    {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+        command: null
+    },
+    {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyN,
+        command: null
+    },
+    {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyO,
+        command: null
+    },
+    {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+        command: null
+    },
+    {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS,
+        command: null
+    },
+])
