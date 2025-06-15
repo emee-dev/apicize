@@ -1098,8 +1098,7 @@ async fn refresh_token(
 
 #[tauri::command]
 fn is_release_mode() -> bool {
-    // !cfg!(debug_assertions)
-    false
+    !cfg!(debug_assertions)
 }
 
 /// Retrieve other sessions for the updated workspace

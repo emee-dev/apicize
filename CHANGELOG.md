@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.24.1
+
+* Restore drag/drop on body editor
+* Remove development context menu
+
 # 0.24.0
 
 * Auto-complete in test editor

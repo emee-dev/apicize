@@ -43,6 +43,59 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
   const bodyInfo = props.body
   const headerInfo = props.headers
 
+  useEffect(() => {
+    if (refContainer.current) {
+      const unregisterDragDrop = fileDragDrop.register(refContainer, {
+        onEnter: (_x, _y, _paths) => {
+          setIsDragging(true)
+        },
+        onOver: (_x, _y) => {
+          setIsDragging(true)
+        },
+        onLeave: () => {
+          setIsDragging(false)
+        },
+        onDrop: (file: DroppedFile) => {
+          setIsDragging(false)
+          if (props.body) {
+            switch (file.type) {
+              case 'binary':
+                props.body.setBody({
+                  type: BodyType.Raw,
+                  data: file.data
+                })
+                break
+              case 'text':
+                switch (file.extension) {
+                  case 'json':
+                    props.body.setBody({
+                      type: BodyType.JSON,
+                      data: file.data
+                    })
+                    break
+                  case 'xml':
+                    props.body.setBody({
+                      type: BodyType.XML,
+                      data: file.data
+                    })
+                    break
+                  default:
+                    props.body.setBody({
+                      type: BodyType.Text,
+                      data: file.data
+                    })
+                }
+                break
+            }
+          }
+        }
+      })
+      return (() => {
+        unregisterDragDrop()
+      })
+    }
+  }, [refContainer])
+
   if (!bodyInfo) {
     const workspace = useWorkspace()
     workspace.activeSelection?.initializeBody()
@@ -229,7 +282,6 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
       <Box padding='10px'>{bodyInfo.data ? bodyInfo.data.length.toLocaleString() + ' Bytes' : '(None)'}</Box>
     </Stack>
   }
-
 
   return (
     <Box id='request-body-container' ref={refContainer} position='relative' width='100%' height='100%' paddingTop='0.7em'>
