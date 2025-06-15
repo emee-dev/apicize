@@ -63,3 +63,11 @@ monaco.editor.addKeybindingRules([
         command: null
     },
 ])
+
+// This needs to be here because Monaco is prone to throwing cancellation errors when it goes out of context
+window.addEventListener('unhandledrejection', (evt) => {
+    console.log(`unhandledrejection`, evt?.reason?.stack)
+    if (evt?.reason?.stack?.includes?.('CancellationError@')) {
+        evt.stopImmediatePropagation()
+    }
+})

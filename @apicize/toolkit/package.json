@@ -1,7 +1,7 @@
 {
   "name": "@apicize/toolkit",
   "private": true,
-  "version": "0.23.2",
+  "version": "0.24.0",
   "description": "UI toolkit for Apicize applications",
   "keywords": [],
   "license": "MIT",
@@ -9,14 +9,15 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "css": "cp ./src/toolkit.css ./dist/toolkit.css",
-    "build": "tsc --build && shx cp ./src/toolkit.css ./dist/toolkit.css",
+    "css": "shx cp ./src/toolkit.css ./dist/toolkit.css && shx cp ./src/test-editor.d.ts ./dist/test-editor.d.ts",
+    "build": "tsc --build && npm run css",
     "watch-css": "nodemon --watch src/toolkit.css --exec npm run css",
     "watch": "tsc --watch",
-    "rebuild": "rm -rf dist && rm ./tsconfig.tsbuildinfo && tsc --build && shx cp ./src/toolkit.css ./dist/toolkit.css",
+    "rebuild": "rm -rf dist && rm ./tsconfig.tsbuildinfo && npm run css",
     "typeface-roboto-mono": "^1.1.13"
   },
   "devDependencies": {
+    "@types/chai": "^5.2.2",
     "@types/hast": "^3.0.4",
     "@types/jest": "^29.5.3",
     "@types/js-beautify": "^1.14.3",

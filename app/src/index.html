@@ -12,13 +12,4 @@
     <div id="root"></div>
 </body>
 
-<script>
-    window.addEventListener('unhandledrejection', (evt) => {
-        console.log(`unhandledrejection`, evt?.reason?.stack)
-        if (evt?.reason?.stack?.includes?.('CancellationError@')) {
-            evt.stopImmediatePropagation()
-        }
-    })
-</script>
-
 </html>

@@ -22,7 +22,7 @@ export default (env, options) => {
                     {
                         test: /\.tsx?$/,
                         use: "ts-loader",
-                        exclude: /node_modules/,
+                        exclude: /node_modules|.d\.ts$/,
                     },
                     {
                         test: /\.css$/i,

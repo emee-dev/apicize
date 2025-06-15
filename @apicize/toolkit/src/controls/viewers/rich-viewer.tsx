@@ -50,7 +50,7 @@ export const RichViewer = observer((props: {
             case EditorMode.js:
             case EditorMode.json:
                 text = js_beautify(props.text, {
-                    indent_size: settings.tabSize,
+                    indent_size: settings.editorIndentSize,
                     indent_empty_lines: false,
                     keep_array_indentation: true,
                     max_preserve_newlines: 2,
@@ -59,13 +59,13 @@ export const RichViewer = observer((props: {
                 break
             case EditorMode.html:
                 text = html_beautify(props.text, {
-                    indent_size: settings.tabSize,
+                    indent_size: settings.editorIndentSize,
                     indent_empty_lines: false,
                     max_preserve_newlines: 2,
                 })
                 break
             case EditorMode.css:
-                text = css_beautify(props.text, { indent_size: settings.tabSize })
+                text = css_beautify(props.text, { indent_size: settings.editorIndentSize })
                 break
             default:
                 text = props.text
@@ -81,8 +81,8 @@ export const RichViewer = observer((props: {
         options={{
             minimap: { enabled: false },
             model,
-            detectIndentation: false,
-            tabSize: settings.tabSize,
+            detectIndentation: settings.editorDetectExistingIndent,
+            tabSize: settings.editorIndentSize,
             autoIndent: 'full',
             formatOnType: true,
             formatOnPaste: true,

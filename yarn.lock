@@ -21,7 +21,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@apicize/toolkit@npm:^0.23.2, @apicize/toolkit@workspace:@apicize/toolkit":
+"@apicize/toolkit@npm:^0.24.0, @apicize/toolkit@workspace:@apicize/toolkit":
   version: 0.0.0-use.local
   resolution: "@apicize/toolkit@workspace:@apicize/toolkit"
   dependencies:
@@ -34,6 +34,7 @@ __metadata:
     "@mui/system": "npm:^7.1.0"
     "@mui/x-tree-view": "npm:^8.4.0"
     "@tauri-apps/plugin-opener": "npm:^2.2.7"
+    "@types/chai": "npm:^5.2.2"
     "@types/hast": "npm:^3.0.4"
     "@types/jest": "npm:^29.5.3"
     "@types/js-beautify": "npm:^1.14.3"
@@ -2309,6 +2310,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/chai@npm:^5.2.2":
+  version: 5.2.2
+  resolution: "@types/chai@npm:5.2.2"
+  dependencies:
+    "@types/deep-eql": "npm:*"
+  checksum: 10c0/49282bf0e8246800ebb36f17256f97bd3a8c4fb31f92ad3c0eaa7623518d7e87f1eaad4ad206960fcaf7175854bdff4cb167e4fe96811e0081b4ada83dd533ec
+  languageName: node
+  linkType: hard
+
 "@types/connect-history-api-fallback@npm:^1.5.4":
   version: 1.5.4
   resolution: "@types/connect-history-api-fallback@npm:1.5.4"
@@ -2334,6 +2344,13 @@ __metadata:
   dependencies:
     "@types/ms": "npm:*"
   checksum: 10c0/5dcd465edbb5a7f226e9a5efd1f399c6172407ef5840686b73e3608ce135eeca54ae8037dcd9f16bdb2768ac74925b820a8b9ecc588a58ca09eca6acabe33e2f
+  languageName: node
+  linkType: hard
+
+"@types/deep-eql@npm:*":
+  version: 4.0.2
+  resolution: "@types/deep-eql@npm:4.0.2"
+  checksum: 10c0/bf3f811843117900d7084b9d0c852da9a044d12eb40e6de73b552598a6843c21291a8a381b0532644574beecd5e3491c5ff3a0365ab86b15d59862c025384844
   languageName: node
   linkType: hard
 
@@ -3264,7 +3281,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:app"
   dependencies:
-    "@apicize/toolkit": "npm:^0.23.2"
+    "@apicize/toolkit": "npm:^0.24.0"
     "@dnd-kit/core": "npm:^6.1.0"
     "@fontsource/open-sans": "npm:^5.1.1"
     "@fontsource/roboto-mono": "npm:^5.1.1"

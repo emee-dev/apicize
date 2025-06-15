@@ -354,6 +354,9 @@ fn generate_settings_defaults(app: AppHandle) -> Result<ApicizeSettings, Apicize
         always_hide_nav_tree: false,
         show_diagnostic_info: false,
         report_format: apicize_lib::ExecutionReportFormat::JSON,
+        editor_indent_size: 3,
+        editor_check_js_syntax: true,
+        editor_detect_existing_indent: true,
     })
 }
 

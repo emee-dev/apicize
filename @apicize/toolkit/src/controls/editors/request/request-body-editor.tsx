@@ -152,7 +152,7 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
 
   const bodyTypeMenuItems = () => {
     return BodyTypes.map(bodyType => (
-      <MenuItem key={bodyType} value={bodyType}>{bodyType}</MenuItem>
+      <MenuItem key={bodyType} value={bodyType}>{bodyType === BodyType.Raw ? 'Binary' : bodyType}</MenuItem>
     ))
   }
 
@@ -302,8 +302,8 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
                 options={{
                   minimap: { enabled: false },
                   model,
-                  detectIndentation: false,
-                  tabSize: settings.tabSize,
+                  detectIndentation: settings.editorDetectExistingIndent,
+                  tabSize: settings.editorIndentSize,
                   autoIndent: 'full',
                   formatOnType: true,
                   formatOnPaste: true,

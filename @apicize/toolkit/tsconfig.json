@@ -24,7 +24,8 @@
     "useDefineForClassFields": true,
   },
   "exclude": [
-    "bdd.d.ts",
+    "./src/test-editor.d.ts",
+    "./test-editor.d.ts",
     "./dist/**/*",
     "test",
     "release/build",

@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.24.0
+
+* Auto-complete in test editor
+* Adding settings for some editor configuration
+
 # 0.23.2
 
 * Restore base64 conversion for detail view of binary data

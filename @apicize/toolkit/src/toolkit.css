@@ -630,3 +630,53 @@ code.results-log {
   line-height: 1.3em;
   white-space: pre-wrap;
 }
+
+
+/* .section {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+
+  border-left: 1px default;
+  border-bottom: 1px default;
+  border-right: 1px default;
+  border-radius: 5px;
+}
+
+.section .childrenContainer {
+  padding: 1em;
+}
+
+.section .header {
+  display: flex;
+  flex-direction: row;
+  width: 100% !important;
+}
+
+.section .header .headerBorderBefore {
+  border-top: 1px default;
+  width: 1em;
+  border-top-left-radius: 5px;
+}
+
+.section .header .headerTitle {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.25em;
+  width: fit-content;
+  height: 2em;
+  margin: -1em 0.5em 0em 0.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.section .header .headerBorderAfter {
+  border-top: 1px default;
+  width: 1em;
+  flex-grow: 2;
+  border-top-right-radius: 5px;
+} */

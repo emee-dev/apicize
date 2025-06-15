@@ -50,6 +50,9 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
                 alwaysHideNavTree: apicizeSettings.alwaysHideNavTree,
                 showDiagnosticInfo: apicizeSettings.showDiagnosticInfo,
                 reportFormat: apicizeSettings.reportFormat,
+                editorIndentSize: apicizeSettings.editorIndentSize,
+                editorDetectExistingIndent: apicizeSettings.editorDetectExistingIndent,
+                editorCheckJsSyntax: apicizeSettings.editorCheckJsSyntax,
             }
             await core.invoke<ApicizeSettings>('save_settings', { settings: settingsToSave })
         } catch (e) {

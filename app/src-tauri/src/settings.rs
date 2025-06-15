@@ -26,6 +26,14 @@ fn default_pkce_listener_port() -> u16 {
     8080
 }
 
+fn default_editor_indent_size() -> u8 {
+    4
+}
+
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 /// Color scheme for UI app
@@ -85,6 +93,18 @@ pub struct ApicizeSettings {
     /// Display diagnostic info like IDs
     #[serde(default)]
     pub show_diagnostic_info: bool,
+
+    /// Tab indent
+    #[serde(default = "default_editor_indent_size")]
+    pub editor_indent_size: u8,
+
+    /// Tab indent
+    #[serde(default = "default_true")]
+    pub editor_detect_existing_indent: bool,
+
+    /// Tab indent
+    #[serde(default = "default_true")]
+    pub editor_check_js_syntax: bool,
 }
 
 impl ApicizeSettings {
@@ -170,6 +190,9 @@ impl ApicizeSettings {
                 always_hide_nav_tree: false,
                 show_diagnostic_info: false,
                 report_format: ExecutionReportFormat::JSON,
+                editor_indent_size: 3,
+                editor_check_js_syntax: true,
+                editor_detect_existing_indent: true,
             };
             Ok(SerializationOpenSuccess {
                 file_name: String::from(""),

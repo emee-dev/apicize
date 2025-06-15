@@ -20,7 +20,9 @@ export class EditableSettings {
     @observable accessor showDiagnosticInfo = false
     @observable accessor reportFormat = ExecutionReportFormat.JSON
 
-    public readonly tabSize = 3
+    @observable accessor editorIndentSize = 3
+    @observable accessor editorDetectExistingIndent = true
+    @observable accessor editorCheckJsSyntax = true
 
     constructor(settings?: ApicizeSettings) {
         if (settings) {
@@ -42,6 +44,15 @@ export class EditableSettings {
         this.alwaysHideNavTree = settings.alwaysHideNavTree
         this.showDiagnosticInfo = settings.showDiagnosticInfo
         this.reportFormat = settings.reportFormat
+        this.editorIndentSize = settings.editorIndentSize
+        this.editorDetectExistingIndent = settings.editorDetectExistingIndent
+        this.editorCheckJsSyntax = settings.editorCheckJsSyntax
+    }
+
+    @action
+    public update(settings: ApicizeSettings) {
+        this.setValues(settings)
+        this.dirty = true
     }
 
     @action
@@ -150,7 +161,6 @@ export class EditableSettings {
         this.editorPanels = value
     }
 
-
     @action
     public setShowDiagnosticInfo(value: boolean) {
         this.showDiagnosticInfo = value
@@ -162,9 +172,19 @@ export class EditableSettings {
         this.dirty = true
     }
 
-    @action
-    public update(settings: ApicizeSettings) {
-        this.setValues(settings)
+    @action setEditorIndentSize(value: number) {
+        this.editorIndentSize = value
         this.dirty = true
     }
+
+    @action setEditorDetectExistingIndent(value: boolean) {
+        this.editorDetectExistingIndent = value
+        this.dirty = true
+    }
+
+    @action setEditorCheckJsSyntax(value: boolean) {
+        this.editorCheckJsSyntax = value
+        this.dirty = true
+    }
+
 }

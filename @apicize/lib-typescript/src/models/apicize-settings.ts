@@ -15,4 +15,7 @@ export interface ApicizeSettings {
     alwaysHideNavTree: boolean
     showDiagnosticInfo: boolean
     reportFormat: ExecutionReportFormat
+    editorIndentSize: number
+    editorDetectExistingIndent: boolean
+    editorCheckJsSyntax: boolean
 }
