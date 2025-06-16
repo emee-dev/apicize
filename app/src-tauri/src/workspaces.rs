@@ -392,10 +392,10 @@ pub struct Workspaces {
 
 impl Workspaces {
     pub fn trace_all_workspaces(&self) {
-        println!("*** Workspaces ***");
+        println!("   Workspaces:");
         for (id, info) in &self.workspaces {
             println!(
-                "   ID: {}, Name: {}, Path: {}",
+                "      ID: {}, Name: {}, Path: {}",
                 id, info.display_name, info.file_name
             );
         }

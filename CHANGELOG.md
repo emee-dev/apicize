@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.24.2
+
+* Restore final save warning on close
+
 # 0.24.1
 
 * Restore drag/drop on body editor

@@ -28,9 +28,11 @@ const logStore = new LogStore()
 const workspaceStore = new WorkspaceStore(
   feedbackStore,
   {
-    close: () => core.invoke('close_workspace', {
-      sessionId
-    }),
+    close: () => {
+      return core.invoke('close_workspace', {
+        sessionId
+      })
+    },
     get: (entityType: EntityType, entityId: string) => core.invoke('get', {
       sessionId,
       entityType,
@@ -139,10 +141,6 @@ export default function Home() {
     let unlistenSaveState = w.listen<SessionSaveState>('save_state', (data) => {
       workspaceStore.updateSaveState(data.payload)
     })
-    // Notification sent when a new session/window is opened or existing closed this session's workspace
-    let unlistenEditorCount = w.listen<number>('editor_count', (data) => {
-      workspaceStore.editorCount = data.payload
-    })
     // Notification on record changes (not sent to window/session initiating the update)
     let unlistenUpdate = w.listen<Entity>('update', (data) => {
       workspaceStore.dirty = true
@@ -164,7 +162,6 @@ export default function Home() {
       unlistenNavigation.then(() => { })
       unlistenNavigationEntry.then(() => { })
       unlistenSaveState.then(() => { })
-      unlistenEditorCount.then(() => { })
       unlistenUpdate.then(() => { })
       unlistenExecution.then(() => { })
       unlistenSettingsUpdate.then(() => { })

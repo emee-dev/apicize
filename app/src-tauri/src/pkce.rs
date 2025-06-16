@@ -10,7 +10,10 @@ use actix_web::{
     web::{self, Data, Query},
     App, HttpRequest, HttpResponse, HttpServer, Result,
 };
-use apicize_lib::{oauth2_pkce::{generate_authorization, refresh_token, retrieve_access_token}, PkceTokenResult};
+use apicize_lib::{
+    oauth2_pkce::{generate_authorization, refresh_token, retrieve_access_token},
+    PkceTokenResult,
+};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, Url};
 
@@ -180,7 +183,7 @@ async fn init_pkce_server(
                     format!("Server started at http://127.0.0.1:{}", port).to_string(),
                 )
                 .unwrap();
-            println!("Started PKCE listener at 127.0.0.1:{}", port);
+            println!("*** Started PKCE listener at 127.0.0.1:{} ***", port);
             let running_server = server.run();
             stop_handle.register(running_server.handle());
             running_server.await

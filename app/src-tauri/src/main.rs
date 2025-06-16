@@ -422,6 +422,14 @@ fn create_workspace(
     // clear_all_oauth2_tokens().await;
 
     let info = workspaces.get_workspace_info_mut(&workspace_result.workspace_id)?;
+    let trace_title = format!(
+        "Open (session: {}, workspace: {})",
+        match &current_session_id {
+            Some(id) => id,
+            None => "new",
+        },
+        &info.display_name
+    );
 
     let open_in_session_id = if let (Some(active_session_id), false) =
         (current_session_id.as_ref(), open_in_new_session)
@@ -480,10 +488,9 @@ fn create_workspace(
     let info1 = workspaces.get_workspace_info(&workspace_result.workspace_id)?;
     dispatch_save_state(&app, sessions, &workspace_result.workspace_id, info1, false);
 
-    if !is_release_mode() {
-        workspaces.trace_all_workspaces();
-        sessions.trace_all_sessions();
-    }
+    println!("*** {} ***", trace_title);
+    workspaces.trace_all_workspaces();
+    sessions.trace_all_sessions();
 
     if !open_in_new_session {
         app.emit_to(&open_in_session_id, "initialize", ()).unwrap();
@@ -566,16 +573,12 @@ async fn clone_workspace(
         startup_state,
     });
 
-    if !is_release_mode() {
-        log::trace!(
-            "Cloning workspace {} in session {}",
-            &workspace_id,
-            &active_session_id
-        );
-
-        workspaces.trace_all_workspaces();
-        sessions.trace_all_sessions();
-    }
+    println!(
+        "*** Clone (session: {}, workspace: {}) ***",
+        &session_id, &info.display_name
+    );
+    workspaces.trace_all_workspaces();
+    sessions.trace_all_sessions();
 
     let webview_url = tauri::WebviewUrl::App("index.html".into());
     let mut builder =
@@ -732,6 +735,7 @@ fn dispatch_save_state(
 
 #[tauri::command]
 async fn close_workspace(
+    app: AppHandle,
     sessions_state: State<'_, SessionsState>,
     workspaces_state: State<'_, WorkspacesState>,
     session_id: &str,
@@ -742,17 +746,23 @@ async fn close_workspace(
 
     sessions.remove_session(session_id)?;
 
-    let mut workspaces = workspaces_state.workspaces.write().await;
-    let editor_count = sessions.get_workspace_session_ids(&workspace_id).len();
-    if editor_count == 0 {
-        workspaces.remove_workspace(&workspace_id);
+    let trace_title: String;
+    {
+        let workspaces = workspaces_state.workspaces.read().await;
+        let info = workspaces.get_workspace_info(&workspace_id)?;
+        trace_title = format!(
+            "Close (session: {}, workspace: {})",
+            session_id, &info.display_name
+        );
+        dispatch_save_state(&app, &sessions, &workspace_id, info, false);
     }
-
-    // let workspaces = workspaces_state.workspaces.read().await;
-    // let info = workspaces.get_workspace_info(&workspace_id)?;
-    // dispatch_save_state(&app, &sessions, &workspace_id, info, false);
-
-    if !is_release_mode() {
+    {
+        let mut workspaces = workspaces_state.workspaces.write().await;
+        let editor_count = sessions.get_workspace_session_ids(&workspace_id).len();
+        if editor_count == 0 {
+            workspaces.remove_workspace(&workspace_id);
+        }
+        println!("*** {} *** ", trace_title);
         workspaces.trace_all_workspaces();
         sessions.trace_all_sessions();
     }

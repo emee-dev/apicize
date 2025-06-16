@@ -34,9 +34,9 @@ pub struct Sessions {
 
 impl Sessions {
     pub fn trace_all_sessions(&self) {
-        println!("*** Sessions ***");
+        println!("   Sessions:");
         for (id, info) in &self.sessions {
-            println!("   ID: {}, Workspace: {}", id, info.workspace_id);
+            println!("      ID: {}, Workspace: {}", id, info.workspace_id);
         }
     }
 
@@ -53,7 +53,7 @@ impl Sessions {
     }
 
     pub fn remove_session(&mut self, session_id: &str) -> Result<(), ApicizeAppError> {
-        log::trace!("Removing session {}", &session_id);
+        // log::trace!("Removing session {}", &session_id);
         match self.sessions.remove(session_id) {
             Some(_) => Ok(()),
             None => Err(ApicizeAppError::InvaliedSession(session_id.into())),
