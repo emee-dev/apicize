@@ -1355,6 +1355,29 @@ impl Workspaces {
         }
     }
 
+    /// List authorizations that are stored in the public or private workbook files
+    pub fn list_workbook_authorization_ids(
+        &mut self,
+        workspace_id: &str,
+    ) -> Result<Vec<String>, ApicizeAppError> {
+        let info = self.get_workspace_info(workspace_id)?;
+        let ids = info
+            .navigation
+            .authorizations
+            .public
+            .iter()
+            .map(|auth| auth.id.clone())
+            .chain(
+                info.navigation
+                    .authorizations
+                    .private
+                    .iter()
+                    .map(|auth| auth.id.clone()),
+            )
+            .collect::<Vec<String>>();
+        Ok(ids)
+    }
+
     pub fn get_certificate(
         &self,
         workspace_id: &str,

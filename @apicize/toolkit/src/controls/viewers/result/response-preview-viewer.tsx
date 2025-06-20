@@ -45,7 +45,13 @@ export function ResultResponsePreview(props: { execution: Execution }) {
                         let i = value.indexOf('/')
                         if (i !== -1) {
                             let j = value.indexOf(';')
-                            setExtension(value.substring(i + 1, j == -1 ? undefined : j))
+                            if (value.indexOf('json') !== -1) {
+                                setExtension('json')
+                            } else if (value.indexOf('xml') !== -1) {
+                                setExtension('xml')
+                            } else {
+                                setExtension(value.substring(i + 1, j == -1 ? undefined : j))
+                            }
                         }
                     }
                 }
@@ -69,6 +75,7 @@ export function ResultResponsePreview(props: { execution: Execution }) {
         default:
             switch (extension) {
                 case 'html':
+                case 'xml':
                     text = beautify.html_beautify(body.text, {})
                     break
                 case 'css':

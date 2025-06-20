@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.24.3
+
+* Clear workbook tokens on close
+* Add jp/JsonPath autocomplete to test editor
+* Improve detection of JSON and XML response bodies
+
 # 0.24.2
 
 * Restore final save warning on close

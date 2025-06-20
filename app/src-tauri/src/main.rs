@@ -419,8 +419,6 @@ fn create_workspace(
         None => Ok(workspaces.add_workspace(Workspace::new()?, "", true)),
     }?;
 
-    // clear_all_oauth2_tokens().await;
-
     let info = workspaces.get_workspace_info_mut(&workspace_result.workspace_id)?;
     let trace_title = format!(
         "Open (session: {}, workspace: {})",
@@ -760,6 +758,10 @@ async fn close_workspace(
         let mut workspaces = workspaces_state.workspaces.write().await;
         let editor_count = sessions.get_workspace_session_ids(&workspace_id).len();
         if editor_count == 0 {
+            let workbook_auth_ids = workspaces.list_workbook_authorization_ids(&workspace_id)?;
+            for auth_id in workbook_auth_ids {
+                clear_cached_authorization(auth_id).await;
+            }
             workspaces.remove_workspace(&workspace_id);
         }
         println!("*** {} *** ", trace_title);
