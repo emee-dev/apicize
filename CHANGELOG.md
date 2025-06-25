@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.24.4
+
+* Fix saving of allow invalid certs option
+* Fix names of selected auth, certs, etc. when updated
+
 # 0.24.3
 
 * Clear workbook tokens on close

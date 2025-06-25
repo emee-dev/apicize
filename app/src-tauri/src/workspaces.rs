@@ -103,10 +103,10 @@ pub struct RequestInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u32>,
     /// Keep HTTP connection alive
-    #[serde(default = "bool::default", skip_serializing_if = "std::ops::Not::not")]
+    #[serde(default = "bool::default")]
     pub keep_alive: bool,
     /// Allow invalid certificates (default is false)
-    #[serde(default = "bool::default", skip_serializing_if = "std::ops::Not::not")]
+    #[serde(default = "bool::default")]
     pub accept_invalid_certs: bool,
     /// Number redirects (default = 10)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -214,7 +214,7 @@ impl RequestInfo {
             method: request.method.clone(),
             timeout: request.timeout,
             keep_alive: request.keep_alive,
-            accept_invalid_certs: false,
+            accept_invalid_certs: request.accept_invalid_certs,
             number_of_redirects: None,
             runs: request.runs,
             multi_run_execution: request.multi_run_execution.clone(),
@@ -775,6 +775,7 @@ impl Workspaces {
                 existing_request.method = request.method;
                 existing_request.query_string_params = request.query_string_params;
                 existing_request.timeout = request.timeout;
+                existing_request.accept_invalid_certs = request.accept_invalid_certs;
                 existing_request.keep_alive = request.keep_alive;
                 existing_request.runs = request.runs;
                 existing_request.multi_run_execution = request.multi_run_execution;
@@ -1244,6 +1245,20 @@ impl Workspaces {
                 let result =
                     info.check_parameter_navigation_update(&scenario, EntityType::Scenario);
 
+                for request_entry in info.workspace.requests.entities.values_mut() {
+                    if let Some(s) = request_entry.selected_scenario_as_mut() {
+                        if s.id == id {
+                            s.name = scenario.name.clone();
+                        }
+                    }
+                }
+
+                if let Some(s) = info.workspace.defaults.selected_scenario_as_mut() {
+                    if s.id == id {
+                        s.name = scenario.name.clone();
+                    }
+                }
+
                 info.workspace
                     .scenarios
                     .entities
@@ -1344,6 +1359,21 @@ impl Workspaces {
                 let id = authorization.get_id();
                 let result = info
                     .check_parameter_navigation_update(&authorization, EntityType::Authorization);
+
+                for request_entry in info.workspace.requests.entities.values_mut() {
+                    if let Some(s) = request_entry.selected_authorization_as_mut() {
+                        if s.id == id {
+                            s.name = authorization.get_name().to_string();
+                        }
+                    }
+                }
+
+                if let Some(s) = info.workspace.defaults.selected_authorization_as_mut() {
+                    if s.id == id {
+                        s.name = authorization.get_name().to_string();
+                    }
+                }
+
                 info.workspace
                     .authorizations
                     .entities
@@ -1461,6 +1491,33 @@ impl Workspaces {
                 let id = certificate.get_id();
                 let result =
                     info.check_parameter_navigation_update(&certificate, EntityType::Certificate);
+
+                for request_entry in info.workspace.requests.entities.values_mut() {
+                    if let Some(s) = request_entry.selected_certificate_as_mut() {
+                        if s.id == id {
+                            s.name = certificate.get_name().to_string();
+                        }
+                    }
+                }
+
+                for auth in info.workspace.authorizations.entities.values_mut() {
+                    if let Authorization::OAuth2Client {
+                        selected_certificate: Some(s),
+                        ..
+                    } = auth
+                    {
+                        if s.id == id {
+                            s.name = certificate.get_name().to_string();
+                        }
+                    }
+                }
+
+                if let Some(s) = info.workspace.defaults.selected_certificate_as_mut() {
+                    if s.id == id {
+                        s.name = certificate.get_name().to_string();
+                    }
+                }
+
                 info.workspace
                     .certificates
                     .entities
@@ -1550,6 +1607,33 @@ impl Workspaces {
                 info.dirty = true;
                 let id = proxy.get_id();
                 let result = info.check_parameter_navigation_update(&proxy, EntityType::Proxy);
+
+                for request_entry in info.workspace.requests.entities.values_mut() {
+                    if let Some(s) = request_entry.selected_proxy_as_mut() {
+                        if s.id == id {
+                            s.name = proxy.name.clone();
+                        }
+                    }
+                }
+
+                for auth in info.workspace.authorizations.entities.values_mut() {
+                    if let Authorization::OAuth2Client {
+                        selected_proxy: Some(s),
+                        ..
+                    } = auth
+                    {
+                        if s.id == id {
+                            s.name = proxy.get_name().to_string();
+                        }
+                    }
+                }
+
+                if let Some(s) = info.workspace.defaults.selected_proxy_as_mut() {
+                    if s.id == id {
+                        s.name = proxy.name.clone();
+                    }
+                }
+
                 info.workspace
                     .proxies
                     .entities
@@ -1648,9 +1732,25 @@ impl Workspaces {
         match self.workspaces.get_mut(workspace_id) {
             Some(info) => {
                 info.dirty = true;
+
+                for request_entry in info.workspace.requests.entities.values_mut() {
+                    if let Some(s) = request_entry.selected_data_as_mut() {
+                        if s.id == data.id {
+                            s.name = data.name.clone();
+                        }
+                    }
+                }
+
+                if let Some(s) = info.workspace.defaults.selected_data_as_mut() {
+                    if s.id == data.id {
+                        s.name = data.name.clone();
+                    }
+                }
+
                 if let Some(index) = info.workspace.data.iter().position(|d| d.id == data.id) {
                     let _ = std::mem::replace(&mut info.workspace.data[index], data);
                 }
+
                 Ok(None)
             }
             None => Err(ApicizeAppError::InvalidWorkspace(workspace_id.into())),

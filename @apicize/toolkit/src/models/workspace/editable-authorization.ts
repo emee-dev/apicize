@@ -4,7 +4,7 @@ import {
 } from "@apicize/lib-typescript"
 import { Editable } from "../editable"
 import { action, computed, observable } from "mobx"
-import { NO_SELECTION } from "../store"
+import { NO_SELECTION, NO_SELECTION_ID } from "../store"
 import { EntityType } from "./entity-type"
 import { EntityAuthorization, WorkspaceStore } from "../../contexts/workspace.context"
 
@@ -112,8 +112,8 @@ export class EditableAuthorization extends Editable<Authorization> {
                     sendCredentialsInBody: this.sendCredentialsInBody,
                     scope: this.scope,
                     audience: this.audience,
-                    selectedCertificate: this.selectedCertificate ?? NO_SELECTION,
-                    selectedProxy: this.selectedProxy ?? NO_SELECTION,
+                    selectedCertificate: this.selectedCertificate && this.selectedCertificate.id !== NO_SELECTION_ID ? this.selectedCertificate : undefined,
+                    selectedProxy: this.selectedProxy && this.selectedProxy.id !== NO_SELECTION_ID ? this.selectedProxy : undefined,
                     validationErrors: this.validationErrors,
                 }
                 break
@@ -200,13 +200,13 @@ export class EditableAuthorization extends Editable<Authorization> {
 
     @action
     setSelectedCertificate(selection: Selection | undefined) {
-        this.selectedCertificate = selection
+        this.selectedCertificate = selection && selection.id != NO_SELECTION_ID ? selection : undefined
         this.onUpdate()
     }
 
     @action
     setSelectedProxy(selection: Selection | undefined) {
-        this.selectedProxy = selection
+        this.selectedProxy = selection && selection.id != NO_SELECTION_ID ? selection : undefined
         this.onUpdate()
     }
 
@@ -241,8 +241,8 @@ export class EditableAuthorization extends Editable<Authorization> {
                 this.audience = updatedItem.audience
                 this.scope = updatedItem.scope
                 this.sendCredentialsInBody = updatedItem.sendCredentialsInBody ?? true
-                this.selectedCertificate = updatedItem.selectedCertificate
-                this.selectedProxy = updatedItem.selectedProxy
+                this.selectedCertificate = updatedItem.selectedCertificate ?? NO_SELECTION
+                this.selectedProxy = updatedItem.selectedProxy ?? NO_SELECTION
                 break
             case AuthorizationType.OAuth2Pkce:
                 this.authorizeUrl = updatedItem.authorizeUrl

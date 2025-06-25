@@ -287,7 +287,7 @@ checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 
 [[package]]
 name = "apicize"
-version = "0.24.3"
+version = "0.24.4"
 dependencies = [
  "actix-web",
  "apicize_lib",
@@ -319,9 +319,9 @@ dependencies = [
 
 [[package]]
 name = "apicize_lib"
-version = "0.24.4"
+version = "0.24.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e45b04a383e939d7d1344d36c599f8e470134546686ed34abe0bb3543207d7d"
+checksum = "bd5d3108e5ab0eeb53d93a7f94bf18aeb860ec1b3462d5555ebfea92b80c5b6d"
 dependencies = [
  "async-recursion",
  "async-trait",
@@ -4005,9 +4005,9 @@ checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
 
 [[package]]
 name = "prettyplease"
-version = "0.2.33"
+version = "0.2.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9dee91521343f4c5c6a63edd65e54f31f5c92fe8978c40a4282f8372194c6a7d"
+checksum = "6837b9e10d61f45f987d50808f83d1ee3d206c66acf650c3e4ae2e1f6ddedf55"
 dependencies = [
  "proc-macro2",
  "syn 2.0.101",
@@ -4196,9 +4196,9 @@ dependencies = [
 
 [[package]]
 name = "quinn-udp"
-version = "0.5.12"
+version = "0.5.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee4e529991f949c5e25755532370b8af5d114acae52326361d68d47af64aa842"
+checksum = "fcebb1209ee276352ef14ff8732e24cc2b02bbac986cd74a4c81bcb2f9881970"
 dependencies = [
  "cfg_aliases",
  "libc",
@@ -4686,9 +4686,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.27"
+version = "0.23.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "730944ca083c1c233a75c09f199e973ca499344a2b7ba9e755c457e86fb4a321"
+checksum = "7160e3e10bf4535308537f3c4e1641468cd0e485175d6163087c0393c7d46643"
 dependencies = [
  "once_cell",
  "ring",
@@ -6526,9 +6526,9 @@ dependencies = [
 
 [[package]]
 name = "webpki-roots"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2853738d1cc4f2da3a225c18ec6c3721abb31961096e9dbf5ab35fa88b19cfdb"
+checksum = "8782dd5a41a24eed3a4f40b606249b3e236ca61adf1f25ea4d45c73de122b502"
 dependencies = [
  "rustls-pki-types",
 ]

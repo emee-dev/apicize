@@ -121,7 +121,7 @@ export const AuthorizationOAuth2ClientEditor = observer((props: { authorization:
                                 ? undefined
                                 : selectionId == NO_SELECTION_ID
                                     ? NO_SELECTION
-                                    : parameters.authorizations.find(a => a.id === selectionId)
+                                    : parameters.certificates.find(a => a.id === selectionId)
                         )
                     }}
                     size='small'

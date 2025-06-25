@@ -33,6 +33,8 @@ export class EditableRequest extends EditableRequestEntry {
     public constructor(entry: BaseRequest, workspace: WorkspaceStore) {
         super(workspace)
 
+        console.log(`Creating request`, entry)
+
         this.id = entry.id
         this.name = entry.name ?? ''
 
@@ -50,6 +52,7 @@ export class EditableRequest extends EditableRequestEntry {
         this.url = entry.url ?? ''
         this.method = entry.method ?? Method.Get
         this.timeout = entry.timeout ?? 30000
+        this.acceptInvalidCerts = entry.acceptInvalidCerts
         this.keepAlive = entry.keepAlive
         // this.headers = entry.headers?.map(h => ({
         //     id: GenerateIdentifier(),
@@ -197,6 +200,7 @@ export class EditableRequest extends EditableRequestEntry {
         this.method = entity.method
         this.timeout = entity.timeout
         this.keepAlive = entity.keepAlive
+        this.acceptInvalidCerts = entity.acceptInvalidCerts
         this.mode = entity.mode
         this.runs = entity.runs
         this.multiRunExecution = entity.multiRunExecution
