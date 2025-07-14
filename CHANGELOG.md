@@ -1,6 +1,6 @@
 # Change Log
 
-# 0.25.1
+# 0.25.0
 
 * Allow specifying format type when copying execution information to clipboard
 * Moved settings saving poll to main panel
