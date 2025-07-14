@@ -260,6 +260,12 @@ pre,
   font-family: "Roboto Mono", Monospace !important;
 }
 
+.tag {
+  word-break: break-all !important;
+  font-family: "Roboto Mono", Monospace !important;
+  display: inline
+}
+
 .console {
   bottom: 0;
   overflow: auto;
@@ -574,6 +580,10 @@ pre.log {
 .results-test-timing {
   margin-top: 0.2rem;
   font-size: 0.8rem;
+}
+
+.results-test-timing > div:nth-child(2) {
+  margin-top: 0.25rem;
 }
 
 .test-result {

@@ -13,6 +13,8 @@ export interface ExecutionResultSummary {
     name: string
     executedAt: number
     duration: number
+    method?: string
+    url?: string
     status?: number
     statusText: string
     hasResponseHeaders: boolean

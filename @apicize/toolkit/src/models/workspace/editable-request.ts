@@ -33,8 +33,6 @@ export class EditableRequest extends EditableRequestEntry {
     public constructor(entry: BaseRequest, workspace: WorkspaceStore) {
         super(workspace)
 
-        console.log(`Creating request`, entry)
-
         this.id = entry.id
         this.name = entry.name ?? ''
 

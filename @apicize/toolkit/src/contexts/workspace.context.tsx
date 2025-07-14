@@ -304,14 +304,16 @@ export class WorkspaceStore {
         }
 
         if (forceRequestRefresh) {
-            // If we are looking at a request and have externally updated data, refresh the request
-            // in case the data referred to is now invalid 
-            switch (this.activeSelection?.type) {
-                case EntityType.Request:
-                case EntityType.Group:
-                case EntityType.RequestEntry:
-                    this.changeActive(this.activeSelection.type, this.activeSelection.id)
-                    break
+            if (this.mode === WorkspaceMode.Normal) {
+                // If we are looking at a request and have externally updated data, refresh the request
+                // in case the data referred to is now invalid 
+                switch (this.activeSelection?.type) {
+                    case EntityType.Request:
+                    case EntityType.Group:
+                    case EntityType.RequestEntry:
+                        this.changeActive(this.activeSelection.type, this.activeSelection.id)
+                        break
+                }
             }
         }
     }

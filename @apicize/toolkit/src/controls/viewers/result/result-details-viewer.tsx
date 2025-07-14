@@ -12,7 +12,6 @@ import { useWorkspace } from "../../../contexts/workspace.context"
 import { useFeedback } from "../../../contexts/feedback.context"
 import { useState } from "react"
 import { Execution } from "../../../models/workspace/execution"
-import { base64Encode } from "../../../services/base64"
 
 export const ResultDetailsViewer = observer((props: { execution: Execution }) => {
 

@@ -225,6 +225,7 @@ export interface ApicizeTestScenario {
 export interface ApicizeTestBehavior {
     type: 'Behavior'
     name: string
+    tag?: string,
     success: boolean,
     error?: string
     logs?: string[]

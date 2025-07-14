@@ -1,4 +1,5 @@
 export enum ExecutionReportFormat {
     JSON = 'JSON',
-    CSV = 'CSV'
+    CSV = 'CSV',
+    ZEPHYR = 'ZEPHYR',
 }

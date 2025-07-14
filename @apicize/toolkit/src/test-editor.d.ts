@@ -15,6 +15,12 @@ declare function describe(name: string, fn: () => void): void
 declare function it(name: string, fn: () => void): void
 
 /**
+ * Define an associative tag that can be used to link to test cases, documentation, etc.
+ * @param name Name of the tag
+ */
+declare function tag(name: string): void
+
+/**
  * Makes the specified value available to subsequent requests
  * @param name Name of the value
  * @param value JSON serializable value

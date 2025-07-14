@@ -1,16 +1,17 @@
-import { Box, Grid, IconButton, Link, Stack, SvgIcon, useTheme } from "@mui/material"
+import { Box, Grid, IconButton, Link, Menu, MenuItem, Stack, SvgIcon, useTheme } from "@mui/material"
 import { Typography } from "@mui/material"
 import CheckIcon from '@mui/icons-material/Check'
 import BlockIcon from '@mui/icons-material/Block'
 import { observer } from "mobx-react-lite"
 import { useClipboard } from "../../../contexts/clipboard.context"
 import { useWorkspace } from "../../../contexts/workspace.context"
-import { ApicizeError, ApicizeTestBehavior, ExecutionResultSuccess, ExecutionResultSummary } from "@apicize/lib-typescript"
-import React from "react"
+import { ApicizeError, ApicizeTestBehavior, ExecutionReportFormat, ExecutionResultSuccess, ExecutionResultSummary } from "@apicize/lib-typescript"
+import React, { useRef, useState } from "react"
 import ViewIcon from "../../../icons/view-icon"
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
 import { useApicize } from "../../../contexts/apicize.context"
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 
 const ApicizeErrorToString = (error?: ApicizeError): string => {
     const sub = (err?: ApicizeError) => err ? `, ${err.description}${ApicizeErrorToString(err.source)}` : ''
@@ -54,12 +55,99 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
         return `${m.toLocaleString().padStart(2, '0')}:${s.toString().padStart(2, '0')}${(0.1).toLocaleString()[1]}${value.toString().padEnd(3, '0')}`
     }
 
-    const RenderExecution = (props: { childResult: ExecutionResultSummary, depth: number }) => {
+    const CopyDataButton = ({ parentKey: key, requestOrGroupId, index }: { parentKey: string, requestOrGroupId: string, index: number }) => {
+        const [formatMenu, setFormatMenu] = useState<{
+            open: boolean
+            anchorEl: null | HTMLElement
+        }>({
+            open: false,
+            anchorEl: null
+        })
+
+        const handleFormatMenuClick = ({ currentTarget }: { currentTarget: HTMLElement }) => {
+            setFormatMenu({ open: true, anchorEl: currentTarget });
+        }
+
+        const handleFormatMenuClose = () => {
+            setFormatMenu((prevState) => ({ ...prevState, open: false }));
+        }
+
+        return <>
+            <IconButton
+                title={`Copy Data to Clipboard (${apicize.reportFormat})`}
+                color='primary'
+                onClick={e => copyToClipboard(e, requestOrGroupId, index)}>
+                <ContentCopyIcon />
+            </IconButton>
+
+            <IconButton
+                id={`${key}-copy`}
+                title={`Copy Data to Clipboard (Select Format)`}
+                size="large"
+                sx={{ padding: '0 0.75em 0 0.75em', minWidth: '1em', width: '1em', marginLeft: '-0.3em', alignSelf: 'begin', alignItems: 'end' }}
+                onClick={handleFormatMenuClick}
+            ><KeyboardArrowDownIcon />
+            </IconButton>
+            <Menu
+                id="copy-format-options"
+                autoFocus
+                className="drop-down-menu"
+                anchorEl={formatMenu.anchorEl}
+                open={formatMenu.open}
+                onClose={handleFormatMenuClose}
+            >
+                <MenuItem autoFocus={apicize.reportFormat == ExecutionReportFormat.JSON} key='report-format-json' disableRipple onClick={e => {
+                    copyToClipboard(e, requestOrGroupId, index, ExecutionReportFormat.JSON)
+                    apicize.setReportFormat(ExecutionReportFormat.JSON)
+                    handleFormatMenuClose()
+                }}>
+                    <Box display='flex' alignContent='center'>
+                        Apicize JSON Format
+                        {
+                            apicize.reportFormat === ExecutionReportFormat.JSON
+                                ? <CheckIcon sx={{ marginLeft: '0.5em' }} />
+                                : null
+                        }
+                    </Box>
+                </MenuItem>
+                <MenuItem autoFocus={apicize.reportFormat == ExecutionReportFormat.CSV} key='report-format-csv' disableRipple onClick={e => {
+                    copyToClipboard(e, requestOrGroupId, index, ExecutionReportFormat.CSV)
+                    apicize.setReportFormat(ExecutionReportFormat.CSV)
+                    handleFormatMenuClose()
+                }}>
+                    <Box display='flex' alignContent='center'>
+                        Apicize CSV Format
+                        {
+                            apicize.reportFormat === ExecutionReportFormat.CSV
+                                ? <CheckIcon sx={{ marginLeft: '0.5em' }} />
+                                : null
+                        }
+                    </Box>
+                </MenuItem>
+                <MenuItem autoFocus={apicize.reportFormat == ExecutionReportFormat.CSV} key='report-format-zephyr' disableRipple onClick={e => {
+                    copyToClipboard(e, requestOrGroupId, index, ExecutionReportFormat.ZEPHYR)
+                    apicize.setReportFormat(ExecutionReportFormat.ZEPHYR)
+                    handleFormatMenuClose()
+                }}>
+                    <Box display='flex' alignContent='center'>
+                        Simplified Zephyr Format
+                        {
+                            apicize.reportFormat === ExecutionReportFormat.ZEPHYR
+                                ? <CheckIcon sx={{ marginLeft: '0.5em' }} />
+                                : null
+                        }
+                    </Box>
+                </MenuItem>
+            </Menu>
+        </>
+    }
+
+    const RenderExecution = ({ childResult, depth }: { childResult: ExecutionResultSummary, depth: number }) => {
         // const rowSuffix = props.result.info.rowNumber && props.result.info.rowCount ? ` Row ${props.result.info.rowNumber} of ${props.result.info.rowCount}` : ''
         let subtitle: string
         let color: string
 
-        switch (props.childResult.success) {
+        switch (childResult.success) {
             case ExecutionResultSuccess.Error:
                 subtitle = 'Error'
                 color = theme.palette.error.main
@@ -74,7 +162,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                 break
         }
 
-        const isFirst = props.depth === 0
+        const isFirst = depth === 0
         const key = isFirst ? 'first-result' : `result-${idx++}`
 
         return <Box key={key} className='results-test-section'>
@@ -83,51 +171,58 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                     <Grid display='flex' flexDirection='column' alignItems='start' alignContent='center' flexGrow='content'>
                         <Box display='flex'>
                             <Box sx={{ whiteSpace: 'nowrap' }} className='results-test-name'>
-                                {props.childResult.name}
+                                {childResult.name}
                                 <Box component='span' marginLeft='1rem' marginRight='0.5rem' sx={{ color }}> ({subtitle}) </Box>
                             </Box>
                         </Box>
-                        <Box display='flex' alignContent='start' marginLeft='1.5rem' className='results-test-timing'>
-                            {props.childResult.executedAt > 0 ? `@${fmtMinSec(props.childResult.executedAt)}` : '@Start'}{props.childResult.duration > 0 ? ` for ${props.childResult.duration.toLocaleString()} ms` : ''}
+                        <Box display='block' alignContent='start' marginLeft='1.5rem' className='results-test-timing'>
+                            <Box>
+                                {childResult.executedAt > 0 ? `@${fmtMinSec(childResult.executedAt)}` : '@Start'}{childResult.duration > 0 ? ` for ${childResult.duration.toLocaleString()} ms` : ''}
+                            </Box>
+                            {
+                                childResult.url
+                                    ? (<Box>{`${childResult.method ? `[${childResult.method}] ` : ''}${childResult.url}`}</Box>)
+                                    : (null)
+                            }
+                            {
+                                childResult.status
+                                    ? (<Box>{`Status: ${childResult.status} ${childResult.statusText}`}</Box>)
+                                    : (null)
+                            }
+
                         </Box>
                     </Grid>
                     <Grid display='flex' flexBasis='content' alignItems='center' alignContent='start' marginLeft='1.0rem'>
-                        <IconButton
-                            title="Copy Data to Clipboard"
-                            color='primary'
-                            onClick={e => copyToClipboard(e, props.childResult.index)}>
-                            <ContentCopyIcon />
-                        </IconButton>
+                        <CopyDataButton parentKey={key} requestOrGroupId={requestOrGroupId} index={childResult.index} />
                         {
                             isFirst
                                 ? <></>
-                                : <Link title='View Details' underline='hover' display='inline-flex' marginLeft='0.5rem' alignItems='center' onClick={e => changeResult(e, props.childResult.index)}><SvgIcon><ViewIcon /></SvgIcon></Link>
+                                : <Link title='View Details' underline='hover' display='inline-flex' marginLeft='0.5rem' alignItems='center' onClick={e => changeResult(e, childResult.index)}><SvgIcon><ViewIcon /></SvgIcon></Link>
                         }
                     </Grid>
                 </Grid >
             }
-            {(props.childResult.error)
-                ? (<TestInfo isError={true} text={`${ApicizeErrorToString(props.childResult.error)}`} />)
-                : (<></>)}
+            <Box margin='0.5rem 0 0.5rem 1.5rem'>
+                {
+                    childResult.error
+                        ? (<TestInfo isError={true} text={`${ApicizeErrorToString(childResult.error)}`} />)
+                        : (null)
+                }
+            </Box>
             {
-                props.childResult.status
-                    ? (<TestInfo text={`Status: ${props.childResult.status} ${props.childResult.statusText}`} />)
-                    : (<></>)
-            }
-            {
-                (props.childResult.testResults && props.childResult.testResults.length > 0)
+                (childResult.testResults && childResult.testResults.length > 0)
                     ? <Box className='test-details'>
                         {
-                            props.childResult.testResults.map(testResult => <TestBehavior behavior={testResult} key={`result-${idx++}`} />)
+                            childResult.testResults.map(testResult => <TestBehavior behavior={testResult} key={`result-${idx++}`} />)
                         }
                     </Box>
-                    : (<></>)
+                    : (null)
             }
             {
-                (props.childResult.childIndexes ?? []).map(childIndex => {
+                (childResult.childIndexes ?? []).map(childIndex => {
                     const child = summaries.get(childIndex)
                     const childKey = `result-${idx++}`
-                    return child ? <RenderExecution key={childKey} childResult={child} depth={props.depth + 1} /> : null
+                    return child ? <RenderExecution key={childKey} childResult={child} depth={depth + 1} /> : null
                 })
             }
         </Box>
@@ -141,7 +236,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
 
     const TestInfo = (props: { isError?: boolean, text: string }) => {
         const key = `result-${idx++}`
-        return <Box key={key} margin='0.5rem 0 0.5rem 1.5rem'>
+        return <Box key={key}>
             {
                 props.isError === true
                     ? (<Box color='#f44336' sx={{ ":first-letter": { textTransform: 'capitalize' }, whiteSpace: 'pre-wrap' }} >{props.text}</Box>)
@@ -167,7 +262,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                     </Box>
                     <Stack direction='column' key={`result-${idx++}`} className='test-result-detail'>
                         <Box key={`result-${idx++}`}>
-                            {behavior.name}
+                            {behavior.name} {behavior.tag ? <Typography className='tag'>[{behavior.tag}]</Typography> : null}
                         </Box>
                         <Box className='test-result-detail-info'>
                             {
@@ -196,7 +291,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                     </Box>
                     <Box key={`result-${idx++}`}>
                         <Typography sx={{ marginTop: 0, marginBottom: 0, paddingTop: 0 }} component='div' key={`result-${idx++}`}>
-                            {behavior.name}
+                            {behavior.name} {behavior.tag ? <Typography className='tag'>[{behavior.tag}]</Typography> : null}
                         </Typography>
                     </Box>
                 </Stack>
@@ -240,16 +335,20 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
 
     }
 
-    const copyToClipboard = (e: React.MouseEvent, index: number) => {
+    const copyToClipboard = (e: React.MouseEvent, requestOrGroupId: string, index: number, format?: ExecutionReportFormat) => {
         try {
             e.preventDefault()
             e.stopPropagation()
 
-            workspace.generateReport(props.requestOrGroupId, props.resultIndex, apicize.reportFormat)
+            if (!format) {
+                format = apicize.reportFormat
+            }
+
+            workspace.generateReport(requestOrGroupId, index, format)
                 .then(results => {
                     clipboardCtx.writeTextToClipboard(results)
                         .then(() =>
-                            feedback.toast('Data copied to clipboard', ToastSeverity.Success)
+                            feedback.toast(`Data copied to clipboard (${format})`, ToastSeverity.Success)
                         )
                         .catch(e => feedback.toastError(e))
                 })

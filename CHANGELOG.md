@@ -1,5 +1,18 @@
 # Change Log
 
+# 0.25.1
+
+* Allow specifying format type when copying execution information to clipboard
+* Moved settings saving poll to main panel
+
+
+# 0.25.0
+
+* Add "tag" test function to store tag with executed tests
+* Include URL and tag in execution results
+* Fix panel swap on adding new data source
+
+
 # 0.24.4
 
 * Fix saving of allow invalid certs option

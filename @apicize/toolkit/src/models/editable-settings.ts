@@ -3,7 +3,7 @@ import { SupportedColorScheme } from '@mui/material';
 import { action, observable } from 'mobx';
 
 export class EditableSettings {
-    @observable accessor dirty = false
+    @observable accessor pendingChangeCtr = 0
 
     @observable accessor appName = 'Apicize'
     @observable accessor appVersion = ''
@@ -52,7 +52,7 @@ export class EditableSettings {
     @action
     public update(settings: ApicizeSettings) {
         this.setValues(settings)
-        this.dirty = true
+        this.pendingChangeCtr++
     }
 
     @action
@@ -67,15 +67,15 @@ export class EditableSettings {
 
 
     @action
-    public setDirty(value: boolean) {
-        this.dirty = value
+    public clearPendingChanges() {
+        this.pendingChangeCtr = 0
     }
 
     @action
     public setWorkbookDirectory(newDirectory: string) {
         if (this.workbookDirectory !== newDirectory) {
             this.workbookDirectory = newDirectory
-            this.dirty = true
+            this.pendingChangeCtr++
         }
     }
 
@@ -83,7 +83,7 @@ export class EditableSettings {
     public setLastWorkbookFileName(newLastWorkbookFileName: string | undefined) {
         if (this.lastWorkbookFileName != newLastWorkbookFileName) {
             this.lastWorkbookFileName = newLastWorkbookFileName
-            this.dirty = true
+            this.pendingChangeCtr++
         }
     }
 
@@ -91,7 +91,7 @@ export class EditableSettings {
     public setRecentWorkbookFileNames(newRecentWorkbookFileNames: string[]) {
         if (this.recentWorkbookFileNames.join(';') != newRecentWorkbookFileNames.join(';')) {
             this.recentWorkbookFileNames = newRecentWorkbookFileNames.slice(0, 10)
-            this.dirty = true
+            this.pendingChangeCtr++
         }
     }
 
@@ -99,14 +99,14 @@ export class EditableSettings {
     public setPkceListenerPort(value: number) {
         if (this.pkceListenerPort !== value) {
             this.pkceListenerPort = value
-            this.dirty = true
+            this.pendingChangeCtr++
         }
     }
 
     @action setAlwaysHideNavTree(value: boolean) {
         if (this.alwaysHideNavTree !== value) {
             this.alwaysHideNavTree = value
-            this.dirty = true
+            this.pendingChangeCtr++
         }
     }
 
@@ -118,7 +118,7 @@ export class EditableSettings {
                 this.recentWorkbookFileNames.splice(i, 1)
             }
             this.recentWorkbookFileNames = [fileName, ...this.recentWorkbookFileNames.slice(0, 10)]
-            this.dirty = true
+            this.pendingChangeCtr++
         }
     }
 
@@ -136,7 +136,7 @@ export class EditableSettings {
     public setFontSize(newFontSize: number) {
         if (this.fontSize != newFontSize) {
             this.fontSize = newFontSize
-            this.dirty = true
+            this.pendingChangeCtr++
         }
     }
 
@@ -144,7 +144,7 @@ export class EditableSettings {
     public setNavigationFontSize(newFontSize: number) {
         if (this.navigationFontSize != newFontSize) {
             this.navigationFontSize = newFontSize
-            this.dirty = true
+            this.pendingChangeCtr++
         }
     }
 
@@ -152,7 +152,7 @@ export class EditableSettings {
     public setColorScheme(newColorScheme: SupportedColorScheme) {
         if (this.colorScheme != newColorScheme) {
             this.colorScheme = newColorScheme
-            this.dirty = false
+            this.pendingChangeCtr++
         }
     }
 
@@ -164,27 +164,26 @@ export class EditableSettings {
     @action
     public setShowDiagnosticInfo(value: boolean) {
         this.showDiagnosticInfo = value
-        this.dirty = true
+        this.pendingChangeCtr++
     }
 
     @action setReportFormat(value: ExecutionReportFormat) {
         this.reportFormat = value
-        this.dirty = true
+        this.pendingChangeCtr++
     }
 
     @action setEditorIndentSize(value: number) {
         this.editorIndentSize = value
-        this.dirty = true
+        this.pendingChangeCtr++
     }
 
     @action setEditorDetectExistingIndent(value: boolean) {
         this.editorDetectExistingIndent = value
-        this.dirty = true
+        this.pendingChangeCtr++
     }
 
     @action setEditorCheckJsSyntax(value: boolean) {
         this.editorCheckJsSyntax = value
-        this.dirty = true
+        this.pendingChangeCtr++
     }
-
 }

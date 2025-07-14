@@ -1,4 +1,4 @@
-import { Stack, SxProps, InputLabel, MenuItem, Select, Box, SupportedColorScheme, Alert, Button, TextField, SvgIcon, IconButton, FormControlLabel, RadioGroup, Radio, Checkbox } from '@mui/material'
+import { Stack, SxProps, InputLabel, MenuItem, Select, Box, SupportedColorScheme, Button, TextField, SvgIcon, IconButton, FormControlLabel, RadioGroup, Radio } from '@mui/material'
 import { observer } from 'mobx-react-lite';
 import { useWorkspace } from '../../contexts/workspace.context';
 import { useFileOperations } from '../../contexts/file-operations.context';
@@ -19,71 +19,6 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
 
     workspace.nextHelpTopic = 'settings'
 
-    let saveCtr = 0
-    const checkSave = (ctr: number) => {
-        // Only save if the save ctr hasn't changed in the specified interval
-        setTimeout(async () => {
-            if (saveCtr === ctr) {
-                try {
-                    saveCtr = 0
-                    await fileOps.saveSettings()
-                } catch (e) {
-                    feedback.toast(`Unable to save Settings - ${e}`, ToastSeverity.Error)
-                }
-            }
-        }, 500)
-    }
-
-    const setFontSize = (size: number) => {
-        apicize.setFontSize(size)
-        checkSave(++saveCtr)
-    }
-
-    const setNavigationFontSize = (size: number) => {
-        apicize.setNavigationFontSize(size)
-        checkSave(++saveCtr)
-    }
-
-    const setScheme = (scheme: SupportedColorScheme) => {
-        apicize.setColorScheme(scheme)
-        checkSave(++saveCtr)
-    }
-
-    const setPkceListenerPort = (port: number) => {
-        apicize.setPkceListenerPort(port)
-        checkSave(++saveCtr)
-    }
-
-    const setAlwaysHideNavTree = (value: boolean) => {
-        apicize.setAlwaysHideNavTree(value)
-        checkSave(++saveCtr)
-    }
-
-    const setShowDiagnosticInfo = (value: boolean) => {
-        apicize.setShowDiagnosticInfo(value)
-        checkSave(++saveCtr)
-    }
-
-    const setReportFormat = (value: ExecutionReportFormat) => {
-        apicize.setReportFormat(value)
-        checkSave(++saveCtr)
-    }
-
-    const setEditorIndentSize = (value: number) => {
-        apicize.setEditorIndentSize(value)
-        checkSave(++saveCtr)
-    }
-
-    const setEditorDetectExistingIndent = (value: boolean) => {
-        apicize.setEditorDetectExistingIndent(value)
-        checkSave(++saveCtr)
-    }
-
-    const setEditorCheckJsSyntax = (value: boolean) => {
-        apicize.setEditorCheckJsSyntax(value)
-        checkSave(++saveCtr)
-    }
-
     const resetToDefaults = async () => {
         if (await feedback.confirm({
             okButton: 'Yes',
@@ -94,7 +29,6 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
             fileOps.generateDefaultSettings()
                 .then(settings => {
                     apicize.update(settings)
-                    checkSave(++saveCtr)
                 })
                 .catch(e => feedback.toastError(e))
         }
@@ -105,7 +39,6 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
             .then(d => {
                 if (d && d !== apicize.workbookDirectory) {
                     apicize.setWorkbookDirectory(d)
-                    checkSave(++saveCtr)
                     feedback.toast(`Workbook directory changed to ${d}`, ToastSeverity.Info)
                 }
             })
@@ -128,7 +61,7 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                                 size='small'
                                 value={apicize.fontSize}
                                 title='Base font size of non-navigation content'
-                                onChange={(e) => setFontSize(parseInt(e.target.value))} />
+                                onChange={(e) => apicize.setFontSize(parseInt(e.target.value))} />
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='text-size-label-id' sx={{ width: '12em' }} >Navigation Text Size:</InputLabel>
@@ -136,13 +69,13 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                                 size='small'
                                 value={apicize.navigationFontSize}
                                 title='Base font size of navigation content'
-                                onChange={(e) => setNavigationFontSize(parseInt(e.target.value))} />
+                                onChange={(e) => apicize.setNavigationFontSize(parseInt(e.target.value))} />
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='color-mode-label-id' sx={{ width: '12em' }}>Color Mode:</InputLabel>
                             <Select
                                 value={apicize.colorScheme}
-                                onChange={(e) => setScheme(e.target.value as SupportedColorScheme)}
+                                onChange={(e) => apicize.setColorScheme(e.target.value as SupportedColorScheme)}
                                 size='small'
                             >
                                 <MenuItem value="light">Light</MenuItem>
@@ -151,7 +84,7 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='hide-nav-menu-label-id' sx={{ width: '12em' }}>Alwaays Hide Nav Menu:</InputLabel>
-                            <RadioGroup row value={apicize.alwaysHideNavTree} onChange={(e) => setAlwaysHideNavTree(e.target.value === 'true')}>
+                            <RadioGroup row value={apicize.alwaysHideNavTree} onChange={(e) => apicize.setAlwaysHideNavTree(e.target.value === 'true')}>
                                 <FormControlLabel value={true} control={<Radio />} label='Yes' title='Always show minimized navigation toolbar' />
                                 <FormControlLabel value={false} control={<Radio />} label='No' title='Show minimized navigation toolbar only when width threshold is reached' />
                             </RadioGroup>
@@ -167,18 +100,18 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                                     size='small'
                                     value={apicize.editorIndentSize}
                                     title='Set indent level for JSON, JavaScript and XML'
-                                    onChange={(e) => setEditorIndentSize(parseInt(e.target.value))} />
+                                    onChange={(e) => apicize.setEditorIndentSize(parseInt(e.target.value))} />
                             </Stack>
                             <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                                 <InputLabel id='detect-indent-label-id' sx={{ width: '12em' }}>Detect Existing Indent:</InputLabel>
-                                <RadioGroup row value={apicize.editorDetectExistingIndent} onChange={(e) => setEditorDetectExistingIndent(e.target.value === 'true')}>
+                                <RadioGroup row value={apicize.editorDetectExistingIndent} onChange={(e) => apicize.setEditorDetectExistingIndent(e.target.value === 'true')}>
                                     <FormControlLabel value={true} control={<Radio />} label='Yes' title='Use existing detection indent level' />
                                     <FormControlLabel value={false} control={<Radio />} label='No' title='Always use indent level configured in Settings' />
                                 </RadioGroup>
                             </Stack>
                             <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                                 <InputLabel id='check-js-label-id' sx={{ width: '12em' }}>Check JavaScript Syntax:</InputLabel>
-                                <RadioGroup row value={apicize.editorCheckJsSyntax} onChange={(e) => setEditorCheckJsSyntax(e.target.value === 'true')}>
+                                <RadioGroup row value={apicize.editorCheckJsSyntax} onChange={(e) => apicize.setEditorCheckJsSyntax(e.target.value === 'true')}>
                                     <FormControlLabel value={true} control={<Radio />} label='Yes' title='Check JavaScript syntax when editing tests' />
                                     <FormControlLabel value={false} control={<Radio />} label='No' title='Ignore JavaScript syntax errors when editing tests' />
                                 </RadioGroup>
@@ -198,11 +131,11 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                             <TextField type='number' slotProps={{ htmlInput: { min: 1, max: 65535 } }}
                                 value={apicize.pkceListenerPort}
                                 size='small'
-                                onChange={(e) => setPkceListenerPort(parseInt(e.target.value))} />
+                                onChange={(e) => apicize.setPkceListenerPort(parseInt(e.target.value))} />
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='show_diag-info-label-id' sx={{ width: '12em' }}>Show Diagnotic Info:</InputLabel>
-                            <RadioGroup row value={apicize.editorCheckJsSyntax} onChange={(e) => setShowDiagnosticInfo(e.target.value === 'true')}>
+                            <RadioGroup row value={apicize.editorCheckJsSyntax} onChange={(e) => apicize.setShowDiagnosticInfo(e.target.value === 'true')}>
                                 <FormControlLabel value={true} control={<Radio />} label='Yes' title='Show IDs and other diagnostic info' />
                                 <FormControlLabel value={false} control={<Radio />} label='No' title='Do not display digagnostic info' />
                             </RadioGroup>
