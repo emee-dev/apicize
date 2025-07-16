@@ -142,11 +142,11 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                             </RadioGroup>
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
-                            <InputLabel id='settings-filename-id' sx={{ width: '12em' }}>Workbook Directory:</InputLabel>
+                            <InputLabel id='settings-filename-id' sx={{ width: '12em' }}>Settings File Name:</InputLabel>
                             <InputLabel>{apicize.settingsFileName}</InputLabel>
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
-                            <InputLabel id='globals-filename-id' sx={{ width: '12em' }}>Globals Directory:</InputLabel>
+                            <InputLabel id='globals-filename-id' sx={{ width: '12em' }}>Globals File Name:</InputLabel>
                             <InputLabel>{apicize.globalsFileName}</InputLabel>
                         </Stack>
                     </Stack>
