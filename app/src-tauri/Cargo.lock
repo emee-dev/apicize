@@ -290,7 +290,7 @@ checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 
 [[package]]
 name = "apicize"
-version = "0.25.1"
+version = "0.25.2"
 dependencies = [
  "actix-web",
  "apicize_lib",
@@ -322,9 +322,9 @@ dependencies = [
 
 [[package]]
 name = "apicize_lib"
-version = "0.25.2"
+version = "0.25.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48145a964b842ad86b102f2ad5bd077484c1c95d926f1c5156b652a9fb0e2326"
+checksum = "dbdc2a75fb93eb8366b9f0579d15928846c4ca84de1fc9cc02b5a2f1bbc58569"
 dependencies = [
  "async-recursion",
  "async-trait",
@@ -7452,9 +7452,9 @@ dependencies = [
 
 [[package]]
 name = "zbus"
-version = "5.8.0"
+version = "5.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "597f45e98bc7e6f0988276012797855613cd8269e23b5be62cc4e5d28b7e515d"
+checksum = "4bb4f9a464286d42851d18a605f7193b8febaf5b0919d71c6399b7b26e5b0aad"
 dependencies = [
  "async-broadcast",
  "async-executor",
@@ -7486,9 +7486,9 @@ dependencies = [
 
 [[package]]
 name = "zbus_macros"
-version = "5.8.0"
+version = "5.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5c8e4e14dcdd9d97a98b189cd1220f30e8394ad271e8c987da84f73693862c2"
+checksum = "ef9859f68ee0c4ee2e8cde84737c78e3f4c54f946f2a38645d0d4c7a95327659"
 dependencies = [
  "proc-macro-crate 3.3.0",
  "proc-macro2",

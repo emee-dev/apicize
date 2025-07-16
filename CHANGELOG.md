@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.25.2
+
+* Update Zephyr output to only include tagged entries
+
 # 0.25.1
 
 * Allow PKCE port to be set to zero, disabling PKCE
