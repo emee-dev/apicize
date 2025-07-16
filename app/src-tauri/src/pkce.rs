@@ -90,15 +90,22 @@ impl OAuth2PkceService {
         }
 
         self.port = Some(port);
+
+        if port == 0 {
+            println!("*** PKCE listener is disabled ***");
+            return;
+        }
+
         let stop_handle = self.stop.take();
         let server = self.server.take();
 
         if let Some(h) = stop_handle {
             h.stop(false);
         }
+
         if let Some(s) = server {
             if let Err(err) = s.join() {
-                self.tauri.emit("pkc-error", format!("{:?}", err)).unwrap();
+                self.tauri.emit("pkc-error", format!("{err:?}")).unwrap();
             }
         }
 
@@ -118,7 +125,10 @@ impl OAuth2PkceService {
         auth: OAuth2PkceInfo,
         port: u16,
     ) -> Result<OAuth2PkceRequest, String> {
-        let redirect_uri = format!("http://localhost:{}", port);
+        if port == 0 {
+            return Err("PKCE port is set to 0 in settings, disabling PKCE".to_string());
+        }
+        let redirect_uri = format!("http://localhost:{port}");
         match generate_authorization(
             auth.authorize_url.as_str(),
             redirect_uri.as_str(),
@@ -133,7 +143,7 @@ impl OAuth2PkceService {
                 verifier,
                 redirect_url: redirect_uri,
             }),
-            Err(err) => Err(format!("{:?}", err)),
+            Err(err) => Err(format!("{err:?}")),
         }
     }
 
@@ -180,10 +190,10 @@ async fn init_pkce_server(
             tauri
                 .emit(
                     "oauth2-pkce-success",
-                    format!("Server started at http://127.0.0.1:{}", port).to_string(),
+                    format!("Server started at http://127.0.0.1:{port}").to_string(),
                 )
                 .unwrap();
-            println!("*** Started PKCE listener at 127.0.0.1:{} ***", port);
+            println!("*** Started PKCE listener at 127.0.0.1:{port} ***");
             let running_server = server.run();
             stop_handle.register(running_server.handle());
             running_server.await
@@ -192,16 +202,10 @@ async fn init_pkce_server(
             tauri
                 .emit(
                     "oauth2-pkce-error",
-                    format!(
-                        "Unable to start server at http://127.0.0.1:{}, {}",
-                        port, err
-                    ),
+                    format!("Unable to start server at http://127.0.0.1:{port}, {err}"),
                 )
                 .unwrap();
-            eprintln!(
-                "Unable to start server at http://127.0.0.1:{}, {}",
-                port, err
-            );
+            eprintln!("Unable to start server at http://127.0.0.1:{port}, {err}");
             Err(err)
         }
     }

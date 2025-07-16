@@ -5,8 +5,10 @@ import { action, observable } from 'mobx';
 export class EditableSettings {
     @observable accessor pendingChangeCtr = 0
 
-    @observable accessor appName = 'Apicize'
-    @observable accessor appVersion = ''
+    @observable accessor  appName = 'Apicize'
+    @observable accessor  appVersion = ''
+    @observable accessor  globalsFileName = ''
+    @observable accessor  settingsFileName = ''
 
     @observable accessor workbookDirectory: string = ''
     @observable accessor lastWorkbookFileName: string | undefined
@@ -56,15 +58,16 @@ export class EditableSettings {
     }
 
     @action
-    changeApp(name: string, version: string) {
+    changeApp(name: string, version: string, settingsFileName: string, globalsFileName: string) {
         this.appName = name
         this.appVersion = version
+        this.settingsFileName = settingsFileName
+        this.globalsFileName = globalsFileName
     }
 
     setOs(os: string) {
         this.ctrlKey = os === 'macos' ? 'Cmd' : 'Ctrl'
     }
-
 
     @action
     public clearPendingChanges() {

@@ -12,21 +12,22 @@ export function ApicizeProvider({
 }) {
 
     (async () => {
-        const [name, version, isReleaseMode] = await Promise.all([
+        const [name, version, isReleaseMode, storage] = await Promise.all([
             app.getName(),
             app.getVersion(),
-            core.invoke<boolean>('is_release_mode')
+            core.invoke<boolean>('is_release_mode'),
+            core.invoke<StorageInformation>('get_storage_information'),
         ])
 
         if (isReleaseMode) {
             document.addEventListener('contextmenu', event => event.preventDefault())
         }
 
-        settings.changeApp(name, version)
+        settings.changeApp(name, version, storage.settingsFileName, storage.globalsFileName)
         try {
             settings.setOs(os.type())
         } catch (e) {
-            console.error("Uanble to detect OS type", e)
+            console.error("Uanble to detect OS", e)
         }
     })()
     return (
@@ -34,4 +35,9 @@ export function ApicizeProvider({
             {children}
         </ApicizeContext.Provider>
     )
+}
+
+interface StorageInformation {
+    globalsFileName: string
+    settingsFileName: string
 }

@@ -23,8 +23,8 @@ export const AuthorizationApiKeyEditor = observer((props: { authorization: Edita
                 label="Value"
                 aria-label='authorization header value'
                 value={props.authorization.value}
-                error={props.authorization.valueInvalid}
-                helperText={props.authorization.valueInvalid ? 'Value is required' : ''}
+                // error={props.authorization.valueInvalid}
+                // helperText={props.authorization.valueInvalid ? 'Value is required' : ''}
                 onChange={e => props.authorization.setValue(e.target.value)}
                 size='small'
                 fullWidth

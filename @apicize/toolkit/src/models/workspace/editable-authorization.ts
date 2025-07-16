@@ -259,9 +259,9 @@ export class EditableAuthorization extends Editable<Authorization> {
         return this.type === AuthorizationType.ApiKey && ((this.header?.length ?? 0) === 0)
     }
 
-    @computed get valueInvalid() {
-        return this.type === AuthorizationType.ApiKey && ((this.value?.length ?? 0) === 0)
-    }
+    // @computed get valueInvalid() {
+    //     return this.type === AuthorizationType.ApiKey && ((this.value?.length ?? 0) === 0)
+    // }
 
     @computed get usernameInvalid() {
         return this.type === AuthorizationType.Basic && ((this.username?.length ?? 0) === 0)

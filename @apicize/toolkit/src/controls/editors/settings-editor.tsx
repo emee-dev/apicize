@@ -132,6 +132,7 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                                 value={apicize.pkceListenerPort}
                                 size='small'
                                 onChange={(e) => apicize.setPkceListenerPort(parseInt(e.target.value))} />
+                            <InputLabel>("0" to disable)</InputLabel>
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='show_diag-info-label-id' sx={{ width: '12em' }}>Show Diagnotic Info:</InputLabel>
@@ -139,6 +140,14 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                                 <FormControlLabel value={true} control={<Radio />} label='Yes' title='Show IDs and other diagnostic info' />
                                 <FormControlLabel value={false} control={<Radio />} label='No' title='Do not display digagnostic info' />
                             </RadioGroup>
+                        </Stack>
+                        <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                            <InputLabel id='settings-filename-id' sx={{ width: '12em' }}>Workbook Directory:</InputLabel>
+                            <InputLabel>{apicize.settingsFileName}</InputLabel>
+                        </Stack>
+                        <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                            <InputLabel id='globals-filename-id' sx={{ width: '12em' }}>Globals Directory:</InputLabel>
+                            <InputLabel>{apicize.globalsFileName}</InputLabel>
                         </Stack>
                     </Stack>
                 </BorderedSection>

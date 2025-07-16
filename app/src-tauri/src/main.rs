@@ -13,8 +13,8 @@ use apicize_lib::{
     clear_all_oauth2_tokens_from_cache, clear_oauth2_token_from_cache,
     editing::indexed_entities::IndexedEntityPosition, store_oauth2_token_in_cache, ApicizeRunner,
     Authorization, CachedTokenInfo, ExecutionReportFormat, ExecutionResultDetail,
-    ExecutionResultSummary, ExecutionStatus, ExternalData, PkceTokenResult, TestRunnerContext,
-    Warnings, Workspace,
+    ExecutionResultSummary, ExecutionStatus, ExternalData, Parameters, PkceTokenResult,
+    TestRunnerContext, Warnings, Workspace,
 };
 use dragdrop::DroppedFile;
 use error::ApicizeAppError;
@@ -267,6 +267,7 @@ async fn main() {
             clear_logs,
             get_entity_type,
             find_descendant_groups,
+            get_storage_information,
         ])
         .run(tauri::generate_context!())
         .expect("error running Apicize");
@@ -407,7 +408,7 @@ fn create_workspace(
                     Err(err) => {
                         if create_new_if_error {
                             let mut result = workspaces.add_workspace(Workspace::new()?, "", true);
-                            result.startup_state.error = Some(format!("{}", err));
+                            result.startup_state.error = Some(format!("{err}"));
                             Ok(result)
                         } else {
                             Err(err)
@@ -486,7 +487,7 @@ fn create_workspace(
     let info1 = workspaces.get_workspace_info(&workspace_result.workspace_id)?;
     dispatch_save_state(&app, sessions, &workspace_result.workspace_id, info1, false);
 
-    println!("*** {} ***", trace_title);
+    println!("*** {trace_title} ***");
     workspaces.trace_all_workspaces();
     sessions.trace_all_sessions();
 
@@ -764,7 +765,7 @@ async fn close_workspace(
             }
             workspaces.remove_workspace(&workspace_id);
         }
-        println!("*** {} *** ", trace_title);
+        println!("*** {trace_title} ***");
         workspaces.trace_all_workspaces();
         sessions.trace_all_sessions();
     }
@@ -1347,8 +1348,7 @@ async fn add(
             Ok(result)
         }
         _ => Err(ApicizeAppError::InvalidOperation(format!(
-            "Unable to add {}",
-            entity_type
+            "Unable to add {entity_type}",
         ))),
     }?;
 
@@ -1553,8 +1553,7 @@ async fn move_entity(
             workspaces.move_proxy(&workspace_id, entity_id, relative_to_id, relative_position)
         }
         _ => Err(ApicizeAppError::InvalidOperation(format!(
-            "Unable to move {}",
-            entity_type
+            "Unable to move {entity_type}",
         ))),
     }?;
 
@@ -1618,6 +1617,21 @@ async fn find_descendant_groups(
     workspaces.find_descendent_groups(&session.workspace_id, group_id)
 }
 
+#[tauri::command]
+async fn get_storage_information() -> StorageInformation {
+    let globals_file_name = Parameters::get_globals_filename()
+        .to_string_lossy()
+        .to_string();
+    let settings_file_name = ApicizeSettings::get_settings_filename()
+        .to_string_lossy()
+        .to_string();
+
+    StorageInformation {
+        globals_file_name,
+        settings_file_name,
+    }
+}
+
 /// Dispatch notification of data list being updated (add or delete)
 fn dispatch_data_list_notification(
     app: &AppHandle,
@@ -1637,4 +1651,11 @@ fn dispatch_data_list_notification(
 struct UpdateEvent {
     session_id: String,
     entity: Entity,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StorageInformation {
+    settings_file_name: String,
+    globals_file_name: String,
 }

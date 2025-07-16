@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.25.1
+
+* Allow PKCE port to be set to zero, disabling PKCE
+* Show global and settings file locations in Settings panel
+* Fix clearing of error icon in navigation
+
 # 0.25.0
 
 * Allow specifying format type when copying execution information to clipboard

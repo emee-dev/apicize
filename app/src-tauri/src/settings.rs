@@ -128,7 +128,7 @@ impl ApicizeSettings {
     }
 
     /// Return the file name for settings
-    fn get_settings_filename() -> path::PathBuf {
+    pub fn get_settings_filename() -> path::PathBuf {
         Self::get_settings_directory().join("settings.json")
     }
 

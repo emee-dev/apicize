@@ -19,7 +19,6 @@ use crate::{error::ApicizeAppError, sessions::SessionStartupState};
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-
 pub struct NavigationRequestEntry {
     pub id: String,
     pub name: String,
@@ -29,7 +28,6 @@ pub struct NavigationRequestEntry {
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-
 pub struct NavigationEntry {
     pub id: String,
     pub name: String,
@@ -1111,8 +1109,7 @@ impl Workspaces {
             EntityType::Proxy => &workspace.proxies.child_ids,
             _ => {
                 return Err(ApicizeAppError::InvalidOperation(format!(
-                    "Invalid list type {}",
-                    entity_type
+                    "Invalid list type {entity_type}",
                 )));
             }
         };
@@ -2047,7 +2044,7 @@ impl WorkspaceInfo {
         }
 
         if let Some(e) = entry {
-            if e.name.eq(&nav_name) && (e.state & nav_state == 0) {
+            if e.name.eq(&nav_name) && e.state == nav_state {
                 None
             } else {
                 e.name = nav_name.to_string();
@@ -2138,7 +2135,7 @@ impl Display for EntityType {
             EntityType::Defaults => "Defaults",
             // EntityType::Warnings => "Warnings",
         };
-        write!(f, "{}", desc)
+        write!(f, "{desc}")
     }
 }
 
