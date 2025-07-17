@@ -16,7 +16,7 @@ declare function it(name: string, fn: () => void): void
 
 /**
  * Define an associative tag that can be used to link to test cases, documentation, etc.
- * @param name Name of the tag
+ * @param name Name of the tag (may use handlebars to include active ($) data/scenario/output values)
  */
 declare function tag(name: string): void
 

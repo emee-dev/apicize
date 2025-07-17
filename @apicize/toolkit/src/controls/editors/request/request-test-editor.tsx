@@ -176,6 +176,7 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
 
 
                             for (const [location, raw] of [
+                                ['ts:filename/editor-defs.d.ts', DEFS_RAW],
                                 ['file://node_modules/typescript/lib/lib.es5.d.ts', ES5_RAW],
                                 ['file://node_modules/typescript/lib/lib.es2015.iterable.d.ts', ES2015_COLLECTION_RAW],
                                 ['file://node_modules/typescript/lib/lib.es2015.iterable.d.ts', ES2015_ITERATE_RAW],
@@ -189,26 +190,6 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
                                     monaco.languages.typescript.javascriptDefaults.addExtraLib(raw)
                                     monaco.editor.createModel(raw, 'typescript', uri)
                                 }
-                            }
-
-                            const editorDefsUri = monaco.Uri.parse('ts:filename/editor-defs.d.ts')
-                            if (!monaco.editor.getModel(editorDefsUri)) {
-                                monaco.languages.typescript.javascriptDefaults.addExtraLib(DEFS_RAW)
-                                monaco.editor.createModel(DEFS_RAW, 'typescript', editorDefsUri)
-                            }
-
-                            const dogUri = monaco.Uri.parse('file://node_modules/@types/dog.d.ts')
-                            if (!monaco.editor.getModel(dogUri)) {
-                                monaco.languages.typescript.javascriptDefaults.addExtraLib(
-                                    `
-                      namespace Animals {
-                        declare class Doggee {
-                          public bark(): string;
-                        }
-                      }
-                        
-                      declare class Dog extends Animals.Doggee {}`,
-                                    "node_modules/@types/dog.d.ts");
                             }
 
                             initalialized.current = true
