@@ -290,7 +290,7 @@ checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 
 [[package]]
 name = "apicize"
-version = "0.25.3"
+version = "0.25.4"
 dependencies = [
  "actix-web",
  "apicize_lib",
@@ -322,9 +322,9 @@ dependencies = [
 
 [[package]]
 name = "apicize_lib"
-version = "0.25.4"
+version = "0.25.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6000db1e5e4d1bfadeb490bcf0a127ec492db8a9dd3099515911d92bfa30c109"
+checksum = "de4f01053201cda6d763aecf8c3f13caac2e9bf850bf33aca9e43ef88d3c35d7"
 dependencies = [
  "async-recursion",
  "async-trait",
@@ -1006,9 +1006,9 @@ dependencies = [
 
 [[package]]
 name = "clipboard-win"
-version = "5.4.0"
+version = "5.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15efe7a882b08f34e38556b14f2fb3daa98769d06c7f0c1b076dfd0d983bc892"
+checksum = "bde03770d3df201d4fb868f2c9c59e66a3e4e2bd06692a0fe701e7103c7e84d4"
 dependencies = [
  "error-code",
  "windows-win",
