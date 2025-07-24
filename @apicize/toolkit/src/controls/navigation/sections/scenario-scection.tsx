@@ -11,11 +11,13 @@ import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
 import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position"
+import { useApicizeSettings } from "../../../contexts/apicize-settings.context"
 
 export const ScenarioSection = observer((props: { includeHeader: boolean }) => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
     const theme = useTheme()
+    const settings = useApicizeSettings()
 
     const [scenarioMenu, setScenarioMenu] = useState<MenuPosition | undefined>(undefined)
 
@@ -87,29 +89,30 @@ export const ScenarioSection = observer((props: { includeHeader: boolean }) => {
                 id='scenario-menu'
                 open={scenarioMenu !== undefined}
                 onClose={closeScenarioMenu}
+                sx={{ fontSize: settings.navigationFontSize }}
                 anchorReference='anchorPosition'
                 anchorPosition={{
                     top: scenarioMenu?.mouseY ?? 0,
                     left: scenarioMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddScenario(scenarioMenu.id, IndexedEntityPosition.After, null)}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(_) => handleAddScenario(scenarioMenu.id, IndexedEntityPosition.After, null)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='scenario'><ScenarioIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Add Scenario</ListItemText>
+                    <ListItemText disableTypography>Add Scenario</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={(e) => handleDupeScenario()}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(e) => handleDupeScenario()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: theme.palette.scenario.light }} />
+                        <SvgIcon fontSize='small' sx={{ color: theme.palette.scenario.light }}><ContentCopyOutlinedIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Duplicate Scenario</ListItemText>
+                    <ListItemText disableTypography>Duplicate Scenario</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={(e) => handleDeleteScenario()}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(e) => handleDeleteScenario()}>
                     <ListItemIcon>
-                        <DeleteIcon fontSize='small' color='error' />
+                        <SvgIcon color='error'><DeleteIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Delete Scenario</ListItemText>
+                    <ListItemText disableTypography>Delete Scenario</ListItemText>
                 </MenuItem>
             </Menu>
             : <></>

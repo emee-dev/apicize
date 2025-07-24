@@ -14,12 +14,12 @@ import { useWorkspace, GroupPanel } from '../../contexts/workspace.context';
 import { RunResultsToolbar } from '../run-results-toolbar';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { useFileOperations } from '../../contexts/file-operations.context';
-import { useApicize } from '../../contexts/apicize.context'
+import { useApicizeSettings } from '../../contexts/apicize-settings.context'
 import { RequestGroupInfoEditor } from './request/request-group-info-editor';
 import { WarningsEditor } from './warnings-editor';
 
 export const RequestGroupEditor = observer((props: { sx?: SxProps }) => {
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const fileOps = useFileOperations()
 
     const workspace = useWorkspace()
@@ -60,12 +60,12 @@ export const RequestGroupEditor = observer((props: { sx?: SxProps }) => {
 
     const sizeStorage = {
         getItem: (_: string) => {
-            return apicize.editorPanels
+            return settings.editorPanels
         },
         setItem: (_: string, value: string) => {
-            if (apicize.editorPanels !== value) {
+            if (settings.editorPanels !== value) {
                 lastResize = Date.now()
-                apicize.editorPanels = value
+                settings.editorPanels = value
                 saveIfSettled()
             }
         }
@@ -77,7 +77,7 @@ export const RequestGroupEditor = observer((props: { sx?: SxProps }) => {
                 <EditorTitle
                     icon={<SvgIcon color='folder'><FolderIcon /></SvgIcon>}
                     name={group.name.length ?? 0 > 0 ? `${group.name} - ${usePanel}` : '(Unnamed)'}
-                    diag={apicize.showDiagnosticInfo ? group.id : undefined}
+                    diag={settings.showDiagnosticInfo ? group.id : undefined}
                 >
                     <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                 </EditorTitle>

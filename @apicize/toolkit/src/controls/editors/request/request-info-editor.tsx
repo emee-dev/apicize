@@ -34,21 +34,35 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
 
     return (
         <Grid container direction='column' spacing={3}>
-            <Grid>
-                <TextField
-                    id='request-name'
-                    label="Name"
-                    aria-label='request name'
-                    // autoFocus={request.name === ''}
-                    required
-                    size="small"
-                    title="Name of request"
-                    value={request.name}
-                    onChange={e => request.setName(e.target.value)}
-                    error={request.nameInvalid}
-                    helperText={request.nameInvalid ? 'Request name is required' : ''}
-                    fullWidth
-                />
+            <Grid container direction='row' spacing={3}>
+                <Grid flexGrow={1}>
+                    <TextField
+                        id='request-name'
+                        label="Name"
+                        aria-label='request name'
+                        // autoFocus={request.name === ''}
+                        required
+                        size="small"
+                        title="Name of request"
+                        value={request.name}
+                        onChange={e => request.setName(e.target.value)}
+                        error={request.nameInvalid}
+                        helperText={request.nameInvalid ? 'Request name is required' : ''}
+                        fullWidth
+                    />
+                </Grid>
+                <Grid flexGrow={0} width={'12em'}>
+                    <TextField
+                        id='request-key'
+                        label="Key"
+                        aria-label='request key'
+                        // autoFocus={request.name === ''}
+                        size="small"
+                        title="Referential key of request"
+                        value={request.key}
+                        onChange={e => request.setKey(e.target.value)}
+                    />
+                </Grid>
             </Grid>
             <Grid container direction='row' spacing={2}>
                 <Grid>

@@ -3,7 +3,7 @@
 }
 
 .dark .resize-handle {
-  flex: 0 0 2rem;
+  flex: 0 0 2em;
   display: flex;
   justify-content: stretch;
   align-items: stretch;
@@ -34,7 +34,7 @@ body .light {
 }
 
 .light .resize-handle {
-  flex: 0 0 2rem;
+  flex: 0 0 2em;
   display: flex;
   justify-content: stretch;
   align-items: stretch;
@@ -52,7 +52,7 @@ body .light {
 
 @media (pointer: coarse) {
   .resize-handle {
-    flex: 0 0 2rem;
+    flex: 0 0 2em;
   }
 }
 
@@ -75,7 +75,7 @@ body .light {
 }
 
 .help .MuiTypography-h1:first-of-type {
-  min-height: 4rem;
+  min-height: 4em;
   margin: 0 0 1em 0;
   padding: 0;
   display: flex;
@@ -166,11 +166,11 @@ body .light {
 }
 
 .MuiTypeography-h1 .help-icon {
-  margin-right: 0.25rem;
+  margin-right: 0.25em;
 }
 
 .MuiTypeography-h2 .help-icon {
-  margin-left: 0.25rem;
+  margin-left: 0.25em;
 }
 
 
@@ -233,15 +233,15 @@ body .light {
 }
 
 .help-contents .MuiMenuItem-root {
-  padding-top: 0.3rem;
-  padding-bottom: 0.3rem;
+  padding-top: 0.3em;
+  padding-bottom: 0.3em;
 }
 
 .help-contents .MuiListSubheader-root {
   font-size: inherit;
   font-weight: bold !important;
-  padding-top: 0.3rem;
-  padding-bottom: 0.3rem;
+  padding-top: 0.3em;
+  padding-bottom: 0.3em;
   line-height: normal;
 }
 
@@ -287,7 +287,7 @@ pre.log {
 .navigation-narrow {
   top: 0;
   left: 0;
-  width: 4rem;
+  width: 4em;
   padding: 12px;
   background-color: #202020;
   display: flex;
@@ -306,7 +306,7 @@ pre.log {
 }
 
 .MuiTreeItem-iconContainer {
-  padding: 0.1rem 0.5rem 0.1rem 1.0rem;
+  padding: 0.1rem 0.5rem 0.1rem 1.0em;
 }
 
 .nav-item {
@@ -331,7 +331,7 @@ pre.log {
   flex-grow: 0;
   display: flex;
   justify-items: center;
-  padding: 0.1rem;
+  padding: 0.1em;
 }
 
 .nav-toolbar {
@@ -345,6 +345,12 @@ pre.log {
   font-size: 1.3em;
 }
 
+.nav-toolbar Button {
+  padding: 8px;
+  padding-inline: 8px;
+  padding-block: 8px;
+}
+
 .nav-icon-box .MuiSvgIcon-root {
   display: flex;
   height: 100%;
@@ -354,7 +360,6 @@ pre.log {
 .nav-icon-context .MuiSvgIcon-root {
   display: flex;
   height: 100%;
-  font-size: 1.5em
 }
 
 .MuiTreeItem-root.selected>.MuiTreeItem-content {
@@ -407,7 +412,7 @@ pre.log {
   max-width: 70em;
   flex-direction: row;
   align-items: center;
-  min-height: 4rem;
+  min-height: 4em;
   margin: 0;
   padding: 0 1em;
 }
@@ -542,11 +547,11 @@ pre.log {
 }
 
 .test-details {
-  padding-left: 1.5rem;
+  padding-left: 1.5em;
 }
 
 .diag.id {
-  font-size: 0.8rem;
+  font-size: 0.8em;
 }
 
 
@@ -569,7 +574,7 @@ pre.log {
 }
 
 .results-test-section {
-  margin: 1rem 0rem 1.5rem 1.5rem;
+  margin: 1rem 0rem 1.5rem 1.5em;
 }
 
 .results-test-name {
@@ -578,12 +583,12 @@ pre.log {
 }
 
 .results-test-timing {
-  margin-top: 0.2rem;
-  font-size: 0.8rem;
+  margin-top: 0.2em;
+  font-size: 0.8em;
 }
 
-.results-test-timing > div:nth-child(2) {
-  margin-top: 0.25rem;
+.results-test-timing>div:nth-child(2) {
+  margin-top: 0.25em;
 }
 
 .test-result {
@@ -613,7 +618,7 @@ pre.log {
 } */
 
 .test-result-icon {
-  width: 2.0rem;
+  width: 2.0em;
   display: flex;
   flex-flow: column;
   align-items: left;
@@ -636,7 +641,7 @@ code.results-log {
   padding-top: 0;
   margin-top: 0.25em;
   filter: brightness(70%);
-  font-size: 0.85em;
+  font-size: 0.8em;
   line-height: 1.3em;
   white-space: pre-wrap;
 }

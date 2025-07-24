@@ -21,13 +21,13 @@ import { RunResultsToolbar } from '../run-results-toolbar';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { useFileOperations } from '../../contexts/file-operations.context';
 import RequestIcon from '../../icons/request-icon';
-import { useApicize } from '../../contexts/apicize.context'
+import { useApicizeSettings } from '../../contexts/apicize-settings.context'
 import { RequestBodyEditor } from './request/request-body-editor'
 import { WarningsEditor } from './warnings-editor'
 import { RequestParametersEditor } from './request/request-parameters-editor'
 
 export const RequestEditor = observer((props: { sx?: SxProps }) => {
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const fileOps = useFileOperations()
 
     const workspace = useWorkspace()
@@ -53,7 +53,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
 
     let hasWarnings = request.warnings.hasEntries
 
-    if (! hasWarnings && usePanel === 'Warnings') {
+    if (!hasWarnings && usePanel === 'Warnings') {
         usePanel = 'Info'
         return null
     }
@@ -69,12 +69,12 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
 
     const sizeStorage = {
         getItem: (_: string) => {
-            return apicize.editorPanels
+            return settings.editorPanels
         },
         setItem: (_: string, value: string) => {
-            if (apicize.editorPanels !== value) {
+            if (settings.editorPanels !== value) {
                 lastResize = Date.now()
-                apicize.editorPanels = value
+                settings.editorPanels = value
                 saveIfSettled()
             }
         }
@@ -87,7 +87,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
                 <EditorTitle
                     icon={<SvgIcon color='request'><RequestIcon /></SvgIcon>}
                     name={(request.name.length > 0) ? `${request.name} - ${usePanel}` : `(Unnamed) - ${usePanel}`}
-                    diag={apicize.showDiagnosticInfo ? request.id : undefined}
+                    diag={settings.showDiagnosticInfo ? request.id : undefined}
                 >
                     <Box display='inline-flex' paddingLeft='1em' visibility={isRunning ? "visible" : "hidden"} width='2em'><PlayArrowIcon color="success" /></Box>
                 </EditorTitle>
@@ -126,7 +126,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
                                         : usePanel === 'Test' ? <RequestTestEditor request={request} />
                                             : usePanel === 'Parameters' ? <RequestParametersEditor requestOrGroup={request} />
                                                 : usePanel === 'Warnings' ? <WarningsEditor warnings={request.warnings} onDelete={(id) => request.deleteWarning(id)} />
-                                                : null}
+                                                    : null}
                     </Box>
                 </Stack>
             </Box>

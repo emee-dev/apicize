@@ -21,13 +21,13 @@ import ES2017_ARRAYBUFFER_RAW from '../../../../../../node_modules/typescript/li
 import ES2017_DATE_RAW from '../../../../../../node_modules/typescript/lib/lib.es2017.date.d.ts?raw'
 
 import { editor } from "monaco-editor";
-import { useApicize } from "../../../contexts/apicize.context";
+import { useApicizeSettings } from "../../../contexts/apicize-settings.context";
 import { runInAction } from "mobx";
 
 export const RequestTestEditor = observer((props: { request: EditableRequest }) => {
     const workspace = useWorkspace()
     const clipboard = useClipboard()
-    const settings = useApicize()
+    const settings = useApicizeSettings()
     const feedback = useFeedback()
     const fileDragDrop = useFileDragDrop()
 

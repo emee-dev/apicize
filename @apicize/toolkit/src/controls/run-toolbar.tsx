@@ -10,11 +10,11 @@ import BlockIcon from '@mui/icons-material/Block';
 import { NO_SELECTION_ID } from "../models/store";
 import SeedIcon from "../icons/seed-icon";
 import { EditableRequestEntry } from "../models/workspace/editable-request-entry";
-import { useApicize } from "../contexts/apicize.context";
+import { useApicizeSettings } from "../contexts/apicize-settings.context";
 import { useState } from "react";
 
 export const RunToolbar = observer((props: { sx?: SxProps, requestEntry: EditableRequestEntry }) => {
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     const feedback = useFeedback()
 
@@ -70,10 +70,10 @@ export const RunToolbar = observer((props: { sx?: SxProps, requestEntry: Editabl
     return (
         <Grid container direction={'row'} display='flex' flexGrow={1} marginLeft='2em' alignItems='center' justifyContent='space-between' sx={props.sx}>
             <Box>
-                <ToggleButton value='Run' sx={{ display: runDisplay }} title={`Run selected ${label} once with no timeout (${apicize.ctrlKey}-Enter)`} size='small' disabled={running} onClick={handleRunClick(true)}>
+                <ToggleButton value='Run' sx={{ display: runDisplay }} title={`Run selected ${label} once with no timeout (${settings.ctrlKey}-Enter)`} size='small' disabled={running} onClick={handleRunClick(true)}>
                     <PlayCircleOutlined color={running ? 'disabled' : 'success'} />
                 </ToggleButton>
-                <ToggleButton value='Multi' sx={{ display: multiDisplay }} title={`Run selected ${label} ${times} (${apicize.ctrlKey}-Shift-Enter)`} size='small' disabled={running} onClick={handleRunClick()}>
+                <ToggleButton value='Multi' sx={{ display: multiDisplay }} title={`Run selected ${label} ${times} (${settings.ctrlKey}-Shift-Enter)`} size='small' disabled={running} onClick={handleRunClick()}>
                     <PlayCircleFilledIcon color={(running) ? 'disabled' : 'success'} />
                 </ToggleButton>
                 <ToggleButton value='Cancel' sx={{ display: cancelDisplay }} title='Cancel' size='small' onClick={() => handleCancel()}>

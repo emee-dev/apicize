@@ -10,7 +10,7 @@ import React, { useRef, useState } from "react"
 import ViewIcon from "../../../icons/view-icon"
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { ToastSeverity, useFeedback } from "../../../contexts/feedback.context"
-import { useApicize } from "../../../contexts/apicize.context"
+import { useApicizeSettings } from "../../../contexts/apicize-settings.context"
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 
 const ApicizeErrorToString = (error?: ApicizeError): string => {
@@ -20,7 +20,7 @@ const ApicizeErrorToString = (error?: ApicizeError): string => {
 
 export const ResultInfoViewer = observer((props: { requestOrGroupId: string, resultIndex: number, results: ExecutionResultSummary[] }) => {
 
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     const theme = useTheme()
     const clipboardCtx = useClipboard()
@@ -74,7 +74,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
 
         return <>
             <IconButton
-                title={`Copy Data to Clipboard (${apicize.reportFormat})`}
+                title={`Copy Data to Clipboard (${settings.reportFormat})`}
                 color='primary'
                 onClick={e => copyToClipboard(e, requestOrGroupId, index)}>
                 <ContentCopyIcon />
@@ -96,43 +96,43 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                 open={formatMenu.open}
                 onClose={handleFormatMenuClose}
             >
-                <MenuItem autoFocus={apicize.reportFormat == ExecutionReportFormat.JSON} key='report-format-json' disableRipple onClick={e => {
+                <MenuItem autoFocus={settings.reportFormat == ExecutionReportFormat.JSON} key='report-format-json' disableRipple onClick={e => {
                     copyToClipboard(e, requestOrGroupId, index, ExecutionReportFormat.JSON)
-                    apicize.setReportFormat(ExecutionReportFormat.JSON)
+                    settings.setReportFormat(ExecutionReportFormat.JSON)
                     handleFormatMenuClose()
                 }}>
                     <Box display='flex' alignContent='center'>
                         Apicize JSON Format
                         {
-                            apicize.reportFormat === ExecutionReportFormat.JSON
+                            settings.reportFormat === ExecutionReportFormat.JSON
                                 ? <CheckIcon sx={{ marginLeft: '0.5em' }} />
                                 : null
                         }
                     </Box>
                 </MenuItem>
-                <MenuItem autoFocus={apicize.reportFormat == ExecutionReportFormat.CSV} key='report-format-csv' disableRipple onClick={e => {
+                <MenuItem autoFocus={settings.reportFormat == ExecutionReportFormat.CSV} key='report-format-csv' disableRipple onClick={e => {
                     copyToClipboard(e, requestOrGroupId, index, ExecutionReportFormat.CSV)
-                    apicize.setReportFormat(ExecutionReportFormat.CSV)
+                    settings.setReportFormat(ExecutionReportFormat.CSV)
                     handleFormatMenuClose()
                 }}>
                     <Box display='flex' alignContent='center'>
                         Apicize CSV Format
                         {
-                            apicize.reportFormat === ExecutionReportFormat.CSV
+                            settings.reportFormat === ExecutionReportFormat.CSV
                                 ? <CheckIcon sx={{ marginLeft: '0.5em' }} />
                                 : null
                         }
                     </Box>
                 </MenuItem>
-                <MenuItem autoFocus={apicize.reportFormat == ExecutionReportFormat.CSV} key='report-format-zephyr' disableRipple onClick={e => {
+                <MenuItem autoFocus={settings.reportFormat == ExecutionReportFormat.CSV} key='report-format-zephyr' disableRipple onClick={e => {
                     copyToClipboard(e, requestOrGroupId, index, ExecutionReportFormat.ZEPHYR)
-                    apicize.setReportFormat(ExecutionReportFormat.ZEPHYR)
+                    settings.setReportFormat(ExecutionReportFormat.ZEPHYR)
                     handleFormatMenuClose()
                 }}>
                     <Box display='flex' alignContent='center'>
                         Simplified Zephyr Format
                         {
-                            apicize.reportFormat === ExecutionReportFormat.ZEPHYR
+                            settings.reportFormat === ExecutionReportFormat.ZEPHYR
                                 ? <CheckIcon sx={{ marginLeft: '0.5em' }} />
                                 : null
                         }
@@ -171,7 +171,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                     <Grid display='flex' flexDirection='column' alignItems='start' alignContent='center' flexGrow='content'>
                         <Box display='flex'>
                             <Box sx={{ whiteSpace: 'nowrap' }} className='results-test-name'>
-                                {childResult.name}
+                                {childResult.name}{childResult.key ? <Typography className='tag'> [{childResult.key}]</Typography> : null}
                                 <Box component='span' marginLeft='1rem' marginRight='0.5rem' sx={{ color }}> ({subtitle}) </Box>
                             </Box>
                         </Box>
@@ -189,7 +189,6 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                                     ? (<Box>{`Status: ${childResult.status} ${childResult.statusText}`}</Box>)
                                     : (null)
                             }
-
                         </Box>
                     </Grid>
                     <Grid display='flex' flexBasis='content' alignItems='center' alignContent='start' marginLeft='1.0rem'>
@@ -262,7 +261,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                     </Box>
                     <Stack direction='column' key={`result-${idx++}`} className='test-result-detail'>
                         <Box key={`result-${idx++}`}>
-                            {behavior.name} {behavior.tag ? <Typography className='tag'>[{behavior.tag}]</Typography> : null}
+                            {behavior.name}{behavior.tag ? <Typography className='tag'> [{behavior.tag}]</Typography> : null}
                         </Box>
                         <Box className='test-result-detail-info'>
                             {
@@ -341,7 +340,7 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
             e.stopPropagation()
 
             if (!format) {
-                format = apicize.reportFormat
+                format = settings.reportFormat
             }
 
             workspace.generateReport(requestOrGroupId, index, format)

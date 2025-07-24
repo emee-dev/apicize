@@ -12,6 +12,7 @@ import { monaco } from "react-monaco-editor"
 export class EditableRequest extends EditableRequestEntry {
     public readonly entityType = EntityType.Request
 
+    @observable public accessor key = ''
     @observable public accessor url = ''
 
     @observable public accessor method = Method.Get
@@ -35,6 +36,7 @@ export class EditableRequest extends EditableRequestEntry {
 
         this.id = entry.id
         this.name = entry.name ?? ''
+        this.key = entry.key ?? ''
 
         this.runs = entry.runs
         this.multiRunExecution = entry.multiRunExecution
@@ -89,6 +91,7 @@ export class EditableRequest extends EditableRequestEntry {
             entityType: 'Request',
             id: this.id,
             name: this.name,
+            key: this.key.length > 0 ? this.key : undefined,
             url: this.url,
             method: this.method,
             // headers: toJS(this.headers),
@@ -127,6 +130,13 @@ export class EditableRequest extends EditableRequestEntry {
 
         this.workspace.updateRequest(request)
     }
+
+    @action
+    setKey(value: string) {
+        this.key = value
+        this.onUpdate()
+    }
+
 
     @action
     setUrl(value: string) {
@@ -194,6 +204,7 @@ export class EditableRequest extends EditableRequestEntry {
     @action
     refreshFromExternalUpdate(entity: EntityRequest) {
         this.name = entity.name ?? ''
+        this.key = entity.key ?? ''
         this.url = entity.url
         this.method = entity.method
         this.timeout = entity.timeout
@@ -244,6 +255,7 @@ export class EditableRequest extends EditableRequestEntry {
 export interface RequestInfo extends Warnings, ValidationErrors {
     id: string
     name: string
+    key?: string
     url: string
     method: Method
     timeout: number

@@ -20,13 +20,13 @@ import { ProxyList } from "./navigation/lists/proxy-list";
 import { NavigationControl } from "./navigation/navigation";
 import { RequestGroupEditor } from "./editors/request-group-editor";
 import { reaction } from "mobx";
-import { useApicize } from "../contexts/apicize.context";
+import { useApicizeSettings } from "../contexts/apicize-settings.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 import { useFileOperations } from "../contexts/file-operations.context";
 
 export const MainPanel = observer(() => {
     const workspace = useWorkspace()
-    const settings = useApicize()
+    const settings = useApicizeSettings()
     const fileOps = useFileOperations()
     const feedback = useFeedback()
 
@@ -38,7 +38,7 @@ export const MainPanel = observer(() => {
     const checkSave = (pendingChangeCtr: number) => {
         // Only save if the save ctr hasn't changed in the specified interval
         setTimeout(async () => {
-            if (lastPendingChangeCtr === pendingChangeCtr) {
+            if (lastPendingChangeCtr === pendingChangeCtr && lastPendingChangeCtr !== 0) {
                 try {
                     lastPendingChangeCtr = 0
                     settings.clearPendingChanges()
@@ -47,10 +47,12 @@ export const MainPanel = observer(() => {
                     feedback.toast(`Unable to save Settings - ${e}`, ToastSeverity.Error)
                 }
             } else {
-                lastPendingChangeCtr = pendingChangeCtr
-                setTimeout(() => {
-                    checkSave(pendingChangeCtr)
-                }, 250)
+                if (pendingChangeCtr > lastPendingChangeCtr) {
+                    lastPendingChangeCtr = pendingChangeCtr
+                    setTimeout(() => {
+                        checkSave(pendingChangeCtr)
+                    }, 250)
+                }
             }
         }, 250)
     }

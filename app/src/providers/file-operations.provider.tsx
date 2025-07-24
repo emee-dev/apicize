@@ -3,10 +3,11 @@ import * as core from '@tauri-apps/api/core'
 import * as dialog from '@tauri-apps/plugin-dialog'
 import * as path from '@tauri-apps/api/path'
 import { exists, readFile, readTextFile } from "@tauri-apps/plugin-fs"
-import { base64Encode, FileOperationsContext, FileOperationsStore, HelpContents, SshFileType, ToastSeverity, useApicize, useFeedback, WorkspaceStore } from "@apicize/toolkit";
+import { base64Encode, FileOperationsContext, FileOperationsStore, HelpContents, SshFileType, ToastSeverity, useApicizeSettings, useFeedback, WorkspaceStore } from "@apicize/toolkit";
 import { GetTitle, ApicizeSettings, Workspace, Persistence } from "@apicize/lib-typescript";
 import { extname, join, resourceDir } from '@tauri-apps/api/path';
 import { EditableSettings } from "@apicize/toolkit/dist/models/editable-settings";
+import { toJS } from "mobx";
 
 
 /**
@@ -17,7 +18,7 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
     const EXT = 'apicize';
 
     const feedback = useFeedback()
-    const apicizeSettings = useApicize()
+    const apicizeSettings = useApicizeSettings()
 
     const _sshPath = useRef('')
     const _bodyDataPath = useRef('')
@@ -27,7 +28,8 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
      * @returns set of default settings
      */
     const generateDefaultSettings = async (): Promise<EditableSettings> => {
-        return new EditableSettings(await core.invoke<ApicizeSettings>('generate_settings_defaults', {}))
+        const returnedSettings = await core.invoke<ApicizeSettings>('generate_settings_defaults', {})
+        return new EditableSettings(returnedSettings)
     }
 
     /**

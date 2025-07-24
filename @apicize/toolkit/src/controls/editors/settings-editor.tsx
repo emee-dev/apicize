@@ -7,12 +7,12 @@ import { EditorTitle } from '../editor-title';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { useApicize } from '../../contexts/apicize.context';
-import { ExecutionReportFormat } from '@apicize/lib-typescript';
+import { useApicizeSettings } from '../../contexts/apicize-settings.context';
 import { BorderedSection } from '../bordered-section';
+import { toJS } from 'mobx';
 
 export const SettingsEditor = observer((props: { sx?: SxProps }) => {
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     const feedback = useFeedback()
     const fileOps = useFileOperations()
@@ -27,8 +27,8 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
             message: 'Are you sure you want to reset to default settings?'
         })) {
             fileOps.generateDefaultSettings()
-                .then(settings => {
-                    apicize.update(settings)
+                .then(newSettings => {
+                    settings.update(newSettings)
                 })
                 .catch(e => feedback.toastError(e))
         }
@@ -37,8 +37,8 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
     const changeWorkbookDirectory = () => {
         fileOps.selectWorkbookDirectory()
             .then(d => {
-                if (d && d !== apicize.workbookDirectory) {
-                    apicize.setWorkbookDirectory(d)
+                if (d && d !== settings.workbookDirectory) {
+                    settings.setWorkbookDirectory(d)
                     feedback.toast(`Workbook directory changed to ${d}`, ToastSeverity.Info)
                 }
             })
@@ -59,23 +59,23 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                             <InputLabel id='text-size-label-id' sx={{ width: '12em' }} >Main Text Size:</InputLabel>
                             <TextField type='number' slotProps={{ htmlInput: { min: 6, max: 120 } }}
                                 size='small'
-                                value={apicize.fontSize}
+                                value={settings.fontSize}
                                 title='Base font size of non-navigation content'
-                                onChange={(e) => apicize.setFontSize(parseInt(e.target.value))} />
+                                onChange={(e) => settings.setFontSize(parseInt(e.target.value))} />
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='text-size-label-id' sx={{ width: '12em' }} >Navigation Text Size:</InputLabel>
                             <TextField type='number' slotProps={{ htmlInput: { min: 6, max: 120 } }}
                                 size='small'
-                                value={apicize.navigationFontSize}
+                                value={settings.navigationFontSize}
                                 title='Base font size of navigation content'
-                                onChange={(e) => apicize.setNavigationFontSize(parseInt(e.target.value))} />
+                                onChange={(e) => settings.setNavigationFontSize(parseInt(e.target.value))} />
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='color-mode-label-id' sx={{ width: '12em' }}>Color Mode:</InputLabel>
                             <Select
-                                value={apicize.colorScheme}
-                                onChange={(e) => apicize.setColorScheme(e.target.value as SupportedColorScheme)}
+                                value={settings.colorScheme}
+                                onChange={(e) => settings.setColorScheme(e.target.value as SupportedColorScheme)}
                                 size='small'
                             >
                                 <MenuItem value="light">Light</MenuItem>
@@ -84,7 +84,7 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='hide-nav-menu-label-id' sx={{ width: '12em' }}>Alwaays Hide Nav Menu:</InputLabel>
-                            <RadioGroup row value={apicize.alwaysHideNavTree} onChange={(e) => apicize.setAlwaysHideNavTree(e.target.value === 'true')}>
+                            <RadioGroup row value={settings.alwaysHideNavTree} onChange={(e) => settings.setAlwaysHideNavTree(e.target.value === 'true')}>
                                 <FormControlLabel value={true} control={<Radio />} label='Yes' title='Always show minimized navigation toolbar' />
                                 <FormControlLabel value={false} control={<Radio />} label='No' title='Show minimized navigation toolbar only when width threshold is reached' />
                             </RadioGroup>
@@ -98,20 +98,20 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                                 <InputLabel id='diag-indent-label-id' sx={{ width: '12em' }}>Indent Size:</InputLabel>
                                 <TextField type='number' slotProps={{ htmlInput: { min: 6, max: 120 } }}
                                     size='small'
-                                    value={apicize.editorIndentSize}
+                                    value={settings.editorIndentSize}
                                     title='Set indent level for JSON, JavaScript and XML'
-                                    onChange={(e) => apicize.setEditorIndentSize(parseInt(e.target.value))} />
+                                    onChange={(e) => settings.setEditorIndentSize(parseInt(e.target.value))} />
                             </Stack>
                             <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                                 <InputLabel id='detect-indent-label-id' sx={{ width: '12em' }}>Detect Existing Indent:</InputLabel>
-                                <RadioGroup row value={apicize.editorDetectExistingIndent} onChange={(e) => apicize.setEditorDetectExistingIndent(e.target.value === 'true')}>
+                                <RadioGroup row value={settings.editorDetectExistingIndent} onChange={(e) => settings.setEditorDetectExistingIndent(e.target.value === 'true')}>
                                     <FormControlLabel value={true} control={<Radio />} label='Yes' title='Use existing detection indent level' />
                                     <FormControlLabel value={false} control={<Radio />} label='No' title='Always use indent level configured in Settings' />
                                 </RadioGroup>
                             </Stack>
                             <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                                 <InputLabel id='check-js-label-id' sx={{ width: '12em' }}>Check JavaScript Syntax:</InputLabel>
-                                <RadioGroup row value={apicize.editorCheckJsSyntax} onChange={(e) => apicize.setEditorCheckJsSyntax(e.target.value === 'true')}>
+                                <RadioGroup row value={settings.editorCheckJsSyntax} onChange={(e) => settings.setEditorCheckJsSyntax(e.target.value === 'true')}>
                                     <FormControlLabel value={true} control={<Radio />} label='Yes' title='Check JavaScript syntax when editing tests' />
                                     <FormControlLabel value={false} control={<Radio />} label='No' title='Ignore JavaScript syntax errors when editing tests' />
                                 </RadioGroup>
@@ -123,32 +123,51 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                     <Stack direction='column' spacing={1}>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='directory-label-id' sx={{ width: '12em' }}>Workbook Directory:</InputLabel>
-                            <InputLabel>{apicize.workbookDirectory}</InputLabel>
+                            <InputLabel>{settings.workbookDirectory}</InputLabel>
                             <Button variant="outlined" onClick={changeWorkbookDirectory}>Set</Button>
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='pkce-port-label-id' sx={{ width: '12em' }}>PKCE Listener Port:</InputLabel>
                             <TextField type='number' slotProps={{ htmlInput: { min: 1, max: 65535 } }}
-                                value={apicize.pkceListenerPort}
+                                value={settings.pkceListenerPort}
                                 size='small'
-                                onChange={(e) => apicize.setPkceListenerPort(parseInt(e.target.value))} />
+                                onChange={(e) => settings.setPkceListenerPort(parseInt(e.target.value))} />
                             <InputLabel>("0" to disable)</InputLabel>
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='show_diag-info-label-id' sx={{ width: '12em' }}>Show Diagnotic Info:</InputLabel>
-                            <RadioGroup row value={apicize.editorCheckJsSyntax} onChange={(e) => apicize.setShowDiagnosticInfo(e.target.value === 'true')}>
+                            <RadioGroup row value={settings.showDiagnosticInfo} onChange={(e) => settings.setShowDiagnosticInfo(e.target.value === 'true')}>
                                 <FormControlLabel value={true} control={<Radio />} label='Yes' title='Show IDs and other diagnostic info' />
                                 <FormControlLabel value={false} control={<Radio />} label='No' title='Do not display digagnostic info' />
                             </RadioGroup>
                         </Stack>
-                        <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
-                            <InputLabel id='settings-filename-id' sx={{ width: '12em' }}>Settings File Name:</InputLabel>
-                            <InputLabel>{apicize.settingsFileName}</InputLabel>
-                        </Stack>
-                        <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
-                            <InputLabel id='globals-filename-id' sx={{ width: '12em' }}>Globals File Name:</InputLabel>
-                            <InputLabel>{apicize.globalsFileName}</InputLabel>
-                        </Stack>
+                        {(
+                            settings.showDiagnosticInfo && settings.storage
+                                ? <>
+                                    <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                                        <InputLabel id='settings-filename-id' sx={{ width: '12em' }}>Settings File Name:</InputLabel>
+                                        <InputLabel>{settings.storage.settingsFileName}</InputLabel>
+                                    </Stack>
+                                    <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                                        <InputLabel id='globals-filename-id' sx={{ width: '12em' }}>Globals File Name:</InputLabel>
+                                        <InputLabel>{settings.storage.globalsFileName}</InputLabel>
+                                    </Stack>
+                                    <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                                        <InputLabel id='settings-directory-id' sx={{ width: '12em' }}>Settings Directory:</InputLabel>
+                                        <InputLabel>{settings.storage.settingsDirectory}</InputLabel>
+                                    </Stack>
+                                    <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                                        <InputLabel id='home-directory-id' sx={{ width: '12em' }}>Home Directory:</InputLabel>
+                                        <InputLabel>{settings.storage.homeDirectory}</InputLabel>
+                                    </Stack>
+                                    <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
+                                        <InputLabel id='home-envvar-id' sx={{ width: '12em' }}>HOME Env Variable:</InputLabel>
+                                        <InputLabel>{settings.storage.homeEnvironmentVariable}</InputLabel>
+                                    </Stack>
+                                </>
+                                : null
+
+                        )}
                     </Stack>
                 </BorderedSection>
                 <Box>

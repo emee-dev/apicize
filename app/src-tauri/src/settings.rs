@@ -119,7 +119,7 @@ impl ApicizeSettings {
         }
     }
 
-    fn get_settings_directory() -> path::PathBuf {
+    pub fn get_settings_directory() -> path::PathBuf {
         if let Some(directory) = config_dir() {
             directory.join("apicize")
         } else {

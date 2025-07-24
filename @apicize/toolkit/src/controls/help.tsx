@@ -49,7 +49,7 @@ import SaveIcon from '@mui/icons-material/Save'
 import SaveAsIcon from '@mui/icons-material/SaveAs'
 
 import { Parent } from 'unist';
-import { useApicize } from '../contexts/apicize.context';
+import { useApicizeSettings } from '../contexts/apicize-settings.context';
 import { useWorkspace } from '../contexts/workspace.context';
 import { DropdownMenu } from './navigation/dropdown-menu';
 import { HelpContents } from '../models/help-contents';
@@ -60,13 +60,13 @@ import { HelpContents } from '../models/help-contents';
 /// <reference types="mdast-util-directive" />
 
 export const HelpPanel = observer((props: { sx?: SxProps }) => {
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     const fileOps = useFileOperations()
     const feedback = useFeedback()
 
-    let name = apicize.appName
-    let version = apicize.appVersion
+    let name = settings.appName
+    let version = settings.appVersion
 
     let [content, setContent] = useState(createElement(Fragment));
     const [contentsMenu, setContentsMenu] = useState<null | HTMLElement>(null)
@@ -142,7 +142,7 @@ export const HelpPanel = observer((props: { sx?: SxProps }) => {
                     replaceWith = version
                     break
                 case 'ctrlkey':
-                    replaceWith = apicize.ctrlKey
+                    replaceWith = settings.ctrlKey
                     break
                 default:
                     // if not an information item that we know about, ignore it

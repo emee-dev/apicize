@@ -14,7 +14,7 @@ import { CertificateSection } from "./sections/certificate-section";
 import { ProxySection } from "./sections/proxy-section";
 import { RequestSection } from "./sections/request-section";
 import useWindowSize from "../../window-size";
-import { useApicize } from "../../contexts/apicize.context";
+import { useApicizeSettings } from "../../contexts/apicize-settings.context";
 import { NavFileOpsMenu } from "./nav-file-ops-menu"
 import AuthIcon from "../../icons/auth-icon"
 import CertificateIcon from "../../icons/certificate-icon"
@@ -29,7 +29,7 @@ const PREFERRED_WIDTH = 1200
 
 export const NavigationControl = observer(() => {
 
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     const windowSize = useWindowSize()
 
@@ -45,7 +45,7 @@ export const NavigationControl = observer(() => {
         workspace.setMode((workspace.mode === mode) ? WorkspaceMode.Normal : mode)
     }
 
-    return (apicize.alwaysHideNavTree || windowSize.width < PREFERRED_WIDTH)
+    return (settings.alwaysHideNavTree || windowSize.width < PREFERRED_WIDTH)
         ? <Box className='navigation-narrow' display='flex'>
             <Stack direction='column' sx={{ flexGrow: 1 }} className='nav-selection-pane' typography='navigation'>
                 <ToggleButtonGroup orientation="vertical" value={workspace.mode}>
@@ -95,7 +95,7 @@ export const NavigationControl = observer(() => {
                 aria-label='request navigator'
                 // defaultCollapseIcon={<ExpandMoreIcon />}
                 // defaultExpandIcon={<ChevronRightIcon />}
-                sx={{ paddingRight: '0.8em' }}
+                sx={{ paddingRight: '0.8em', fontSize: settings.navigationFontSize }}
                 expansionTrigger='iconContainer'
                 expandedItems={workspace.expandedItems}
                 selectedItems={workspace.activeSelection ? `${workspace.activeSelection.type}-${workspace.activeSelection.id}` : null}

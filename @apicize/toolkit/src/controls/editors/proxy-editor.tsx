@@ -3,10 +3,10 @@ import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';
 import { useWorkspace } from '../../contexts/workspace.context';
-import { useApicize } from '../../contexts/apicize.context';
+import { useApicizeSettings } from '../../contexts/apicize-settings.context';
 
 export const ProxyEditor = observer((props: { sx?: SxProps }) => {
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     const activeSelection = workspace.activeSelection
 
@@ -23,7 +23,7 @@ export const ProxyEditor = observer((props: { sx?: SxProps }) => {
                 <EditorTitle
                     icon={<AirlineStopsIcon color='proxy' />}
                     name={proxy.name.length > 0 ? proxy.name : '(Unnamed)'}
-                    diag={apicize.showDiagnosticInfo ? proxy.id : undefined}
+                    diag={settings.showDiagnosticInfo ? proxy.id : undefined}
                 />
             </Box>
             <Box className='editor-panel'>

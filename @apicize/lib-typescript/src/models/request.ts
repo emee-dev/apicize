@@ -81,6 +81,7 @@ export interface BodyRaw {
 export type RequestEntry = Request | RequestGroup
 
 export interface BaseRequest extends Identifiable, Named, SelectedParameters, Executable, ValidationErrors, Warnings {
+    key?: string
     url: string
     method?: Method
     timeout?: number
@@ -108,5 +109,6 @@ export enum GroupExecution {
 }
 
 export interface RequestGroup extends Identifiable, Named, SelectedParameters, Executable, ValidationErrors, Warnings {
+    key?: string
     execution: GroupExecution
 }

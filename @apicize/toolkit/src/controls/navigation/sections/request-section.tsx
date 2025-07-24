@@ -1,4 +1,4 @@
-import { SvgIcon, IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material"
+import { SvgIcon, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Typography } from "@mui/material"
 import { Box } from "@mui/system"
 import { TreeItem } from "@mui/x-tree-view/TreeItem"
 import FolderIcon from "../../../icons/folder-icon"
@@ -14,14 +14,14 @@ import { useState } from "react"
 import { useWorkspace } from "../../../contexts/workspace.context"
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
-import { useApicize } from "../../../contexts/apicize.context"
+import { useApicizeSettings } from "../../../contexts/apicize-settings.context"
 import { NavigationRequestEntry } from "../../../models/navigation"
 import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position"
 
 export const RequestSection = observer((props: { includeHeader?: boolean }) => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
-    const settings = useApicize()
+    const settings = useApicizeSettings()
 
     const [requestsMenu, setRequestsMenu] = useState<MenuPosition | undefined>()
     const [requestMenu, setRequestMenu] = useState<MenuPosition | undefined>(undefined)
@@ -145,25 +145,25 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
             <Menu
                 id='requests-menu'
                 open={requestsMenu !== undefined}
-                sx={{ fontSize: settings.navigationFontSize }}
                 onClose={closeRequestsMenu}
                 anchorReference='anchorPosition'
+                sx={{fontSize: settings.navigationFontSize}}
                 anchorPosition={{
                     top: requestsMenu?.mouseY ?? 0,
                     left: requestsMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequest(null, IndexedEntityPosition.Under)} >
+                <MenuItem className='navigation-menu-item' sx={{fontSize: 'inherit'}} onClick={(_) => handleAddRequest(null, IndexedEntityPosition.Under)} >
                     <ListItemIcon>
                         <SvgIcon fontSize='inherit' color='request'><RequestIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText sx={{ fontSize: settings.navigationFontSize }} disableTypography>Append Request</ListItemText>
+                    <ListItemText disableTypography>Append Request</ListItemText>
                 </MenuItem>
-                <MenuItem className='navigation-menu-item' onClick={(_) => handleAddRequestGroup(null, IndexedEntityPosition.Under)}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(_) => handleAddRequestGroup(null, IndexedEntityPosition.Under)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='inherit' color='folder'><FolderIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText sx={{ fontSize: settings.navigationFontSize }} disableTypography>Append Group</ListItemText>
+                    <ListItemText disableTypography>Append Group</ListItemText>
                 </MenuItem>
             </Menu>
         )
@@ -189,24 +189,24 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
         return <Menu
             id='req-menu'
             open={requestMenu !== undefined}
-            sx={{ fontSize: settings.navigationFontSize }}
             onClose={closeRequestMenu}
             anchorReference='anchorPosition'
+            sx={{fontSize: settings.navigationFontSize}}
             anchorPosition={{
                 top: requestMenu?.mouseY ?? 0,
                 left: requestMenu?.mouseX ?? 0
             }}
         >
-            <MenuItem className='navigation-menu-item' onClick={(e) => handleAddRequest(
+            <MenuItem className='navigation-menu-item' sx={{fontSize: 'inherit'}} onClick={(e) => handleAddRequest(
                 requestMenu.id,
                 positionType
             )}>
                 <ListItemIcon>
                     <SvgIcon fontSize='inherit' color='request'><RequestIcon /></SvgIcon>
                 </ListItemIcon>
-                <ListItemText sx={{ fontSize: settings.navigationFontSize }} disableTypography>{action} Request</ListItemText>
+                <ListItemText disableTypography>{action} Request</ListItemText>
             </MenuItem>
-            <MenuItem className='navigation-menu-item' onClick={(e) =>
+            <MenuItem className='navigation-menu-item' sx={{fontSize: 'inherit'}}  onClick={(e) =>
                 handleAddRequestGroup(
                     requestMenu.id,
                     positionType
@@ -214,19 +214,19 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
                 <ListItemIcon>
                     <SvgIcon fontSize='inherit' color='folder'><FolderIcon /></SvgIcon>
                 </ListItemIcon>
-                <ListItemText sx={{ fontSize: settings.navigationFontSize }} disableTypography>{action} Request Group</ListItemText>
+                <ListItemText disableTypography>{action} Request Group</ListItemText>
             </MenuItem>
-            <MenuItem className='navigation-menu-item' onClick={(e) => handleDupeRequest(requestMenu.id, requestMenu.type)}>
+            <MenuItem className='navigation-menu-item' sx={{fontSize: 'inherit'}}  onClick={(e) => handleDupeRequest(requestMenu.id, requestMenu.type)}>
                 <ListItemIcon>
                     <ContentCopyOutlinedIcon fontSize='inherit' sx={{ color: 'request' }} />
                 </ListItemIcon>
-                <ListItemText sx={{ fontSize: settings.navigationFontSize }} disableTypography>Add Duplicate</ListItemText>
+                <ListItemText disableTypography>Add Duplicate</ListItemText>
             </MenuItem>
-            <MenuItem className='navigation-menu-item' onClick={(e) => handleDeleteRequest(requestMenu.id, requestMenu.type)}>
+            <MenuItem className='navigation-menu-item' sx={{fontSize: 'inherit'}}  onClick={(e) => handleDeleteRequest(requestMenu.id, requestMenu.type)}>
                 <ListItemIcon>
                     <DeleteIcon fontSize='inherit' color='error' />
                 </ListItemIcon>
-                <ListItemText sx={{ fontSize: settings.navigationFontSize }} disableTypography>Delete</ListItemText>
+                <ListItemText disableTypography>Delete</ListItemText>
             </MenuItem>
         </Menu>
     }
@@ -301,7 +301,7 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
                 // e.stopPropagation()
             }}
             onFocusCapture={e => e.stopPropagation()}
-            sx={{ margin: '0.5em 0 0 0', padding: 0 }}
+            sx={{ margin: '0.5em 0 0 0', padding: 0, fontSize: settings.navigationFontSize }}
             label={(
                 <Box
                     className='nav-item'
@@ -324,15 +324,15 @@ export const RequestSection = observer((props: { includeHeader?: boolean }) => {
                 // sx={{ background: isOver ? dragPositionToColor(dragDrop.dragPosition) : 'default' }}
                 >
                     <Box className='nav-icon-box'><SvgIcon className='nav-folder' color='request'><RequestIcon /></SvgIcon></Box>
-                    <Box className='nav-node-text' typography='navigation' sx={{ flexGrow: 1 }}>
-                        Requests
+                    <Box className='nav-node-text'sx={{ flexGrow: 1 }}>
+                        <Typography variant="navigation">Requests</Typography>
                     </Box>
-                    <IconButton sx={{ flexGrow: 0, margin: 0, padding: 0, visibility: focused ? 'normal' : 'hidden', fontSize: settings.navigationFontSize }} onClick={(e) => {
+                    <IconButton sx={{ flexGrow: 0, margin: 0, padding: 0, visibility: focused ? 'normal' : 'hidden' }} onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
                         handleShowRequestsMenu(e, 'menu-requests', EntityType.Group)
                     }}>
-                        <Box className='nav-icon-context'><MoreVertIcon /></Box>
+                        <Box className='nav-icon-context'><MoreVertIcon  style={{fontSize: settings.navigationFontSize * 1.5}} /></Box>
                     </IconButton>
                 </Box >
             )}>

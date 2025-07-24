@@ -16,6 +16,7 @@ use apicize_lib::{
     ExecutionResultSummary, ExecutionStatus, ExternalData, Parameters, PkceTokenResult,
     TestRunnerContext, Warnings, Workspace,
 };
+use dirs::home_dir;
 use dragdrop::DroppedFile;
 use error::ApicizeAppError;
 use pkce::{OAuth2PkceInfo, OAuth2PkceRequest, OAuth2PkceService};
@@ -375,7 +376,7 @@ fn create_workspace(
     let mut save_recent_file_name: Option<String> = None;
 
     // Find the existing workspace for the file, if there is one
-    let existing_workspace_id = match &open_existing_file_name {
+    let mut existing_workspace_id = match &open_existing_file_name {
         Some(file_name) => workspaces.workspaces.iter().find_map(|(id, info)| {
             if !info.file_name.is_empty() && file_name.eq(&info.file_name) {
                 Some(id.clone())
@@ -385,6 +386,21 @@ fn create_workspace(
         }),
         None => None,
     };
+
+    // Identifiy any open sessions
+    let existing_session_ids = match &existing_workspace_id {
+        Some(existing_workspace_id) => sessions.get_workspace_session_ids(existing_workspace_id),
+        None => Vec::new(),
+    };
+
+    // If this is an open workbook, but we are on the last session, then close the workbook and the session
+    // to "reset" any changes made
+    if existing_session_ids.len() == 1 && !open_in_new_session {
+        if let Some(workspace_id) = &existing_workspace_id {
+            workspaces.remove_workspace(workspace_id);
+            existing_workspace_id = None;
+        }
+    }
 
     let workspace_result = match &open_existing_file_name {
         Some(file_name) => {
@@ -931,8 +947,7 @@ async fn run_request(
 
         match responses.into_iter().next() {
             Some(Ok(result)) => {
-                let (summaries, details) = result.assemble_results();
-
+                let (summaries, details) = result.assemble_results(&runner);
                 info.result_summaries
                     .insert(request_or_group_id.to_string(), summaries.clone());
 
@@ -1625,10 +1640,21 @@ async fn get_storage_information() -> StorageInformation {
     let settings_file_name = ApicizeSettings::get_settings_filename()
         .to_string_lossy()
         .to_string();
+    let settings_directory = ApicizeSettings::get_settings_directory()
+        .to_string_lossy()
+        .to_string();
+    let home_directory = match home_dir() {
+        Some(dir) => dir.to_string_lossy().to_string(),
+        None => "(None)".to_string(),
+    };
+    let home_environment_variable = std::env::var("HOME").unwrap_or("(None)".to_string());
 
     StorageInformation {
         globals_file_name,
         settings_file_name,
+        settings_directory,
+        home_directory,
+        home_environment_variable,
     }
 }
 
@@ -1658,4 +1684,7 @@ struct UpdateEvent {
 struct StorageInformation {
     settings_file_name: String,
     globals_file_name: String,
+    home_directory: String,
+    home_environment_variable: String,
+    settings_directory: String,
 }

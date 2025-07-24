@@ -11,6 +11,7 @@ import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
 import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position"
+import { useApicizeSettings } from "../../../contexts/apicize-settings.context"
 
 export const ProxySection = observer((props: {
     includeHeader: boolean,
@@ -18,6 +19,7 @@ export const ProxySection = observer((props: {
     const workspace = useWorkspace()
     const feedback = useFeedback()
     const theme = useTheme()
+    const settings = useApicizeSettings()
 
     const [proxyMenu, setProxyMenu] = useState<MenuPosition | undefined>(undefined)
 
@@ -89,29 +91,30 @@ export const ProxySection = observer((props: {
                 id='proxy-menu'
                 open={proxyMenu !== undefined}
                 onClose={closeProxyMenu}
+                sx={{ fontSize: settings.navigationFontSize }}
                 anchorReference='anchorPosition'
                 anchorPosition={{
                     top: proxyMenu?.mouseY ?? 0,
                     left: proxyMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddProxy(proxyMenu.id, IndexedEntityPosition.After)}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(_) => handleAddProxy(proxyMenu.id, IndexedEntityPosition.After)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='proxy'><ProxyIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Add Proxy</ListItemText>
+                    <ListItemText disableTypography>Add Proxy</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={(e) => handleDupeProxy()}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(e) => handleDupeProxy()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: theme.palette.proxy.light }} />
+                        <SvgIcon fontSize='small' sx={{ color: theme.palette.proxy.light }}><ContentCopyOutlinedIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Duplicate Proxy</ListItemText>
+                    <ListItemText disableTypography>Duplicate Proxy</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={(e) => handleDeleteProxy()}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(e) => handleDeleteProxy()}>
                     <ListItemIcon>
                         <DeleteIcon fontSize='small' color='error' />
                     </ListItemIcon>
-                    <ListItemText>Delete Proxy</ListItemText>
+                    <ListItemText disableTypography>Delete Proxy</ListItemText>
                 </MenuItem>
             </Menu>
             : <></>

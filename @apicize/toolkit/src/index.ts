@@ -21,18 +21,17 @@ export * from './models/workspace/entity-type'
 export * from './models/workspace/ssh-file-type'
 export * from './models/navigation'
 export * from './contexts/workspace.context'
-
-export { useFeedback, FeedbackContext, FeedbackStore, ToastSeverity, ConfirmationOptions } from './contexts/feedback.context'
-export { useClipboard, ClipboardContext, ClipboardStore } from './contexts/clipboard.context'
+export * from './contexts/feedback.context'
+export * from './contexts/clipboard.context'
 export * from './contexts/file-operations.context'
-export { usePkce, PkceContext } from './contexts/pkce.context'
-export { useWorkspace, WorkspaceContext, WorkspaceStore } from './contexts/workspace.context'
-export { useApicize, ApicizeContext } from './contexts/apicize.context'
-export { useLog, LogContext, LogStore } from './contexts/log.context'
-export { ReqwestEvent, ReqwestEventConnect, ReqwestEventRead, ReqwestEventWrite } from './models/trace';
-export { DragDropContext, DragDropProvider, useDragDrop } from './contexts/dragdrop.context'
-export { FileDragDropContext, FileDragDropStore, useFileDragDrop } from './contexts/file-dragdrop.context'
-export { EditableSettings as ApicizeSettings } from './models/editable-settings'
+export * from './contexts/pkce.context'
+export * from './contexts/workspace.context'
+export * from './contexts/apicize-settings.context'
+export * from './contexts/log.context'
+export * from './models/trace';
+export * from './contexts/dragdrop.context'
+export * from './contexts/file-dragdrop.context'
+export * from './models/editable-settings'
 
 import { monaco } from 'react-monaco-editor'
 import "./toolkit.css"
@@ -66,7 +65,7 @@ monaco.editor.addKeybindingRules([
 
 // This needs to be here because Monaco is prone to throwing cancellation errors when it goes out of context
 window.addEventListener('unhandledrejection', (evt) => {
-    console.log(`unhandledrejection`, evt?.reason?.stack)
+    console.warn(`unhandledrejection`, evt?.reason?.stack)
     if (evt?.reason?.stack?.includes?.('CancellationError@')) {
         evt.stopImmediatePropagation()
     }

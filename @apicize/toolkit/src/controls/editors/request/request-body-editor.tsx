@@ -21,12 +21,12 @@ import { EditableRequestHeaders } from '../../../models/workspace/editable-reque
 import { GenerateIdentifier } from '../../../services/random-identifier-generator'
 import { editor } from 'monaco-editor'
 import MonacoEditor, { monaco } from 'react-monaco-editor'
-import { useApicize } from '../../../contexts/apicize.context'
+import { useApicizeSettings } from '../../../contexts/apicize-settings.context'
 
 export const RequestBodyEditor = observer((props: { body: EditableRequestBody | null, headers: EditableRequestHeaders | null }) => {
   const workspace = useWorkspace()
   const clipboard = useClipboard()
-  const settings = useApicize()
+  const settings = useApicizeSettings()
   const fileOps = useFileOperations()
   const feedback = useFeedback()
   const fileDragDrop = useFileDragDrop()

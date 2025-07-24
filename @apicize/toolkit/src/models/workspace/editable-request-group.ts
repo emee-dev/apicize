@@ -1,6 +1,5 @@
 import { RequestGroup, GroupExecution } from "@apicize/lib-typescript"
 import { observable, action, computed } from "mobx"
-import { GenerateIdentifier } from "../../services/random-identifier-generator"
 import { EntityType } from "./entity-type"
 import { EntityGroup, WorkspaceStore } from "../../contexts/workspace.context"
 import { EditableRequestEntry } from "./editable-request-entry"
@@ -9,8 +8,8 @@ import { EditableWarnings } from "./editable-warnings"
 export class EditableRequestGroup extends EditableRequestEntry {
     public readonly entityType = EntityType.Group
 
+    @observable public accessor key = ''
     @observable public accessor execution = GroupExecution.Sequential
-
     @observable accessor timeout = 0
     @observable accessor warnings = new EditableWarnings()
 
@@ -18,6 +17,7 @@ export class EditableRequestGroup extends EditableRequestEntry {
         super(workspace)
         this.id = entry.id
         this.name = entry.name ?? ''
+        this.key = entry.key ?? ''
 
         this.execution = entry.execution
         this.multiRunExecution = entry.multiRunExecution
@@ -37,6 +37,7 @@ export class EditableRequestGroup extends EditableRequestEntry {
             entityType: 'Group',
             id: this.id,
             name: this.name,
+            key: this.key.length > 0 ? this.key : undefined,
             runs: this.runs,
             execution: this.execution,
             multiRunExecution: this.multiRunExecution,
@@ -51,6 +52,12 @@ export class EditableRequestGroup extends EditableRequestEntry {
     }
 
     @action
+    setKey(value: string) {
+        this.key = value
+        this.onUpdate()
+    }
+
+    @action
     setGroupExecution(value: GroupExecution) {
         this.execution = value
         this.onUpdate()
@@ -59,6 +66,7 @@ export class EditableRequestGroup extends EditableRequestEntry {
     @action
     refreshFromExternalUpdate(entity: EntityGroup) {
         this.name = entity.name ?? ''
+        this.key = entity.key ?? ''
         this.runs = entity.runs
         this.execution = entity.execution
         this.multiRunExecution = entity.multiRunExecution

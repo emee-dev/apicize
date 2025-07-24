@@ -8,11 +8,11 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { VariableSourceType } from '@apicize/lib-typescript';
 import { useWorkspace } from '../../contexts/workspace.context';
-import { useApicize } from '../../contexts/apicize.context';
+import { useApicizeSettings } from '../../contexts/apicize-settings.context';
 
 export const ScenarioEditor = observer((props: { sx?: SxProps }) => {
 
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     const activeSelection = workspace.activeSelection
 
@@ -44,7 +44,7 @@ export const ScenarioEditor = observer((props: { sx?: SxProps }) => {
                 <EditorTitle
                     icon={<SvgIcon color='scenario'><ScenarioIcon /></SvgIcon>}
                     name={scenario.name.length > 0 ? scenario.name : '(Unnamed)'}
-                    diag={apicize.showDiagnosticInfo ? scenario.id : undefined}
+                    diag={settings.showDiagnosticInfo ? scenario.id : undefined}
                 />
             </Box>
             <Box className='editor-panel'>

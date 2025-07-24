@@ -1,12 +1,12 @@
 import { Typography } from "@mui/material";
 import { Box } from "@mui/material";
 import ApicizeIcon from "../icons/apicize-icon";
-import { useApicize } from "../contexts/apicize.context";
+import { useApicizeSettings } from "../contexts/apicize-settings.context";
 
 export function logo() {
-    const apicize = useApicize()
-    let name = apicize.appName
-    let version = apicize.appVersion
+    const settings = useApicizeSettings()
+    let name = settings.appName
+    let version = settings.appVersion
 
     return <Box className='logo' display='flex'>
         <Box className='logo-icon'>

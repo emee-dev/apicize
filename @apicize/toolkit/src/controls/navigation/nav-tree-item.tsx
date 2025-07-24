@@ -1,5 +1,5 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core"
-import { SvgIconPropsColorOverrides, SvgIcon, IconButton } from "@mui/material"
+import { SvgIconPropsColorOverrides, SvgIcon, IconButton, Typography } from "@mui/material"
 import { Box } from "@mui/system"
 import { TreeItem } from "@mui/x-tree-view/TreeItem"
 import { observer } from "mobx-react-lite"
@@ -13,7 +13,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import { CSS, useCombinedRefs } from '@dnd-kit/utilities';
 import { useState } from "react"
 import { useDragDrop } from "../../contexts/dragdrop.context"
-import { useApicize } from "../../contexts/apicize.context"
+import { useApicizeSettings } from "../../contexts/apicize-settings.context"
 import { useWorkspace } from "../../contexts/workspace.context"
 import { IndexedEntityPosition } from "../../models/workspace/indexed-entity-position"
 import { NavigationEntry, NavigationEntryState } from "../../models/navigation"
@@ -59,7 +59,7 @@ export const NavTreeItem = observer((props: {
     onMenu?: (event: React.MouseEvent, id: string, type: EntityType) => void,
     onMove?: (id: string, relativeToId: string, relativePosition: IndexedEntityPosition) => void
 }) => {
-    const settings = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     const dragDrop = useDragDrop()
     const entry = props.entry
@@ -147,7 +147,7 @@ export const NavTreeItem = observer((props: {
             >
                 {
                     (props.icon && props.iconColor)
-                        ? <Box className='nav-icon-box'><SvgIcon color={props.iconColor}>{props.icon}</SvgIcon></Box>
+                        ? <Box className='nav-icon-box'><SvgIcon color={props.iconColor} >{props.icon}</SvgIcon></Box>
                         : null
                 }
                 <Box
@@ -166,7 +166,6 @@ export const NavTreeItem = observer((props: {
                                 visibility: focused ? 'normal' : 'hidden',
                                 margin: 0,
                                 padding: 0,
-                                fontSize: settings.navigationFontSize
                             }}
                             onClick={(e) => {
                                 e.preventDefault()
@@ -174,7 +173,7 @@ export const NavTreeItem = observer((props: {
                                 if (props.onMenu) props.onMenu(e, entry.id, props.type)
                             }}
                         >
-                            <Box className='nav-icon-context'><MoreVertIcon /></Box>
+                            <Box className='nav-icon-context'><MoreVertIcon style={{fontSize: settings.navigationFontSize * 1.5}} /></Box>
                         </IconButton>
                         : <></>
                 }

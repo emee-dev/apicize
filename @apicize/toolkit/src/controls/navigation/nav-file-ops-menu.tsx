@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite";
 import { createRef, useRef, useState } from "react";
-import { useApicize } from "../../contexts/apicize.context";
+import { useApicizeSettings } from "../../contexts/apicize-settings.context";
 import { useFileOperations } from "../../contexts/file-operations.context";
 import { useWorkspace } from "../../contexts/workspace.context";
 import { IconButton, MenuItem } from "@mui/material";
@@ -15,7 +15,7 @@ import OpenInBrowserIcon from '@mui/icons-material/OpenInBrowser'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 
 export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'horizontal' | 'vertical' }) => {
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     const fileOps = useFileOperations()
 
@@ -49,8 +49,8 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
     };
 
     const normalizeWorkbookFileName = (filename: string) => {
-        if (filename.startsWith(apicize.workbookDirectory)) {
-            filename = filename.substring(apicize.workbookDirectory.length + 1)
+        if (filename.startsWith(settings.workbookDirectory)) {
+            filename = filename.substring(settings.workbookDirectory.length + 1)
             if (filename.endsWith('.apicize')) {
                 filename = filename.substring(0, filename.length - 8)
             }
@@ -97,25 +97,27 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
     let alignDropBtnItems: ResponsiveStyleValue<'begin' | 'end'>
     let firstPanelTPad: string
     let buttonSpacing: string | undefined
-    let iconPadding: string
 
     if (props.orientation == 'horizontal') {
         direction = 'row'
         firstPanelTPad = 'None'
         alignDropBtnSelf = 'begin'
         alignDropBtnItems = 'end'
-        iconPadding = '0 0.75em 0 0.75em'
     } else {
         direction = 'column'
         firstPanelTPad = '10em'
         alignDropBtnSelf = 'end'
         buttonSpacing = '1em'
         alignDropBtnItems = 'begin'
-        iconPadding = '0'
     }
 
     return <Stack direction={direction} sx={props.sx}>
-        <IconButton aria-label='new' title={`New Workspace (${apicize.ctrlKey} + N)`} onClick={() => fileOps.newWorkbook(false)} sx={{ fontSize: 'inherit' }}>
+        <IconButton
+            size='large'
+            aria-label='new'
+            title={`New Workspace (${settings.ctrlKey} + N)`} onClick={() => fileOps.newWorkbook(false)}
+            sx={{ fontSize: 'inherit', paddingLeft: '8px', paddingRight: '4px' }}
+        >
             <PostAddIcon />
         </IconButton>
 
@@ -123,7 +125,7 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
             id='file-new-menu-button'
             title='New Workspace'
             size="large"
-            sx={{ padding: iconPadding, minWidth: '1em', width: '1em', marginLeft: '-0.3em', alignSelf: alignDropBtnSelf, alignItems: alignDropBtnItems }}
+            sx={{ minWidth: '1em', width: '1em', alignSelf: alignDropBtnSelf, alignItems: 'alignDropBtnItems' }}
             onClick={handleNewFileMenuClick}
         ><KeyboardArrowDownIcon />
         </IconButton>
@@ -132,36 +134,41 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
             id="file-new-menu"
             autoFocus
             className="drop-down-menu"
+            sx={{ fontSize: settings.navigationFontSize }}
             anchorEl={newMenu}
             open={newMenu !== null}
             onClose={handleNewFileMenuClose}
         >
-            <MenuItem autoFocus={true} key='nav-new-file' className='recent-file' disableRipple onClick={() => handleFileNew()}>
+            <MenuItem autoFocus={true} key='nav-new-file' className='recent-file' sx={{ fontSize: 'inherit' }} disableRipple onClick={() => handleFileNew()}>
                 <Box className='filename'>Open Workspace in New Window</Box>
                 <OpenInBrowserIcon sx={{ marginRight: 0 }} fontSize='inherit' />
             </MenuItem>
         </DropdownMenu>
 
-        <IconButton size="large"
+        <IconButton
+            size="large"
             aria-label='open'
             id='file-open-btn'
-            sx={{ fontSize: apicize.navigationFontSize, marginTop: buttonSpacing }}
-            title={`Open Workbook (${apicize.ctrlKey} + O)`}
+            sx={{ marginTop: buttonSpacing, paddingRight: settings.recentWorkbookFileNames.length > 1 ? '4px' : '8px' }}
+            title={`Open Workbook (${settings.ctrlKey} + O)`}
             onClick={() => fileOps.openWorkbook(false, undefined, true)}>
             <FileOpenIcon />
         </IconButton>
         {
-            apicize.recentWorkbookFileNames.length > 1
-                ? <IconButton
+            settings.recentWorkbookFileNames.length > 1
+                ? <><IconButton
                     id='file-open-menu-button'
                     title='Open Recent Workbook'
-                    sx={{ padding: iconPadding, minWidth: '1em', width: '1em', marginLeft: '-0.3em', alignSelf: alignDropBtnSelf, alignItems: alignDropBtnItems }}
+                    size="large"
+                    sx={{ minWidth: '1em', width: '1em' }}
                     onClick={handleOpenFileMenuClick}
                 ><KeyboardArrowDownIcon />
+                </IconButton>
                     <DropdownMenu
                         id="file-open-menu"
                         autoFocus
                         className="drop-down-menu"
+                        sx={{fontSize: settings.navigationFontSize}}
                         slotProps={{
                             list: {
                                 'aria-labelledby': 'file-open-menu-button',
@@ -172,15 +179,16 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
                         onClose={handleOpenFileMenuClose}
                     >
                     </DropdownMenu>
-                </IconButton>
+                </>
                 : null
         }
         {
-            apicize.recentWorkbookFileNames.length > 1
+            settings.recentWorkbookFileNames.length > 1
                 ? <DropdownMenu
                     id="file-open-menu"
                     autoFocus
                     className="drop-down-menu"
+                    sx={{fontSize: settings.navigationFontSize}}
                     slotProps={{
                         list: {
                             'aria-labelledby': 'file-open-menu-button',
@@ -191,8 +199,8 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
                     onClose={handleOpenFileMenuClose}
                 >
                     {
-                        apicize.recentWorkbookFileNames.map((f, idx) => (
-                            <MenuItem autoFocus={idx == 0} key={`nav-file-${idx}`} className='recent-file' disableRipple onClick={() => handleFileOpen(f, false)}>
+                        settings.recentWorkbookFileNames.map((f, idx) => (
+                            <MenuItem autoFocus={idx == 0} key={`nav-file-${idx}`} sx={{ fontSize: 'inherit' }}  className='recent-file' disableRipple onClick={() => handleFileOpen(f, false)}>
                                 <Box className='filename'>{normalizeWorkbookFileName(f)}</Box>
                                 <IconButton title='Open in New Window' onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleFileOpen(f, true); }}><OpenInBrowserIcon sx={{ marginRight: 0 }} fontSize='inherit' /></IconButton>
                             </MenuItem>
@@ -201,10 +209,17 @@ export const NavFileOpsMenu = observer((props: { sx?: SxProps, orientation: 'hor
                 </DropdownMenu>
                 : null
         }
-        <IconButton aria-label='save' sx={{ fontSize: apicize.navigationFontSize, marginTop: buttonSpacing }} title={`Save to Workbook (${apicize.ctrlKey} + S)`} disabled={workspace.fileName.length == 0} onClick={() => fileOps.saveWorkbook()}>
+        <IconButton
+            size='large'
+            aria-label='save'
+            sx={{ marginTop: buttonSpacing, paddingLeft: '8px', paddingRight: '8px' }}
+            title={`Save to Workbook (${settings.ctrlKey} + S)`} disabled={workspace.fileName.length == 0} onClick={() => fileOps.saveWorkbook()}>
             <SaveIcon />
         </IconButton>
-        <IconButton aria-label='save-as' sx={{ fontSize: apicize.navigationFontSize, marginTop: buttonSpacing }} title={`Save to Workbook As (${apicize.ctrlKey} + Shift + S)`} onClick={() => fileOps.saveWorkbookAs()}>
+        <IconButton
+            size='large'
+            aria-label='save-as' sx={{ marginTop: buttonSpacing, paddingLeft: '8px', paddingRight: '8px' }}
+            title={`Save to Workbook As (${settings.ctrlKey} + Shift + S)`} onClick={() => fileOps.saveWorkbookAs()}>
             <SaveAsIcon />
         </IconButton>
     </Stack>

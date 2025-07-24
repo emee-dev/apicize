@@ -11,6 +11,7 @@ export interface ExecutionResultSummary {
     childIndexes?: number[]
     level: number
     name: string
+    key?: string
     executedAt: number
     duration: number
     method?: string

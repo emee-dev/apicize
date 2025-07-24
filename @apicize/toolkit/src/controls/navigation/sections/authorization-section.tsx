@@ -11,11 +11,13 @@ import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite";
 import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position";
+import { useApicizeSettings } from "../../../contexts/apicize-settings.context";
 
 export const AuthorizationSection = observer((props: { includeHeader: boolean }) => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
     const theme = useTheme()
+    const settings = useApicizeSettings()
 
     const [authorizationMenu, setAuthorizationMenu] = useState<MenuPosition | undefined>(undefined)
 
@@ -87,29 +89,30 @@ export const AuthorizationSection = observer((props: { includeHeader: boolean })
                 id='authorization-menu'
                 open={authorizationMenu !== undefined}
                 onClose={closeAuthorizationMenu}
+                sx={{ fontSize: settings.navigationFontSize }}
                 anchorReference='anchorPosition'
                 anchorPosition={{
                     top: authorizationMenu?.mouseY ?? 0,
                     left: authorizationMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddAuthorization(authorizationMenu.id, IndexedEntityPosition.After)}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(_) => handleAddAuthorization(authorizationMenu.id, IndexedEntityPosition.After)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='authorization'><AuthorizationIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Add Authorization</ListItemText>
+                    <ListItemText disableTypography>Add Authorization</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={(e) => handleDupeAuthorization()}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(e) => handleDupeAuthorization()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: theme.palette.authorization.light }} />
+                        <SvgIcon fontSize='small' sx={{ color: theme.palette.authorization.light }}><ContentCopyOutlinedIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Duplicate Authorization</ListItemText>
+                    <ListItemText disableTypography>Duplicate Authorization</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={(e) => handleDeleteAuthorization()}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(e) => handleDeleteAuthorization()}>
                     <ListItemIcon>
-                        <DeleteIcon fontSize='small' color='error' />
+                        <SvgIcon color='error'><DeleteIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Delete Authorization</ListItemText>
+                    <ListItemText disableTypography>Delete Authorization</ListItemText>
                 </MenuItem>
             </Menu>
             : <></>

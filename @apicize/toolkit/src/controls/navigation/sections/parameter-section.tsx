@@ -14,10 +14,11 @@ import { useWorkspace } from "../../../contexts/workspace.context"
 import { NavTreeItem } from "../nav-tree-item"
 import { useDroppable } from "@dnd-kit/core"
 import { observer } from "mobx-react-lite"
-import { useApicize } from "../../../contexts/apicize.context"
+import { useApicizeSettings } from "../../../contexts/apicize-settings.context"
 import { NavigationEntry, ParamNavigationSection } from "../../../models/navigation"
 import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position"
 import { useDragDrop } from "../../../contexts/dragdrop.context"
+import { SettingsEditor } from "../../editors/settings-editor"
 
 const ParameterSubsection = observer((props: {
     type: EntityType,
@@ -31,7 +32,7 @@ const ParameterSubsection = observer((props: {
     onItemMenu: (event: React.MouseEvent, id: string) => void,
     onSelectHeader: (headerId: string, helpTopic?: string) => void
 }) => {
-    const settings = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     const dragDrop = useDragDrop()
 
@@ -70,7 +71,7 @@ const ParameterSubsection = observer((props: {
                 <Box className='nav-node-text' typography='navigation' sx={{ flexGrow: 1, minHeight: '1em' }}>
                     {props.label}
                 </Box>
-                <IconButton sx={{ flexGrow: 0, minHeight: '1em', padding: 0, margin: 0, fontSize: settings.navigationFontSize }}
+                <IconButton sx={{ flexGrow: 0, minHeight: '1em', padding: 0, margin: 0 }}
                     onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
@@ -78,7 +79,7 @@ const ParameterSubsection = observer((props: {
                         workspace.updateExpanded(headerId, true)
                     }}>
                     <Box className='nav-icon-context'>
-                        <AddIcon />
+                        <AddIcon style={{fontSize: settings.navigationFontSize * 1.5}} />
                     </Box>
                 </IconButton>
             </Box>
@@ -128,6 +129,7 @@ export const ParameterSection = observer(<T extends EditableEntity>(props: {
     onItemMenu: (e: React.MouseEvent, persistence: Persistence, id: string) => void,
     onSelectHeader: (headerId: string, helpTopic?: string) => void
 }) => {
+    const settings = useApicizeSettings()
     const Contents = () => {
         return <>
             {props.contextMenu}

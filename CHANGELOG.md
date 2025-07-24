@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.26.0
+
+* Add Key property support for requests and groups
+* Fix many (but not all) font sizing issues
+* Add diagnostic directory information
+
 # 0.25.5
 
 * Fix Zephyr report to say "Passed" instead of "Success"

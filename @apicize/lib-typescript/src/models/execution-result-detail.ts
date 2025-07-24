@@ -12,6 +12,9 @@ export interface ExecutionResultDetailRequest {
     /// Request name
     name: string,
 
+    /// Request key
+    key?: string,
+
     /// Row number (if applicable)
     rowNumber?: number,
 
@@ -64,6 +67,9 @@ export interface ExecutionResultDetailGroup {
 
     /// Request name
     name: string,
+
+    /// Request key
+    key?: string,
 
     /// Row number (if applicable)
     rowNumber?: number,

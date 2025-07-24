@@ -1,4 +1,4 @@
-import { useApicize } from "@apicize/toolkit"
+import { useApicizeSettings } from "@apicize/toolkit"
 import { createTheme, ThemeProvider, TypographyVariantsOptions } from "@mui/material/styles"
 import { observer } from "mobx-react-lite"
 import { ReactNode } from "react"
@@ -11,20 +11,19 @@ interface ExtendedTypographyOptions extends TypographyVariantsOptions {
 
 export const ConfigurableTheme = observer((props: {
   children?: ReactNode,
-  colorScheme: 'dark' | 'light',
-  fontSize: number,
-  navigationFontSize: number,
 }) => {
+  const settings = useApicizeSettings()
+
   const palette = createTheme()
-  palette.palette.text.primary = props.colorScheme === 'dark'
+  palette.palette.text.primary = settings.colorScheme === 'dark'
     ? '#FFFFFF'
     : '#000000'
 
-  const isDark = props.colorScheme === 'dark'
+  const isDark = settings.colorScheme === 'dark'
 
   const theme = createTheme({
     palette: {
-      mode: props.colorScheme,
+      mode: settings.colorScheme,
       navigation: palette.palette.augmentColor({
         color: {
           main: isDark ? '#202020' : '#F0F0F0',
@@ -99,13 +98,13 @@ export const ConfigurableTheme = observer((props: {
       }),
     },
     typography: {
-      fontSize: props.fontSize,
+      fontSize: settings.fontSize,
       fontFamily: "'Open Sans','sans'",
       code: {
         fontFamily: "'Roboto Mono','monospace'"
       },
       navigation: {
-        fontSize: props.navigationFontSize
+        fontSize: settings.navigationFontSize
       },
     } as TypographyVariantsOptions,
     components: {

@@ -1,7 +1,7 @@
 'use client'
 
 import * as core from '@tauri-apps/api/core'
-import { ApicizeSettings, DragDropProvider, Entity, EntityType, FeedbackStore, IndexedEntityPosition, LogStore, MainPanel, Navigation, ReqwestEvent, SessionInitialization, SessionSaveState, ToastSeverity, UpdatedNavigationEntry, WorkspaceStore } from '@apicize/toolkit'
+import { EditableSettings, DragDropProvider, Entity, EntityType, FeedbackStore, IndexedEntityPosition, LogStore, MainPanel, Navigation, ReqwestEvent, SessionInitialization, SessionSaveState, ToastSeverity, UpdatedNavigationEntry, WorkspaceStore } from '@apicize/toolkit'
 import React, { useEffect, useState } from 'react'
 import "@fontsource/open-sans/latin.css"
 import "@fontsource/roboto-mono/latin.css"
@@ -10,7 +10,7 @@ import { FeedbackProvider } from './providers/feedback.provider';
 import { FileOperationsProvider } from './providers/file-operations.provider';
 import { WorkspaceProvider } from './providers/workspace.provider';
 import { ExecutionResultSummary, ExecutionStatus } from '@apicize/lib-typescript';
-import { ApicizeProvider } from './providers/apicize.provider';
+import { ApicizeSettingsProvider } from './providers/apicize-settings.provider';
 import { ConfigurableTheme } from './controls/configurable-theme';
 import { PkceProvider } from './providers/pkce.provider';
 import { emit } from '@tauri-apps/api/event';
@@ -120,7 +120,7 @@ const workspaceStore = new WorkspaceStore(
 
 export default function Home() {
 
-  const [settings, setSettings] = useState<ApicizeSettings | null>(null)
+  const [settings, setSettings] = useState<EditableSettings | null>(null)
 
   useEffect(() => {
     const w = getCurrentWebviewWindow()
@@ -151,8 +151,8 @@ export default function Home() {
       workspaceStore.updateExecutionStatus(data.payload)
     })
     // Notification on settings update
-    let unlistenSettingsUpdate = w.listen<ApicizeSettings>('update_settings', (data) => {
-      setSettings(data.payload)
+    let unlistenSettingsUpdate = w.listen<EditableSettings>('update_settings', (data) => {
+      setSettings(new EditableSettings(data.payload))
     })
     let unlistenListLogs = w.listen<ReqwestEvent[]>('list_logs', () => {
       workspaceStore.listLogs()
@@ -170,28 +170,29 @@ export default function Home() {
   }, [settings])
 
   if (!settings) {
+    const newSettings = new EditableSettings()
     core.invoke<SessionInitialization>('initialize_session', {
       sessionId,
     }).then((info) => {
-      setSettings(info.settings)
+      setSettings(new EditableSettings(info.settings))
       workspaceStore.initialize(info)
     }).catch((e) => {
       feedbackStore.toast(`${e}`, ToastSeverity.Error)
     })
-    return <ApicizeProvider settings={new ApicizeSettings()}>
-      <ConfigurableTheme colorScheme='dark' fontSize={12} navigationFontSize={12}>
+    return <ApicizeSettingsProvider settings={newSettings}>
+      <ConfigurableTheme>
         <CssBaseline />
         <FeedbackProvider store={feedbackStore} />
       </ConfigurableTheme>
-    </ApicizeProvider>
+    </ApicizeSettingsProvider>
   }
 
   return (
     <LogProvider store={logStore}>
-      <ConfigurableTheme colorScheme={settings.colorScheme} fontSize={settings.fontSize} navigationFontSize={settings.navigationFontSize}>
-        <CssBaseline />
-        <FeedbackProvider store={feedbackStore}>
-          <ApicizeProvider settings={new ApicizeSettings(settings)}>
+      <ApicizeSettingsProvider settings={settings}>
+        <ConfigurableTheme>
+          <CssBaseline />
+          <FeedbackProvider store={feedbackStore}>
             <FileOperationsProvider activeSessionId={sessionId} workspaceStore={workspaceStore}>
               <WorkspaceProvider store={workspaceStore}>
                 <DragDropProvider>
@@ -205,9 +206,9 @@ export default function Home() {
                 </DragDropProvider>
               </WorkspaceProvider>
             </FileOperationsProvider>
-          </ApicizeProvider >
-        </FeedbackProvider>
-      </ConfigurableTheme >
+          </FeedbackProvider>
+        </ConfigurableTheme >
+      </ApicizeSettingsProvider >
     </LogProvider>
   )
 }

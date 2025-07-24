@@ -27,6 +27,15 @@ declare module '@mui/material/styles' {
         vault?: PaletteOptions['primary']
         defaults?: PaletteOptions['primary']
     }
+
+    interface TypographyVariants {
+        navigation: React.CSSProperties;
+    }
+
+    // allow configuration using `createTheme()`
+    interface TypographyVariantsOptions {
+        navigation?: React.CSSProperties;
+    }
 }
 
 declare module '@mui/material/IconButton' {
@@ -55,5 +64,13 @@ declare module '@mui/material/SvgIcon' {
         private: true
         vault: true
         defaults: true
+    }
+}
+
+
+// Update the Typography's variant prop options
+declare module '@mui/material/Typography' {
+    interface TypographyPropsVariantOverrides {
+        navigation: true;
     }
 }

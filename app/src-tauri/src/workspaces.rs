@@ -92,6 +92,8 @@ pub struct RequestInfo {
     pub id: String,
     /// Human-readable name describing the Apicize Request
     pub name: String,
+    /// Optional referential key
+    pub key: Option<String>,
     /// URL to dispatch the HTTP request to
     pub url: String,
     /// HTTP method
@@ -208,6 +210,7 @@ impl RequestInfo {
         RequestInfo {
             id: request.id.clone(),
             name: request.name.clone(),
+            key: request.key.clone(),
             url: request.url.clone(),
             method: request.method.clone(),
             timeout: request.timeout,
@@ -768,6 +771,7 @@ impl Workspaces {
         let (name, state) = match info.workspace.requests.entities.get_mut(&request.id) {
             Some(RequestEntry::Request(existing_request)) => {
                 existing_request.name = request.name;
+                existing_request.key = request.key;
                 existing_request.test = request.test;
                 existing_request.url = request.url;
                 existing_request.method = request.method;

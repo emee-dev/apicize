@@ -38,23 +38,35 @@ export const RequestGroupInfoEditor = observer((props: {
 
     return (
         <Grid container direction='column' spacing={3} sx={props.sx}>
-            <Grid>
-                <TextField
-                    id='group-name'
-                    label='Name'
-                    aria-label='group name'
-                    sx={{ flexGrow: 1 }}
-                    // autoFocus={group.name === ''}
-                    size='small'
-                    fullWidth
-                    title="Name of group"
-                    // size='small'
-                    value={group.name}
-                    onChange={e => group.setName(e.target.value)}
-                    error={group.nameInvalid}
-                    helperText={group.nameInvalid ? 'Group name is required' : ''}
-
-                />
+            <Grid container direction='row' spacing={3}>
+                <Grid flexGrow={1}>
+                    <TextField
+                        id='group-name'
+                        label='Name'
+                        aria-label='group name'
+                        // autoFocus={group.name === ''}
+                        size='small'
+                        fullWidth
+                        title="Name of group"
+                        // size='small'
+                        value={group.name}
+                        onChange={e => group.setName(e.target.value)}
+                        error={group.nameInvalid}
+                        helperText={group.nameInvalid ? 'Group name is required' : ''}
+                    />
+                </Grid>
+                <Grid flexGrow={0} width={'12em'}>
+                    <TextField
+                        id='group-key'
+                        label="Key"
+                        aria-label='group key'
+                        // autoFocus={request.name === ''}
+                        size="small"
+                        title="Referential key of group"
+                        value={group.key}
+                        onChange={e => group.setKey(e.target.value)}
+                    />
+                </Grid>
             </Grid>
             <Grid container direction='row' spacing={2}>
                 <Grid container direction='row' spacing={0}>
@@ -121,6 +133,6 @@ export const RequestGroupInfoEditor = observer((props: {
                     </FormControl>
                 </Grid>
             </Grid>
-        </Grid>
+        </Grid >
     )
 })

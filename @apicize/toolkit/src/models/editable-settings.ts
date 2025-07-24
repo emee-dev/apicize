@@ -5,10 +5,9 @@ import { action, observable } from 'mobx';
 export class EditableSettings {
     @observable accessor pendingChangeCtr = 0
 
-    @observable accessor  appName = 'Apicize'
-    @observable accessor  appVersion = ''
-    @observable accessor  globalsFileName = ''
-    @observable accessor  settingsFileName = ''
+    @observable accessor appName = 'Apicize'
+    @observable accessor appVersion = ''
+    @observable accessor storage: StorageInformation | null = null
 
     @observable accessor workbookDirectory: string = ''
     @observable accessor lastWorkbookFileName: string | undefined
@@ -54,15 +53,15 @@ export class EditableSettings {
     @action
     public update(settings: ApicizeSettings) {
         this.setValues(settings)
+        console.log(`update incrementing change ctr ${this.pendingChangeCtr}`)
         this.pendingChangeCtr++
     }
 
     @action
-    changeApp(name: string, version: string, settingsFileName: string, globalsFileName: string) {
+    changeApp(name: string, version: string, storage: StorageInformation) {
         this.appName = name
         this.appVersion = version
-        this.settingsFileName = settingsFileName
-        this.globalsFileName = globalsFileName
+        this.storage = storage
     }
 
     setOs(os: string) {
@@ -189,4 +188,12 @@ export class EditableSettings {
         this.editorCheckJsSyntax = value
         this.pendingChangeCtr++
     }
+}
+
+export interface StorageInformation {
+    globalsFileName: string
+    settingsFileName: string
+    homeDirectory: string
+    homeEnvironmentVariable: string
+    settingsDirectory: string
 }

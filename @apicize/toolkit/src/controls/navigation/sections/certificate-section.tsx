@@ -11,11 +11,13 @@ import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { useFeedback } from "../../../contexts/feedback.context"
 import { observer } from "mobx-react-lite"
 import { IndexedEntityPosition } from "../../../models/workspace/indexed-entity-position"
+import { useApicizeSettings } from "../../../contexts/apicize-settings.context"
 
 export const CertificateSection = observer((props: { includeHeader: boolean }) => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
     const theme = useTheme()
+    const settings = useApicizeSettings()
 
     const [certificateMenu, setCertificateMenu] = useState<MenuPosition | undefined>(undefined)
 
@@ -87,29 +89,30 @@ export const CertificateSection = observer((props: { includeHeader: boolean }) =
                 id='certificate-menu'
                 open={certificateMenu !== undefined}
                 onClose={closeCertificateMenu}
+                sx={{ fontSize: settings.navigationFontSize }}
                 anchorReference='anchorPosition'
                 anchorPosition={{
                     top: certificateMenu?.mouseY ?? 0,
                     left: certificateMenu?.mouseX ?? 0
                 }}
             >
-                <MenuItem onClick={(_) => handleAddCertificate(certificateMenu.id, IndexedEntityPosition.After)}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(_) => handleAddCertificate(certificateMenu.id, IndexedEntityPosition.After)}>
                     <ListItemIcon>
                         <SvgIcon fontSize='small' color='certificate'><CertificateIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Add Certificate</ListItemText>
+                    <ListItemText disableTypography>Add Certificate</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={(e) => handleDupeCertificate()}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(e) => handleDupeCertificate()}>
                     <ListItemIcon>
-                        <ContentCopyOutlinedIcon fontSize='small' sx={{ color: theme.palette.certificate.light }} />
+                        <SvgIcon fontSize='small' sx={{ color: theme.palette.certificate.light }}><ContentCopyOutlinedIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Duplicate Certificate</ListItemText>
+                    <ListItemText disableTypography>Duplicate Certificate</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={(e) => handleDeleteCertificate()}>
+                <MenuItem className='navigation-menu-item' sx={{ fontSize: 'inherit' }} onClick={(e) => handleDeleteCertificate()}>
                     <ListItemIcon>
-                        <DeleteIcon fontSize='small' color='error' />
+                        <SvgIcon color='error'><DeleteIcon /></SvgIcon>
                     </ListItemIcon>
-                    <ListItemText>Delete Certificate</ListItemText>
+                    <ListItemText disableTypography>Delete Certificate</ListItemText>
                 </MenuItem>
             </Menu>
             : <></>

@@ -8,10 +8,10 @@ import { AuthorizationOAuth2ClientEditor } from './authorization/authorization-o
 import { AuthorizationOAuth2PkceEditor } from './authorization/authorization-oauth2-pkce-editor';
 import AuthIcon from '../../icons/auth-icon';
 import { useWorkspace } from '../../contexts/workspace.context';
-import { useApicize } from '../../contexts/apicize.context';
+import { useApicizeSettings } from '../../contexts/apicize-settings.context';
 
 export const AuthorizationEditor = observer((props: { sx: SxProps }) => {
-    const apicize = useApicize()
+    const settings = useApicizeSettings()
     const workspace = useWorkspace()
     workspace.nextHelpTopic = 'workspace/authorizations'
     const activeSelection = workspace.activeSelection
@@ -27,7 +27,7 @@ export const AuthorizationEditor = observer((props: { sx: SxProps }) => {
                 <EditorTitle
                     icon={<SvgIcon color='authorization'><AuthIcon /></SvgIcon>}
                     name={authorization.name}
-                    diag={apicize.showDiagnosticInfo ? authorization.id : undefined}
+                    diag={settings.showDiagnosticInfo ? authorization.id : undefined}
                 />
             </Box>
             <Box className='editor-panel'>

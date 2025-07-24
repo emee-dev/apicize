@@ -7,7 +7,7 @@ import { SxProps } from '@mui/system'
 
 import { css_beautify, html_beautify, js_beautify } from 'js-beautify'
 import { EditorMode } from '../../models/editor-mode'
-import { useApicize } from '../../contexts/apicize.context'
+import { useApicizeSettings } from '../../contexts/apicize-settings.context'
 import { observer } from 'mobx-react-lite'
 import { ResultEditSessionType } from '../editors/editor-types'
 import { useWorkspace } from '../../contexts/workspace.context'
@@ -33,7 +33,7 @@ export const RichViewer = observer((props: {
 }) => {
     const workspace = useWorkspace()
     const feedback = useFeedback()
-    const settings = useApicize()
+    const settings = useApicizeSettings()
     const [model, setModel] = useState<editor.ITextModel | null>(null)
 
     if (!model) {
