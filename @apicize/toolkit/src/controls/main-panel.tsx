@@ -23,12 +23,14 @@ import { reaction } from "mobx";
 import { useApicizeSettings } from "../contexts/apicize-settings.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 import { useFileOperations } from "../contexts/file-operations.context";
+import useWindowSize from "../window-size";
 
 export const MainPanel = observer(() => {
     const workspace = useWorkspace()
     const settings = useApicizeSettings()
     const fileOps = useFileOperations()
     const feedback = useFeedback()
+    const windowSize = useWindowSize()
 
     const mode = workspace.mode
     const activeSelection = workspace.activeSelection
@@ -110,7 +112,7 @@ export const MainPanel = observer(() => {
         }
     })
 
-    return <Stack direction='row' sx={{ width: '100%', height: '100vh', display: 'flex', padding: '0' }}>
+    return <Stack direction='row' sx={{ width: windowSize.width, height: windowSize.height, display: 'flex', padding: '0' }}>
         <NavigationControl />
         <Pane />
     </Stack>

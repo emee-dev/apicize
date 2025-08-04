@@ -13,6 +13,7 @@ import MonacoEditor, { monaco } from 'react-monaco-editor';
 
 import DEFS_RAW from '../../../test-editor.d.ts?raw'
 import ES5_RAW from '../../../../../../node_modules/typescript/lib/lib.es5.d.ts?raw'
+import ES2015_CORE from '../../../../../../node_modules/typescript/lib/lib.es2015.core.d.ts?raw'
 import ES2015_COLLECTION_RAW from '../../../../../../node_modules/typescript/lib/lib.es2015.collection.d.ts?raw'
 import ES2015_ITERATE_RAW from '../../../../../../node_modules/typescript/lib/lib.es2015.iterable.d.ts?raw'
 import ES2015_SYMBOL_RAW from '../../../../../../node_modules/typescript/lib/lib.es2015.symbol.d.ts?raw'
@@ -23,6 +24,7 @@ import ES2017_DATE_RAW from '../../../../../../node_modules/typescript/lib/lib.e
 import { editor } from "monaco-editor";
 import { useApicizeSettings } from "../../../contexts/apicize-settings.context";
 import { runInAction } from "mobx";
+import useWindowSize from "../../../window-size";
 
 export const RequestTestEditor = observer((props: { request: EditableRequest }) => {
     const workspace = useWorkspace()
@@ -30,6 +32,7 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
     const settings = useApicizeSettings()
     const feedback = useFeedback()
     const fileDragDrop = useFileDragDrop()
+    const windowSize = useWindowSize()
 
     const refContainer = createRef<HTMLElement>()
     const [isDragging, setIsDragging] = useState(false)
@@ -101,7 +104,7 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
         return null
     }
 
-    return <Box id='request-test-container' position='relative' width='100%' height='100%' paddingTop='0.7em'>
+    return <Box id='request-test-container' position='relative' width='100%' height='100%'>
         <Stack direction='column' spacing={3} position='relative' width='100%' height='100%'>
             <Stack direction='row' justifyContent='center' display='flex'>
                 <IconButton
@@ -127,6 +130,8 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
             <Box id='req-test-editor' ref={refContainer} position='relative' width='100%' height='100%'>
                 <MonacoEditor
                     language='javascript'
+                    width='100%'
+                    height='calc(100% - 1em)'
                     theme={settings.colorScheme === "dark" ? 'vs-dark' : 'vs-light'}
                     value={props.request.test}
                     onChange={(text: string) => {
@@ -178,7 +183,8 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
                             for (const [location, raw] of [
                                 ['ts:filename/editor-defs.d.ts', DEFS_RAW],
                                 ['file://node_modules/typescript/lib/lib.es5.d.ts', ES5_RAW],
-                                ['file://node_modules/typescript/lib/lib.es2015.iterable.d.ts', ES2015_COLLECTION_RAW],
+                                ['file://node_modules/typescript/lib/lib.es2015.collection.d.ts', ES2015_COLLECTION_RAW],
+                                ['file://node_modules/typescript/lib/lib.es2015.core.d.ts', ES2015_CORE],
                                 ['file://node_modules/typescript/lib/lib.es2015.iterable.d.ts', ES2015_ITERATE_RAW],
                                 ['file://node_modules/typescript/lib/lib.es2015.symbol.d.ts?raw', ES2015_SYMBOL_RAW],
                                 ['file://node_modules/typescript/lib/lib.es2016.array.include.d.ts', ES2016_ARRAY_INCLUDE_RAW],
@@ -199,5 +205,5 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
                 />
             </Box>
         </Stack>
-    </Box>
+    </Box >
 })

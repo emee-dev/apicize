@@ -345,6 +345,8 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
               ? <RawEditor />
               : <MonacoEditor
                 language={editorMode}
+                width='100%'
+                height='calc(100% - 1em)'
                 theme={settings.colorScheme === "dark" ? 'vs-dark' : 'vs-light'}
                 value={typeof bodyInfo.data === 'string' ? bodyInfo.data : ''}
                 onChange={(text: string) => bodyInfo.setBodyData(text)}

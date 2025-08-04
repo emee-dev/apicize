@@ -78,6 +78,8 @@ export const RichViewer = observer((props: {
         language={editorLanguage}
         theme={settings.colorScheme === "dark" ? 'vs-dark' : 'vs-light'}
         value={text}
+        width='100%'
+        height='calc(100% - 1em)'
         options={{
             minimap: { enabled: false },
             model,

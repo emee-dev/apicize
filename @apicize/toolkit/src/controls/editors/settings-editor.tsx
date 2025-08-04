@@ -135,7 +135,7 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                             <InputLabel>("0" to disable)</InputLabel>
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
-                            <InputLabel id='show_diag-info-label-id' sx={{ width: '12em' }}>Show Diagnotic Info:</InputLabel>
+                            <InputLabel id='show_diag-info-label-id' sx={{ width: '12em' }}>Show Diagnostic Info:</InputLabel>
                             <RadioGroup row value={settings.showDiagnosticInfo} onChange={(e) => settings.setShowDiagnosticInfo(e.target.value === 'true')}>
                                 <FormControlLabel value={true} control={<Radio />} label='Yes' title='Show IDs and other diagnostic info' />
                                 <FormControlLabel value={false} control={<Radio />} label='No' title='Do not display digagnostic info' />

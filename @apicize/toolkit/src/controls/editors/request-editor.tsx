@@ -94,7 +94,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
                 <RunToolbar requestEntry={request} />
             </Stack>
             <Box className='editor-panel'>
-                <Stack direction='row' flexGrow={1} className='editor-content'>
+                <Stack direction='row' flexGrow={1} className='editor-content' overflow='hidden'>
                     <ToggleButtonGroup
                         className='button-column'
                         orientation='vertical'
