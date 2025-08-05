@@ -1,9 +1,12 @@
 import { ApicizeSettings, ExecutionReportFormat } from '@apicize/lib-typescript';
 import { SupportedColorScheme } from '@mui/material';
-import { action, observable } from 'mobx';
+import { action, observable, runInAction } from 'mobx';
 
 export class EditableSettings {
-    @observable accessor pendingChangeCtr = 0
+    private pendingChangeCtr = 0
+    private lastChangeCtrCheck = 0
+    private lastChangeTimeout: NodeJS.Timeout | null = null
+    private settlingTimeout = 100
 
     @observable accessor appName = 'Apicize'
     @observable accessor appVersion = ''
@@ -24,6 +27,7 @@ export class EditableSettings {
     @observable accessor editorIndentSize = 3
     @observable accessor editorDetectExistingIndent = true
     @observable accessor editorCheckJsSyntax = true
+    @observable accessor readyToSave = true
 
     constructor(settings?: ApicizeSettings) {
         if (settings) {
@@ -48,13 +52,41 @@ export class EditableSettings {
         this.editorIndentSize = settings.editorIndentSize
         this.editorDetectExistingIndent = settings.editorDetectExistingIndent
         this.editorCheckJsSyntax = settings.editorCheckJsSyntax
+        this.readyToSave = false
+        this.lastChangeCtrCheck = 0
+        this.pendingChangeCtr = 0
     }
 
     @action
     public update(settings: ApicizeSettings) {
         this.setValues(settings)
-        console.log(`update incrementing change ctr ${this.pendingChangeCtr}`)
+    }
+
+    private checkChangeCtr() {
+        if (this.lastChangeCtrCheck === this.pendingChangeCtr) {
+            runInAction(() => {
+                this.readyToSave = true
+            })
+        } else {
+            this.lastChangeCtrCheck = this.pendingChangeCtr
+            this.lastChangeTimeout = setTimeout(() => this.checkChangeCtr(), this.settlingTimeout)
+        }
+    }
+
+    @action
+    public clearChangeCtr() {
+        this.pendingChangeCtr = 0
+        this.lastChangeCtrCheck = 0
+        this.readyToSave = false
+    }
+
+    private incrementChangeCtr(settlingTimeout = 100) {
         this.pendingChangeCtr++
+        this.settlingTimeout = settlingTimeout
+        if (this.lastChangeTimeout) {
+            clearTimeout(this.lastChangeTimeout)
+        }
+        this.lastChangeTimeout = setTimeout(() => this.checkChangeCtr(), settlingTimeout)
     }
 
     @action
@@ -69,15 +101,10 @@ export class EditableSettings {
     }
 
     @action
-    public clearPendingChanges() {
-        this.pendingChangeCtr = 0
-    }
-
-    @action
     public setWorkbookDirectory(newDirectory: string) {
         if (this.workbookDirectory !== newDirectory) {
             this.workbookDirectory = newDirectory
-            this.pendingChangeCtr++
+            this.incrementChangeCtr()
         }
     }
 
@@ -85,7 +112,7 @@ export class EditableSettings {
     public setLastWorkbookFileName(newLastWorkbookFileName: string | undefined) {
         if (this.lastWorkbookFileName != newLastWorkbookFileName) {
             this.lastWorkbookFileName = newLastWorkbookFileName
-            this.pendingChangeCtr++
+            this.incrementChangeCtr()
         }
     }
 
@@ -93,7 +120,7 @@ export class EditableSettings {
     public setRecentWorkbookFileNames(newRecentWorkbookFileNames: string[]) {
         if (this.recentWorkbookFileNames.join(';') != newRecentWorkbookFileNames.join(';')) {
             this.recentWorkbookFileNames = newRecentWorkbookFileNames.slice(0, 10)
-            this.pendingChangeCtr++
+            this.incrementChangeCtr()
         }
     }
 
@@ -101,14 +128,14 @@ export class EditableSettings {
     public setPkceListenerPort(value: number) {
         if (this.pkceListenerPort !== value) {
             this.pkceListenerPort = value
-            this.pendingChangeCtr++
+            this.incrementChangeCtr(2000)
         }
     }
 
     @action setAlwaysHideNavTree(value: boolean) {
         if (this.alwaysHideNavTree !== value) {
             this.alwaysHideNavTree = value
-            this.pendingChangeCtr++
+            this.incrementChangeCtr()
         }
     }
 
@@ -120,7 +147,7 @@ export class EditableSettings {
                 this.recentWorkbookFileNames.splice(i, 1)
             }
             this.recentWorkbookFileNames = [fileName, ...this.recentWorkbookFileNames.slice(0, 10)]
-            this.pendingChangeCtr++
+            this.incrementChangeCtr()
         }
     }
 
@@ -130,6 +157,7 @@ export class EditableSettings {
         if (i !== 0) {
             if (i !== -1) {
                 this.recentWorkbookFileNames.splice(i, 1)
+                this.incrementChangeCtr()
             }
         }
     }
@@ -138,7 +166,7 @@ export class EditableSettings {
     public setFontSize(newFontSize: number) {
         if (this.fontSize != newFontSize) {
             this.fontSize = newFontSize
-            this.pendingChangeCtr++
+            this.incrementChangeCtr()
         }
     }
 
@@ -146,7 +174,7 @@ export class EditableSettings {
     public setNavigationFontSize(newFontSize: number) {
         if (this.navigationFontSize != newFontSize) {
             this.navigationFontSize = newFontSize
-            this.pendingChangeCtr++
+            this.incrementChangeCtr()
         }
     }
 
@@ -154,39 +182,40 @@ export class EditableSettings {
     public setColorScheme(newColorScheme: SupportedColorScheme) {
         if (this.colorScheme != newColorScheme) {
             this.colorScheme = newColorScheme
-            this.pendingChangeCtr++
+            this.incrementChangeCtr()
         }
     }
 
     @action
     public setEditorPanels(value: string) {
         this.editorPanels = value
+        this.incrementChangeCtr()
     }
 
     @action
     public setShowDiagnosticInfo(value: boolean) {
         this.showDiagnosticInfo = value
-        this.pendingChangeCtr++
+        this.incrementChangeCtr()
     }
 
     @action setReportFormat(value: ExecutionReportFormat) {
         this.reportFormat = value
-        this.pendingChangeCtr++
+        this.incrementChangeCtr()
     }
 
     @action setEditorIndentSize(value: number) {
         this.editorIndentSize = value
-        this.pendingChangeCtr++
+        this.incrementChangeCtr()
     }
 
     @action setEditorDetectExistingIndent(value: boolean) {
         this.editorDetectExistingIndent = value
-        this.pendingChangeCtr++
+        this.incrementChangeCtr()
     }
 
     @action setEditorCheckJsSyntax(value: boolean) {
         this.editorCheckJsSyntax = value
-        this.pendingChangeCtr++
+        this.incrementChangeCtr()
     }
 }
 

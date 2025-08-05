@@ -59,14 +59,6 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
     }
 
     let lastResize = Date.now()
-    const saveIfSettled = () => {
-        if (Date.now() - lastResize > 500) {
-            fileOps.saveSettings()
-        } else {
-            setTimeout(saveIfSettled, 500)
-        }
-    }
-
     const sizeStorage = {
         getItem: (_: string) => {
             return settings.editorPanels
@@ -75,7 +67,6 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
             if (settings.editorPanels !== value) {
                 lastResize = Date.now()
                 settings.editorPanels = value
-                saveIfSettled()
             }
         }
     }

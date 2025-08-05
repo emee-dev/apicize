@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.26.1
+
+* Address resizing issues with code editors
+* Centrallize polling when detecting if settings are ready to save
+
 # 0.26.0
 
 * Add Key property support for requests and groups

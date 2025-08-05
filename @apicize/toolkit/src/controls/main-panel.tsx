@@ -8,7 +8,6 @@ import { CertificateEditor } from "./editors/certificate-editor";
 import { ProxyEditor } from "./editors/proxy-editor";
 import { SettingsEditor } from "./editors/settings-editor";
 import { DefaultsEditor } from "./editors/defaults-editor";
-import { WarningsEditor } from "./editors/warnings-editor";
 import { useWorkspace, WorkspaceMode } from "../contexts/workspace.context";
 import { EntityType } from "../models/workspace/entity-type";
 import { LogViewer } from "./viewers/log-viewer";
@@ -19,7 +18,7 @@ import { CertificateList } from "./navigation/lists/certificate-list";
 import { ProxyList } from "./navigation/lists/proxy-list";
 import { NavigationControl } from "./navigation/navigation";
 import { RequestGroupEditor } from "./editors/request-group-editor";
-import { reaction } from "mobx";
+import { reaction, when } from "mobx";
 import { useApicizeSettings } from "../contexts/apicize-settings.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 import { useFileOperations } from "../contexts/file-operations.context";
@@ -35,34 +34,12 @@ export const MainPanel = observer(() => {
     const mode = workspace.mode
     const activeSelection = workspace.activeSelection
 
-    let lastPendingChangeCtr = 0
 
-    const checkSave = (pendingChangeCtr: number) => {
-        // Only save if the save ctr hasn't changed in the specified interval
-        setTimeout(async () => {
-            if (lastPendingChangeCtr === pendingChangeCtr && lastPendingChangeCtr !== 0) {
-                try {
-                    lastPendingChangeCtr = 0
-                    settings.clearPendingChanges()
-                    await fileOps.saveSettings()
-                } catch (e) {
-                    feedback.toast(`Unable to save Settings - ${e}`, ToastSeverity.Error)
-                }
-            } else {
-                if (pendingChangeCtr > lastPendingChangeCtr) {
-                    lastPendingChangeCtr = pendingChangeCtr
-                    setTimeout(() => {
-                        checkSave(pendingChangeCtr)
-                    }, 250)
-                }
-            }
-        }, 250)
-    }
-
-    reaction(
-        () => settings.pendingChangeCtr,
-        pendingChangeCtr => {
-            checkSave(pendingChangeCtr)
+    when(
+        () => settings.readyToSave === true,
+        () => {
+            settings.clearChangeCtr()
+            fileOps.saveSettings()
         }
     )
 

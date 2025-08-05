@@ -57,19 +57,23 @@ export const SettingsEditor = observer((props: { sx?: SxProps }) => {
                     <Stack direction='column' spacing={1}>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='text-size-label-id' sx={{ width: '12em' }} >Main Text Size:</InputLabel>
-                            <TextField type='number' slotProps={{ htmlInput: { min: 6, max: 120 } }}
+                            <TextField type='number' slotProps={{ htmlInput: { min: 6, max: 72 } }}
                                 size='small'
                                 value={settings.fontSize}
                                 title='Base font size of non-navigation content'
-                                onChange={(e) => settings.setFontSize(parseInt(e.target.value))} />
+                                onChange={(e) => {
+                                    settings.setFontSize(parseInt(e.target.value))
+                                }} />
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='text-size-label-id' sx={{ width: '12em' }} >Navigation Text Size:</InputLabel>
-                            <TextField type='number' slotProps={{ htmlInput: { min: 6, max: 120 } }}
+                            <TextField type='number' slotProps={{ htmlInput: { min: 6, max: 72 } }}
                                 size='small'
                                 value={settings.navigationFontSize}
                                 title='Base font size of navigation content'
-                                onChange={(e) => settings.setNavigationFontSize(parseInt(e.target.value))} />
+                                onChange={(e) => {
+                                    settings.setNavigationFontSize(parseInt(e.target.value))
+                                }} />
                         </Stack>
                         <Stack direction={'row'} spacing={'1em'} display='flex' alignItems='center' justifyContent='left'>
                             <InputLabel id='color-mode-label-id' sx={{ width: '12em' }}>Color Mode:</InputLabel>

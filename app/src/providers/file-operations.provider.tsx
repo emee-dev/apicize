@@ -36,30 +36,29 @@ export function FileOperationsProvider({ activeSessionId, workspaceStore, childr
      * Updates specified settings and saves
      * @param updates 
      */
-    const saveSettings = async () => {
-        try {
-            const settingsToSave: ApicizeSettings = {
-                workbookDirectory: apicizeSettings.workbookDirectory,
-                lastWorkbookFileName: apicizeSettings.lastWorkbookFileName,
-                fontSize: apicizeSettings.fontSize,
-                navigationFontSize: apicizeSettings.navigationFontSize,
-                colorScheme: apicizeSettings.colorScheme,
-                editorPanels: apicizeSettings.editorPanels,
-                recentWorkbookFileNames: apicizeSettings.recentWorkbookFileNames.length > 0
-                    ? apicizeSettings.recentWorkbookFileNames
-                    : undefined,
-                pkceListenerPort: apicizeSettings.pkceListenerPort,
-                alwaysHideNavTree: apicizeSettings.alwaysHideNavTree,
-                showDiagnosticInfo: apicizeSettings.showDiagnosticInfo,
-                reportFormat: apicizeSettings.reportFormat,
-                editorIndentSize: apicizeSettings.editorIndentSize,
-                editorDetectExistingIndent: apicizeSettings.editorDetectExistingIndent,
-                editorCheckJsSyntax: apicizeSettings.editorCheckJsSyntax,
-            }
-            await core.invoke<ApicizeSettings>('save_settings', { settings: settingsToSave })
-        } catch (e) {
-            feedback.toast(`Unable to save settings: ${e}`, ToastSeverity.Error)
+    const saveSettings = () => {
+        const updatedSettings: ApicizeSettings = {
+            workbookDirectory: apicizeSettings.workbookDirectory,
+            lastWorkbookFileName: apicizeSettings.lastWorkbookFileName,
+            fontSize: apicizeSettings.fontSize,
+            navigationFontSize: apicizeSettings.navigationFontSize,
+            colorScheme: apicizeSettings.colorScheme,
+            editorPanels: apicizeSettings.editorPanels,
+            recentWorkbookFileNames: apicizeSettings.recentWorkbookFileNames.length > 0
+                ? apicizeSettings.recentWorkbookFileNames
+                : undefined,
+            pkceListenerPort: apicizeSettings.pkceListenerPort,
+            alwaysHideNavTree: apicizeSettings.alwaysHideNavTree,
+            showDiagnosticInfo: apicizeSettings.showDiagnosticInfo,
+            reportFormat: apicizeSettings.reportFormat,
+            editorIndentSize: apicizeSettings.editorIndentSize,
+            editorDetectExistingIndent: apicizeSettings.editorDetectExistingIndent,
+            editorCheckJsSyntax: apicizeSettings.editorCheckJsSyntax,
         }
+        core.invoke<ApicizeSettings>('save_settings', { updatedSettings })
+            .catch(e => {
+                feedback.toast(`Unable to save settings: ${e}`, ToastSeverity.Error)
+            })
     }
 
     /**

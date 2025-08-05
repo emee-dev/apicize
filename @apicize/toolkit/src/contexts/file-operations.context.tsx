@@ -11,7 +11,7 @@ export class FileOperationsStore {
     public readonly cloneWorkspace: () => Promise<void>
     public readonly openSshFile: (fileType: SshFileType) => Promise<string | null>
     public readonly openFile: () => Promise<Uint8Array | null>
-    public readonly saveSettings: () => Promise<void>
+    public readonly saveSettings: () => void
     public readonly retrieveHelpTopic: (showTopic: string) => Promise<string>
     public readonly retrieveHelpContents: () => Promise<HelpContents>
     public readonly selectWorkbookDirectory: () => Promise<string | null>
@@ -25,7 +25,7 @@ export class FileOperationsStore {
         onCloneWorkspace: () => Promise<void>,
         onOpenSshFile: (fileType: SshFileType) => Promise<string | null>,
         onOpenFile: () => Promise<Uint8Array | null>,
-        onSaveSettings: () => Promise<void>,
+        onSaveSettings: () => void,
         onRetrieveHelpTopic: (showTopic: string) => Promise<string>,
         onRetrieveHelpContents: () => Promise<HelpContents>,
         onSelectWorkbookDirectory: () => Promise<string | null>,

@@ -848,10 +848,16 @@ async fn open_settings() -> Result<ApicizeSettings, String> {
 }
 
 #[tauri::command]
-async fn save_settings(app: AppHandle, settings: ApicizeSettings) -> Result<(), String> {
+async fn save_settings(
+    app: AppHandle,
+    updated_settings: ApicizeSettings,
+    settings_state: State<'_, SettingsState>,
+) -> Result<(), String> {
+    let mut settings = settings_state.settings.write().await;
+    settings.clone_from(&updated_settings);
     match settings.save() {
         Ok(..) => {
-            app.emit("update_settings", settings).unwrap();
+            app.emit("update_settings", updated_settings).unwrap();
             Ok(())
         }
         Err(err) => Err(format!("{}", err.error)),

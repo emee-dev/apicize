@@ -6,7 +6,7 @@ import { Window } from "@tauri-apps/api/window"
 import { Webview } from "@tauri-apps/api/webview"
 import { EditableAuthorization } from "@apicize/toolkit";
 import { observer } from "mobx-react-lite";
-import { autorun, toJS } from "mobx";
+import { autorun, reaction, toJS } from "mobx";
 import { AuthorizationType, OAuth2PkceAuthorization } from "@apicize/lib-typescript";
 
 /**
@@ -20,6 +20,10 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
 
     const wip = useRef<Map<string, OAuthPkceRequest>>(new Map())
     const window_counter = useRef(1)
+
+    let lastPortUpdatedAt = useRef(0)
+    let lastPortValue = useRef(0)
+    let lastPortTimeout = useRef<NodeJS.Timeout | null>(null)
 
     useEffect(() => {
         const unlistenPkceInit = listen<OAuthPkceInitParams>('oauth2-pkce-init', (event) => {
@@ -42,9 +46,25 @@ export const PkceProvider = observer(({ store, children }: { store: WorkspaceSto
             feedback.toast(event.payload, ToastSeverity.Error)
         });
 
-        autorun(async () => {
-            await core.invoke('set_pkce_port', { port: settings.pkceListenerPort })
-        })
+        const checkPortUpdate = (newPort: number) => {
+            const now = Date.now()
+            if ((lastPortUpdatedAt.current === 0 || now - lastPortUpdatedAt.current > 1000) && lastPortValue.current !== newPort) {
+                core.invoke('set_pkce_port', { port: newPort })
+            } else if (lastPortUpdatedAt.current !== newPort) {
+                lastPortUpdatedAt.current = now
+                lastPortTimeout.current = setTimeout(() => checkPortUpdate(newPort), 500)
+            }
+        }
+
+        reaction(
+            () => settings.pkceListenerPort,
+            (pkceListenerPort) => {
+                if (lastPortTimeout.current) {
+                    clearTimeout(lastPortTimeout.current)
+                }
+                lastPortTimeout.current = setTimeout(() => checkPortUpdate(pkceListenerPort), 500)
+            }
+        )
 
         return () => {
             unlistenPkceInit.then(f => f())
