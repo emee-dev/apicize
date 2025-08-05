@@ -1,10 +1,13 @@
 import { observer } from "mobx-react-lite"
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import { WarningAmberIcon, PlayArrowIcon, AirlineStopsIcon } from '../../icons'
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView'
 import { TreeItem } from '@mui/x-tree-view/TreeItem'
-import { Box, Stack, SvgIcon, ToggleButton, ToggleButtonGroup } from '@mui/material'
-import { useEffect } from 'react'
+import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
+import SvgIcon from '@mui/material/SvgIcon'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import { useEffect, useCallback, useMemo } from 'react'
 import { EntityType } from "../../models/workspace/entity-type";
 import { useWorkspace, WorkspaceMode } from "../../contexts/workspace.context";
 import DefaultsIcon from "../../icons/defaults-icon";
@@ -20,7 +23,6 @@ import AuthIcon from "../../icons/auth-icon"
 import CertificateIcon from "../../icons/certificate-icon"
 import RequestIcon from "../../icons/request-icon"
 import ScenarioIcon from "../../icons/scenario-icon"
-import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import { NavOpsMenu } from "./nav-ops-menu"
 import { NavigationEntry, NavigationEntryState } from "../../models/navigation"
 import { iconsFromState } from "./nav-tree-item"
@@ -33,19 +35,32 @@ export const NavigationControl = observer(() => {
     const workspace = useWorkspace()
     const windowSize = useWindowSize()
 
+    const listModes = useMemo(() => [
+        WorkspaceMode.RequestList,
+        WorkspaceMode.ScenarioList,
+        WorkspaceMode.AuthorizationList,
+        WorkspaceMode.CertificateList,
+        WorkspaceMode.ProxyList
+    ], [])
+
+
     useEffect(() => {
         // If window size returns to non-narrow state, and there is a list displayed, go back to "normal"
-        if (windowSize.width >= PREFERRED_WIDTH && [WorkspaceMode.RequestList, WorkspaceMode.ScenarioList, WorkspaceMode.AuthorizationList,
-        WorkspaceMode.CertificateList, WorkspaceMode.ProxyList].includes(workspace.mode)) {
+        if (windowSize.width >= PREFERRED_WIDTH && listModes.includes(workspace.mode)) {
             workspace.setMode(WorkspaceMode.Normal)
         }
-    }, [windowSize])
+    }, [windowSize, listModes, workspace])
 
-    const toggleMode = (mode: WorkspaceMode) => {
+    const toggleMode = useCallback((mode: WorkspaceMode) => {
         workspace.setMode((workspace.mode === mode) ? WorkspaceMode.Normal : mode)
-    }
+    }, [workspace])
 
-    return (settings.alwaysHideNavTree || windowSize.width < PREFERRED_WIDTH)
+    const isNarrowMode = useMemo(() =>
+        settings.alwaysHideNavTree || windowSize.width < PREFERRED_WIDTH,
+        [settings.alwaysHideNavTree, windowSize.width]
+    )
+
+    return isNarrowMode
         ? <Box className='navigation-narrow' display='flex'>
             <Stack direction='column' sx={{ flexGrow: 1 }} className='nav-selection-pane' typography='navigation'>
                 <ToggleButtonGroup orientation="vertical" value={workspace.mode}>

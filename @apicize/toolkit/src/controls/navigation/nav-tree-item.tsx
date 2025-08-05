@@ -11,7 +11,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ErrorIcon from '@mui/icons-material/Error';
 import { CSS, useCombinedRefs } from '@dnd-kit/utilities';
-import { useState } from "react"
+import React, { useState } from "react"
 import { useDragDrop } from "../../contexts/dragdrop.context"
 import { useApicizeSettings } from "../../contexts/apicize-settings.context"
 import { useWorkspace } from "../../contexts/workspace.context"
@@ -35,7 +35,7 @@ export const iconsFromState = (entry: NavigationEntry) => {
         : null
 }
 
-export const NavTreeItem = observer((props: {
+export const NavTreeItem = React.memo(observer((props: {
     entry: NavigationEntry,
     type: EntityType,
     depth: number,
@@ -183,4 +183,4 @@ export const NavTreeItem = observer((props: {
             props.children
         }
     </TreeItem>
-})
+}))

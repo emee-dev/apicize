@@ -1,4 +1,4 @@
-import { Stack } from "@mui/material";
+import Stack from "@mui/material/Stack";
 import { observer } from "mobx-react-lite";
 import { HelpPanel } from "./help";
 import { RequestEditor } from "./editors/request-editor";
@@ -18,11 +18,12 @@ import { CertificateList } from "./navigation/lists/certificate-list";
 import { ProxyList } from "./navigation/lists/proxy-list";
 import { NavigationControl } from "./navigation/navigation";
 import { RequestGroupEditor } from "./editors/request-group-editor";
-import { reaction, when } from "mobx";
+import { when } from "mobx";
 import { useApicizeSettings } from "../contexts/apicize-settings.context";
 import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 import { useFileOperations } from "../contexts/file-operations.context";
 import useWindowSize from "../window-size";
+import { useMemo } from "react";
 
 export const MainPanel = observer(() => {
     const workspace = useWorkspace()
@@ -43,7 +44,7 @@ export const MainPanel = observer(() => {
         }
     )
 
-    const Pane = (() => {
+    const Pane = useMemo(() => {
         switch (mode) {
             case WorkspaceMode.Help:
                 return <HelpPanel sx={{ display: 'block', flexGrow: 1 }} />
@@ -87,10 +88,10 @@ export const MainPanel = observer(() => {
                     return <></>
                 }
         }
-    })
+    }, [mode, activeSelection])
 
     return <Stack direction='row' sx={{ width: windowSize.width, height: windowSize.height, display: 'flex', padding: '0' }}>
         <NavigationControl />
-        <Pane />
+        {Pane}
     </Stack>
 })

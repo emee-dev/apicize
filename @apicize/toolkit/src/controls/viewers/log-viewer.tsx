@@ -7,13 +7,13 @@ import LogIcon from "../../icons/log-icon"
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
-import { useEffect, useRef } from "react"
+import React, { useEffect, useRef } from "react"
 import { useClipboard } from "../../contexts/clipboard.context"
 import { useWorkspace } from "../../contexts/workspace.context"
 import { reaction, runInAction } from "mobx"
 import { useFeedback } from "../../contexts/feedback.context"
 
-export const LogViewer = observer((props: {
+export const LogViewer = React.memo(observer((props: {
     sx?: SxProps<Theme>
 }) => {
     const log = useLog()
@@ -110,5 +110,5 @@ export const LogViewer = observer((props: {
             </Stack>
         </Box>
     </Stack>
-})
+}))
 

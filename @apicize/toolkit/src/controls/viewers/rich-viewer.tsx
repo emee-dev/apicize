@@ -1,8 +1,3 @@
-import 'prismjs'
-import 'prismjs/components/prism-javascript'
-import 'prismjs/components/prism-markup'
-import 'prismjs/themes/prism-tomorrow.css'
-
 import { SxProps } from '@mui/system'
 
 import { css_beautify, html_beautify, js_beautify } from 'js-beautify'
@@ -13,7 +8,7 @@ import { ResultEditSessionType } from '../editors/editor-types'
 import { useWorkspace } from '../../contexts/workspace.context'
 import MonacoEditor, { monaco } from 'react-monaco-editor'
 import { editor } from 'monaco-editor'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useFeedback } from '../../contexts/feedback.context'
 
 /**
@@ -21,7 +16,7 @@ import { useFeedback } from '../../contexts/feedback.context'
  * @param props
  * @returns 
  */
-export const RichViewer = observer((props: {
+export const RichViewer = React.memo(observer((props: {
     sx?: SxProps,
     id: string,
     index: number,
@@ -92,4 +87,4 @@ export const RichViewer = observer((props: {
             readOnly: true,
             wordWrap: props.wrap === true ? 'on' : 'off',
         }} />
-})
+}))

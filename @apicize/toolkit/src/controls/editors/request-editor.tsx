@@ -1,15 +1,15 @@
 import * as React from 'react'
-import { ToggleButtonGroup, ToggleButton, Box, Stack, SxProps, SvgIcon } from '@mui/material'
-import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings'
-import ViewListIcon from '@mui/icons-material/ViewList'
-import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
-import AltRouteIcon from '@mui/icons-material/AltRoute'
+import { useMemo } from 'react'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import ToggleButton from '@mui/material/ToggleButton'
+import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
+import SvgIcon from '@mui/material/SvgIcon'
+import { SxProps } from '@mui/material'
+import { DisplaySettingsIcon, ViewListIcon, ViewListOutlinedIcon, PlayArrowIcon, ArticleOutlinedIcon, AltRouteIcon } from '../../icons'
 import { RequestInfoEditor } from './request/request-info-editor'
 import { RequestHeadersEditor } from './request/request-headers-editor'
-import ScienceIcon from '@mui/icons-material/Science';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { ScienceIcon, WarningAmberIcon } from '../../icons';
 import { RequestQueryStringEditor } from './request/request-query-string-editor'
 import { RequestTestEditor } from './request/request-test-editor'
 import { ResultsViewer } from '../viewers/results-viewer'
@@ -19,7 +19,6 @@ import { RunToolbar } from '../run-toolbar';
 import { useWorkspace, RequestPanel } from '../../contexts/workspace.context';
 import { RunResultsToolbar } from '../run-results-toolbar';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { useFileOperations } from '../../contexts/file-operations.context';
 import RequestIcon from '../../icons/request-icon';
 import { useApicizeSettings } from '../../contexts/apicize-settings.context'
 import { RequestBodyEditor } from './request/request-body-editor'
@@ -28,7 +27,6 @@ import { RequestParametersEditor } from './request/request-parameters-editor'
 
 export const RequestEditor = observer((props: { sx?: SxProps }) => {
     const settings = useApicizeSettings()
-    const fileOps = useFileOperations()
 
     const workspace = useWorkspace()
     const activeSelection = workspace.activeSelection
@@ -58,21 +56,22 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
         return null
     }
 
-    let lastResize = Date.now()
     const sizeStorage = {
         getItem: (_: string) => {
             return settings.editorPanels
         },
         setItem: (_: string, value: string) => {
             if (settings.editorPanels !== value) {
-                lastResize = Date.now()
                 settings.editorPanels = value
             }
         }
     }
 
-    const RequestPanel = observer(() => {
-        const panelsClass = (usePanel === 'Body' || usePanel === 'Test') ? 'panels full-width' : 'panels'
+    const RequestPanel = React.memo(observer(() => {
+        const panelsClass = useMemo(() => 
+            (usePanel === 'Body' || usePanel === 'Test') ? 'panels full-width' : 'panels',
+            [usePanel]
+        )
         return <>
             <Stack direction='row' className='editor-panel-header'>
                 <EditorTitle
@@ -122,7 +121,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
                 </Stack>
             </Box>
         </>
-    })
+    }))
 
     const RequestEditorLayout = observer((props: { sx?: SxProps, lastExecuted: number }) => {
         return execution.results.length > 0

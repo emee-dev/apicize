@@ -1,4 +1,13 @@
-import { TextField, Select, MenuItem, FormControl, InputLabel, Stack, SxProps, Grid, Box, SvgIcon } from '@mui/material'
+import TextField from '@mui/material/TextField'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Stack from '@mui/material/Stack'
+import { SxProps } from '@mui/material/styles'
+import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box'
+import SvgIcon from '@mui/material/SvgIcon'
 import { AuthorizationType } from '@apicize/lib-typescript';
 import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';

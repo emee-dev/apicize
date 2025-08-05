@@ -1,18 +1,23 @@
+import React, { useMemo, useCallback } from "react"
 import { EditableNameValuePair } from "../../models/workspace/editable-name-value-pair";
-import { Box } from "@mui/material";
-import { Button, Grid, IconButton, Stack, TextField } from "@mui/material";
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Grid from '@mui/material/Grid'
+import IconButton from '@mui/material/IconButton'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
 import { toJS } from "mobx";
 import { GenerateIdentifier } from "../../services/random-identifier-generator";
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-export function NameValueEditor(props: {
+export const NameValueEditor = React.memo((props: {
     values: EditableNameValuePair[] | undefined,
     title: string,
     nameHeader: string,
     valueHeader: string,
     onUpdate: (pair: EditableNameValuePair[] | undefined) => void
-}) {
+}) => {
     const onAdd = () => {
         const values = toJS(props.values ?? [])
         values.push({
@@ -28,25 +33,45 @@ export function NameValueEditor(props: {
         props.onUpdate(values)
     }
 
-    const onNameUpdate = (id: string, value: string) => {
-        if (!props.values) return
-        const values = toJS(props.values)
-        const match = values.find(v => v.id === id)
-        if (match) {
-            match.name = value
-            props.onUpdate(values)
+    const debouncedUpdateName = useMemo(() => {
+        let timeoutId: NodeJS.Timeout
+        return (id: string, value: string) => {
+            clearTimeout(timeoutId)
+            timeoutId = setTimeout(() => {
+                if (!props.values) return
+                const values = toJS(props.values)
+                const match = values.find(v => v.id === id)
+                if (match) {
+                    match.name = value
+                    props.onUpdate(values)
+                }
+            }, 300)
         }
-    }
+    }, [props.values, props.onUpdate])
 
-    const onValueUpdate = (id: string, value: string) => {
-        if (!props.values) return
-        const values = toJS(props.values)
-        const match = values.find(v => v.id === id)
-        if (match) {
-            match.value = value
-            props.onUpdate(values)
+    const debouncedUpdateValue = useMemo(() => {
+        let timeoutId: NodeJS.Timeout
+        return (id: string, value: string) => {
+            clearTimeout(timeoutId)
+            timeoutId = setTimeout(() => {
+                if (!props.values) return
+                const values = toJS(props.values)
+                const match = values.find(v => v.id === id)
+                if (match) {
+                    match.value = value
+                    props.onUpdate(values)
+                }
+            }, 300)
         }
-    }
+    }, [props.values, props.onUpdate])
+
+    const onNameUpdate = useCallback((id: string, value: string) => {
+        debouncedUpdateName(id, value)
+    }, [debouncedUpdateName])
+
+    const onValueUpdate = useCallback((id: string, value: string) => {
+        debouncedUpdateValue(id, value)
+    }, [debouncedUpdateValue])
 
     let ctr = 0
     return <Stack direction='column' position='relative' spacing={4} width='100%'>
@@ -87,4 +112,4 @@ export function NameValueEditor(props: {
             <Button variant="outlined" aria-label="add" startIcon={<AddIcon />} size='small' onClick={() => onAdd()}>Add {props.title}</Button>
         </Box>
     </Stack>
-}
+})

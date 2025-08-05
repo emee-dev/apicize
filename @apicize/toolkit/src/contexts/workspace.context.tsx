@@ -1287,6 +1287,21 @@ export class WorkspaceStore {
 
     @action
     clearAllEditSessions() {
+        // Dispose all models before clearing
+        for (const [, models] of this.requestModels) {
+            for (const [, model] of models) {
+                model.dispose()
+            }
+        }
+        
+        for (const [, resultMap] of this.resultModels) {
+            for (const [, typeMap] of resultMap) {
+                for (const [, model] of typeMap) {
+                    model.dispose()
+                }
+            }
+        }
+        
         this.requestModels.clear()
         this.resultModels.clear()
     }

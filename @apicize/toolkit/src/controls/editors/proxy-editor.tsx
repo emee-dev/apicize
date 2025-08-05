@@ -1,4 +1,8 @@
-import { Stack, TextField, SxProps, Grid, Box } from '@mui/material'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import { SxProps } from '@mui/material/styles'
+import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box'
 import AirlineStopsIcon from '@mui/icons-material/AirlineStops';
 import { EditorTitle } from '../editor-title';
 import { observer } from 'mobx-react-lite';

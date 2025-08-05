@@ -1,4 +1,17 @@
-import { Stack, SxProps, InputLabel, MenuItem, Select, Box, SupportedColorScheme, Button, TextField, SvgIcon, IconButton, FormControlLabel, RadioGroup, Radio } from '@mui/material'
+import Stack from '@mui/material/Stack'
+import { SxProps } from '@mui/material/styles'
+import InputLabel from '@mui/material/InputLabel'
+import MenuItem from '@mui/material/MenuItem'
+import Select from '@mui/material/Select'
+import Box from '@mui/material/Box'
+import { SupportedColorScheme } from '@mui/material/styles'
+import Button from '@mui/material/Button'
+import TextField from '@mui/material/TextField'
+import SvgIcon from '@mui/material/SvgIcon'
+import IconButton from '@mui/material/IconButton'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import RadioGroup from '@mui/material/RadioGroup'
+import Radio from '@mui/material/Radio'
 import { observer } from 'mobx-react-lite';
 import { useWorkspace } from '../../contexts/workspace.context';
 import { useFileOperations } from '../../contexts/file-operations.context';

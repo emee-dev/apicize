@@ -1,14 +1,12 @@
-import 'prismjs'
-import { Box, Stack, SvgIcon, SvgIconPropsColorOverrides, SxProps, Theme, ToggleButton, ToggleButtonGroup } from "@mui/material"
-import ScienceIcon from '@mui/icons-material/ScienceOutlined'
+import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
+import SvgIcon from '@mui/material/SvgIcon'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import { SvgIconPropsColorOverrides, SxProps, Theme } from "@mui/material"
+import { ScienceOutlinedIcon, ViewListOutlinedIcon, ArticleOutlinedIcon, PreviewIcon } from '../../icons'
 import { OverridableStringUnion } from '@mui/types';
-import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined'
-import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
-import PreviewIcon from '@mui/icons-material/Preview'
-import React from "react"
-import 'prismjs/components/prism-json'
-import 'prismjs/components/prism-markup'
-// import 'prismjs/themes/prism-tomorrow.css''
+import React, { useMemo, useEffect } from "react"
 import { ResultResponsePreview } from "./result/response-preview-viewer";
 import { ResultRawPreview } from "./result/response-raw-viewer";
 import { ResultInfoViewer } from "./result/result-info-viewer";
@@ -50,9 +48,15 @@ export const ResultsViewer = observer((props: {
 
     const result = execution.results[execution.resultIndex]
 
-    const disableHeadersPanel = !result.hasResponseHeaders
-    const disableText = (!result.responseBodyLength) || (result.responseBodyLength === 0)
-    const disablePreview = (!result.responseBodyLength) || (result.responseBodyLength === 0 || result.responseBodyLength > MAX_TEXT_RENDER_LENGTH)
+    const panelStates = useMemo(() => {
+        const disableHeadersPanel = !result.hasResponseHeaders
+        const disableText = (!result.responseBodyLength) || (result.responseBodyLength === 0)
+        const disablePreview = (!result.responseBodyLength) || (result.responseBodyLength === 0 || result.responseBodyLength > MAX_TEXT_RENDER_LENGTH)
+        
+        return { disableHeadersPanel, disableText, disablePreview }
+    }, [result.hasResponseHeaders, result.responseBodyLength])
+
+    const { disableHeadersPanel, disableText, disablePreview } = panelStates
 
     let panel = execution.panel
 
@@ -94,7 +98,7 @@ export const ResultsViewer = observer((props: {
             value={panel}
             sx={{ marginRight: '12px' }}
             aria-label="text alignment">
-            <ToggleButton value="Info" title="Show Result Info" aria-label='show info' size='small'><ScienceIcon color={infoColor ?? 'disabled'} /></ToggleButton>
+            <ToggleButton value="Info" title="Show Result Info" aria-label='show info' size='small'><ScienceOutlinedIcon color={infoColor ?? 'disabled'} /></ToggleButton>
             <ToggleButton value="Headers" title="Show Response Headers" aria-label='show headers' size='small' disabled={disableHeadersPanel}><ViewListOutlinedIcon /></ToggleButton>
             <ToggleButton value="Text" title="Show Response Body as Text" aria-label='show body text' size='small' disabled={disableText}><ArticleOutlinedIcon /></ToggleButton>
             <ToggleButton value="Preview" title="Show Body as Preview" aria-label='show body preview' disabled={disablePreview} size='small'><PreviewIcon /></ToggleButton>

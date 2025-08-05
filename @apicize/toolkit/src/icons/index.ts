@@ -1,0 +1,12 @@
+// Centralized icon exports for better tree-shaking
+export { default as DisplaySettingsIcon } from '@mui/icons-material/DisplaySettings'
+export { default as ViewListIcon } from '@mui/icons-material/ViewList'
+export { default as ViewListOutlinedIcon } from '@mui/icons-material/ViewListOutlined'
+export { default as PlayArrowIcon } from '@mui/icons-material/PlayArrow'
+export { default as ArticleOutlinedIcon } from '@mui/icons-material/ArticleOutlined'
+export { default as AltRouteIcon } from '@mui/icons-material/AltRoute'
+export { default as ScienceIcon } from '@mui/icons-material/Science'
+export { default as ScienceOutlinedIcon } from '@mui/icons-material/ScienceOutlined'
+export { default as WarningAmberIcon } from '@mui/icons-material/WarningAmber'
+export { default as PreviewIcon } from '@mui/icons-material/Preview'
+export { default as AirlineStopsIcon } from '@mui/icons-material/AirlineStops'

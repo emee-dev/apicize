@@ -1,4 +1,17 @@
-import { Stack, FormControl, InputLabel, MenuItem, Select, SxProps, Box, SvgIcon, IconButton, ToggleButtonGroup, ToggleButton, Grid, TextField, Button } from '@mui/material'
+import Stack from '@mui/material/Stack'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import MenuItem from '@mui/material/MenuItem'
+import Select from '@mui/material/Select'
+import { SxProps } from '@mui/material/styles'
+import Box from '@mui/material/Box'
+import SvgIcon from '@mui/material/SvgIcon'
+import IconButton from '@mui/material/IconButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import ToggleButton from '@mui/material/ToggleButton'
+import Grid from '@mui/material/Grid'
+import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
 import { observer } from 'mobx-react-lite';
 import { useWorkspace, WorkspaceMode } from '../../contexts/workspace.context';
 import { Selection } from '@apicize/lib-typescript';
