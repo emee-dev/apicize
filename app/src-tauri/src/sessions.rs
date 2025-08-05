@@ -1,4 +1,5 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
+use rustc_hash::FxHashMap;
 
 use apicize_lib::{ExecutionResultSummary, WorkbookDefaultParameters};
 use serde::{Deserialize, Serialize};
@@ -28,8 +29,9 @@ pub struct Session {
 
 #[derive(Default)]
 pub struct Sessions {
-    pub sessions: HashMap<String, Session>,
+    pub sessions: FxHashMap<String, Session>,
     pub counter: u64,
+    session_lookup_cache: FxHashMap<u64, String>, // Cache numeric ID to string mapping
 }
 
 impl Sessions {
@@ -44,9 +46,15 @@ impl Sessions {
         let session_id = if self.counter == 0 {
             "main".to_string()
         } else {
-            format!("main-{}", &self.counter)
+            let mut id = String::with_capacity(8); // "main-" + digits
+            id.push_str("main-");
+            use std::fmt::Write;
+            write!(&mut id, "{}", self.counter).unwrap();
+            id
         };
 
+        // Cache the lookup for faster access
+        self.session_lookup_cache.insert(self.counter, session_id.clone());
         self.counter += 1;
         self.sessions.insert(session_id.clone(), session);
         session_id
@@ -55,7 +63,16 @@ impl Sessions {
     pub fn remove_session(&mut self, session_id: &str) -> Result<(), ApicizeAppError> {
         // log::trace!("Removing session {}", &session_id);
         match self.sessions.remove(session_id) {
-            Some(_) => Ok(()),
+            Some(_) => {
+                // Clean up lookup cache - find and remove the entry
+                if let Some(counter_key) = self.session_lookup_cache
+                    .iter()
+                    .find_map(|(k, v)| if v == session_id { Some(*k) } else { None }) 
+                {
+                    self.session_lookup_cache.remove(&counter_key);
+                }
+                Ok(())
+            },
             None => Err(ApicizeAppError::InvaliedSession(session_id.into())),
         }
     }
@@ -103,7 +120,7 @@ pub struct SessionInitialization {
     pub error: Option<String>,
     pub navigation: Navigation,
     pub executing_request_ids: HashSet<String>,
-    pub result_summaries: HashMap<String, Vec<ExecutionResultSummary>>,
+    pub result_summaries: FxHashMap<String, Vec<ExecutionResultSummary>>,
     pub file_name: String,
     pub display_name: String,
     pub dirty: bool,

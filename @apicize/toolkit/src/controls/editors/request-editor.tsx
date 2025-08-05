@@ -107,7 +107,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
                     </ToggleButtonGroup>
 
 
-                    <Box flexGrow={1} className={panelsClass}>
+                    <Box flexGrow={1} className={panelsClass} paddingTop='0.5em'>
                         {usePanel === 'Info' ? <RequestInfoEditor request={request} />
                             : usePanel === 'Headers' ? <RequestHeadersEditor headers={activeSelection.requestHeaders} />
                                 : usePanel === 'Query String' ? <RequestQueryStringEditor request={request} />
@@ -159,6 +159,4 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
     })
 
     return <RequestEditorLayout sx={props.sx} lastExecuted={execution.lastExecuted} />
-
-
 })

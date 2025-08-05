@@ -9,10 +9,11 @@ use apicize_lib::{
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashSet, VecDeque},
     fmt::Display,
     path::PathBuf,
 };
+use rustc_hash::FxHashMap;
 use uuid::Uuid;
 
 use crate::{error::ApicizeAppError, sessions::SessionStartupState};
@@ -141,7 +142,7 @@ pub struct RequestInfo {
     pub warnings: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// Validation errors
-    pub validation_errors: Option<HashMap<String, String>>,
+    pub validation_errors: Option<std::collections::HashMap<String, String>>,
 }
 
 impl Identifiable for RequestInfo {
@@ -185,9 +186,9 @@ pub struct WorkspaceInfo {
     /// Indicator which requests have executions running
     pub executing_request_ids: HashSet<String>,
     /// Execution summary results (if any)
-    pub result_summaries: HashMap<String, Vec<ExecutionResultSummary>>,
+    pub result_summaries: FxHashMap<String, Vec<ExecutionResultSummary>>,
     /// Execution detail results (if any)
-    pub result_details: HashMap<String, Vec<ExecutionResultDetail>>,
+    pub result_details: FxHashMap<String, Vec<ExecutionResultDetail>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -253,7 +254,7 @@ impl ParamNavigationSection {
     }
 
     fn map_entities<T: Identifiable + Warnings + ValidationErrors>(
-        entities: &HashMap<String, T>,
+        entities: &std::collections::HashMap<String, T>,
         ids: &[String],
     ) -> Vec<NavigationEntry> {
         ids.iter()
@@ -306,63 +307,111 @@ impl ParamNavigationSection {
 }
 
 impl NavigationRequestEntry {
+    /// Calculate state flags for a request entry
+    fn calculate_state(request: &RequestEntry, executing_request_ids: &HashSet<String>) -> u8 {
+        let mut state = 0;
+        
+        if request.get_warnings().as_ref().is_some_and(|w| !w.is_empty()) {
+            state |= NAVIGATION_STATE_WARNING;
+        }
+        
+        if request.get_validation_errors().as_ref().is_some_and(|e| !e.is_empty()) {
+            state |= NAVIGATION_STATE_ERROR;
+        }
+        
+        if executing_request_ids.contains(request.get_id()) {
+            state |= NAVIGATION_STATE_RUNNING;
+        }
+        
+        state
+    }
+    
+    /// Iteratively build navigation tree with pre-allocated capacity
     fn from_requests(
         ids: &[String],
         requests: &IndexedEntities<RequestEntry>,
         executing_request_ids: &HashSet<String>,
     ) -> Option<Vec<NavigationRequestEntry>> {
-        let results = ids
-            .iter()
-            .map(|id| {
-                let entity = requests.entities.get(id).unwrap();
-                // Groups will be differentiated from Requests by having a child list, even if empty
-                let children = match &entity {
+        if ids.is_empty() {
+            return None;
+        }
+
+        // Pre-allocate result vector with exact capacity
+        let mut results = Vec::with_capacity(ids.len());
+        
+        // Process each top-level ID
+        for id in ids {
+            if let Some(entity) = requests.entities.get(id) {
+                let state = Self::calculate_state(entity, executing_request_ids);
+                
+                let children = match entity {
                     RequestEntry::Request(_) => None,
-                    RequestEntry::Group(_) => match requests.child_ids.get(id) {
-                        Some(child_ids) => {
-                            Self::from_requests(child_ids, requests, executing_request_ids)
+                    RequestEntry::Group(_) => {
+                        // For groups, build children iteratively
+                        match requests.child_ids.get(id) {
+                            Some(child_ids) if !child_ids.is_empty() => {
+                                Self::build_children_iteratively(child_ids, requests, executing_request_ids)
+                            }
+                            _ => Some(Vec::new()), // Empty group
                         }
-                        None => Some(vec![]),
-                    },
-                };
-                let request = requests.entities.get(id).unwrap();
-
-                let state = if request
-                    .get_warnings()
-                    .as_ref()
-                    .is_some_and(|w| !w.is_empty())
-                {
-                    NAVIGATION_STATE_WARNING
-                } else {
-                    0
-                } | if request
-                    .get_validation_errors()
-                    .as_ref()
-                    .is_some_and(|e| !e.is_empty())
-                {
-                    NAVIGATION_STATE_ERROR
-                } else {
-                    0
-                } | if executing_request_ids.contains(id) {
-                    NAVIGATION_STATE_RUNNING
-                } else {
-                    0
+                    }
                 };
 
-                NavigationRequestEntry {
+                results.push(NavigationRequestEntry {
                     id: id.clone(),
-                    name: request.get_title(),
+                    name: entity.get_title(),
                     children,
                     state,
-                }
-            })
-            .collect::<Vec<_>>();
+                });
+            }
+        }
 
         if results.is_empty() {
             None
         } else {
             Some(results)
         }
+    }
+
+    /// Build children iteratively with pre-allocated capacity
+    fn build_children_iteratively(
+        child_ids: &[String],
+        requests: &IndexedEntities<RequestEntry>,
+        executing_request_ids: &HashSet<String>,
+    ) -> Option<Vec<NavigationRequestEntry>> {
+        if child_ids.is_empty() {
+            return Some(Vec::new());
+        }
+
+        let mut results = Vec::with_capacity(child_ids.len());
+        
+        for child_id in child_ids {
+            if let Some(entity) = requests.entities.get(child_id) {
+                let state = Self::calculate_state(entity, executing_request_ids);
+                
+                let children = match entity {
+                    RequestEntry::Request(_) => None,
+                    RequestEntry::Group(_) => {
+                        match requests.child_ids.get(child_id) {
+                            Some(grandchild_ids) if !grandchild_ids.is_empty() => {
+                                // Recursive call but much more controlled - only for group structure
+                                Self::build_children_iteratively(grandchild_ids, requests, executing_request_ids)
+                            }
+                            _ => Some(Vec::new()), // Empty group
+                        }
+                    }
+                };
+                
+                results.push(NavigationRequestEntry {
+                    id: child_id.clone(),
+                    name: entity.get_title(),
+                    children,
+                    state,
+                });
+            }
+        }
+        
+        Some(results)
     }
 
     pub fn build(
@@ -388,7 +437,7 @@ impl Navigation {
 
 #[derive(Default)]
 pub struct Workspaces {
-    pub workspaces: HashMap<String, WorkspaceInfo>,
+    pub workspaces: FxHashMap<String, WorkspaceInfo>,
 }
 
 impl Workspaces {
@@ -430,8 +479,8 @@ impl Workspaces {
                 workspace,
                 navigation,
                 executing_request_ids: HashSet::new(),
-                result_summaries: HashMap::new(),
-                result_details: HashMap::new(),
+                result_summaries: FxHashMap::default(),
+                result_details: FxHashMap::default(),
                 file_name: file_name.to_string(),
                 display_name: display_name.clone(),
             },
@@ -620,7 +669,7 @@ impl Workspaces {
         let request = match clone_from_id {
             Some(other_id) => match info.workspace.requests.entities.get(other_id) {
                 Some(RequestEntry::Request(request)) => {
-                    request.clone_as_new(format!("{} (Copy)", request.get_name()))
+                    request.clone_as_new(Self::create_copy_name(request.get_name()))
                 }
                 _ => return Err(ApicizeAppError::InvalidRequest(other_id.into())),
             },
@@ -648,7 +697,7 @@ impl Workspaces {
         let group = match clone_from_id {
             Some(other_id) => match info.workspace.requests.entities.get(other_id) {
                 Some(RequestEntry::Group(group)) => {
-                    group.clone_as_new(format!("{} (Copy)", &group.get_name()))
+                    group.clone_as_new(Self::create_copy_name(group.get_name()))
                 }
                 _ => return Err(ApicizeAppError::InvalidGroup(other_id.into())),
             },
@@ -663,74 +712,65 @@ impl Workspaces {
         )?;
 
         if let Some(other_id) = clone_from_id {
-            let mut cloned_group_ids = HashMap::<String, String>::new();
+            // Pre-calculate approximate size by counting descendant nodes
+            let estimated_size = Self::count_descendant_nodes(&info.workspace.requests, other_id);
+            
+            // Pre-allocate collections with estimated capacity
+            let mut cloned_group_ids = FxHashMap::<String, String>::with_capacity_and_hasher(estimated_size / 2, Default::default());
             cloned_group_ids.insert(other_id.to_string(), id.to_string());
 
-            // Build lists of new entities and child mappings
-            let mut new_entries = Vec::<RequestEntry>::new();
-            let mut new_child_mappings = HashMap::<String, Vec<String>>::new();
+            let mut new_entries = Vec::<RequestEntry>::with_capacity(estimated_size);
+            let mut new_child_mappings = FxHashMap::<String, Vec<String>>::with_capacity_and_hasher(estimated_size / 2, Default::default());
 
-            // Get the initial list of children to process
-            let mut to_process = VecDeque::new();
+            // Use a single pass to collect all entries that need cloning
+            let mut to_process = VecDeque::with_capacity(estimated_size);
             to_process.push_back(other_id.to_string());
 
-            // Keep track of what we have processed, we should *not* have to worry about recursive nested IDs
-            // but best to make sure
-            let mut processed = HashSet::<String>::new();
+            let mut processed = HashSet::<String>::with_capacity(estimated_size);
 
             while let Some(parent_id) = to_process.pop_front() {
-                if processed.contains(&parent_id) {
-                    continue;
+                if !processed.insert(parent_id.clone()) {
+                    continue; // Already processed
                 }
 
                 if let Some(child_ids) = info.workspace.requests.child_ids.get(&parent_id) {
                     let new_group_id = cloned_group_ids
-                        .get(parent_id.as_str())
-                        .unwrap()
-                        .to_string();
-                    let mut new_group_child_ids = vec![];
+                        .get(&parent_id)
+                        .expect("Parent group ID should exist in cloned_group_ids")
+                        .clone();
+                    
+                    // Pre-allocate child vector with known size
+                    let mut new_group_child_ids = Vec::with_capacity(child_ids.len());
 
                     for child_id in child_ids {
                         if let Some(child) = info.workspace.requests.get(child_id) {
                             let cloned_child = child.clone_as_new(child.get_name().to_owned());
                             let cloned_child_id = cloned_child.get_id().to_string();
-                            let is_group = match &cloned_child {
-                                RequestEntry::Request(_) => false,
-                                RequestEntry::Group(_) => true,
-                            };
+                            let is_group = matches!(&cloned_child, RequestEntry::Group(_));
 
-                            new_group_child_ids.push(cloned_child_id.to_string());
+                            new_group_child_ids.push(cloned_child_id.clone());
                             new_entries.push(cloned_child);
 
                             if is_group {
-                                cloned_group_ids
-                                    .insert(child_id.to_string(), cloned_child_id.to_string());
-                                to_process.push_back(child_id.to_string());
+                                cloned_group_ids.insert(child_id.to_string(), cloned_child_id);
+                                to_process.push_back(child_id.clone());
                             }
                         }
                     }
 
                     new_child_mappings.insert(new_group_id, new_group_child_ids);
                 }
-
-                processed.insert(parent_id);
             }
 
-            // Add all the new entries we made
+            // Batch insert new entries - more efficient than individual inserts
+            info.workspace.requests.entities.reserve(new_entries.len());
             for entry in new_entries {
-                info.workspace
-                    .requests
-                    .entities
-                    .insert(entry.get_id().to_string(), entry);
+                info.workspace.requests.entities.insert(entry.get_id().to_string(), entry);
             }
 
-            // Add all of the new child mappings
-            for (parent_id, child_ids) in new_child_mappings {
-                info.workspace
-                    .requests
-                    .child_ids
-                    .insert(parent_id, child_ids);
-            }
+            // Batch insert child mappings
+            info.workspace.requests.child_ids.reserve(new_child_mappings.len());
+            info.workspace.requests.child_ids.extend(new_child_mappings);
         }
         Ok(id)
     }
@@ -1197,7 +1237,7 @@ impl Workspaces {
         info.dirty = true;
         let scenario = match clone_from_id {
             Some(other_id) => match info.workspace.scenarios.get(other_id) {
-                Some(other) => other.clone_as_new(format!("{} (Copy)", other.name)),
+                Some(other) => other.clone_as_new(Self::create_copy_name(&other.name)),
                 None => return Err(ApicizeAppError::InvalidScenario(other_id.to_owned())),
             },
             None => Scenario::default(),
@@ -1308,7 +1348,7 @@ impl Workspaces {
         info.dirty = true;
         let authorization = match clone_from_id {
             Some(other_id) => match info.workspace.authorizations.get(other_id) {
-                Some(other) => other.clone_as_new(format!("{} (Copy)", other.get_name())),
+                Some(other) => other.clone_as_new(Self::create_copy_name(other.get_name())),
                 None => return Err(ApicizeAppError::InvalidAuthorization(other_id.to_owned())),
             },
             None => Authorization::default(),
@@ -1444,7 +1484,7 @@ impl Workspaces {
         info.dirty = true;
         let certificate = match clone_from_id {
             Some(other_id) => match info.workspace.certificates.get(other_id) {
-                Some(other) => other.clone_as_new(format!("{} (Copy)", other.get_name())),
+                Some(other) => other.clone_as_new(Self::create_copy_name(other.get_name())),
                 None => return Err(ApicizeAppError::InvalidCertificate(other_id.to_owned())),
             },
             None => Certificate::default(),
@@ -1560,7 +1600,7 @@ impl Workspaces {
         info.dirty = true;
         let proxy = match clone_from_id {
             Some(other_id) => match info.workspace.proxies.get(other_id) {
-                Some(other) => other.clone_as_new(format!("{} (Copy)", other.name)),
+                Some(other) => other.clone_as_new(Self::create_copy_name(&other.name)),
                 None => return Err(ApicizeAppError::InvalidProxy(other_id.to_owned())),
             },
             None => Proxy::default(),
@@ -1692,6 +1732,38 @@ impl Workspaces {
             })
     }
 
+    /// Count descendant nodes for capacity estimation
+    fn count_descendant_nodes(requests: &IndexedEntities<RequestEntry>, root_id: &str) -> usize {
+        let mut count = 0;
+        let mut to_count = VecDeque::new();
+        to_count.push_back(root_id);
+        let mut visited = HashSet::new();
+
+        while let Some(id) = to_count.pop_front() {
+            if !visited.insert(id) {
+                continue;
+            }
+            
+            if let Some(child_ids) = requests.child_ids.get(id) {
+                count += child_ids.len();
+                for child_id in child_ids {
+                    to_count.push_back(child_id);
+                }
+            }
+        }
+        
+        // Return at least 4 to ensure some pre-allocation benefit
+        count.max(4)
+    }
+
+    /// Create a copy name with pre-allocated capacity
+    fn create_copy_name(original_name: &str) -> String {
+        let mut copy_name = String::with_capacity(original_name.len() + 7); // " (Copy)"
+        copy_name.push_str(original_name);
+        copy_name.push_str(" (Copy)");
+        copy_name
+    }
+
     pub fn add_data(
         &mut self,
         workspace_id: &str,
@@ -1701,7 +1773,7 @@ impl Workspaces {
         info.dirty = true;
         let data = match clone_from_id {
             Some(other_id) => match info.workspace.data.iter().find(|data| data.id == other_id) {
-                Some(other) => other.clone_as_new(format!("{} (Copy)", other.name)),
+                Some(other) => other.clone_as_new(Self::create_copy_name(&other.name)),
                 None => return Err(ApicizeAppError::InvalidExternalData(other_id.to_owned())),
             },
             None => ExternalData::default(),

@@ -24,13 +24,13 @@ use serde::{Deserialize, Serialize};
 use sessions::{Session, SessionInitialization, SessionSaveState, SessionStartupState, Sessions};
 use settings::{ApicizeSettings, ColorScheme};
 use std::{
-    collections::HashMap,
     env,
     fs::{self, exists},
     io::{self},
     path::{Path, PathBuf},
     sync::{Arc, Mutex, OnceLock},
 };
+use rustc_hash::FxHashMap;
 use tauri::{
     AppHandle, Emitter, LogicalSize, Manager, PhysicalSize, State, WebviewWindowBuilder, Wry,
 };
@@ -275,15 +275,17 @@ async fn main() {
 }
 
 fn format_window_title(display_name: &str, dirty: bool) -> String {
-    format!(
-        "{} - Apicize {}",
-        if display_name.is_empty() {
-            "(New)"
-        } else {
-            display_name
-        },
-        if dirty { "*" } else { "" }
-    )
+    let name_part = if display_name.is_empty() { "(New)" } else { display_name };
+    let mut title = String::with_capacity(name_part.len() + 12); // Pre-allocate: " - Apicize *"
+    
+    title.push_str(name_part);
+    title.push_str(" - Apicize");
+    if dirty {
+        title.push(' ');
+        title.push('*');
+    }
+    
+    title
 }
 
 #[tauri::command]
@@ -437,14 +439,19 @@ fn create_workspace(
     }?;
 
     let info = workspaces.get_workspace_info_mut(&workspace_result.workspace_id)?;
-    let trace_title = format!(
-        "Open (session: {}, workspace: {})",
-        match &current_session_id {
-            Some(id) => id,
+    let trace_title = {
+        let session_name = match &current_session_id {
+            Some(id) => id.as_str(),
             None => "new",
-        },
-        &info.display_name
-    );
+        };
+        let mut title = String::with_capacity(32 + session_name.len() + info.display_name.len());
+        title.push_str("Open (session: ");
+        title.push_str(session_name);
+        title.push_str(", workspace: ");
+        title.push_str(&info.display_name);
+        title.push(')');
+        title
+    };
 
     let open_in_session_id = if let (Some(active_session_id), false) =
         (current_session_id.as_ref(), open_in_new_session)
@@ -765,10 +772,15 @@ async fn close_workspace(
     {
         let workspaces = workspaces_state.workspaces.read().await;
         let info = workspaces.get_workspace_info(&workspace_id)?;
-        trace_title = format!(
-            "Close (session: {}, workspace: {})",
-            session_id, &info.display_name
-        );
+        trace_title = {
+            let mut title = String::with_capacity(32 + session_id.len() + info.display_name.len());
+            title.push_str("Close (session: ");
+            title.push_str(session_id);
+            title.push_str(", workspace: ");
+            title.push_str(&info.display_name);
+            title.push(')');
+            title
+        };
         dispatch_save_state(&app, &sessions, &workspace_id, info, false);
     }
     {
@@ -843,7 +855,7 @@ async fn open_settings() -> Result<ApicizeSettings, String> {
             clear_all_oauth2_tokens_from_cache().await;
             Ok(result.data)
         }
-        Err(err) => Err(format!("{}", err.error)),
+        Err(err) => Err(err.error.to_string()),
     }
 }
 
@@ -860,13 +872,13 @@ async fn save_settings(
             app.emit("update_settings", updated_settings).unwrap();
             Ok(())
         }
-        Err(err) => Err(format!("{}", err.error)),
+        Err(err) => Err(err.error.to_string()),
     }
 }
 
-fn cancellation_tokens() -> &'static Mutex<HashMap<String, CancellationToken>> {
-    static TOKENS: OnceLock<Mutex<HashMap<String, CancellationToken>>> = OnceLock::new();
-    TOKENS.get_or_init(|| Mutex::new(HashMap::new()))
+fn cancellation_tokens() -> &'static Mutex<FxHashMap<String, CancellationToken>> {
+    static TOKENS: OnceLock<Mutex<FxHashMap<String, CancellationToken>>> = OnceLock::new();
+    TOKENS.get_or_init(|| Mutex::new(FxHashMap::default()))
 }
 
 #[tauri::command]
@@ -879,10 +891,6 @@ async fn run_request(
     workbook_full_name: String,
     single_run: bool,
 ) -> Result<Vec<ExecutionResultSummary>, ApicizeAppError> {
-    let workspace_id: String;
-    let runner: Arc<TestRunnerContext>;
-    let other_session_ids: Vec<String>;
-
     let cancellation = CancellationToken::new();
     {
         cancellation_tokens()
@@ -903,92 +911,123 @@ async fn run_request(
         )
     };
 
-    {
+    // Phase 1: Read session data with minimal lock scope
+    let workspace_id = {
         let sessions = sessions_state.sessions.read().await;
         let session = sessions.get_session(session_id)?;
-        workspace_id = session.workspace_id.to_string();
+        session.workspace_id.clone()
+    };
 
-        let cloned_workspace: Workspace;
-        {
+    // Phase 2: Quick read to get workspace data, then release lock immediately
+    let (cloned_workspace, other_session_ids) = {
+        let sessions = sessions_state.sessions.read().await;
+        
+        // Acquire write lock for minimal time - just to update execution state
+        let cloned_workspace = {
             let mut workspaces = workspaces_state.workspaces.write().await;
             let info = workspaces.get_workspace_info_mut(&workspace_id)?;
-            info.executing_request_ids
-                .insert(request_or_group_id.to_string());
-            cloned_workspace = info.workspace.clone();
+            info.executing_request_ids.insert(request_or_group_id.to_string());
+            info.workspace.clone()
+        }; // Write lock released here
+        
+        // Get session IDs with read lock (can be done concurrently)
+        let other_session_ids = get_workspace_sessions(&workspace_id, &sessions, Some(request_or_group_id))
+            .unwrap_or_default();
+            
+        (cloned_workspace, other_session_ids)
+    };
 
-            other_session_ids =
-                get_workspace_sessions(&workspace_id, &sessions, Some(request_or_group_id))
-                    .unwrap_or_default();
+    // Phase 3: Emit status updates outside of any locks
+    let execution_status = ExecutionStatus {
+        request_or_group_id: request_or_group_id.to_string(),
+        running: true,
+        results: None,
+    };
 
+    for emit_to_session_id in &other_session_ids {
+        app.emit_to(emit_to_session_id, "update_execution", &execution_status)
+            .unwrap();
+    }
+
+    // Phase 4: Create runner outside of locks
+    let runner = Arc::new(TestRunnerContext::new(
+        cloned_workspace,
+        Some(cancellation),
+        single_run,
+        &allowed_data_path,
+        true, // enable detailed trace capture to get read/write data
+    ));
+
+    // Phase 5: Execute request (no locks held)
+    let responses = runner.run(vec![request_or_group_id.to_string()]).await;
+    
+    // Clean up cancellation token
+    cancellation_tokens()
+        .lock()
+        .unwrap()
+        .remove(request_or_group_id);
+
+    // Phase 6: Process results with minimal lock scope
+    match responses.into_iter().next() {
+        Some(Ok(result)) => {
+            // Assemble results outside of lock
+            let (summaries, details) = result.assemble_results(&runner);
+            
+            // Quick write lock just for state updates
+            {
+                let mut workspaces = workspaces_state.workspaces.write().await;
+                let info = workspaces.get_workspace_info_mut(&workspace_id)?;
+                info.result_summaries.insert(request_or_group_id.to_string(), summaries.clone());
+                info.result_details.insert(request_or_group_id.to_string(), details);
+                info.executing_request_ids.remove(request_or_group_id);
+            } // Write lock released immediately
+            
+            // Emit completion status outside of locks
             let execution_status = ExecutionStatus {
                 request_or_group_id: request_or_group_id.to_string(),
-                running: true,
-                results: None,
+                running: false,
+                results: Some(summaries.clone()),
             };
 
             for emit_to_session_id in &other_session_ids {
                 app.emit_to(emit_to_session_id, "update_execution", &execution_status)
                     .unwrap();
             }
+
+            Ok(summaries)
         }
 
-        runner = Arc::new(TestRunnerContext::new(
-            cloned_workspace,
-            Some(cancellation),
-            single_run,
-            &allowed_data_path,
-            true, // enable detailed trace capture to get read/write data
-        ));
-    }
-
-    let responses = runner.run(vec![request_or_group_id.to_string()]).await;
-    cancellation_tokens()
-        .lock()
-        .unwrap()
-        .remove(request_or_group_id);
-
-    {
-        let mut workspaces = workspaces_state.workspaces.write().await;
-        let info = workspaces.get_workspace_info_mut(&workspace_id)?;
-
-        match responses.into_iter().next() {
-            Some(Ok(result)) => {
-                let (summaries, details) = result.assemble_results(&runner);
-                info.result_summaries
-                    .insert(request_or_group_id.to_string(), summaries.clone());
-
-                info.result_details
-                    .insert(request_or_group_id.to_string(), details);
-
-                let execution_status = ExecutionStatus {
-                    request_or_group_id: request_or_group_id.to_string(),
-                    running: false,
-                    results: Some(summaries.clone()),
-                };
-
-                for emit_to_session_id in &other_session_ids {
-                    app.emit_to(emit_to_session_id, "update_execution", &execution_status)
-                        .unwrap();
-                }
-
+        Some(Err(err)) => {
+            // Quick write lock for error cleanup
+            {
+                let mut workspaces = workspaces_state.workspaces.write().await;
+                let info = workspaces.get_workspace_info_mut(&workspace_id)?;
                 info.executing_request_ids.remove(request_or_group_id);
-                Ok(summaries)
+            } // Write lock released immediately
+            
+            // Emit error status outside of locks
+            let status = ExecutionStatus {
+                request_or_group_id: request_or_group_id.to_string(),
+                running: false,
+                results: None,
+            };
+            
+            for session_id in &other_session_ids {
+                app.emit_to(session_id, "update_execution", &status)
+                    .unwrap();
             }
-
-            Some(Err(err)) => {
-                let status = ExecutionStatus {
-                    request_or_group_id: request_or_group_id.to_string(),
-                    running: false,
-                    results: None,
-                };
-                for session_id in &other_session_ids {
-                    app.emit_to(session_id, "update_execution", &status)
-                        .unwrap();
-                }
+            
+            Err(ApicizeAppError::ApicizeError(err))
+        }
+        
+        None => {
+            // Quick cleanup for unexpected case
+            {
+                let mut workspaces = workspaces_state.workspaces.write().await;
+                let info = workspaces.get_workspace_info_mut(&workspace_id)?;
                 info.executing_request_ids.remove(request_or_group_id);
-                Err(ApicizeAppError::ApicizeError(err))
             }
-            None => Err(ApicizeAppError::UnspecifiedError),
+            Err(ApicizeAppError::UnspecifiedError)
         }
     }
 }

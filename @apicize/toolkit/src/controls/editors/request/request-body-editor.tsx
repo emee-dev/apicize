@@ -284,7 +284,7 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
   }
 
   return (
-    <Box id='request-body-container' ref={refContainer} position='relative' width='100%' height='100%' paddingTop='0.7em'>
+    <Box id='request-body-container' ref={refContainer} position='relative' width='100%' height='100%'>
       <Box top={0}
         left={0}
         width='100%'

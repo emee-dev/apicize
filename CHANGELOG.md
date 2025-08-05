@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.27.0
+
+* Claude-suggested optimizations
+
 # 0.26.1
 
 * Address resizing issues with code editors
