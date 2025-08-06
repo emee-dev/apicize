@@ -101,7 +101,7 @@ export const RequestGroupEditor = observer((props: { sx?: SxProps }) => {
                                 : null
                         }
                     </ToggleButtonGroup>
-                    <Box className='panels' flexGrow={1} paddingTop='0.5em'>
+                    <Box className='panels' flexGrow={1}>
                         <Box>
                             {usePanel === 'Info' ? <RequestGroupInfoEditor group={group} />
                                 : usePanel === 'Parameters' ? <RequestParametersEditor requestOrGroup={group} />

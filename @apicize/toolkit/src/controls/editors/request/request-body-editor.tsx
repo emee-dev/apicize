@@ -346,7 +346,7 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
               : <MonacoEditor
                 language={editorMode}
                 width='100%'
-                height='calc(100% - 1em)'
+                height='100%'
                 theme={settings.colorScheme === "dark" ? 'vs-dark' : 'vs-light'}
                 value={typeof bodyInfo.data === 'string' ? bodyInfo.data : ''}
                 onChange={(text: string) => bodyInfo.setBodyData(text)}
@@ -354,6 +354,7 @@ export const RequestBodyEditor = observer((props: { body: EditableRequestBody | 
                   editor.current = me
                 }}
                 options={{
+                  automaticLayout: true,
                   minimap: { enabled: false },
                   model,
                   detectIndentation: settings.editorDetectExistingIndent,

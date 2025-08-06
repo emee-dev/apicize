@@ -68,7 +68,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
     }
 
     const RequestPanel = React.memo(observer(() => {
-        const panelsClass = useMemo(() => 
+        const panelsClass = useMemo(() =>
             (usePanel === 'Body' || usePanel === 'Test') ? 'panels full-width' : 'panels',
             [usePanel]
         )
@@ -107,7 +107,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
                     </ToggleButtonGroup>
 
 
-                    <Box flexGrow={1} className={panelsClass} paddingTop='0.5em'>
+                    <Box flexGrow={1} className={panelsClass}>
                         {usePanel === 'Info' ? <RequestInfoEditor request={request} />
                             : usePanel === 'Headers' ? <RequestHeadersEditor headers={activeSelection.requestHeaders} />
                                 : usePanel === 'Query String' ? <RequestQueryStringEditor request={request} />
@@ -153,7 +153,7 @@ export const RequestEditor = observer((props: { sx?: SxProps }) => {
                     }
                 </PanelGroup>
             </Box>
-            : <Box className='editor request' sx={props.sx}>
+            : <Box className='editor panels request' sx={props.sx}>
                 <RequestPanel />
             </Box>
     })

@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.27.1
+
+* Enable Monaco autoLayout option
+
 # 0.27.0
 
 * Claude-suggested optimizations

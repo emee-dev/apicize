@@ -20,7 +20,6 @@ import { NavigationControl } from "./navigation/navigation";
 import { RequestGroupEditor } from "./editors/request-group-editor";
 import { when } from "mobx";
 import { useApicizeSettings } from "../contexts/apicize-settings.context";
-import { ToastSeverity, useFeedback } from "../contexts/feedback.context";
 import { useFileOperations } from "../contexts/file-operations.context";
 import useWindowSize from "../window-size";
 import { useMemo } from "react";
@@ -29,7 +28,6 @@ export const MainPanel = observer(() => {
     const workspace = useWorkspace()
     const settings = useApicizeSettings()
     const fileOps = useFileOperations()
-    const feedback = useFeedback()
     const windowSize = useWindowSize()
 
     const mode = workspace.mode

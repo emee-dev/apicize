@@ -74,8 +74,9 @@ export const RichViewer = React.memo(observer((props: {
         theme={settings.colorScheme === "dark" ? 'vs-dark' : 'vs-light'}
         value={text}
         width='100%'
-        height='calc(100% - 1em)'
+        height='100%'
         options={{
+            automaticLayout: true,
             minimap: { enabled: false },
             model,
             detectIndentation: settings.editorDetectExistingIndent,

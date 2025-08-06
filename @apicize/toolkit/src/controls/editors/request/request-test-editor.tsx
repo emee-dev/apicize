@@ -130,14 +130,13 @@ export const RequestTestEditor = observer((props: { request: EditableRequest }) 
             <Box id='req-test-editor' ref={refContainer} position='relative' width='100%' height='100%'>
                 <MonacoEditor
                     language='javascript'
-                    width='100%'
-                    height='calc(100% - 1em)'
                     theme={settings.colorScheme === "dark" ? 'vs-dark' : 'vs-light'}
                     value={props.request.test}
                     onChange={(text: string) => {
                         props.request.setTest(text)
                     }}
                     options={{
+                        automaticLayout: true,
                         minimap: { enabled: false },
                         model,
                         detectIndentation: settings.editorDetectExistingIndent,
