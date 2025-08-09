@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.28.0
+
+* Remove Zephyr report format
+* README.md updates
+
 # 0.27.1
 
 * Enable Monaco autoLayout option

@@ -124,20 +124,6 @@ export const ResultInfoViewer = observer((props: { requestOrGroupId: string, res
                         }
                     </Box>
                 </MenuItem>
-                <MenuItem autoFocus={settings.reportFormat == ExecutionReportFormat.CSV} key='report-format-zephyr' disableRipple onClick={e => {
-                    copyToClipboard(e, requestOrGroupId, index, ExecutionReportFormat.ZEPHYR)
-                    settings.setReportFormat(ExecutionReportFormat.ZEPHYR)
-                    handleFormatMenuClose()
-                }}>
-                    <Box display='flex' alignContent='center'>
-                        Simplified Zephyr Format
-                        {
-                            settings.reportFormat === ExecutionReportFormat.ZEPHYR
-                                ? <CheckIcon sx={{ marginLeft: '0.5em' }} />
-                                : null
-                        }
-                    </Box>
-                </MenuItem>
             </Menu>
         </>
     }
