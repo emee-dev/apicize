@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.28.1
+
+* Fix Basic Authorization validation
+
 # 0.28.0
 
 * Remove Zephyr report format
