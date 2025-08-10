@@ -21,13 +21,8 @@ export const RequestInfoEditor = observer((props: { request: EditableRequest }) 
         ))
     }
 
-    const handleRunClick = () => async () => {
-        try {
-            await workspace.executeRequest(request.id)
-        } catch (e) {
-            let msg1 = `${e}`
-            feedback.toast(msg1, msg1 == 'Cancelled' ? ToastSeverity.Warning : ToastSeverity.Error)
-        }
+    const handleRunClick = () => () => {
+        workspace.launchExecution(request.id)
     }
 
     let times = request.runs == 1 ? 'one time' : `${request.runs} times`

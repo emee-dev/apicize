@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.28.2
+
+* Standardize Cancellation handling
+
 # 0.28.1
 
 * Fix Basic Authorization validation

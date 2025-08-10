@@ -25,13 +25,8 @@ export const RequestGroupInfoEditor = observer((props: {
 
     const isUsingSeedData = workspace.defaults.selectedData.id !== NO_SELECTION_ID
 
-    const handleRunClick = () => async () => {
-        try {
-            await workspace.executeRequest(group.id)
-        } catch (e) {
-            let msg1 = `${e}`
-            feedback.toast(msg1, msg1 == 'Cancelled' ? ToastSeverity.Warning : ToastSeverity.Error)
-        }
+    const handleRunClick = () => () => {
+        workspace.launchExecution(group.id)
     }
 
     let times = group.runs == 1 ? 'one time' : `${group.runs} times`

@@ -14,8 +14,9 @@ import { useApicizeSettings } from "../../../contexts/apicize-settings.context"
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 
 const ApicizeErrorToString = (error?: ApicizeError): string => {
-    const sub = (err?: ApicizeError) => err ? `, ${err.description}${ApicizeErrorToString(err.source)}` : ''
-    return error ? `[${error.type}] ${error.description}${sub(error.source)}` : ''
+    const desc = error?.description ? ` ${error.description}` : ''
+    const sub = error?.source ? ` ${ApicizeErrorToString(error.source)}` : ''
+    return error ? `[${error.type}]${desc}${sub}` : ''
 }
 
 export const ResultInfoViewer = observer((props: { requestOrGroupId: string, resultIndex: number, results: ExecutionResultSummary[] }) => {
