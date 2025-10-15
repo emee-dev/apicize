@@ -5,6 +5,8 @@
 Apicize is a testing platform that facilitates webservice testing both via GUI and CLI.  It utilizes Rust and V8 for file I/O and
 to execute  HTTP requests and tests.  Tauri, React, MobX and MUI are used for the UI.  The Monaco editor is used to edit JSON and JavaScript.
 
+This is a recent update and will continue to add more for testing purposes.
+
 ### Contents
 
 * [Installation](#installation)
