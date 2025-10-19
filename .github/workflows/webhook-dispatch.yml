@@ -1,0 +1,25 @@
+name: Webhook Dispatch
+
+on:
+  repository_dispatch:
+    types: [trigger-from-webhook]
+
+jobs:
+  handle-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Print payload
+        run: |
+          echo "Event Type: ${{ github.event.action }}"
+          echo "Full Payload:"
+          echo '${{ toJson(github.event.client_payload) }}'
+
+      - name: Run custom logic
+        run: |
+          echo "Performing actions based on webhook data..."
+          # Example: extract payload values
+          echo "User: ${{ github.event.client_payload.user }}"
+          echo "Message: ${{ github.event.client_payload.message }}"
